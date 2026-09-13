@@ -931,6 +931,7 @@
         "fallbackIgnoredCaptainAbilityCoverage": "Fallback relaxed full Captain Ability tier coverage.",
         "fallbackDowngradedCaptainAbilityCoverage": "Fallback downgraded Captain Ability coverage to simple scope matching."
       },
+      "rejectedSummary": "{{count}} candidates were not picked for this slot. Select a reason to see only those.",
       "rejectedReasons": {
         "manualSlotLocked": "Manual slot lock kept the selected unit.",
         "alreadySelected": "Already used by another final slot.",

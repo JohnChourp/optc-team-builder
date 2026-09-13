@@ -931,6 +931,7 @@
         "fallbackIgnoredCaptainAbilityCoverage": "Το fallback χαλάρωσε full Captain Ability tier coverage.",
         "fallbackDowngradedCaptainAbilityCoverage": "Το fallback γύρισε το Captain Ability coverage σε simple scope matching."
       },
+      "rejectedSummary": "{{count}} υποψήφιοι δεν επιλέχθηκαν για αυτή τη θέση. Διάλεξε έναν λόγο για να δεις μόνο αυτούς.",
       "rejectedReasons": {
         "manualSlotLocked": "Το manual slot lock κράτησε το selected unit.",
         "alreadySelected": "Χρησιμοποιείται ήδη από άλλο final slot.",

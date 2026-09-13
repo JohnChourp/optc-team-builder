@@ -1718,10 +1718,12 @@ describe('AutoTeamBuilderPage builder interactions', () => {
           'Contributes less to current requirements.',
           'Lost the current ranking tie-break.',
         ],
+        groupCode: 'lowerRequirementDemand',
       },
       {
         title: 'Rejected Zoro (#902)',
         reasonLabels: ['Conflicts with unique base-character rules.'],
+        groupCode: 'duplicateBaseConflict',
       },
     ]);
     expect(slots[1]?.hasStructuredExplanation).toBe(false);
@@ -1750,6 +1752,130 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     } as unknown as Event);
 
     expect(page.isSlotExplanationOpen(slot!.trackKey)).toBe(false);
+  });
+
+  /*
+   * 869f127by. The per-candidate reason already shipped; what a thin result never said is why it
+   * was thin AS A WHOLE. These three cover the wiring the pure grouping spec cannot: that the page
+   * labels every candidate with the reason that DECIDED, counts them, and narrows on click.
+   */
+  it('groups the rejected pool by decisive reason, counted and ordered by count', async () => {
+    const { page } = await createPage();
+    const baseline = createAutoBuildResult();
+
+    page.result.set(
+      createAutoBuildResult([
+        {
+          ...baseline.slots[0]!,
+          explanation: {
+            primaryReason: { code: 'manualPick' },
+            reasons: [],
+            fallbackReasons: [],
+            rejectedCandidates: [
+              {
+                characterId: 901,
+                characterName: 'Cost One',
+                // Blocked by the cap AND ranked lower: only the cap decided.
+                reasons: [{ code: 'costConstraint' }, { code: 'lowerCoverageContribution' }],
+              },
+              {
+                characterId: 902,
+                characterName: 'Cost Two',
+                reasons: [{ code: 'costConstraint' }],
+              },
+              {
+                characterId: 903,
+                characterName: 'Crew Conflict',
+                reasons: [{ code: 'duplicateBaseConflict' }],
+              },
+            ],
+          },
+        },
+        ...baseline.slots.slice(1),
+      ]),
+    );
+
+    const [slot] = page.teamSlots();
+
+    expect(slot?.rejectedCandidateGroups).toEqual([
+      {
+        code: 'costConstraint',
+        count: 2,
+        label: 'Would exceed the active cost budget.',
+      },
+      {
+        code: 'duplicateBaseConflict',
+        count: 1,
+        label: 'Conflicts with unique base-character rules.',
+      },
+    ]);
+    // The counts must account for the whole pool or the summary line contradicts its own chips.
+    expect(
+      slot!.rejectedCandidateGroups.reduce((sum, group) => sum + group.count, 0),
+    ).toBe(slot!.rejectedCandidateLabels.length);
+  });
+
+  it('narrows the rejected list to the selected group and restores it on a second click', async () => {
+    const { page } = await createPage();
+    const baseline = createAutoBuildResult();
+
+    page.result.set(
+      createAutoBuildResult([
+        {
+          ...baseline.slots[0]!,
+          explanation: {
+            primaryReason: { code: 'manualPick' },
+            reasons: [],
+            fallbackReasons: [],
+            rejectedCandidates: [
+              {
+                characterId: 901,
+                characterName: 'Cost One',
+                reasons: [{ code: 'costConstraint' }],
+              },
+              {
+                characterId: 903,
+                characterName: 'Crew Conflict',
+                reasons: [{ code: 'duplicateBaseConflict' }],
+              },
+            ],
+          },
+        },
+        ...baseline.slots.slice(1),
+      ]),
+    );
+
+    const [slot] = page.teamSlots();
+
+    expect(page.visibleRejectedCandidates(slot!)).toHaveLength(2);
+    expect(page.isRejectedGroupSelected(slot!.trackKey, 'costConstraint')).toBe(false);
+
+    page.onRejectedGroupToggle(slot!.trackKey, 'costConstraint');
+
+    expect(page.isRejectedGroupSelected(slot!.trackKey, 'costConstraint')).toBe(true);
+    expect(page.visibleRejectedCandidates(slot!).map((entry) => entry.title)).toEqual([
+      'Cost One (#901)',
+    ]);
+
+    page.onRejectedGroupToggle(slot!.trackKey, 'costConstraint');
+
+    expect(page.visibleRejectedCandidates(slot!)).toHaveLength(2);
+  });
+
+  it('keeps the narrowing of one slot out of the others', async () => {
+    const { page } = await createPage();
+
+    page.result.set(createAutoBuildResult());
+    const slots = page.teamSlots();
+
+    // Guard against the assertion below passing on two undefined track keys.
+    expect(slots.length).toBeGreaterThan(1);
+    expect(slots[0]!.trackKey).not.toBe(slots[1]!.trackKey);
+
+    page.onRejectedGroupToggle(slots[0]!.trackKey, 'costConstraint');
+
+    expect(page.isRejectedGroupSelected(slots[0]!.trackKey, 'costConstraint')).toBe(true);
+    expect(page.isRejectedGroupSelected(slots[1]!.trackKey, 'costConstraint')).toBe(false);
   });
 
   it('formats relaxed Super Special Criteria warnings with character names', async () => {
