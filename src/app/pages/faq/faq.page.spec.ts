@@ -106,18 +106,27 @@ describe('FaqPage content', () => {
   });
 
   it('states the Captain and Friend Captain rule the code actually implements', () => {
-    // Owner-confirmed 2026-09-03 and asked repeatedly, so the answer says it
-    // outright. Two guards in Manual Team Builder make it true: the leader
-    // seats never conflict at all, and the Friend Captain contributes no
-    // conflict keys to the rest of the crew. If either goes, the answer is a
-    // lie and this fails.
-    const manual = readFileSync(
-      resolve(process.cwd(), 'src/app/pages/manual-team-builder/manual-team-builder.page.ts'),
+    /*
+     * Owner-confirmed 2026-09-03 and asked repeatedly, so the answer says it outright, and this
+     * binds the answer to the code that makes it true.
+     *
+     * 869f127ej moved that code. It used to be two guards written out inside the Manual Team
+     * Builder - an early return below the first sub index, and the Friend Captain excluded from
+     * the key set - and this test named both literally. They now live once, in
+     * `character-party-conflict-keys.utils.ts`, so the binding points there.
+     *
+     * That is why this test failed when the predicate landed, and why it is worth having: the FAQ
+     * makes a promise about behaviour, and something has to notice when the behaviour moves.
+     */
+    const predicate = readFileSync(
+      resolve(process.cwd(), 'src/app/core/services/character-party-conflict-keys.utils.ts'),
       'utf8',
     );
 
-    expect(manual).toContain('if (slotIndex < MANUAL_TEAM_FIRST_SUB_SLOT_INDEX) {');
-    expect(manual).toContain('index !== MANUAL_TEAM_FRIEND_CAPTAIN_SLOT_INDEX');
+    // A leader seat is exempt before any key is resolved.
+    expect(predicate).toContain('if (isLeaderSlotIndex(slotIndex)) {');
+    // The borrowed seat contributes nothing to what the four subs must avoid.
+    expect(predicate).toContain('index === TEAM_FRIEND_CAPTAIN_SLOT_INDEX');
     expect(english.entries['conflicts']?.bullets['leaders']).toContain('may be the same character');
     expect(greek.entries['conflicts']?.bullets['leaders']).toContain(
       'ΜΠΟΡΟΥΝ να είναι ο ίδιος χαρακτήρας',

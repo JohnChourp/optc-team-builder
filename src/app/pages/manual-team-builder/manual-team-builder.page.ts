@@ -60,7 +60,7 @@ import {
   resolveCaptainCoverageBranchDisplay,
   resolveCaptainCoverageBranchOptions,
 } from '../../core/services/captain-coverage.utils';
-import { resolveCharacterPartyConflictKeys } from '../../core/services/character-party-conflict-keys.utils';
+import { maySlotHoldCharacter } from '../../core/services/character-party-conflict-keys.utils';
 import {
   compareCharactersByPowerFirst,
   OptcRepositoryService,
@@ -1687,26 +1687,17 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
    * the rule Captain Coverage and the Auto Team Builder engine already apply. The slot's own
    * occupant is left out, so swapping a character for another version of itself stays allowed.
    */
+  /**
+   * 869f127ej. The leader-seat exemption is asked for by name now, rather than re-derived here.
+   * The early return below the first sub index and the Friend Captain exclusion from the key set
+   * were this page's own copy of a rule three pages each wrote out separately.
+   */
   private repeatsCrewMember(
     slotIndex: number,
     character: CharacterDetailRecord,
     slots: ReadonlyArray<CharacterDetailRecord | null> = this.slots(),
   ): boolean {
-    if (slotIndex < MANUAL_TEAM_FIRST_SUB_SLOT_INDEX) {
-      return false;
-    }
-
-    const crewConflictKeys = new Set(
-      slots.flatMap((slot, index) =>
-        slot && index !== slotIndex && index !== MANUAL_TEAM_FRIEND_CAPTAIN_SLOT_INDEX
-          ? resolveCharacterPartyConflictKeys(slot)
-          : [],
-      ),
-    );
-
-    return resolveCharacterPartyConflictKeys(character).some((conflictKey) =>
-      crewConflictKeys.has(conflictKey),
-    );
+    return !maySlotHoldCharacter(slots, slotIndex, character);
   }
 
   /**
