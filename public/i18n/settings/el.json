@@ -205,7 +205,8 @@
       "deleteFavorites": "Να διαγραφούν όλα τα favorites; Η ενέργεια δεν επηρεάζει τα saved teams ή τα saved enemies.",
       "deleteFavoriteShips": "Να διαγραφούν όλα τα αγαπημένα καράβια; Η ενέργεια δεν επηρεάζει τα favorite characters, τα saved teams ή τα saved enemies.",
       "deleteSavedEnemies": "Να διαγραφούν όλα τα saved enemies; Η ενέργεια δεν επηρεάζει τα favorites ή τα saved teams.",
-      "deleteSavedTeams": "Να διαγραφούν όλα τα saved teams; Η ενέργεια δεν επηρεάζει τα favorites ή τα saved enemies."
+      "deleteSavedTeams": "Να διαγραφούν όλα τα saved teams; Η ενέργεια δεν επηρεάζει τα favorites ή τα saved enemies.",
+      "revertCharacterOverride": "Να αναιρεθούν οι local αλλαγές σου στον {{name}}; Ο χαρακτήρας επιστρέφει στις τιμές που έρχονται με την εφαρμογή."
     },
     "counts": {
       "characterBoxes": "{{count}} character boxes",
@@ -266,7 +267,7 @@
       "title": "Character Boxes"
     },
     "characterOverrides": {
-      "copy": "Κάνε export όλων των local character overrides σε JSON, import ενός backup για local overrides ή διαγραφή όλων των local character overrides από αυτή τη συσκευή.",
+      "copy": "Δες κάθε χαρακτήρα που έχεις αλλάξει local και τι άλλαξε η κάθε αλλαγή, αναίρεσε έναν χαρακτήρα ή όλους, κάνε export όλων των local character overrides σε JSON ή import ενός backup για local overrides.",
       "deleteAll": "Διαγραφή όλων των character overrides",
       "errors": {
         "generic": "Το import των character overrides απέτυχε.",
@@ -288,7 +289,27 @@
         "successTitle": "Το import των character overrides ολοκληρώθηκε",
         "warningTitle": "Το import των character overrides ολοκληρώθηκε με παρατηρήσεις"
       },
+      "fields": {
+        "classes": "Classes",
+        "combo": "Combo",
+        "cost": "Cost",
+        "growth": "Ρυθμός growth",
+        "maxAtk": "Max ATK",
+        "maxHp": "Max HP",
+        "maxRcv": "Max RCV",
+        "minAtk": "Min ATK",
+        "minHp": "Min HP",
+        "minRcv": "Min RCV",
+        "name": "Όνομα",
+        "stars": "Αστέρια",
+        "type": "Type"
+      },
       "import": "Εισαγωγή character overrides",
+      "list": {
+        "datasetMissing": "Ο χαρακτήρας δεν υπάρχει πια στα δεδομένα της εφαρμογής, οπότε δεν υπάρχει κάτι για σύγκριση. Οι αλλαγές σου διατηρούνται.",
+        "noDifferences": "Οι local αλλαγές σου ταυτίζονται αυτή τη στιγμή με τα δεδομένα της εφαρμογής, οπότε δεν εμφανίζεται τίποτα.",
+        "revert": "Αναίρεση"
+      },
       "processing": "Γίνεται import των character overrides...",
       "title": "Character Overrides"
     },

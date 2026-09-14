@@ -190,6 +190,81 @@
   background: rgba(255, 107, 107, 0.14);
 }
 
+.override-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.override-list__item {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.override-list__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.override-list__head strong {
+  color: #ffffff;
+}
+
+.override-list__head ion-button {
+  margin: 0;
+  flex: 0 0 auto;
+}
+
+.override-list__note {
+  margin: 0;
+  color: rgba(248, 251, 255, 0.72);
+  font-size: 0.92rem;
+}
+
+.override-list__changes {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+
+.override-list__change {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.override-list__change dt {
+  color: rgba(248, 251, 255, 0.72);
+  font-size: 0.92rem;
+}
+
+.override-list__change dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0;
+  color: #ffffff;
+  font-size: 0.92rem;
+}
+
+.override-list__from {
+  color: rgba(248, 251, 255, 0.72);
+  text-decoration: line-through;
+}
+
+.override-list__to {
+  font-weight: 600;
+}
+
 .about-card {
   display: grid;
   gap: 16px;

@@ -15,7 +15,7 @@ import { IonToolbar } from '@ionic/angular/ion-toolbar';
 import { TranslocoDirective } from '@jsverse/transloco';
 
 import { APP_VERSION } from '../../core/data/app-version.data';
-import { type CharacterBox } from '../../core/models/optc.models';
+import { type CharacterBox, type CharacterListItem } from '../../core/models/optc.models';
 import { AnalyticsConsentService } from '../../core/services/analytics-consent.service';
 import { AppI18nService } from '../../core/services/app-i18n.service';
 import { resolveBrowserStorageFailureDiagnostic } from '../../core/services/browser-storage-error.utils';
@@ -32,6 +32,10 @@ import {
 import { OptcbxImportService } from '../../core/services/optcbx-import.service';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserDataTransferService } from '../../core/services/user-data-transfer.service';
+import {
+  buildCharacterOverrideDiffs,
+  type CharacterOverrideDiff,
+} from './character-override-diff.utils';
 import { buildDatasetSummary, type DatasetSummary } from './dataset-summary.utils';
 import {
   buildStorageDiagnosticsFilename,
@@ -185,6 +189,25 @@ export class SettingsPage implements OnInit {
   );
   public readonly canDeleteAllCharacterOverrides = computed(
     () => this.characterOverrides().length > 0,
+  );
+
+  /**
+   * The dataset rows the overrides are compared against, keyed by id.
+   *
+   * 869f12x4e. `getCharactersByIds` is async and this page is constructed
+   * directly in its spec - no injection context - so this cannot be an
+   * `effect`. It is refreshed explicitly at every point the override set can
+   * change, the same way `datasetSummary` is loaded.
+   */
+  private readonly characterOverrideDatasetCharacters = signal<
+    ReadonlyMap<number, CharacterListItem>
+  >(new Map());
+
+  public readonly characterOverrideDiffs = computed<readonly CharacterOverrideDiff[]>(() =>
+    buildCharacterOverrideDiffs(
+      this.characterOverrides(),
+      this.characterOverrideDatasetCharacters(),
+    ),
   );
   public readonly canExportSavedTeams = computed(() => this.savedTeams().length > 0);
   public readonly canDeleteAllSavedTeams = computed(() => this.savedTeams().length > 0);
@@ -418,7 +441,11 @@ export class SettingsPage implements OnInit {
   public async ngOnInit(): Promise<void> {
     await Promise.all([
       this.userState.ready(),
-      this.characterOverrideState.ready(),
+      /*
+       * The diff list is only meaningful once the override set is loaded, so
+       * the dataset read is chained behind `ready()` rather than raced with it.
+       */
+      this.characterOverrideState.ready().then(() => this.refreshCharacterOverrideDiffs()),
       this.loadDatasetSummary(),
       this.refreshStorageQuota(),
     ]);
@@ -783,6 +810,61 @@ export class SettingsPage implements OnInit {
     }
 
     await this.userState.clearAllCharacterBoxes();
+  }
+
+  /**
+   * Never rejects. The list is informational and a dataset read that fails
+   * must not take the rest of Settings down with it - the overrides
+   * themselves are still listed, just without the dataset side of the
+   * comparison.
+   */
+  public async refreshCharacterOverrideDiffs(): Promise<void> {
+    const characterIds = this.characterOverrides().map((override) => override.characterId);
+
+    if (characterIds.length === 0) {
+      this.characterOverrideDatasetCharacters.set(new Map());
+
+      return;
+    }
+
+    try {
+      const characters = await this.repository.getCharactersByIds(characterIds);
+
+      this.characterOverrideDatasetCharacters.set(
+        new Map(characters.map((character) => [character.id, character])),
+      );
+    } catch {
+      this.characterOverrideDatasetCharacters.set(new Map());
+    }
+  }
+
+  public resolveCharacterOverrideFieldLabel(field: string): string {
+    return this.i18n.translate(
+      `management.characterOverrides.fields.${field}`,
+      undefined,
+      'settings',
+    );
+  }
+
+  public async revertCharacterOverride(characterId: number): Promise<void> {
+    const diff = this.characterOverrideDiffs().find(
+      (candidate) => candidate.characterId === characterId,
+    );
+
+    if (
+      !diff ||
+      !this.confirmAction(
+        this.i18n.translate(
+          'management.confirm.revertCharacterOverride',
+          { name: diff.name },
+          'settings',
+        ),
+      )
+    ) {
+      return;
+    }
+
+    await this.characterOverrideState.deleteOverride(characterId);
   }
 
   public async deleteAllCharacterOverrides(): Promise<void> {
@@ -1269,13 +1351,20 @@ export class SettingsPage implements OnInit {
       await this.collectAllDataSectionResult({
         failedSections,
         label: this.resolveAllDataSectionLabel('characterOverrides'),
-        run: async () =>
-          this.buildCharacterOverridesImportFeedback({
-            ...(await this.userDataTransfer.importCharacterOverridesPayload(
-              payload.characterOverrides as unknown,
-            )),
-            fileName,
-          }),
+        run: async () => {
+          const stats = await this.userDataTransfer.importCharacterOverridesPayload(
+            payload.characterOverrides as unknown,
+          );
+
+          /*
+           * An imported override whose dataset row was never fetched reads as
+           * `datasetMissing` - "the character is gone" rather than "not looked
+           * up yet". Refresh before the list is next rendered.
+           */
+          await this.refreshCharacterOverrideDiffs();
+
+          return this.buildCharacterOverridesImportFeedback({ ...stats, fileName });
+        },
         successfulSections,
         resolveError: (error) => this.resolveCharacterOverridesImportError(error),
       });
@@ -1918,6 +2007,8 @@ export class SettingsPage implements OnInit {
         ? parseCharacterOverridesImportPayload(input.rawContent ?? '')
         : input.parsedPayload;
     const stats = await this.userDataTransfer.importCharacterOverridesPayload(payload);
+
+    await this.refreshCharacterOverrideDiffs();
 
     return this.buildCharacterOverridesImportFeedback({
       ...stats,

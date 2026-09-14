@@ -625,6 +625,50 @@
                 }
               </div>
             }
+
+            @if (characterOverrideDiffs().length > 0) {
+              <ul class="override-list">
+                @for (diff of characterOverrideDiffs(); track diff.characterId) {
+                  <li class="override-list__item">
+                    <div class="override-list__head">
+                      <strong>{{ diff.name || diff.characterId }}</strong>
+                      <ion-button
+                        fill="clear"
+                        size="small"
+                        color="warning"
+                        [disabled]="characterOverridesImporting()"
+                        (click)="revertCharacterOverride(diff.characterId)"
+                      >
+                        {{ t('management.characterOverrides.list.revert') }}
+                      </ion-button>
+                    </div>
+
+                    @if (diff.datasetMissing) {
+                      <p class="override-list__note">
+                        {{ t('management.characterOverrides.list.datasetMissing') }}
+                      </p>
+                    } @else {
+                      <dl class="override-list__changes">
+                        @for (change of diff.changes; track change.field) {
+                          <div class="override-list__change">
+                            <dt>{{ resolveCharacterOverrideFieldLabel(change.field) }}</dt>
+                            <dd>
+                              <span class="override-list__from">{{ change.from }}</span>
+                              <span aria-hidden="true">&rarr;</span>
+                              <span class="override-list__to">{{ change.to }}</span>
+                            </dd>
+                          </div>
+                        }
+                      </dl>
+                    }
+                  </li>
+                }
+              </ul>
+            } @else if (characterOverrides().length > 0) {
+              <p class="override-list__note">
+                {{ t('management.characterOverrides.list.noDifferences') }}
+              </p>
+            }
           </article>
 
           <article class="transfer-card">
