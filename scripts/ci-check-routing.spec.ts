@@ -232,6 +232,7 @@ describe('ci-check-routing', () => {
       'route-sitemap-coverage',
       'page-doc-coverage',
       'public-asset-shadowing',
+      'storage-keys',
       'public-entry-synthetics',
       'i18n-regression',
       'drive-sync-server',
