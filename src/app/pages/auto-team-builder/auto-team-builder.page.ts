@@ -3553,6 +3553,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     await Promise.all([
       this.userState.readyFavoriteCharacterIds(),
       this.userState.readyFavoriteShipIds(),
+      /*
+       * 869f1rmuu. Without this the signal is empty at build time even when a list is stored, so
+       * the build silently runs with no boosts. Every unit test passed because the stubs
+       * pre-populate the signal; a live pass caught it - the stored list read [4551,4520,4408] and
+       * the input the engine got read [].
+       */
+      this.userState.readyBoostedCharacterIds(),
       this.userState.readyCharacterBoxes(),
       this.userState.readySavedTeams(),
       this.userState.readyAutoTeamBuilderWorkerPreference(),

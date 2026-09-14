@@ -2151,6 +2151,27 @@ function compareAutoFillLeaderCandidates(
     return leaderRequirementDifference;
   }
 
+  /*
+   * 869f1rmuu. The boost sits HERE, and the position is the whole design.
+   *
+   * Above it are the two things the reader actually asked for - the leaders they preferred by
+   * name, and how much of their ability requirements a leader covers. A boost must never beat
+   * either: it is a fact about this week, not a request.
+   *
+   * Below it is `compareCandidatesByNewestId`, which is an arbitrary fallback rather than a
+   * preference - "whichever is newer" answers nothing the reader said. Beating that is exactly
+   * what a boost should do.
+   *
+   * It is a comparator STEP here and a score term in the sub path, and that asymmetry is the
+   * surrounding code rather than a decision: subs are ranked by a summed score where a boost
+   * needs a magnitude, leaders by a sequence of tiebreaks where it needs a position.
+   */
+  const boostedDifference = compareBoostedLeaderOrder(left, right, input.boostedCharacterIds);
+
+  if (boostedDifference !== 0) {
+    return boostedDifference;
+  }
+
   const idDifference = compareCandidatesByNewestId(left, right);
 
   if (idDifference !== 0) {
@@ -2179,6 +2200,31 @@ function resolveLeaderRequirementPriorityScore(
         : score,
     0,
   );
+}
+
+/**
+ * 869f1rmuu. A boosted leader ahead of an unboosted one, and nothing else.
+ *
+ * Boosting both, or neither, is a tie - so this never reorders two leaders the event treats the
+ * same, and the comparator falls through to the tiebreaks below it exactly as before.
+ */
+function compareBoostedLeaderOrder(
+  left: AutoBuildCandidate,
+  right: AutoBuildCandidate,
+  boostedCharacterIds: number[] | undefined,
+): number {
+  if (!boostedCharacterIds?.length) {
+    return 0;
+  }
+
+  const leftBoosted = boostedCharacterIds.includes(left.character.id);
+  const rightBoosted = boostedCharacterIds.includes(right.character.id);
+
+  if (leftBoosted === rightBoosted) {
+    return 0;
+  }
+
+  return leftBoosted ? -1 : 1;
 }
 
 function comparePreferredLeaderIdOrder(

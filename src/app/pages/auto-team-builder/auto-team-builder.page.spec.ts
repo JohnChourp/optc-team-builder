@@ -904,6 +904,36 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.result()?.slots).toHaveLength(6);
   });
 
+  /*
+   * 869f1rmuu. The page must HYDRATE the boost list, not just read the signal. Without it the
+   * signal is empty at build time even when a list is stored, and the build silently runs with no
+   * boosts - the stored list read [4551,4520,4408] while the engine got []. Every other test here
+   * passed because the stub pre-populates the signal, which is why only a live pass found it.
+   */
+  it('hydrates the boosted list before a build can read it', async () => {
+    const { page, userState } = await createPage();
+
+    await page.ngOnInit();
+
+    expect(userState.readyBoostedCharacterIds).toHaveBeenCalled();
+  });
+
+  it('sends the boosted list to the builder', async () => {
+    const { page, autoTeamBuilder, userState } = await createPage();
+
+    userState.boostedCharacterIds.set([101, 102]);
+    autoTeamBuilder.buildTeam.mockResolvedValue(createAutoBuildResult());
+    await page.ngOnInit();
+    await page.buildTeam();
+
+    // buildTeam(classes, types, constraints, executionOptions) - the constraints are third.
+    const constraints = autoTeamBuilder.buildTeam.mock.calls[0]![2] as {
+      boostedCharacterIds: number[];
+    };
+
+    expect(constraints.boostedCharacterIds).toEqual([101, 102]);
+  });
+
   it('has no timeline before anything is built', async () => {
     const { page } = await createPage();
 
@@ -10865,6 +10895,7 @@ async function createPage(
     };
     toggleBoostedCharacter: ReturnType<typeof vi.fn>;
     clearBoostedCharacterIds: ReturnType<typeof vi.fn>;
+    readyBoostedCharacterIds: ReturnType<typeof vi.fn>;
     favoriteCharacterIds: {
       (): number[];
       set(value: number[]): void;
