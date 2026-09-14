@@ -74,6 +74,77 @@ describe('CharacterBoxesPage', () => {
     expect(page.selectedBox()?.id).toBe('box-1');
   });
 
+  /*
+   * 869f1naz5. The ladder says what a box can FIELD - the dataset carries 787 stage names and no
+   * requirements at all, so nothing here claims a clear.
+   */
+  it('reads the selected box against the ladder', async () => {
+    const { page, repository } = createPage([
+      {
+        id: 'box-1',
+        name: 'Big box',
+        characterIds: [101, 102, 103, 104, 105, 106],
+        createdAt: '2026-04-14T10:00:00.000Z',
+        updatedAt: '2026-04-14T10:05:00.000Z',
+      },
+    ]);
+
+    page.selectBox('box-1');
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(repository.getCharactersByIds).toHaveBeenCalledWith([101, 102, 103, 104, 105, 106]);
+
+    const report = page.contentLadderReport();
+
+    expect(report?.boxSize).toBe(6);
+    expect(report?.entries.length).toBeGreaterThan(0);
+    // A six-strong box of 5-star characters clears every team-size and rarity floor in the ladder.
+    expect(report?.readyCount).toBe(report?.entries.length);
+    expect(report?.nextGoal).toBeNull();
+  });
+
+  it('names the next goal, and what the box is short of', async () => {
+    const { page } = createPage([
+      {
+        id: 'box-1',
+        name: 'Small box',
+        characterIds: [101, 102, 103],
+        createdAt: '2026-04-14T10:00:00.000Z',
+        updatedAt: '2026-04-14T10:05:00.000Z',
+      },
+    ]);
+
+    page.selectBox('box-1');
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const report = page.contentLadderReport();
+
+    expect(report?.nextGoal?.milestone.stage).toBe('Syrup Village');
+    expect(report?.nextGoal?.verdict).toBe('oneAway');
+    expect(page.contentLadderMissingLabel(report!.nextGoal!)).toContain('ladder.missing.teamSize');
+  });
+
+  it('has no ladder without a selected box', () => {
+    const { page } = createPage([]);
+
+    expect(page.contentLadderReport()).toBeNull();
+  });
+
+  it('keeps the page alive when the character read fails', async () => {
+    const { page, repository } = createPage();
+
+    repository.getCharactersByIds.mockRejectedValue(new Error('no database'));
+    page.selectBox('box-1');
+    await Promise.resolve();
+    await Promise.resolve();
+
+    // The box is still selected; the ladder simply reads it as empty rather than throwing.
+    expect(page.selectedBox()?.id).toBe('box-1');
+    expect(page.contentLadderReport()?.boxSize).toBe(0);
+  });
+
   it('renames the selected box after valid input', async () => {
     const { page, userState } = createPage();
 
@@ -1587,6 +1658,16 @@ function createPage(
     searchDetailedCharacters: vi.fn().mockResolvedValue([]),
     getAvailableCharacterTags: vi.fn().mockResolvedValue([]),
     getCharacterTagMatchIndex: vi.fn().mockResolvedValue(null),
+    /* 869f1naz5. The ladder reads stars/type/classes for exactly the ids in the box. */
+    getCharactersByIds: vi.fn().mockImplementation(async (ids: number[]) =>
+      ids.map((id) => ({
+        id,
+        name: `C${id}`,
+        stars: 5,
+        type: 'STR',
+        classes: ['Fighter'],
+      })),
+    ),
   };
   const i18n = {
     translate: vi.fn((key: string, params?: Record<string, string | number>) => {

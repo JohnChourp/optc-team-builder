@@ -1,1 +1,96 @@
 /* Character boxes page styles are split into character-boxes style panels. */
+
+/* 869f1naz5. What this box can field - the curated content ladder. */
+.ladder-card {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.ladder-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ladder-card__head strong {
+  color: #ffffff;
+}
+
+.ladder-card__head span {
+  color: rgba(248, 251, 255, 0.72);
+  font-size: 0.92rem;
+}
+
+.ladder-card__copy,
+.ladder-card__note,
+.ladder-list__group,
+.ladder-list__missing,
+.ladder-list__provisional {
+  margin: 0;
+  color: rgba(248, 251, 255, 0.72);
+  font-size: 0.92rem;
+}
+
+.ladder-card__next {
+  margin: 0;
+  color: #ffffff;
+}
+
+.ladder-card__next-label {
+  color: rgba(248, 251, 255, 0.72);
+  margin-right: 6px;
+}
+
+.ladder-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ladder-list__item {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.ladder-list__item--ready {
+  background: rgba(74, 222, 128, 0.14);
+}
+
+.ladder-list__item--one-away {
+  background: rgba(245, 200, 76, 0.14);
+}
+
+.ladder-list__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ladder-list__head strong {
+  color: #ffffff;
+}
+
+.ladder-chip {
+  flex: 0 0 auto;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(248, 251, 255, 0.82);
+  font-size: 0.82rem;
+}
+
+.ladder-list__provisional {
+  font-style: italic;
+}

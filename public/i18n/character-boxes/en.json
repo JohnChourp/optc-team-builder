@@ -16,6 +16,25 @@
     "count": "{{count}} characters",
     "updatedAt": "Updated {{timestamp}}"
   },
+  "ladder": {
+    "title": "What this box can field",
+    "copy": "A short list of well-known content, and whether this box holds enough characters to field a team for it. It is about the box, not about clearing: how hard something is to beat is not in the app data.",
+    "summary": "Ready for {{ready}} of {{total}}",
+    "nextGoalLabel": "Next up:",
+    "provisional": "The numbers for this one are a starting point, not a confirmed requirement.",
+    "note": "Content names come from the app data and are checked against it on every build, so a renamed stage shows up as a problem instead of sitting here quietly. The requirements beside them are hand-written.",
+    "verdict": {
+      "ready": "you can field this",
+      "oneAway": "one character away",
+      "notClose": "{{count}} characters away"
+    },
+    "missing": {
+      "teamSize": "{{count}} more in the box.",
+      "minStars": "{{count}} more at {{stars}} stars or above.",
+      "class": "{{count}} more {{name}}.",
+      "type": "{{count}} more {{name}}."
+    }
+  },
   "editor": {
     "buildFromBoxAction": "Build from this box",
     "buildFromBoxLabel": "What can I build with this box?",

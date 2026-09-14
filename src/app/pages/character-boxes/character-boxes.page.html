@@ -138,6 +138,55 @@
                   </ion-button>
                 </div>
 
+                <!--
+                  869f1naz5. What this box can FIELD, never what it can clear. The dataset carries
+                  787 stage names and no requirements at all, so difficulty is not something this
+                  app can claim - the card speaks about the box, and any milestone whose numbers
+                  are a starting point says so on its own row.
+                -->
+                @if (contentLadderReport(); as ladder) {
+                  <section class="ladder-card" data-testid="box-content-ladder">
+                    <div class="ladder-card__head">
+                      <strong>{{ t('ladder.title') }}</strong>
+                      <span>{{
+                        t('ladder.summary', { ready: ladder.readyCount, total: ladder.entries.length })
+                      }}</span>
+                    </div>
+                    <p class="ladder-card__copy">{{ t('ladder.copy') }}</p>
+
+                    @if (ladder.nextGoal; as next) {
+                      <p class="ladder-card__next">
+                        <span class="ladder-card__next-label">{{ t('ladder.nextGoalLabel') }}</span>
+                        {{ next.milestone.stage }} &mdash; {{ contentLadderMissingLabel(next) }}
+                      </p>
+                    }
+
+                    <ul class="ladder-list">
+                      @for (entry of ladder.entries; track entry.milestone.id) {
+                        <li
+                          class="ladder-list__item"
+                          [class.ladder-list__item--ready]="entry.verdict === 'ready'"
+                          [class.ladder-list__item--one-away]="entry.verdict === 'oneAway'"
+                        >
+                          <div class="ladder-list__head">
+                            <strong>{{ entry.milestone.stage }}</strong>
+                            <small class="ladder-chip">{{ contentLadderVerdictLabel(entry) }}</small>
+                          </div>
+                          <p class="ladder-list__group">{{ entry.milestone.group }}</p>
+                          @if (entry.verdict !== 'ready') {
+                            <p class="ladder-list__missing">{{ contentLadderMissingLabel(entry) }}</p>
+                          }
+                          @if (entry.milestone.provisional) {
+                            <p class="ladder-list__provisional">{{ t('ladder.provisional') }}</p>
+                          }
+                        </li>
+                      }
+                    </ul>
+
+                    <p class="ladder-card__note">{{ t('ladder.note') }}</p>
+                  </section>
+                }
+
                 <div class="bulk-actions-grid">
                   <div class="favorites-bulk-action">
                     <div class="favorites-bulk-action__copy">
