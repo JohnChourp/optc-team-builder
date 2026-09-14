@@ -148,6 +148,14 @@ export const SCRIPT_SUITES = {
     label: 'Team builder engine divergence tests',
     command: 'npm run test:engine-divergences',
   },
+  /*
+   * 869f1naz5. The curated content ladder is hand-maintained, so the lane that binds every
+   * milestone to a real dataset stage is the thing that keeps it from going quietly stale.
+   */
+  'content-ladder': {
+    label: 'Content ladder tests',
+    command: 'npm run test:content-ladder',
+  },
   'public-entry-synthetics': {
     label: 'Public entry synthetic monitor tests',
     command: 'npm run test:public-entry-synthetics',
@@ -378,6 +386,24 @@ function isRouteSitemapCoveragePath(filePath) {
  * writing this - a `continue` here stripped Angular, e2e and 32 script suites
  * from a route change, which is a far larger hole than the one being fixed.
  */
+function isContentLadderPath(filePath) {
+  return (
+    filePath === 'scripts/check-content-ladder.mjs' ||
+    filePath === 'scripts/check-content-ladder.spec.ts'
+  );
+}
+
+/*
+ * Non-terminating: the ladder data and the module that reads it are app sources, so they route to
+ * the Angular lane as well. Making this terminating is the mistake 869f12x4h already made once.
+ */
+function touchesContentLadderSources(filePath) {
+  return (
+    filePath === 'src/app/core/data/content-ladder.data.ts' ||
+    filePath === 'src/app/pages/character-boxes/content-ladder.utils.ts'
+  );
+}
+
 function isEngineDivergencePath(filePath) {
   return (
     filePath === 'scripts/check-engine-divergences.mjs' ||
@@ -806,6 +832,15 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
 
     if (touchesEngineDivergenceSources(filePath)) {
       addScriptSuite(scriptSuites, 'engine-divergences');
+    }
+
+    if (touchesContentLadderSources(filePath)) {
+      addScriptSuite(scriptSuites, 'content-ladder');
+    }
+
+    if (isContentLadderPath(filePath)) {
+      addScriptSuite(scriptSuites, 'content-ladder');
+      continue;
     }
 
     if (isEngineDivergencePath(filePath)) {

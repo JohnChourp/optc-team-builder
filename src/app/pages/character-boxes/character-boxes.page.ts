@@ -33,6 +33,11 @@ import {
   type DetailedCharacterSearchQuery,
 } from '../../core/models/optc.models';
 import {
+  buildContentLadderReport,
+  type ContentLadderEntry,
+  type ContentLadderReport,
+} from './content-ladder.utils';
+import {
   type AbilityFilterTagSetSelection,
   type AutoBuildAbilityCatalog,
   type AutoBuildAbilityRequirement,
@@ -387,6 +392,19 @@ export class CharacterBoxesPage implements OnInit {
    * and this project's own - so five distinct characters are enough, and the
    * threshold is deliberately not six.
    */
+  /**
+   * 869f1naz5. The selected box's characters, for the ladder only.
+   *
+   * The page's own `characters` signal is the catalogue it is browsing, not the box - and the
+   * ladder needs `stars`, `type` and `classes` for exactly the ids in the box. Loaded on selection
+   * rather than reactively, because this page is constructed directly in its spec and an `effect`
+   * would have no injection context.
+   */
+  private readonly ladderBoxCharacters = signal<CharacterListItem[]>([]);
+  public readonly contentLadderReport = computed<ContentLadderReport | null>(() =>
+    this.selectedBox() ? buildContentLadderReport(this.ladderBoxCharacters()) : null,
+  );
+
   public readonly canBuildFromSelectedBox = computed(
     () => (this.selectedBox()?.characterIds.length ?? 0) >= MINIMUM_BUILDABLE_BOX_SIZE,
   );
@@ -499,6 +517,65 @@ export class CharacterBoxesPage implements OnInit {
 
     this.selectedBoxId.set(box?.id ?? null);
     this.boxNameDraft.set(box?.name ?? '');
+    void this.loadLadderBoxCharacters();
+  }
+
+  /**
+   * Never rejects. A ladder that cannot be built leaves the rest of the page alone - the report
+   * simply reads the box as empty, which is visible rather than silently wrong.
+   */
+  private async loadLadderBoxCharacters(): Promise<void> {
+    const box = this.selectedBox();
+
+    if (!box || box.characterIds.length === 0) {
+      this.ladderBoxCharacters.set([]);
+      return;
+    }
+
+    try {
+      this.ladderBoxCharacters.set(await this.repository.getCharactersByIds(box.characterIds));
+    } catch {
+      this.ladderBoxCharacters.set([]);
+    }
+  }
+
+  public contentLadderVerdictLabel(entry: ContentLadderEntry): string {
+    if (entry.verdict === 'ready') {
+      return this.t('ladder.verdict.ready');
+    }
+
+    if (entry.verdict === 'oneAway') {
+      return this.t('ladder.verdict.oneAway');
+    }
+
+    return this.t('ladder.verdict.notClose', { count: entry.shortBy });
+  }
+
+  /**
+   * What is missing, in the reader's words. Each token is `kind[:detail]:shortfall`, produced by
+   * `content-ladder.utils.ts` so the copy lives here rather than in the computation.
+   */
+  public contentLadderMissingLabel(entry: ContentLadderEntry): string {
+    const parts = entry.missing.map((token) => {
+      const segments = token.split(':');
+      const shortfall = Number(segments[segments.length - 1]);
+
+      if (segments[0] === 'teamSize') {
+        return this.t('ladder.missing.teamSize', { count: shortfall });
+      }
+
+      if (segments[0] === 'minStars') {
+        return this.t('ladder.missing.minStars', { count: shortfall, stars: segments[1] });
+      }
+
+      if (segments[0] === 'class') {
+        return this.t('ladder.missing.class', { count: shortfall, name: segments[1] });
+      }
+
+      return this.t('ladder.missing.type', { count: shortfall, name: segments[1] });
+    });
+
+    return parts.join(' ');
   }
 
   public async onBoxNameInput(event: CustomEvent<{ value?: string | null }>): Promise<void> {
@@ -535,6 +612,7 @@ export class CharacterBoxesPage implements OnInit {
 
     this.selectedBoxId.set(nextSelectedBox?.id ?? null);
     this.boxNameDraft.set(nextSelectedBox?.name ?? '');
+    await this.loadLadderBoxCharacters();
   }
 
   public async addFavoritesToSelectedBox(): Promise<void> {
