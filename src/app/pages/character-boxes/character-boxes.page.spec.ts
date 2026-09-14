@@ -1467,6 +1467,56 @@ describe('CharacterBoxesPage', () => {
     expect(template).toContain('character-detail-thumb-link');
     expect(template).toContain('character-detail-name-link');
   });
+
+  /*
+   * 869f12x47. The subtask's "verify first" asked whether the builder already
+   * accepts a box as a pool restriction. It does - `selectedCharacterBoxId`
+   * narrows the candidate pool and the builder already explains the
+   * intersection - so this is a link and a preset rather than a second builder.
+   *
+   * What is worth testing is the gate: a box that cannot fill a crew must not
+   * offer a link to a builder that can only fail.
+   */
+  it('offers the build link only once a box can fill a crew', () => {
+    const { page } = createPage([
+      {
+        id: 'box-1',
+        name: 'Four units',
+        characterIds: [101, 102, 103, 104],
+        createdAt: '2026-04-14T10:00:00.000Z',
+        updatedAt: '2026-04-14T10:05:00.000Z',
+      },
+    ]);
+
+    page.selectBox('box-1');
+
+    expect(page.canBuildFromSelectedBox()).toBe(false);
+    // The harness's i18n stub returns the key, so the branch is what is asserted.
+    expect(page.buildFromBoxSupportLabel()).toBe('editor.buildFromBoxSupport.tooSmall');
+  });
+
+  it('accepts five characters, because the Friend Captain may repeat the Captain', () => {
+    /*
+     * Six seats, five distinct characters. The Friend Captain is borrowed from
+     * another player, so it is never constrained by the rest of your own crew -
+     * the game's rule and this project's own. A threshold of six here would
+     * refuse a box that can legally build.
+     */
+    const { page } = createPage([
+      {
+        id: 'box-1',
+        name: 'Five units',
+        characterIds: [101, 102, 103, 104, 105],
+        createdAt: '2026-04-14T10:00:00.000Z',
+        updatedAt: '2026-04-14T10:05:00.000Z',
+      },
+    ]);
+
+    page.selectBox('box-1');
+
+    expect(page.canBuildFromSelectedBox()).toBe(true);
+    expect(page.buildFromBoxSupportLabel()).toBe('editor.buildFromBoxSupport.ready');
+  });
 });
 
 function createPage(

@@ -1011,6 +1011,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly requireSuperTandemCriteriaCoverage = signal(true);
   public readonly requireUniqueBaseCharacterNames = signal(true);
   public readonly selectedCharacterBoxId = signal<string | null>(null);
+  /** Set when the reader arrived from a box asking what it can build. */
+  public readonly loadedCharacterBoxPoolName = signal('');
   public readonly selectedExcludeCharacterBoxId = signal<string | null>(null);
   public readonly favoritesOnly = signal(false);
   public readonly allowAnyFriendCaptainAutoFill = signal(false);
@@ -3578,6 +3580,16 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     if (!appliedSavedTeamPreset) {
       await this.applyEnemyPresetFromRoute();
     }
+
+    /*
+     * 869f12x47. Runs AFTER the two presets above, and on purpose.
+     *
+     * A saved team or a saved enemy describes what to build; a box describes
+     * what you have to build it from. Arriving with both means "build this
+     * enemy's answer out of this box", so the pool must be applied last - the
+     * preset restores filter state wholesale and would otherwise wipe it.
+     */
+    await this.applyCharacterBoxPoolFromRoute();
 
     await this.refreshAllCompareSnapshots();
   }
@@ -7375,6 +7387,55 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     await this.applySelectionPresetState(buildAutoTeamBuilderStateFromSavedEnemy(enemy));
     this.loadedEnemyPresetName.set(enemy.name);
     await this.clearEnemyPresetQueryParam();
+  }
+
+  /**
+   * 869f12x47. "What can I build with only this box?"
+   *
+   * The builder already accepted a box as a pool restriction - that was this
+   * subtask's "verify first", and the answer was yes: `selectedCharacterBoxId`
+   * narrows the candidate pool and `characterBoxSupportLabel` already explains
+   * the intersection. So the missing piece was never a second builder. It was
+   * that a reader looking at a box had no way to ask the question without
+   * leaving for the builder and setting the filter by hand.
+   *
+   * Hence a link and a preset, which is also what the parent's "no new route,
+   * no new page" rule allows.
+   */
+  private async applyCharacterBoxPoolFromRoute(): Promise<void> {
+    const characterBoxId = this.route.snapshot.queryParamMap.get('characterBoxId')?.trim() ?? '';
+
+    if (characterBoxId.length === 0) {
+      return;
+    }
+
+    await this.userState.readyCharacterBoxes();
+
+    const characterBox = this.characterBoxes().find((box) => box.id === characterBoxId);
+
+    if (!characterBox) {
+      /*
+       * A box deleted since the link was made. Clearing the parameter and
+       * leaving the pool alone is the honest outcome: silently building from
+       * everything would answer a different question than the one asked.
+       */
+      await this.clearCharacterBoxPoolQueryParam();
+
+      return;
+    }
+
+    this.selectedCharacterBoxId.set(characterBox.id);
+    this.loadedCharacterBoxPoolName.set(characterBox.name);
+    await this.clearCharacterBoxPoolQueryParam();
+  }
+
+  private async clearCharacterBoxPoolQueryParam(): Promise<void> {
+    await this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { characterBoxId: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 
   private async clearSavedTeamPresetQueryParam(): Promise<void> {
