@@ -112,6 +112,15 @@ export const SCRIPT_SUITES = {
     label: 'Page / docs coverage tests',
     command: 'npm run test:page-doc-coverage',
   },
+  /*
+   * 869f12x4y. `public/` is copied verbatim into the build output, so a file
+   * there shadows whatever the SEO generator writes at the same path. A
+   * committed 7-URL sitemap.xml sat beside a generated 4,638-URL one for months.
+   */
+  'public-asset-shadowing': {
+    label: 'Public asset shadowing tests',
+    command: 'npm run test:public-asset-shadowing',
+  },
   'public-entry-synthetics': {
     label: 'Public entry synthetic monitor tests',
     command: 'npm run test:public-entry-synthetics',
@@ -342,6 +351,22 @@ function isRouteSitemapCoveragePath(filePath) {
  * writing this - a `continue` here stripped Angular, e2e and 32 script suites
  * from a route change, which is a far larger hole than the one being fixed.
  */
+function isPublicAssetShadowingPath(filePath) {
+  return (
+    filePath === 'scripts/check-public-asset-shadowing.mjs' ||
+    filePath === 'scripts/check-public-asset-shadowing.spec.ts'
+  );
+}
+
+/* Non-terminating: `public/` files also route to the broader plans below. */
+function touchesPublicAssetShadowingSources(filePath) {
+  return (
+    filePath === 'public/robots.txt' ||
+    filePath === 'public/sitemap.xml' ||
+    filePath === 'public/sitemap.html'
+  );
+}
+
 function isPageDocCoveragePath(filePath) {
   return (
     filePath === 'scripts/check-page-doc-coverage.mjs' ||
@@ -681,6 +706,15 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
 
     if (isPageDocCoveragePath(filePath)) {
       addScriptSuite(scriptSuites, 'page-doc-coverage');
+      continue;
+    }
+
+    if (touchesPublicAssetShadowingSources(filePath)) {
+      addScriptSuite(scriptSuites, 'public-asset-shadowing');
+    }
+
+    if (isPublicAssetShadowingPath(filePath)) {
+      addScriptSuite(scriptSuites, 'public-asset-shadowing');
       continue;
     }
 

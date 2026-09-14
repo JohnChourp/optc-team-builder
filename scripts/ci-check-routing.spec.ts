@@ -231,6 +231,7 @@ describe('ci-check-routing', () => {
       'discoverability',
       'route-sitemap-coverage',
       'page-doc-coverage',
+      'public-asset-shadowing',
       'public-entry-synthetics',
       'i18n-regression',
       'drive-sync-server',
