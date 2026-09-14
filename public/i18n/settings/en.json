@@ -205,7 +205,8 @@
       "deleteFavorites": "Delete all favorites? This does not affect your saved teams or saved enemies.",
       "deleteFavoriteShips": "Delete all favorite ships? This does not affect your favorite characters, saved teams, or saved enemies.",
       "deleteSavedEnemies": "Delete all saved enemies? This does not affect your favorites or saved teams.",
-      "deleteSavedTeams": "Delete all saved teams? This does not affect your favorites or saved enemies."
+      "deleteSavedTeams": "Delete all saved teams? This does not affect your favorites or saved enemies.",
+      "revertCharacterOverride": "Revert your local edits to {{name}}? The character goes back to the values that ship with the app."
     },
     "counts": {
       "characterBoxes": "{{count}} character boxes",
@@ -266,7 +267,7 @@
       "title": "Character Boxes"
     },
     "characterOverrides": {
-      "copy": "Export all local character overrides as JSON, import a local override backup, or delete every local character override from this device.",
+      "copy": "See every character you have edited locally and what each edit changed, revert one character or all of them, export all local character overrides as JSON, or import a local override backup.",
       "deleteAll": "Delete all character overrides",
       "errors": {
         "generic": "Character overrides import failed.",
@@ -288,7 +289,27 @@
         "successTitle": "Character overrides import completed",
         "warningTitle": "Character overrides import completed with warnings"
       },
+      "fields": {
+        "classes": "Classes",
+        "combo": "Combo",
+        "cost": "Cost",
+        "growth": "Growth rate",
+        "maxAtk": "Max ATK",
+        "maxHp": "Max HP",
+        "maxRcv": "Max RCV",
+        "minAtk": "Min ATK",
+        "minHp": "Min HP",
+        "minRcv": "Min RCV",
+        "name": "Name",
+        "stars": "Stars",
+        "type": "Type"
+      },
       "import": "Import character overrides",
+      "list": {
+        "datasetMissing": "This character is no longer in the app data, so there is nothing to compare against. Your edits are kept.",
+        "noDifferences": "Your local edits currently match the app data, so nothing is listed.",
+        "revert": "Revert"
+      },
       "processing": "Importing character overrides...",
       "title": "Character Overrides"
     },

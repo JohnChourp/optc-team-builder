@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { type LocalCharacterOverride } from '../../core/models/optc.models';
 import { BrowserStoragePersistenceError } from '../../core/services/browser-storage-error.utils';
 import { UserDataTransferService } from '../../core/services/user-data-transfer.service';
 import {
@@ -1009,6 +1010,127 @@ describe('SettingsPage', () => {
     expect(userState.clearAllSavedTeams).toHaveBeenCalledOnce();
   });
 
+  it('lists every locally edited character with what the edit changed', async () => {
+    const { page, characterOverrideState } = createPage();
+
+    characterOverrideState.overrides.set([
+      createOverride(1001, { name: 'My Luffy', updatedAt: '2026-05-01T10:00:00.000Z' }),
+      createOverride(1002, { maxAtk: 1400, updatedAt: '2026-05-02T10:00:00.000Z' }),
+    ]);
+    await page.refreshCharacterOverrideDiffs();
+
+    const diffs = page.characterOverrideDiffs();
+
+    // Newest edit first.
+    expect(diffs.map((diff) => diff.characterId)).toEqual([1002, 1001]);
+    expect(diffs[1].changes).toContainEqual({ field: 'name', from: 'Luffy', to: 'My Luffy' });
+    expect(diffs[0].changes).toContainEqual({ field: 'maxAtk', from: '\u2014', to: '1400' });
+  });
+
+  /*
+   * The dataset map is fetched, so an override whose row was never looked up
+   * is indistinguishable from one whose character is genuinely gone. Both
+   * import paths refresh; this proves the single-card one does.
+   */
+  it('refreshes the dataset comparison after importing character overrides', async () => {
+    const { page, repository, userDataTransfer, characterOverrideState } = createPage();
+
+    vi.spyOn(userDataTransfer, 'importCharacterOverridesPayload').mockImplementation(async () => {
+      characterOverrideState.overrides.set([createOverride(1002, { name: 'My Zoro' })]);
+
+      return {
+        addedCount: 1,
+        duplicateCharacterIdCount: 0,
+        invalidOverrideCount: 0,
+        unknownCharacterIdCount: 0,
+        updatedCount: 0,
+      };
+    });
+    repository.getCharactersByIds.mockClear();
+
+    await page.onCharacterOverridesFileSelected(
+      createFileEvent(
+        buildFile(
+          'overrides.json',
+          JSON.stringify({
+            schemaVersion: 1,
+            source: 'character-overrides',
+            exportedAt: '2026-05-02T10:00:00.000Z',
+            overrides: [createOverride(1002, { name: 'My Zoro' })],
+          }),
+        ),
+      ),
+      { value: '' } as HTMLInputElement,
+    );
+
+    expect(repository.getCharactersByIds).toHaveBeenCalledWith([1002]);
+    expect(page.characterOverrideDiffs()[0]).toMatchObject({
+      characterId: 1002,
+      datasetMissing: false,
+    });
+  });
+
+  it('keeps an override whose character left the dataset, and says so', async () => {
+    const { page, characterOverrideState } = createPage();
+
+    characterOverrideState.overrides.set([createOverride(999999, { name: 'Retired unit' })]);
+    await page.refreshCharacterOverrideDiffs();
+
+    expect(page.characterOverrideDiffs()).toEqual([
+      {
+        characterId: 999999,
+        name: 'Retired unit',
+        updatedAt: '2026-05-01T10:00:00.000Z',
+        changes: [],
+        datasetMissing: true,
+      },
+    ]);
+  });
+
+  it('confirms before reverting a single character override', async () => {
+    const confirmSpy = vi.fn().mockReturnValue(true);
+    vi.stubGlobal('confirm', confirmSpy);
+    const { page, characterOverrideState } = createPage();
+
+    characterOverrideState.overrides.set([
+      createOverride(1001, { name: 'My Luffy' }),
+      createOverride(1002, { name: 'My Zoro' }),
+    ]);
+    await page.refreshCharacterOverrideDiffs();
+    await page.revertCharacterOverride(1001);
+
+    expect(confirmSpy).toHaveBeenCalledOnce();
+    expect(characterOverrideState.deleteOverride).toHaveBeenCalledWith(1001);
+    expect(page.characterOverrideDiffs().map((diff) => diff.characterId)).toEqual([1002]);
+  });
+
+  it('reverts nothing when the confirmation is declined', async () => {
+    vi.stubGlobal('confirm', vi.fn().mockReturnValue(false));
+    const { page, characterOverrideState } = createPage();
+
+    characterOverrideState.overrides.set([createOverride(1001, { name: 'My Luffy' })]);
+    await page.refreshCharacterOverrideDiffs();
+    await page.revertCharacterOverride(1001);
+
+    expect(characterOverrideState.deleteOverride).not.toHaveBeenCalled();
+    expect(page.characterOverrideDiffs()).toHaveLength(1);
+  });
+
+  it('empties the list when every override is reverted at once', async () => {
+    vi.stubGlobal('confirm', vi.fn().mockReturnValue(true));
+    const { page, characterOverrideState } = createPage();
+
+    characterOverrideState.overrides.set([
+      createOverride(1001, { name: 'My Luffy' }),
+      createOverride(1002, { name: 'My Zoro' }),
+    ]);
+    await page.refreshCharacterOverrideDiffs();
+    await page.deleteAllCharacterOverrides();
+
+    expect(characterOverrideState.clearAllOverrides).toHaveBeenCalledOnce();
+    expect(page.characterOverrideDiffs()).toEqual([]);
+  });
+
   it('confirms before deleting all character boxes', async () => {
     const confirmSpy = vi.fn().mockReturnValue(true);
     vi.stubGlobal('confirm', confirmSpy);
@@ -1100,7 +1222,7 @@ function createPage() {
   const favoriteIds = signal([1001, 1002]);
   const favoriteShipIds = signal([9001, 9002]);
   const characterBoxes = signal([createBox('box-1', [1001, 1002]), createBox('box-2', [1002])]);
-  const characterOverrides = signal([]);
+  const characterOverrides = signal<LocalCharacterOverride[]>([]);
   const savedTeams = signal([
     createTeam('team-1', [1001, 1002, null, null, null, null]),
     createTeam('team-2', [1002, null, null, null, null, null]),
@@ -1227,6 +1349,11 @@ function createPage() {
     overrides: characterOverrides,
     clearAllOverrides: vi.fn().mockImplementation(async () => {
       characterOverrides.set([]);
+    }),
+    deleteOverride: vi.fn().mockImplementation(async (characterId: number) => {
+      characterOverrides.set(
+        characterOverrides().filter((override) => override.characterId !== characterId),
+      );
     }),
     mergeImportedOverrides: vi.fn().mockResolvedValue({
       addedCount: 1,
@@ -1630,6 +1757,34 @@ function createFileEvent(file: File): Event {
       files: [file],
     },
   } as unknown as Event;
+}
+
+function createOverride(
+  characterId: number,
+  patch: Partial<LocalCharacterOverride> = {},
+): LocalCharacterOverride {
+  return {
+    characterId,
+    name: '',
+    isIncomplete: false,
+    type: '',
+    classes: [],
+    stars: 0,
+    cost: 0,
+    combo: 0,
+    minHp: null,
+    minAtk: null,
+    minRcv: null,
+    maxHp: null,
+    maxAtk: null,
+    maxRcv: null,
+    growth: null,
+    detail: {} as LocalCharacterOverride['detail'],
+    images: { thumbnailDataUrl: null, detailDataUrl: null },
+    createdAt: '2026-05-01T10:00:00.000Z',
+    updatedAt: '2026-05-01T10:00:00.000Z',
+    ...patch,
+  };
 }
 
 function createTeam(id: string, slots: Array<number | null>) {
