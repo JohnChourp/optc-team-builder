@@ -1,5 +1,5 @@
 /**
- * 869f1p4wx. A small, curated, read-only set of teams, shipped with the app.
+ * 869f1pu2u. A small, curated, read-only set of teams, shipped with the app.
  *
  * 869f12xc8 asked for a shared layer - teams published against a piece of content, searchable,
  * importable - and was explicit that **the deliverable is a decision, not a design**, because the

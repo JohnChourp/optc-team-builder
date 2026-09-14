@@ -286,7 +286,7 @@ export class SavedTeamsPage implements OnInit {
   public readonly loading = signal(true);
   public readonly savedTeams;
   /**
-   * 869f1p4wx. The zero-backend half of 869f12xc8: a curated read-only set, shipped in the bundle.
+   * 869f1pu2u. The zero-backend half of 869f12xc8: a curated read-only set, shipped in the bundle.
    * Nothing is submitted, so there is nothing to moderate and nothing stored on anyone's behalf.
    */
   public readonly publishedTeamCards = signal<PublishedTeamCard[]>([]);
@@ -427,7 +427,7 @@ export class SavedTeamsPage implements OnInit {
   }
 
   /**
-   * 869f1p4wx. The read-only published set, resolved against the shipped dataset.
+   * 869f1pu2u. The read-only published set, resolved against the shipped dataset.
    *
    * Never rejects: this is an extra shelf on the page, and a dataset read that fails must not take
    * the reader's own saved teams down with it.

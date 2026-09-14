@@ -157,7 +157,7 @@ export const SCRIPT_SUITES = {
     command: 'npm run test:content-ladder',
   },
   /*
-   * 869f1p4wx. The read-only published team set is hand-curated and ships in the bundle, so it
+   * 869f1pu2u. The read-only published team set is hand-curated and ships in the bundle, so it
    * rots the same way: a retired character or a renamed stage leaves a team the app cannot
    * assemble. Its lane also owns the sub-slot conflict rule, where the leader-seat exception is
    * the easy thing to get backwards.
