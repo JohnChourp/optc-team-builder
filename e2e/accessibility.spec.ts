@@ -216,6 +216,207 @@ test.describe('guided compare and sharing accessibility @accessibility', () => {
   });
 });
 
+/*
+ * 869f12x4r. The spec above covered four flows; the FAQ and Settings were in
+ * none of them. They are first here on purpose, in the order the subtask set:
+ * the page a player in difficulty reaches first, then the screen that holds
+ * their data.
+ *
+ * This block is deliberately NOT `serial`, unlike the one above. Measured on
+ * clean `main` before writing a line of it: one control run failed a single
+ * test and reported "2 did not run", because serial mode abandons the rest of
+ * the block. A second control run passed all four, so that failure was flake -
+ * but a flake that hides two unrelated tests costs more than the one it hit.
+ * Independent tests here mean a flake reports exactly what flaked.
+ */
+/*
+ * 869f12x4r. The spec above covered four flows; the FAQ and Settings were in
+ * none of them. They are first here on purpose, in the order the subtask set:
+ * the page a player in difficulty reaches first, then the screen that holds
+ * their data.
+ *
+ * This block is deliberately NOT `serial`, unlike the one above. Measured on
+ * clean `main` before writing a line of it: one control run failed a single
+ * test and reported "2 did not run", because serial mode abandons the rest of
+ * the block. A second control run passed all four, so that failure was flake -
+ * but a flake that hides two unrelated tests costs more than the one it hit.
+ * Independent tests here mean a flake reports exactly what flaked.
+ */
+test.describe('faq and settings accessibility @accessibility', () => {
+  test('every FAQ question is reachable by Tab and opens on Enter', async ({ page }) => {
+    await seedBrowserState(page, []);
+
+    await page.goto('/tabs/faq');
+    await waitForAppAttached(page);
+
+    const accordions = page.locator('ion-accordion.faq-accordion');
+
+    await expect(accordions.first()).toBeVisible();
+    await expectNoAxeViolations(page, '.faq-shell');
+
+    const questionCount = await accordions.count();
+
+    expect(questionCount).toBeGreaterThan(1);
+
+    /*
+     * Tab, rather than `.focus()` on the header.
+     *
+     * `ion-item` is not focusable; the control that takes focus is the
+     * `button.item-native` inside its shadow root, and Ionic's accordion wires
+     * the keyboard to that. Focusing the light-DOM host silently does nothing -
+     * measured, the active element stayed `BODY` and Enter went nowhere, which
+     * reads exactly like "the FAQ is keyboard-inaccessible" and is not. Tabbing
+     * is also what a keyboard user actually does, so a regression in reachability
+     * fails this instead of being papered over by a direct focus call.
+     */
+    const reachedHeaders = await tabUntilInsideFaqAccordion(page);
+
+    expect(reachedHeaders, 'a FAQ question takes focus within a short Tab run').toBe(true);
+
+    await page.keyboard.press('Enter');
+
+    const expanded = page.locator('ion-accordion.faq-accordion.accordion-expanded');
+
+    await expect(expanded).toHaveCount(1);
+
+    /*
+     * And the state has to be announced, not merely rendered. Ionic keeps
+     * `aria-expanded` on the shadow button, so the value a screen reader sees is
+     * not on the element this page's own markup declares - checking the host
+     * would pass while announcing nothing.
+     */
+    await expect
+      .poll(() => readFaqHeaderAriaExpanded(page))
+      .toBe('true');
+
+    const answer = page.locator('[data-test^="faq-answer-"]').first();
+
+    await expect(answer).toBeVisible();
+    await expect(answer).not.toBeEmpty();
+
+    for (const link of await answer.locator('ion-button').all()) {
+      await expect(link, 'every link out of an answer is named, not an icon').not.toBeEmpty();
+    }
+
+    await expectNoAxeViolations(page, '.faq-shell');
+  });
+
+  test('the FAQ headings describe the page in reading order', async ({ page }) => {
+    await seedBrowserState(page, []);
+
+    await page.goto('/tabs/faq');
+    await waitForAppAttached(page);
+    await expect(page.locator('ion-accordion.faq-accordion').first()).toBeVisible();
+
+    /*
+     * One `h1`, then an `h2` per section, in document order and none empty.
+     * A screen-reader user navigates this page by heading; a page that is one
+     * flat list of questions cannot be skimmed that way, and `axe` only checks
+     * that levels are not skipped - never that the outline is meaningful.
+     */
+    await expect(page.locator('.faq-shell h1')).toHaveCount(1);
+
+    const sectionHeadings = page.locator('.faq-shell .faq-card h2');
+
+    expect(await sectionHeadings.count()).toBeGreaterThan(1);
+
+    for (const heading of await sectionHeadings.all()) {
+      await expect(heading).not.toBeEmpty();
+    }
+  });
+
+  test('Settings exposes its data controls with names, not just icons', async ({ page }) => {
+    await seedBrowserState(page, SEEDED_SAVED_TEAMS, SEEDED_SAVED_ENEMIES);
+
+    await page.goto('/tabs/settings');
+    await waitForAppAttached(page);
+    // This page marks its hooks `data-test`, not the `data-testid` getByTestId reads.
+    await expect(page.locator('[data-test="settings-about"]')).toBeVisible();
+    await expectNoAxeViolations(page, '.settings-shell');
+
+    /*
+     * This screen is where a player exports, imports and deletes everything they
+     * own, so an unnamed control here is worse than elsewhere: the irreversible
+     * actions are the ones that must not be guessed at.
+     */
+    const buttons = await page.locator('.settings-shell ion-button').all();
+
+    expect(buttons.length).toBeGreaterThan(5);
+
+    for (const button of buttons) {
+      const accessibleName = (
+        (await button.getAttribute('aria-label')) ??
+        (await button.textContent()) ??
+        ''
+      ).trim();
+
+      expect(accessibleName, 'every Settings button has an accessible name').not.toBe('');
+    }
+  });
+
+  test('Settings reports the build a problem report has to quote', async ({ page }) => {
+    await seedBrowserState(page, []);
+
+    await page.goto('/tabs/settings');
+    await waitForAppAttached(page);
+
+    /*
+     * The About block is what a player is asked to read out when something is
+     * wrong, so it has to be populated rather than rendering definition terms
+     * with nothing after them.
+     */
+    await expect(page.locator('[data-test="settings-about"]')).toBeVisible();
+    await expect(page.locator('[data-test="settings-app-version"]')).not.toBeEmpty();
+    await expect(page.locator('[data-test="settings-character-count"]')).not.toBeEmpty();
+    await expectNoAxeViolations(page, '[data-test="settings-about"]');
+  });
+});
+
+/** The deepest active element, following open shadow roots the way focus really lands. */
+function readDeepActiveElement(): { insideFaqAccordion: boolean; tag: string } {
+  let node: Element | null = document.activeElement;
+
+  while (node?.shadowRoot?.activeElement) {
+    node = node.shadowRoot.activeElement;
+  }
+
+  const host = node?.getRootNode() as ShadowRoot | Document | null;
+  const owner = host instanceof ShadowRoot ? host.host : node;
+
+  return {
+    insideFaqAccordion: Boolean(owner?.closest('ion-accordion.faq-accordion')),
+    tag: node?.tagName ?? 'NONE',
+  };
+}
+
+async function tabUntilInsideFaqAccordion(page: Page, maxPresses = 15): Promise<boolean> {
+  await page.locator('body').click({ position: { x: 4, y: 4 } });
+
+  for (let press = 0; press < maxPresses; press += 1) {
+    await page.keyboard.press('Tab');
+
+    if ((await page.evaluate(readDeepActiveElement)).insideFaqAccordion) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/** `aria-expanded` as a screen reader sees it: on the shadow button, not the host. */
+async function readFaqHeaderAriaExpanded(page: Page): Promise<string> {
+  return page
+    .locator('ion-accordion.faq-accordion')
+    .first()
+    .evaluate(
+      (element) =>
+        element
+          .querySelector('ion-item')
+          ?.shadowRoot?.querySelector('button')
+          ?.getAttribute('aria-expanded') ?? 'ABSENT',
+    );
+}
+
 async function expectModalDialogName(modal: Locator): Promise<void> {
   await expect
     .poll(() =>
