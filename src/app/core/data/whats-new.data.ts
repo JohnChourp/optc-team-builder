@@ -31,6 +31,27 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.33',
+    date: '2026-09-14',
+    userVisible: true,
+    headline: {
+      en: 'Tell the builder who is boosted this event',
+      el: 'Πες στον builder ποιος είναι boosted σε αυτό το event',
+    },
+    summaryEn:
+      'Auto Team Builder can now take the boosted units of the event you are playing into account. Under the Final team report, tap anyone your event screen says is boosted and the builder will prefer them next time it picks - among the characters it would have chosen anyway. It never bends a rule to fit one in, and it never beats a character your own filters match better. The list is yours, it stays until you change it, and it travels in your backup.',
+    summaryEl:
+      'Το Auto Team Builder μπορεί πλέον να λάβει υπόψη τις boosted μονάδες του event που παίζεις. Κάτω από το Τελικό report ομάδας, πάτα όποιον λέει η οθόνη του event ότι είναι boosted και ο builder θα τον προτιμήσει την επόμενη φορά που θα διαλέξει - ανάμεσα στους χαρακτήρες που θα διάλεγε έτσι κι αλλιώς. Ποτέ δεν λυγίζει κανόνα για να χωρέσει κάποιον, και ποτέ δεν κερδίζει έναν χαρακτήρα που τα δικά σου φίλτρα ταιριάζουν καλύτερα. Η λίστα είναι δική σου, μένει μέχρι να την αλλάξεις, και ταξιδεύει στο backup σου.',
+    added: [
+      {
+        en: 'A **Boosted this event** list under the Final team report on **Auto Team Builder**. Tap the units your event screen names and the next build prefers them; the line above the list shows how many you have marked and how many are on the team in front of you. Clearing it is one tap, and your backup carries the list so a new phone keeps it.',
+        el: 'Μια λίστα **Boosted σε αυτό το event** κάτω από το Τελικό report ομάδας στο **Auto Team Builder**. Πάτα τις μονάδες που ονομάζει η οθόνη του event και το επόμενο build τις προτιμά· η γραμμή πάνω από τη λίστα δείχνει πόσες έχεις σημειώσει και πόσες είναι στην ομάδα μπροστά σου. Ο καθαρισμός είναι ένα πάτημα, και το backup σου κρατά τη λίστα ώστε ένα καινούργιο κινητό να τη βρει.',
+      },
+    ],
+    improved: [],
+    fixed: [],
+  },
+  {
     version: '0.4.32',
     date: '2026-09-14',
     userVisible: true,
