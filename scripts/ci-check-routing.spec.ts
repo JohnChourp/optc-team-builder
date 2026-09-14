@@ -234,6 +234,7 @@ describe('ci-check-routing', () => {
       'public-asset-shadowing',
       'storage-keys',
       'i18n-ownership',
+      'engine-divergences',
       'public-entry-synthetics',
       'i18n-regression',
       'drive-sync-server',

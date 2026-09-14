@@ -139,6 +139,15 @@ export const SCRIPT_SUITES = {
     label: 'i18n namespace ownership tests',
     command: 'npm run test:i18n-ownership',
   },
+  /*
+   * 869f12x69. Two builders, two engines, two workers, and no record of which
+   * differences were chosen - so every session that read one after the other
+   * proposed merging them, re-arguing refusals already in the record.
+   */
+  'engine-divergences': {
+    label: 'Team builder engine divergence tests',
+    command: 'npm run test:engine-divergences',
+  },
   'public-entry-synthetics': {
     label: 'Public entry synthetic monitor tests',
     command: 'npm run test:public-entry-synthetics',
@@ -369,6 +378,24 @@ function isRouteSitemapCoveragePath(filePath) {
  * writing this - a `continue` here stripped Angular, e2e and 32 script suites
  * from a route change, which is a far larger hole than the one being fixed.
  */
+function isEngineDivergencePath(filePath) {
+  return (
+    filePath === 'scripts/check-engine-divergences.mjs' ||
+    filePath === 'scripts/check-engine-divergences.spec.ts'
+  );
+}
+
+/* Non-terminating: these are app sources that also route to the Angular lane. */
+function touchesEngineDivergenceSources(filePath) {
+  return (
+    filePath === 'src/app/core/data/team-builder-engine-divergences.data.ts' ||
+    filePath === 'src/app/core/models/auto-team-builder.models.ts' ||
+    filePath === 'src/app/core/models/auto-team-builder-rumble.models.ts' ||
+    filePath === 'src/app/core/services/auto-team-builder.worker.models.ts' ||
+    filePath === 'src/app/core/services/auto-team-builder-rumble.worker.models.ts'
+  );
+}
+
 function isI18nOwnershipPath(filePath) {
   return (
     filePath === 'scripts/generate-i18n-ownership.mjs' ||
@@ -775,6 +802,15 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
 
     if (touchesI18nNamespaces(filePath)) {
       addScriptSuite(scriptSuites, 'i18n-ownership');
+    }
+
+    if (touchesEngineDivergenceSources(filePath)) {
+      addScriptSuite(scriptSuites, 'engine-divergences');
+    }
+
+    if (isEngineDivergencePath(filePath)) {
+      addScriptSuite(scriptSuites, 'engine-divergences');
+      continue;
     }
 
     if (isI18nOwnershipPath(filePath)) {
