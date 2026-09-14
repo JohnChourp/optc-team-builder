@@ -148,6 +148,14 @@ import {
   snapshotCharacterIds,
 } from './auto-team-builder-result-snapshot.utils';
 import {
+  buildSpecialChargeTimeline,
+  clampTimelineTurns,
+  DEFAULT_TIMELINE_TURNS,
+  type SpecialChargeEntry,
+  type SpecialChargeTimeline,
+  type SpecialCooldownRecord,
+} from './special-charge-timeline.utils';
+import {
   AUTO_TEAM_BUILDER_SELECTION_SESSION_KEY,
   isDefaultSelectionState,
   narrowToAvailable,
@@ -1084,6 +1092,19 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly buildPaused = signal(false);
   public readonly buildProgress = signal<AutoBuildProgressSnapshot | null>(null);
   public readonly result = signal<AutoBuildResult | null>(null);
+
+  /**
+   * 869f1k107. How many stages the reader expects to fight, and the two cooldown columns for the
+   * built team.
+   *
+   * The turn count cannot come from the dataset - its whole schema is six tables and none is a
+   * stage table - so it is one field the reader enters, which 869f12xbm established up front.
+   */
+  public readonly timelineTurns = signal(DEFAULT_TIMELINE_TURNS);
+  private readonly specialCooldowns = signal<ReadonlyMap<number, SpecialCooldownRecord>>(new Map());
+  public readonly specialChargeTimeline = computed<SpecialChargeTimeline | null>(() =>
+    buildSpecialChargeTimeline(this.result(), this.timelineTurns(), this.specialCooldowns()),
+  );
   public readonly errorMessage = signal('');
   /** Why the last build shows no team, as a code the debug report can carry (869exmkf4). */
   public readonly lastBuildFailure = signal<AutoTeamBuildFailureCode | null>(null);
@@ -4789,10 +4810,93 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
    */
   private applyResult(next: AutoBuildResult | null): void {
     this.result.set(next);
+    void this.loadSpecialCooldowns(next);
 
     if (next) {
       void this.persistResultSnapshot(next);
     }
+  }
+
+  /**
+   * 869f1k107. The two cooldown columns for whoever is on the team now.
+   *
+   * They are not on the builder's records: `CharacterProgression` is loaded per character on
+   * purpose, because its evolution and drop payloads would be dead weight in every builder query.
+   * So this reads just the two columns, for the six ids, in one query.
+   *
+   * Never rejects. A timeline that cannot be built leaves the rest of the result on screen - the
+   * computed simply reports every member as unknown, which is the truth.
+   */
+  private async loadSpecialCooldowns(next: AutoBuildResult | null): Promise<void> {
+    if (!next) {
+      this.specialCooldowns.set(new Map());
+      return;
+    }
+
+    try {
+      const records = await this.repository.getSpecialCooldownsByIds(
+        next.slots.map((slot) => slot.character.id),
+      );
+
+      this.specialCooldowns.set(new Map(records.map((record) => [record.characterId, record])));
+    } catch {
+      this.specialCooldowns.set(new Map());
+    }
+  }
+
+  public chargeTimelineSummaryLabel(): string {
+    const timeline = this.specialChargeTimeline();
+
+    if (!timeline) {
+      return '';
+    }
+
+    if (timeline.entries.length === 0) {
+      return this.i18n.translate('chargeTimeline.summaryNone', undefined, 'auto-team-builder');
+    }
+
+    return this.i18n.translate(
+      'chargeTimeline.summary',
+      { ready: timeline.readyCount, total: timeline.entries.length, turns: timeline.turns },
+      'auto-team-builder',
+    );
+  }
+
+  public chargeTimelineEntryLabel(entry: SpecialChargeEntry): string {
+    if (!entry.chargesInRun) {
+      return this.i18n.translate(
+        'chargeTimeline.entryShort',
+        { turns: entry.shortfallTurns ?? 0 },
+        'auto-team-builder',
+      );
+    }
+
+    /*
+     * A special that never speeds up reads oddly as "at max special level - at level 1 it takes
+     * the same". `character-progression.presenter.ts` already collapses that case for the same
+     * reason, and a live pass caught this one repeating the mistake.
+     */
+    const speedsUp = entry.baseTurns !== entry.maxLevelTurns;
+
+    if (entry.spareTurns === 0) {
+      return this.i18n.translate(
+        speedsUp ? 'chargeTimeline.entryExact' : 'chargeTimeline.entryExactFixed',
+        undefined,
+        'auto-team-builder',
+      );
+    }
+
+    return this.i18n.translate(
+      speedsUp ? 'chargeTimeline.entryReady' : 'chargeTimeline.entryReadyFixed',
+      { turns: entry.spareTurns ?? 0, base: entry.baseTurns },
+      'auto-team-builder',
+    );
+  }
+
+  public onTimelineTurnsChange(event: Event): void {
+    const raw = (event.target as HTMLInputElement | null)?.value ?? '';
+
+    this.timelineTurns.set(clampTimelineTurns(Number(raw)));
   }
 
   private async persistResultSnapshot(next: AutoBuildResult | null): Promise<void> {
@@ -4878,6 +4982,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     }
 
     this.result.set(restored);
+    await this.loadSpecialCooldowns(restored);
   }
 
   private persistSelectionState(): void {

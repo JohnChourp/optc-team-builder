@@ -3416,6 +3416,75 @@
               </section>
 
               <!--
+                869f1k107. The special charge timeline. Its own card because it answers a question
+                neither of the two above asks: the report says which rules the team kept, this says
+                WHEN the team can actually do anything.
+
+                It reports turns to CHARGE, never "ready on turn N". Nothing in this app states how
+                a cooldown maps onto a turn index, and the dataset carries a count rather than a
+                convention - an off-by-one there would be wrong on every row and invisible.
+              -->
+              @if (specialChargeTimeline(); as timeline) {
+                <section class="glass-card report-card" data-testid="auto-build-charge-timeline">
+                  <div class="slot-grid__header">
+                    <h2>{{ t('chargeTimeline.title') }}</h2>
+                    <p>{{ t('chargeTimeline.copy') }}</p>
+                  </div>
+
+                  <div class="charge-turns">
+                    <label for="charge-timeline-turns">{{ t('chargeTimeline.turnsLabel') }}</label>
+                    <input
+                      id="charge-timeline-turns"
+                      class="transfer-text-input charge-turns__input"
+                      type="number"
+                      inputmode="numeric"
+                      min="1"
+                      max="99"
+                      [value]="timeline.turns"
+                      (change)="onTimelineTurnsChange($event)"
+                    />
+                    <span class="charge-turns__summary">{{ chargeTimelineSummaryLabel() }}</span>
+                  </div>
+
+                  @if (timeline.entries.length) {
+                    <ul class="charge-list">
+                      @for (entry of timeline.entries; track entry.characterId) {
+                        <li
+                          class="charge-list__item"
+                          [class.charge-list__item--short]="!entry.chargesInRun"
+                        >
+                          <div class="charge-list__head">
+                            <strong>{{ entry.characterName }}</strong>
+                            <small class="coverage-chip">{{
+                              t('chargeTimeline.charges', { turns: entry.maxLevelTurns })
+                            }}</small>
+                          </div>
+                          @if (entry.specialName) {
+                            <p class="charge-list__special">{{ entry.specialName }}</p>
+                          }
+                          <p class="charge-list__verdict">
+                            {{ chargeTimelineEntryLabel(entry) }}
+                          </p>
+                        </li>
+                      }
+                    </ul>
+                  }
+
+                  @if (timeline.unknownCharacterNames.length) {
+                    <p class="charge-list__note">
+                      {{
+                        t('chargeTimeline.unknown', {
+                          names: timeline.unknownCharacterNames.join(', '),
+                        })
+                      }}
+                    </p>
+                  }
+
+                  <p class="charge-list__note">{{ t('chargeTimeline.limitBreakNote') }}</p>
+                </section>
+              }
+
+              <!--
                 869f1935z. The mechanic checklist. Its own card, directly after the Final team
                 report, because it answers a different question: the report says which of YOUR
                 rules bent, this says which of the GAME'S mechanics went unanswered. Fourteen of

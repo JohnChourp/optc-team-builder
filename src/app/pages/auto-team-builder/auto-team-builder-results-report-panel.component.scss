@@ -51,3 +51,80 @@
   font-size: 0.86rem;
   line-height: 1.45;
 }
+
+/* 869f1k107. The special charge timeline, a sibling card of the final team report. */
+.charge-turns {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.charge-turns label {
+  color: rgba(248, 251, 255, 0.72);
+  font-size: 0.92rem;
+}
+
+.charge-turns__input {
+  width: 96px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  color: #ffffff;
+  font: inherit;
+}
+
+.charge-turns__input:focus {
+  outline: 2px solid rgba(245, 200, 76, 0.4);
+  outline-offset: 2px;
+}
+
+.charge-turns__summary {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.charge-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.charge-list__item {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.charge-list__item--short {
+  background: rgba(244, 114, 182, 0.14);
+}
+
+.charge-list__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.charge-list__head strong {
+  color: #ffffff;
+}
+
+.charge-list__special,
+.charge-list__verdict,
+.charge-list__note {
+  margin: 0;
+  color: rgba(248, 251, 255, 0.72);
+  font-size: 0.92rem;
+}
+
+.charge-list__special {
+  font-style: italic;
+}

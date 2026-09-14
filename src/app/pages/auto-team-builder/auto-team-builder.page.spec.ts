@@ -761,6 +761,134 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.result()?.slots).toHaveLength(6);
   });
 
+  /*
+   * 869f1k107. The two cooldown columns are NOT on the builder's records - CharacterProgression is
+   * loaded per character on purpose - so the page reads them for the six team members.
+   */
+  it('builds a charge timeline for the team it just built', async () => {
+    const { page, autoTeamBuilder, repository } = await createPage();
+
+    autoTeamBuilder.buildTeam.mockResolvedValue(createAutoBuildResult());
+    await page.ngOnInit();
+    await page.buildTeam();
+
+    expect(repository.getSpecialCooldownsByIds).toHaveBeenCalledWith([101, 102, 103, 104, 105, 106]);
+
+    const timeline = page.specialChargeTimeline();
+
+    expect(timeline?.entries).toHaveLength(6);
+    expect(timeline?.turns).toBe(20);
+    // Fastest first: 101 -> 13, 105 -> 12, so 105 leads.
+    expect(timeline?.entries[0].maxLevelTurns).toBeLessThanOrEqual(
+      timeline!.entries[timeline!.entries.length - 1].maxLevelTurns,
+    );
+  });
+
+  /*
+   * A special that never speeds up read as "with N to spare, at max special level - at level 1 it
+   * takes N", which says the same number twice. A live pass caught it; Character Detail already
+   * collapses the identical case.
+   */
+  it('does not claim a special speeds up when its cooldown never changes', async () => {
+    const { page, autoTeamBuilder, repository } = await createPage();
+
+    repository.getSpecialCooldownsByIds.mockImplementation(async (ids: number[]) =>
+      ids.map((characterId) => ({ characterId, baseTurns: 10, maxLevelTurns: 10 })),
+    );
+    autoTeamBuilder.buildTeam.mockResolvedValue(createAutoBuildResult());
+    await page.ngOnInit();
+    await page.buildTeam();
+
+    const label = page.chargeTimelineEntryLabel(page.specialChargeTimeline()!.entries[0]);
+
+    expect(label).toContain('does not speed up');
+    expect(label).not.toContain('At level 1');
+  });
+
+  it('still says what levelling buys when the special does speed up', async () => {
+    const { page, autoTeamBuilder, repository } = await createPage();
+
+    repository.getSpecialCooldownsByIds.mockImplementation(async (ids: number[]) =>
+      ids.map((characterId) => ({ characterId, baseTurns: 25, maxLevelTurns: 18 })),
+    );
+    autoTeamBuilder.buildTeam.mockResolvedValue(createAutoBuildResult());
+    await page.ngOnInit();
+    await page.buildTeam();
+
+    const label = page.chargeTimelineEntryLabel(page.specialChargeTimeline()!.entries[0]);
+
+    expect(label).toContain('At level 1 it takes 25');
+    expect(label).not.toContain('does not speed up');
+  });
+
+  it('has no timeline before anything is built', async () => {
+    const { page } = await createPage();
+
+    await page.ngOnInit();
+
+    expect(page.specialChargeTimeline()).toBeNull();
+  });
+
+  it('re-answers the timeline when the reader changes the run length', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    autoTeamBuilder.buildTeam.mockResolvedValue(createAutoBuildResult());
+    await page.ngOnInit();
+    await page.buildTeam();
+
+    expect(page.specialChargeTimeline()?.readyCount).toBe(6);
+
+    page.onTimelineTurnsChange({ target: { value: '5' } } as unknown as Event);
+
+    expect(page.timelineTurns()).toBe(5);
+    expect(page.specialChargeTimeline()?.readyCount).toBe(0);
+    expect(page.specialChargeTimeline()?.entries.every((entry) => !entry.chargesInRun)).toBe(true);
+  });
+
+  it('clamps a run length the reader cannot mean', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    autoTeamBuilder.buildTeam.mockResolvedValue(createAutoBuildResult());
+    await page.ngOnInit();
+    await page.buildTeam();
+
+    page.onTimelineTurnsChange({ target: { value: '0' } } as unknown as Event);
+    expect(page.timelineTurns()).toBe(1);
+
+    page.onTimelineTurnsChange({ target: { value: '9999' } } as unknown as Event);
+    expect(page.timelineTurns()).toBe(99);
+  });
+
+  it('keeps the result when the cooldown query fails', async () => {
+    const { page, autoTeamBuilder, repository } = await createPage();
+
+    repository.getSpecialCooldownsByIds.mockRejectedValue(new Error('no database'));
+    autoTeamBuilder.buildTeam.mockResolvedValue(createAutoBuildResult());
+    await page.ngOnInit();
+    await page.buildTeam();
+
+    expect(page.result()?.slots).toHaveLength(6);
+    // Every member reads as unknown, which is the truth rather than a silent zero.
+    expect(page.specialChargeTimeline()?.entries).toEqual([]);
+    expect(page.specialChargeTimeline()?.unknownCharacterNames).toHaveLength(6);
+  });
+
+  it('rebuilds the timeline for a restored team', async () => {
+    const first = await createPage();
+
+    first.autoTeamBuilder.buildTeam.mockResolvedValue(createAutoBuildResult());
+    await first.page.ngOnInit();
+    await first.page.buildTeam();
+
+    const parked = first.preferences.store.get('autoTeamBuilderResultV1');
+    const second = await createPage();
+
+    second.preferences.store.set('autoTeamBuilderResultV1', parked!);
+    await second.page.ngOnInit();
+
+    expect(second.page.specialChargeTimeline()?.entries).toHaveLength(6);
+  });
+
   it('guided auto build fills and requires only captain on the first run', async () => {
     const { page, autoTeamBuilder } = await createPage();
 
@@ -10630,6 +10758,7 @@ async function createPage(
     getCharacterById: ReturnType<typeof vi.fn>;
     getCharactersByIds: ReturnType<typeof vi.fn>;
     getDetailedCharactersByIds: ReturnType<typeof vi.fn>;
+    getSpecialCooldownsByIds: ReturnType<typeof vi.fn>;
     searchDetailedCharacters: ReturnType<typeof vi.fn>;
     searchCharacters: ReturnType<typeof vi.fn>;
   };
@@ -10791,6 +10920,15 @@ async function createPage(
         characterIds
           .filter((characterId) => characterId > 0 && characterId < 900)
           .map((characterId) => createCharacterRecord(characterId)),
+      ),
+    getSpecialCooldownsByIds: vi
+      .fn()
+      .mockImplementation(async (characterIds: number[]) =>
+        characterIds.map((characterId) => ({
+          characterId,
+          baseTurns: 20 + (characterId % 5),
+          maxLevelTurns: 12 + (characterId % 5),
+        })),
       ),
     searchDetailedCharacters: vi.fn().mockResolvedValue([]),
     searchCharacters: vi.fn().mockResolvedValue([]),

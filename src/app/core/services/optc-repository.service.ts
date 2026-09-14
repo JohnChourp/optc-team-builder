@@ -1222,6 +1222,39 @@ export class OptcRepositoryService {
     };
   }
 
+  /**
+   * 869f1k107. Just the two cooldown columns, for a handful of characters at once.
+   *
+   * `getCharacterProgression` above answers the same question but joins evolutions and drops,
+   * which a turn timeline never looks at - and it answers for one character at a time, so a
+   * six-slot team would be six queries for two integers each.
+   */
+  public async getSpecialCooldownsByIds(
+    ids: number[],
+  ): Promise<{ characterId: number; baseTurns: number | null; maxLevelTurns: number | null }[]> {
+    const uniqueIds = [...new Set(ids)].filter((id) => Number.isFinite(id));
+
+    if (uniqueIds.length === 0) {
+      return [];
+    }
+
+    const placeholders = uniqueIds.map(() => '?').join(', ');
+    const rows = await this.selectAll(
+      `
+        SELECT id, special_cooldown_max, special_cooldown_min
+        FROM characters
+        WHERE id IN (${placeholders})
+      `,
+      uniqueIds,
+    );
+
+    return rows.map((row) => ({
+      characterId: Number(row['id']),
+      baseTurns: parseNullableNumber(row['special_cooldown_max']),
+      maxLevelTurns: parseNullableNumber(row['special_cooldown_min']),
+    }));
+  }
+
   public async getAutoBuilderCandidates(
     typeFilters: string[],
     limit: number | null = DEFAULT_AUTO_TEAM_CANDIDATE_LIMIT,
