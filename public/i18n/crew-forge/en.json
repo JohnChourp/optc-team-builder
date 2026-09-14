@@ -29,6 +29,13 @@
     "previewFallbackName": "Uploaded screenshot",
     "previewTitle": "Recognized slots",
     "previewCopy": "{{count}} unique characters are ready for build.",
+    "review": {
+      "allChecked": "You have checked every match. Anything you corrected is kept.",
+      "confirm": "Looks right",
+      "confirmAll": "Accept the rest",
+      "pending": "{{count}} still to check - the least certain are first.",
+      "reopen": "Check again"
+    },
     "confidence": "Confidence",
     "picker": {
       "title": "Pick character",
