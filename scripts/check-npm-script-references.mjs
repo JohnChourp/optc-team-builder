@@ -58,14 +58,19 @@ const MIN_REASON_LENGTH = 20;
  * registry was committed, because `git ls-files` cannot see an untracked file:
  * the check passed while the file was new and failed on the next run.
  *
- * The spec is here for the same reason - its fixtures are script names as data.
- * Nothing else is excluded: a doc that tells a maintainer to run a manual script
- * IS a reference, and should retire that script's entry.
+ * The spec is here for the same reason - its fixtures are script names as data -
+ * and so is this file, whose comments name scripts to explain the classes. All
+ * four describe scripts; none of them runs one.
+ *
+ * Nothing else is excluded. A doc naming a script still counts as a reference for
+ * the orphan clause, because a runbook knowing about a script is exactly what
+ * stops it being orphaned; it just does not count as an INVOCATION - see clause D.
  */
 const MECHANISM_FILES = new Set([
   'package.json',
   'package-lock.json',
   'scripts/npm-script-registry.mjs',
+  'scripts/check-npm-script-references.mjs',
   'scripts/check-npm-script-references.spec.ts',
 ]);
 
@@ -115,9 +120,13 @@ export function analyse({ scripts, sources }) {
     const calledBy = names.filter((other) => other !== name && scripts[other].includes(name));
     const viaPrefix = [...prefixes].filter((prefix) => name.startsWith(prefix));
 
+    /* Prose can name a script; only these can run one. */
+    const invokedIn = literalIn.filter((file) => !file.toLowerCase().endsWith('.md'));
+
     status.set(name, {
       referenced: literalIn.length > 0 || calledBy.length > 0 || viaPrefix.length > 0,
-      literalIn,
+      invoked: invokedIn.length > 0 || calledBy.length > 0 || viaPrefix.length > 0,
+      literalIn: invokedIn,
       calledBy,
       viaPrefix,
     });
@@ -157,10 +166,18 @@ export function checkNpmScriptReferences({ scripts, sources, registry = NPM_SCRI
      * D. A real reference behind a `manual` label hides the reference, and an
      * `unwired` entry that has since been wired is a finding someone fixed. Both
      * are stale, and the entry has to go rather than outlive what it described.
+     *
+     * Documentation is excluded here and only here, because the two clauses ask
+     * different questions. Clause A asks whether anything KNOWS about the script,
+     * and a runbook naming it is a perfectly good answer. This clause asks whether
+     * automation INVOKES it, and prose never does. Counting both the same way made
+     * `docs/ios-platform-footprint.md` - an inventory written precisely to explain
+     * why `ios:open` is unreferenced - demand the deletion of the entry that says
+     * the same thing.
      */
-    if ((entry.class === 'manual' || entry.class === 'unwired') && state.referenced) {
+    if ((entry.class === 'manual' || entry.class === 'unwired') && state.invoked) {
       errors.push(
-        `${entry.script} is registered as ${entry.class} but is referenced by ${describeReferences(state)}. Remove the entry.`,
+        `${entry.script} is registered as ${entry.class} but is invoked by ${describeReferences(state)}. Remove the entry.`,
       );
     }
 
