@@ -773,6 +773,23 @@
       "noTypeCoverage": "Δεν υπάρχει type coverage"
     }
   },
+  "gameMode": {
+    "title": "Αυτό το mode",
+    "copy": "Κάποια specials κάνουν κάτι επιπλέον σε Treasure Map ή σε Kizuna Clash, ή χτυπούν πιο δυνατά όσο πιο ψηλό είναι το level σου σε εκείνο το mode. Διάλεξε το mode που πας να παίξεις και σου λέει ποιοι της ομάδας σου το νοιάζονται.",
+    "label": "Mode",
+    "any": "Δεν έχει οριστεί",
+    "modes": {
+      "treasureMap": "Treasure Map",
+      "kizunaClash": "Kizuna Clash"
+    },
+    "summary": "{{affected}} από {{total}} σε αυτή την ομάδα κάνουν κάτι διαφορετικό σε {{mode}}.",
+    "summaryNone": "Κανείς σε αυτή την ομάδα δεν κάνει κάτι διαφορετικό σε {{mode}}.",
+    "memberConditional": "επιπλέον effect σε αυτό το mode",
+    "memberScaling": "κλιμακώνεται με το level σου σε αυτό το mode",
+    "memberBoth": "επιπλέον effect, που κλιμακώνεται με το level σου",
+    "memberUnaffected": "ίδιο όπως παντού",
+    "doesNotChangeSearch": "Αυτό δεν αλλάζει ποιους χαρακτήρες διαλέγει ο builder - διαβάζει την ομάδα που ήδη έχεις. Τα event boosts δεν υπάρχουν καθόλου στα δεδομένα της εφαρμογής, οπότε τίποτα εδώ δεν ξέρει ποιες μονάδες είναι boosted αυτή την εβδομάδα."
+  },
   "chargeTimeline": {
     "charges": "φορτίζει σε {{turns}}",
     "copy": "Πόσους γύρους θέλει να φορτίσει το special του κάθε μέλους αυτής της ομάδας, για run του μήκους που δίνεις. Είναι ο χρόνος φόρτισης από την αρχή της μάχης - δεν υπολογίζει χρήση του special και δεύτερη φόρτιση.",

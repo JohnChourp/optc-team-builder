@@ -821,6 +821,89 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(label).not.toContain('does not speed up');
   });
 
+  /*
+   * 869f1mcdv. The mode card stays away until the reader asks for one: the app has never had a
+   * notion of a game mode, and appearing unasked on every build would claim the mode shaped the
+   * result. It did not.
+   */
+  it('reads no mode until the reader picks one', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    autoTeamBuilder.buildTeam.mockResolvedValue(createAutoBuildResult());
+    await page.ngOnInit();
+    await page.buildTeam();
+
+    expect(page.selectedGameMode()).toBeNull();
+    expect(page.teamModeEffects()).toBeNull();
+  });
+
+  it('reads the built team against the mode the reader picked', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+    const built = createAutoBuildResult();
+
+    built.slots[0].character.detail.specialText =
+      "Boosts own ATK by 1.5x for 2 turns. If you are on a Treasure Map, deals 10%-25% of " +
+      "enemies' current HP in True damage to all enemies, depending on your Treasure Map Level";
+    autoTeamBuilder.buildTeam.mockResolvedValue(built);
+    await page.ngOnInit();
+    await page.buildTeam();
+
+    page.onGameModeChange({ detail: { value: 'treasureMap' } } as CustomEvent<{ value: string }>);
+
+    const effects = page.teamModeEffects();
+
+    expect(page.selectedGameMode()).toBe('treasureMap');
+    // Every member is listed, only one is marked.
+    expect(effects?.members).toHaveLength(6);
+    expect(effects?.affectedCount).toBe(1);
+    expect(effects?.members[0].effect?.clause).toContain('If you are on a Treasure Map');
+  });
+
+  it('says plainly when nobody on the team cares about the mode', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    autoTeamBuilder.buildTeam.mockResolvedValue(createAutoBuildResult());
+    await page.ngOnInit();
+    await page.buildTeam();
+    page.onGameModeChange({ detail: { value: 'kizunaClash' } } as CustomEvent<{ value: string }>);
+
+    expect(page.teamModeEffects()?.affectedCount).toBe(0);
+    expect(page.teamModeEffectsSummaryLabel()).toContain('Nobody on this team');
+  });
+
+  it('clears back to no mode, and rejects a value it does not know', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    autoTeamBuilder.buildTeam.mockResolvedValue(createAutoBuildResult());
+    await page.ngOnInit();
+    await page.buildTeam();
+
+    page.onGameModeChange({ detail: { value: 'treasureMap' } } as CustomEvent<{ value: string }>);
+    expect(page.selectedGameMode()).toBe('treasureMap');
+
+    page.onGameModeChange({ detail: { value: null } } as CustomEvent<{ value: null }>);
+    expect(page.selectedGameMode()).toBeNull();
+
+    page.onGameModeChange({ detail: { value: 'coliseum' } } as CustomEvent<{ value: string }>);
+    expect(page.selectedGameMode()).toBeNull();
+  });
+
+  it('does not change what the builder was asked for', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    autoTeamBuilder.buildTeam.mockResolvedValue(createAutoBuildResult());
+    await page.ngOnInit();
+    await page.buildTeam();
+
+    const askedBefore = autoTeamBuilder.buildTeam.mock.calls.length;
+
+    page.onGameModeChange({ detail: { value: 'treasureMap' } } as CustomEvent<{ value: string }>);
+
+    // Picking a mode re-reads the team; it never re-runs or re-scopes the search.
+    expect(autoTeamBuilder.buildTeam.mock.calls).toHaveLength(askedBefore);
+    expect(page.result()?.slots).toHaveLength(6);
+  });
+
   it('has no timeline before anything is built', async () => {
     const { page } = await createPage();
 

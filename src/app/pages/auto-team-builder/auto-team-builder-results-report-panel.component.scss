@@ -128,3 +128,12 @@
 .charge-list__special {
   font-style: italic;
 }
+
+/* 869f1mcdv. A team member the selected mode does nothing for, kept in the list but stepped back. */
+.charge-list__item--muted {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.charge-list__item--muted .charge-list__head strong {
+  color: rgba(248, 251, 255, 0.72);
+}

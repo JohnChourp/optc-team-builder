@@ -3416,6 +3416,59 @@
               </section>
 
               <!--
+                869f1mcdv. The mode card. It appears only once the reader picks a mode, because
+                the app has never had a notion of one and showing it unasked on every build would
+                claim the mode shaped the result. It did not, and the card says so.
+              -->
+              <section class="glass-card report-card" data-testid="auto-build-game-mode">
+                <div class="slot-grid__header">
+                  <h2>{{ t('gameMode.title') }}</h2>
+                  <p>{{ t('gameMode.copy') }}</p>
+                </div>
+
+                <div class="charge-turns">
+                  <label for="auto-build-game-mode-select">{{ t('gameMode.label') }}</label>
+                  <ion-select
+                    id="auto-build-game-mode-select"
+                    data-testid="auto-build-game-mode-select"
+                    interface="popover"
+                    fill="outline"
+                    [placeholder]="t('gameMode.any')"
+                    [value]="selectedGameMode()"
+                    (ionChange)="onGameModeChange($event)"
+                  >
+                    <ion-select-option [value]="null">{{ t('gameMode.any') }}</ion-select-option>
+                    @for (mode of availableGameModes; track mode) {
+                      <ion-select-option [value]="mode">{{ gameModeLabel(mode) }}</ion-select-option>
+                    }
+                  </ion-select>
+                </div>
+
+                @if (teamModeEffects(); as modeEffects) {
+                  <p class="charge-turns__summary">{{ teamModeEffectsSummaryLabel() }}</p>
+
+                  <ul class="charge-list">
+                    @for (member of modeEffects.members; track member.characterId) {
+                      <li
+                        class="charge-list__item"
+                        [class.charge-list__item--muted]="!member.effect"
+                      >
+                        <div class="charge-list__head">
+                          <strong>{{ member.characterName }}</strong>
+                          <small class="coverage-chip">{{ teamModeEffectLabel(member) }}</small>
+                        </div>
+                        @if (member.effect?.clause; as clause) {
+                          <p class="charge-list__special">&ldquo;{{ clause }}&rdquo;</p>
+                        }
+                      </li>
+                    }
+                  </ul>
+
+                  <p class="charge-list__note">{{ t('gameMode.doesNotChangeSearch') }}</p>
+                }
+              </section>
+
+              <!--
                 869f1k107. The special charge timeline. Its own card because it answers a question
                 neither of the two above asks: the report says which rules the team kept, this says
                 WHEN the team can actually do anything.
