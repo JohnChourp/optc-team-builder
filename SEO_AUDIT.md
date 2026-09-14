@@ -20,6 +20,7 @@ Date: 2026-04-26
 - `scripts/generate-seo-pages.mjs`
 - `scripts/write-app-config.mjs`
 - `public/robots.txt`
+<!-- docs-integrity-ignore-next-line: removed by 869f12x4y; this is the historical record of a file that no longer exists, not a live reference -->
 - `public/sitemap.xml`
 - `public/404.html`
 - `.github/workflows/deploy-pages.yml`
@@ -34,6 +35,7 @@ Date: 2026-04-26
 ## Files Changed
 
 - `scripts/generate-seo-pages.mjs`
+<!-- docs-integrity-ignore-next-line: removed by 869f12x4y; this is the historical record of a file that no longer exists, not a live reference -->
 - `public/sitemap.xml`
 - `src/app/app.routes.ts`
 - `src/app/app.component.ts`
@@ -65,7 +67,9 @@ Date: 2026-04-26
 - Kept legal route canonical handling consistent: `/tabs/privacy`, `/tabs/cookies`, and `/tabs/terms` use canonical URLs at `/privacy/`, `/cookies/`, and `/terms/`.
 - Made the SEO generator always write `robots.txt` into the final build output.
 - Added generated `sitemap.html` with only the main public pages, not thousands of character pages.
+<!-- docs-integrity-ignore-next-line: removed by 869f12x4y; this is the historical record of a file that no longer exists, not a live reference -->
 - Updated the committed fallback `public/sitemap.xml` to the current major public canonical URLs. The build output sitemap is still generated after build and includes character pages.
+  - **Superseded on 2026-09-14 by [869f12x4y](https://app.clickup.com/t/90121749478/869f12x4y): that committed fallback was deleted.** It held 7 URLs beside a generated 4,638, in the folder Angular copies verbatim into the build output, so a build that skipped the generator served a file that looked authoritative and was 0.17% of the truth. `npm run seo:public-assets` now fails if anything in `public/` shadows a file the generator owns.
 - Improved short English visible copy for Characters, Team Builder, and Auto Team Builder.
 
 ## DokkanTeamBuilder Patterns Reused
