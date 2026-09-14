@@ -48,11 +48,32 @@ const INTERPOLATED_RUN = /npm run ([a-z0-9:_-]*)\$\{/gu;
 
 const MIN_REASON_LENGTH = 20;
 
+/**
+ * Files that name scripts without calling them, so counting them as references
+ * would make this check contradict itself.
+ *
+ * `package.json` holds the definitions. The registry describes the very scripts
+ * it registers - left in, every `manual` entry reported itself as referenced by
+ * its own entry and demanded its own removal. That did not appear until the
+ * registry was committed, because `git ls-files` cannot see an untracked file:
+ * the check passed while the file was new and failed on the next run.
+ *
+ * The spec is here for the same reason - its fixtures are script names as data.
+ * Nothing else is excluded: a doc that tells a maintainer to run a manual script
+ * IS a reference, and should retire that script's entry.
+ */
+const MECHANISM_FILES = new Set([
+  'package.json',
+  'package-lock.json',
+  'scripts/npm-script-registry.mjs',
+  'scripts/check-npm-script-references.spec.ts',
+]);
+
 export function collectTrackedFiles(root = projectRoot) {
   return execFileSync('git', ['ls-files'], { cwd: root, encoding: 'utf8', maxBuffer: 1e8 })
     .split('\n')
     .filter(Boolean)
-    .filter((file) => file !== 'package.json' && file !== 'package-lock.json');
+    .filter((file) => !MECHANISM_FILES.has(file));
 }
 
 /**
@@ -76,11 +97,19 @@ export function collectInterpolatedPrefixes(sources) {
 
 export function analyse({ scripts, sources }) {
   const names = Object.keys(scripts);
-  const prefixes = collectInterpolatedPrefixes(sources);
+  /*
+   * Decided here rather than only at collection time, so the exclusion holds
+   * however the sources were gathered - the bug it fixes was invisible for
+   * exactly as long as the registry happened to be untracked.
+   */
+  const callers = new Map(
+    [...sources.entries()].filter(([file]) => !MECHANISM_FILES.has(file)),
+  );
+  const prefixes = collectInterpolatedPrefixes(callers);
   const status = new Map();
 
   for (const name of names) {
-    const literalIn = [...sources.entries()]
+    const literalIn = [...callers.entries()]
       .filter(([, contents]) => contents.includes(name))
       .map(([file]) => file);
     const calledBy = names.filter((other) => other !== name && scripts[other].includes(name));

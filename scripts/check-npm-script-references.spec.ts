@@ -158,6 +158,29 @@ describe('npm script reference check', () => {
     );
   });
 
+  /*
+   * The registry names every script it registers, so if it is scanned as a
+   * source every `manual` entry reports itself as referenced by its own entry
+   * and demands its own removal. That is a contradiction, and it stayed hidden
+   * until the registry was committed: `git ls-files` cannot see an untracked
+   * file, so the check passed while the file was new and failed on the next run.
+   */
+  it('does not let an entry count as a reference to its own script', () => {
+    const sources = new Map(CLEAN_SOURCES);
+
+    sources.set(
+      'scripts/npm-script-registry.mjs',
+      "export const R = [{ script: 'cap:sync', class: 'manual', reason: '...' }];",
+    );
+
+    const { errors } = run({ sources });
+
+    expect(
+      errors.some((error) => error.includes('registered as manual but is referenced')),
+      'the registry describing cap:sync must not count as calling it',
+    ).toBe(false);
+  });
+
   /* E. */
   it('fails on an entry whose reason explains nothing', () => {
     const registry = [{ ...CLEAN_REGISTRY[1], reason: 'manual' }];
