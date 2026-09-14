@@ -36,8 +36,11 @@ export interface PublishedTeam {
   /**
    * Why these six, in terms the dataset can confirm. A team with no checkable rationale is an
    * opinion about play, and this file is not entitled to ship those.
+   *
+   * Both languages, like every other player-facing string in this app. A live pass caught this
+   * rendering as English inside Greek copy, which is the one thing the reader would notice first.
    */
-  readonly rationale: string;
+  readonly rationale: { readonly en: string; readonly el: string };
   readonly curatedOn: string;
   /**
    * True for a team composed for this app rather than submitted by a player. Every entry here is
@@ -56,8 +59,10 @@ export const PUBLISHED_TEAMS: readonly PublishedTeam[] = [
     stage: 'Garp',
     // Chopperemon, Kizaru, Garp, Lafitte, Kikunojo, Raizo - no two share a conflict key.
     slots: [3271, 3270, 3387, 3386, 3296, 3237],
-    rationale:
-      'Every one of these six has special text that does something extra specifically on a Treasure Map - they are drawn from the 60 characters in the shipped dataset whose specials carry a Treasure Map clause. Composed for this app to show what such a crew looks like; it is not a submitted team and claims no clear.',
+    rationale: {
+      en: 'Every one of these six has special text that does something extra specifically on a Treasure Map - they are drawn from the 60 characters in the shipped dataset whose specials carry a Treasure Map clause. Composed for this app to show what such a crew looks like; it is not a submitted team and claims no clear.',
+      el: 'Και οι έξι έχουν special text που κάνει κάτι επιπλέον ειδικά σε Treasure Map - προέρχονται από τους 60 χαρακτήρες των δεδομένων της εφαρμογής που έχουν ρήτρα Treasure Map στο special τους. Φτιάχτηκε για αυτή την εφαρμογή ως παράδειγμα τέτοιου crew· δεν είναι ομάδα που υπέβαλε κάποιος και δεν ισχυρίζεται πέρασμα.',
+    },
     curatedOn: CURATED_ON,
     workedExample: true,
   },
@@ -67,8 +72,10 @@ export const PUBLISHED_TEAMS: readonly PublishedTeam[] = [
     stage: 'Clash!! Buster Call',
     // Ace, Luffy, Nami, Vivi, Loki, Reiju - all Free Spirit, all distinct conflict keys.
     slots: [5032, 5014, 4633, 4632, 4629, 4628],
-    rationale:
-      'All six carry the Free Spirit class at 5 stars or above, so this is what a single-class Free Spirit crew looks like out of the shipped dataset. Composed for this app as a worked example of a class crew; it is not a submitted team and claims no clear.',
+    rationale: {
+      en: 'All six carry the Free Spirit class at 5 stars or above, so this is what a single-class Free Spirit crew looks like out of the shipped dataset. Composed for this app as a worked example of a class crew; it is not a submitted team and claims no clear.',
+      el: 'Και οι έξι έχουν την κλάση Free Spirit σε 5 αστέρια ή πάνω, οπότε έτσι μοιάζει ένα crew μίας κλάσης Free Spirit μέσα από τα δεδομένα της εφαρμογής. Φτιάχτηκε για αυτή την εφαρμογή ως παράδειγμα crew κλάσης· δεν είναι ομάδα που υπέβαλε κάποιος και δεν ισχυρίζεται πέρασμα.',
+    },
     curatedOn: CURATED_ON,
     workedExample: true,
   },

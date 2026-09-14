@@ -232,13 +232,21 @@ export function validatePublishedTeams({
       errors.push(`${label} is curated in the future (${entry.curatedOn}).`);
     }
 
-    const rationale = typeof entry.rationale === 'string' ? entry.rationale.trim() : '';
+    /*
+     * Both languages, because every player-facing string in this app is bilingual - and a
+     * rationale is the most visible of them. A live pass caught this rendering as English inside
+     * Greek copy, so the guard now refuses a half-translated entry.
+     */
+    for (const language of ['en', 'el']) {
+      const rationale =
+        typeof entry.rationale?.[language] === 'string' ? entry.rationale[language].trim() : '';
 
-    if (rationale.length < MINIMUM_RATIONALE_LENGTH) {
-      errors.push(
-        `${label} has no real rationale. A team with no checkable reason is an opinion about ` +
-          'play, and this file is not entitled to ship those.',
-      );
+      if (rationale.length < MINIMUM_RATIONALE_LENGTH) {
+        errors.push(
+          `${label} has no real ${language} rationale. A team with no checkable reason is an ` +
+            'opinion about play, and this file is not entitled to ship those - in either language.',
+        );
+      }
     }
 
     if (entry.workedExample !== true) {

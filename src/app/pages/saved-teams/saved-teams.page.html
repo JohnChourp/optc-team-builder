@@ -111,7 +111,7 @@
                   <p class="published-list__members">
                     {{ publishedTeamMemberNames(card) }}
                   </p>
-                  <p class="published-list__rationale">{{ card.team.rationale }}</p>
+                  <p class="published-list__rationale">{{ publishedTeamRationale(card) }}</p>
 
                   @if (card.complete) {
                     <ion-button

@@ -11,8 +11,10 @@ import {
 } from './check-published-teams.mjs';
 import { stageKey } from './check-content-ladder.mjs';
 
-const REAL_RATIONALE =
-  'All six carry the Free Spirit class at 5 stars or above, so this is what a single-class crew looks like out of the shipped dataset. Not a submitted team, and it claims no clear.';
+const REAL_RATIONALE = {
+  en: 'All six carry the Free Spirit class at 5 stars or above, so this is what a single-class crew looks like out of the shipped dataset. Not a submitted team, and it claims no clear.',
+  el: 'Και οι έξι έχουν την κλάση Free Spirit σε 5 αστέρια ή πάνω, οπότε έτσι μοιάζει ένα crew μίας κλάσης. Δεν είναι ομάδα που υπέβαλε κάποιος και δεν ισχυρίζεται πέρασμα.',
+};
 
 const STAGES = new Set([stageKey('Raid', 'Clash!! Buster Call')]);
 const CHARACTER_IDS = new Set([1, 2, 3, 4, 5, 6, 7]);
@@ -109,11 +111,22 @@ describe('published teams guard', () => {
   });
 
   it('rejects a placeholder rationale', () => {
-    const result = check([team({ rationale: 'Good team' })]);
+    const result = check([team({ rationale: { en: 'Good team', el: 'Καλή ομάδα' } })]);
 
     expect(result.ok).toBe(false);
-    expect(result.errors[0]).toContain('no real rationale');
+    expect(result.errors[0]).toContain('no real en rationale');
     expect('Good team'.length).toBeLessThan(MINIMUM_RATIONALE_LENGTH);
+  });
+
+  /*
+   * Every player-facing string in this app is bilingual, and a rationale is the most visible of
+   * them. A live pass caught it rendering as English inside Greek copy.
+   */
+  it('MUTATION - a half-translated rationale goes red', () => {
+    const result = check([team({ rationale: { en: REAL_RATIONALE.en, el: '' } })]);
+
+    expect(result.ok).toBe(false);
+    expect(result.errors[0]).toContain('no real el rationale');
   });
 
   it.each([
@@ -170,7 +183,7 @@ describe('published teams guard', () => {
         "const CURATED_ON = '2026-09-14';",
         'export const PUBLISHED_TEAMS = [',
         "  { id: 'a', group: 'Raid', stage: 'Clash!! Buster Call', slots: [1, null, 3, 4, 5, 6],",
-        `    rationale: '${REAL_RATIONALE}', curatedOn: CURATED_ON, workedExample: true },`,
+        `    rationale: { en: '${REAL_RATIONALE.en}', el: '${REAL_RATIONALE.el}' }, curatedOn: CURATED_ON, workedExample: true },`,
         '];',
       ].join('\n');
       const { entries, found } = parsePublishedTeams({ source });

@@ -451,6 +451,13 @@ export class SavedTeamsPage implements OnInit {
    * from a team the reader built, and a worked example that loses the sentence saying so becomes a
    * claim nobody made.
    */
+  /** The rationale in the reader's language, like every other player-facing string here. */
+  public publishedTeamRationale(card: PublishedTeamCard): string {
+    return this.i18n.activeLanguage() === 'el'
+      ? card.team.rationale.el
+      : card.team.rationale.en;
+  }
+
   public publishedTeamMemberNames(card: PublishedTeamCard): string {
     return card.members
       .map((member) => member?.name ?? this.i18n.translate('published.emptySeat', undefined, 'saved-teams'))

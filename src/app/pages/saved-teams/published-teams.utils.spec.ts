@@ -18,7 +18,10 @@ function team(overrides: Partial<PublishedTeam> = {}): PublishedTeam {
     group: 'Raid',
     stage: 'Clash!! Buster Call',
     slots: [1, 2, 3, 4, 5, 6],
-    rationale: 'All six carry the Free Spirit class, composed for this app rather than submitted.',
+    rationale: {
+      en: 'All six carry the Free Spirit class, composed for this app rather than submitted.',
+      el: 'Και οι έξι έχουν την κλάση Free Spirit, φτιαγμένη για αυτή την εφαρμογή.',
+    },
     curatedOn: '2026-09-14',
     workedExample: true,
     ...overrides,
