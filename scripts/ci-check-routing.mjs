@@ -130,6 +130,15 @@ export const SCRIPT_SUITES = {
     label: 'Browser storage key registry tests',
     command: 'npm run test:storage-keys',
   },
+  /*
+   * 869f12x61. 27 i18n namespaces and no record of which page or component owns
+   * each - which is how an FAQ entry came to quote a Settings button, and six
+   * wrong Greek labels reached production.
+   */
+  'i18n-ownership': {
+    label: 'i18n namespace ownership tests',
+    command: 'npm run test:i18n-ownership',
+  },
   'public-entry-synthetics': {
     label: 'Public entry synthetic monitor tests',
     command: 'npm run test:public-entry-synthetics',
@@ -360,6 +369,19 @@ function isRouteSitemapCoveragePath(filePath) {
  * writing this - a `continue` here stripped Angular, e2e and 32 script suites
  * from a route change, which is a far larger hole than the one being fixed.
  */
+function isI18nOwnershipPath(filePath) {
+  return (
+    filePath === 'scripts/generate-i18n-ownership.mjs' ||
+    filePath === 'scripts/generate-i18n-ownership.spec.ts' ||
+    filePath === 'docs/i18n-namespace-ownership.json'
+  );
+}
+
+/* Non-terminating: a namespace folder also routes to the i18n regression lane. */
+function touchesI18nNamespaces(filePath) {
+  return filePath.startsWith('public/i18n/');
+}
+
 function isStorageKeyRegistryPath(filePath) {
   return (
     filePath === 'scripts/check-browser-storage-keys.mjs' ||
@@ -749,6 +771,15 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
 
     if (touchesStorageKeySources(filePath)) {
       addScriptSuite(scriptSuites, 'storage-keys');
+    }
+
+    if (touchesI18nNamespaces(filePath)) {
+      addScriptSuite(scriptSuites, 'i18n-ownership');
+    }
+
+    if (isI18nOwnershipPath(filePath)) {
+      addScriptSuite(scriptSuites, 'i18n-ownership');
+      continue;
     }
 
     if (isStorageKeyRegistryPath(filePath)) {
