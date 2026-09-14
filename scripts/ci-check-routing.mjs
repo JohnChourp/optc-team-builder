@@ -392,7 +392,15 @@ function touchesPageDocCoverageSources(filePath) {
 }
 
 function touchesRouteSitemapSources(filePath) {
-  return filePath === 'src/app/app.routes.ts' || filePath === 'scripts/generate-seo-pages.mjs';
+  return (
+    filePath === 'src/app/app.routes.ts' ||
+    filePath === 'src/app/core/data/public-routes.data.ts' ||
+    filePath === 'scripts/lib/public-routes.mjs' ||
+    filePath === 'scripts/lib/public-routes.spec.ts' ||
+    filePath === 'scripts/generate-seo-pages.mjs' ||
+    filePath === 'scripts/audit-seo-pages.mjs' ||
+    filePath === 'scripts/check-docs-integrity.mjs'
+  );
 }
 
 function isPublicEntrySyntheticsPath(filePath) {

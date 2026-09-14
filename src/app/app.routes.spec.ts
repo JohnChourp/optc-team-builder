@@ -2,6 +2,7 @@ import '@angular/compiler';
 import { type Route } from '@angular/router';
 import { describe, expect, it } from 'vitest';
 
+import { PUBLIC_ROUTES, publicRouteSeo } from './core/data/public-routes.data';
 import { routes } from './app.routes';
 
 describe('app routes', () => {
@@ -14,9 +15,7 @@ describe('app routes', () => {
     expect(homeRoute).toBeDefined();
     expect(homeRoute?.redirectTo).toBeUndefined();
     expect(homeRoute?.loadComponent).toBeTypeOf('function');
-    expect(seo?.['title']).toBe('OPTC Team Builder | One Piece Treasure Cruise Tools');
-    expect(seo?.['description']).toBeTypeOf('string');
-    expect(seo?.['canonicalPath']).toBe('');
+    expect(seo).toEqual(publicRouteSeo(''));
   });
 
   it('redirects the tabs shell root to characters for compatibility', () => {
@@ -170,49 +169,72 @@ describe('app routes', () => {
     expect(faqRoute?.pathMatch).toBe('full');
   });
 
-  it('adds SEO route data for public indexable tab routes', () => {
-    const tabsRoute = findRouteByPath(routes, 'tabs');
-    const publicRoutePaths = [
-      'characters',
-      'auto-team-builder',
-      'manual-team-builder',
-      'captain-coverage',
-      'auto-team-builder-rumble',
-      'rumble-characters',
-      'crew-forge',
-    ];
+  /*
+   * 869f12x57. These used to restate the public route list - two hand-written
+   * arrays, the fourth and fifth copies of it. `/faq` reached the router and
+   * none of the copies, which is how it shipped into the app, out of the
+   * sitemap, and out of this spec at the same time.
+   *
+   * So the spec now walks the registry. That makes the per-route assertions
+   * partly tautological on purpose: the strings are the registry's to own, and
+   * pinning them a second time here is exactly the duplication being removed.
+   * What is NOT tautological is the wiring - that each registered route exists
+   * in the router at all, and that its `data.seo` is the record for ITS OWN
+   * path rather than a neighbour's.
+   */
+  it('gives every registered public route its own SEO data', () => {
+    expect(PUBLIC_ROUTES.length).toBeGreaterThan(15);
 
-    for (const path of publicRoutePaths) {
-      const route = tabsRoute?.children?.find((childRoute) => childRoute.path === path);
+    for (const record of PUBLIC_ROUTES) {
+      const route = findRouteByFullPath(routes, record.routePath);
       const seo = route?.data?.['seo'] as Record<string, unknown> | undefined;
 
-      expect(seo?.['title']).toBeTypeOf('string');
-      expect(seo?.['description']).toBeTypeOf('string');
-      expect(seo?.['canonicalPath']).toBe(`tabs/${path}`);
+      expect(route, `router declares ${record.routePath}`).toBeDefined();
+      expect(seo, `${record.routePath} carries data.seo`).toBeDefined();
+      expect(seo?.['canonicalPath'], `${record.routePath} publishes at its own canonical`).toBe(
+        record.canonicalPath,
+      );
+      expect(seo?.['title']).toBe(record.title);
+      expect(seo?.['description']).toBe(record.description);
     }
   });
 
-  it('registers public SEO content routes for tools and guides', () => {
-    const publicContentPaths = [
-      'tools/optc-team-builder',
-      'tools/optc-auto-team-builder',
-      'tools/optc-rumble-team-builder',
-      'tools/optc-character-database',
-      'guides/how-to-build-an-optc-team',
-      'guides/guided-build-compare-team-sharing',
-      'guides/optc-pirate-rumble-team-building',
-    ];
+  it('keeps the home page the anchor of the registry', () => {
+    /*
+     * One real string is still pinned, and deliberately: every assertion above
+     * reads the registry, so all of them would pass just as well against an
+     * emptied or wholly rewritten one. This is the canary that the registry
+     * still describes THIS site.
+     */
+    expect(publicRouteSeo('')).toEqual({
+      title: 'OPTC Team Builder | One Piece Treasure Cruise Tools',
+      description: expect.stringContaining('Plan OPTC crews'),
+      canonicalPath: '',
+    });
+  });
 
-    for (const path of publicContentPaths) {
-      const route = findRouteByPath(routes, path);
-      const seo = route?.data?.['seo'] as Record<string, unknown> | undefined;
+  it('throws rather than defaulting when a route is not registered', () => {
+    /*
+     * A silent default here would produce a route with no `data.seo`, which the
+     * app serves as `noindex,follow` with a home-page canonical - the exact
+     * defect that took a production measurement to find.
+     */
+    expect(() => publicRouteSeo('tabs/settings')).toThrowError(/No public route record/u);
+  });
+
+  it('registers public SEO content routes for tools and guides', () => {
+    const contentPaths = PUBLIC_ROUTES.map((record) => record.routePath).filter(
+      (routePath) => routePath.startsWith('tools/') || routePath.startsWith('guides/'),
+    );
+
+    expect(contentPaths.length).toBeGreaterThan(5);
+
+    for (const routePath of contentPaths) {
+      const route = findRouteByPath(routes, routePath);
       const content = route?.data?.['content'] as Record<string, unknown> | undefined;
 
       expect(route?.loadComponent).toBeTypeOf('function');
-      expect(seo?.['title']).toBeTypeOf('string');
-      expect(seo?.['description']).toBeTypeOf('string');
-      expect(seo?.['canonicalPath']).toBe(path);
-      expect(content?.['title']).toBeTypeOf('string');
+      expect(content?.['title'], `${routePath} has in-page content`).toBeTypeOf('string');
     }
   });
 
@@ -252,6 +274,38 @@ describe('app routes', () => {
     expect(termsRoute?.pathMatch).toBe('full');
   });
 });
+
+/**
+ * Resolve a route by its FULL path, joining parents the way the router does.
+ *
+ * `findRouteByPath` matches on a route's own `path` segment, so it returns the
+ * drawer shell for `''` rather than the home page inside it, and it could not
+ * tell `tabs/faq` from a hypothetical top-level `faq` component. The registry
+ * records full paths, so it needs the full-path resolver.
+ */
+function findRouteByFullPath(
+  routeList: readonly Route[],
+  fullPath: string,
+  parentPath = '',
+): Route | undefined {
+  for (const route of routeList) {
+    const routePath = [parentPath, route.path ?? ''].filter((part) => part !== '').join('/');
+
+    if (routePath === fullPath && route.data?.['seo']) {
+      return route;
+    }
+
+    const childRoute = route.children
+      ? findRouteByFullPath(route.children, fullPath, routePath)
+      : undefined;
+
+    if (childRoute) {
+      return childRoute;
+    }
+  }
+
+  return undefined;
+}
 
 function findRouteByPath(routeList: readonly Route[], path: string): Route | undefined {
   for (const route of routeList) {

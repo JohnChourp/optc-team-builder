@@ -55,16 +55,23 @@ function buildTranslationFiles({
 
 function buildGuideFiles({ includeHelpSource = true } = {}) {
   return {
+    /*
+     * 869f12x57. Three files, because a guide's facts now live in three places
+     * that each own a different one: the router declares the route, the registry
+     * owns its canonical path and `<title>`, and the generator owns the page's
+     * heading and prose. They used to be two files holding overlapping copies.
+     */
     'src/app/app.routes.ts': [
       "path: 'guides/example'",
-      "canonicalPath: 'guides/example'",
-      "title: 'Example Guide | OPTC Team Builder'",
       "title: 'Example Guide'",
       'Important app route help text',
     ].join('\n'),
+    'src/app/core/data/public-routes.data.ts': [
+      "canonicalPath: 'guides/example'",
+      "title: 'Example Guide | OPTC Team Builder'",
+    ].join('\n'),
     'scripts/generate-seo-pages.mjs': [
       "path: 'guides/example'",
-      "title: 'Example Guide | OPTC Team Builder'",
       "heading: 'Example Guide'",
       'Important generated guide text',
     ].join('\n'),
@@ -159,7 +166,8 @@ describe('i18n regression check', () => {
     expect(result.status).toBe('failed');
     expect(result.errors).toEqual(
       expect.arrayContaining([
-        expect.stringContaining('example-guide: scripts/generate-seo-pages.mjs must include "Example Guide | OPTC Team Builder"'),
+        // The heading is the generator's own; its `<title>` is the registry's.
+        expect.stringContaining('example-guide: scripts/generate-seo-pages.mjs must include "Example Guide"'),
         expect.stringContaining('example-guide: src/app/pages/example/example.page.html must include "/guides/example"'),
         expect.stringContaining('example-guide: README.md must include "https://example.test/guides/example/"'),
       ]),
@@ -172,8 +180,6 @@ describe('i18n regression check', () => {
       ...buildGuideFiles(),
       'src/app/app.routes.ts': [
         "path: 'guides/example-broken'",
-        "canonicalPath: 'guides/example'",
-        "title: 'Example Guide | OPTC Team Builder'",
         "title: 'Example Guide'",
         'Important app route help text',
       ].join('\n'),

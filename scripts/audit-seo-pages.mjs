@@ -1,6 +1,8 @@
 import { access, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { loadPublicRoutes, publishedPaths } from './lib/public-routes.mjs';
+
 const projectRoot = path.resolve(import.meta.dirname, '..');
 const defaultOutputDir = path.join(projectRoot, 'dist', 'optc-team-builder', 'browser');
 const outputDir = path.resolve(process.env.SEO_OUTPUT_DIR ?? defaultOutputDir);
@@ -12,32 +14,25 @@ const robotsPath = path.join(outputDir, 'robots.txt');
 const sitemapHtmlPath = path.join(outputDir, 'sitemap.html');
 const indexNowKey = '0e9b739514c64e9a9a762120955f79dc';
 const indexNowKeyPath = path.join(outputDir, `${indexNowKey}.txt`);
-const publicToolPaths = new Set([
-  '',
-  'tabs/characters',
-  'tabs/rumble-characters',
-  'tabs/auto-team-builder',
-  'tabs/manual-team-builder',
-  'tabs/captain-coverage',
-  'tabs/auto-team-builder-rumble',
-  'tabs/crew-forge',
-  'tabs/account',
-  'tools/optc-team-builder',
-  'tools/optc-auto-team-builder',
-  'tools/optc-rumble-team-builder',
-  'tools/optc-character-database',
-  'guides/how-to-build-an-optc-team',
-  'guides/guided-build-compare-team-sharing',
-  'guides/optc-pirate-rumble-team-building',
-  'faq',
-  'privacy',
-  'cookies',
-  'terms',
-]);
+const publicRouteRecords = loadPublicRoutes(projectRoot);
+
+/*
+ * 869f12x57. Both lists come from the app's own public route registry rather
+ * than being restated here. They were two of the five copies of "which routes
+ * are public", and `/faq` had to be added to each by hand - which is how it
+ * reached the router and none of the others.
+ *
+ * The split is the registry's own: a record's `canonicalPath` is the URL the
+ * sitemap must carry, and its `aliases` are extra paths the generator renders
+ * for the same page. An alias must NOT appear in the sitemap - two URLs for one
+ * page is the duplicate-content problem the canonical tag exists to prevent -
+ * so adding an alias now forbids it automatically instead of needing a second
+ * edit here.
+ */
+const publicToolPaths = new Set(publicRouteRecords.map((record) => record.canonicalPath));
 const forbiddenSitemapPaths = new Set([
-  'tabs/privacy',
-  'tabs/cookies',
-  'tabs/terms',
+  ...publicRouteRecords.flatMap((record) => record.aliases),
+  // Screens holding the reader's own data: rendered by the app, never indexed.
   'tabs/settings',
   'tabs/saved-teams',
   'tabs/saved-enemies',
