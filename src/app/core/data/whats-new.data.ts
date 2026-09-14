@@ -31,6 +31,27 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.31',
+    date: '2026-09-14',
+    userVisible: true,
+    headline: {
+      en: 'A short answer to what this box is ready for',
+      el: 'Μια σύντομη απάντηση στο τι είναι έτοιμο αυτό το box',
+    },
+    summaryEn:
+      'Character Boxes now ends with a list of well-known content and whether the box you are looking at holds enough characters to field a team for it - what you are ready for, what you are one character away from, and what is further off. It is about the box and not about winning: how hard something is to beat is not in the app data, and the card says so. The content names come from the app data and are checked against it on every build, so a stage that gets renamed shows up as a problem instead of sitting in the list as a goal that no longer exists.',
+    summaryEl:
+      'Τα Character Boxes τελειώνουν πλέον με μια λίστα από γνωστό περιεχόμενο και το αν το box που κοιτάς έχει αρκετούς χαρακτήρες για να στήσει ομάδα γι’ αυτό - τι είναι έτοιμο, τι σου λείπει έναν χαρακτήρα, και τι είναι πιο μακριά. Αφορά το box και όχι το να περάσεις: το πόσο δύσκολο είναι κάτι δεν υπάρχει στα δεδομένα της εφαρμογής, και η κάρτα το λέει. Τα ονόματα του περιεχομένου έρχονται από τα δεδομένα της εφαρμογής και ελέγχονται σε κάθε build, οπότε ένα στάδιο που μετονομάζεται βγαίνει ως πρόβλημα αντί να μένει στη λίστα ως στόχος που δεν υπάρχει πια.',
+    added: [
+      {
+        en: 'A new **What this box can field** card at the bottom of the **Character Boxes** editor. It lists a handful of well-known places - the early Story Islands, a Raid, a Kizuna Clash and a Treasure Map - and for each one says whether the selected box can field a team, is one character away, or is further off, naming what is missing. A **Next up** line points at the first one you cannot field yet. Where the numbers behind a row are a starting point rather than a confirmed requirement, the row says so.',
+        el: 'Μια νέα κάρτα **Τι μπορεί να στήσει αυτό το box** στο κάτω μέρος του editor στα **Character Boxes**. Απαριθμεί μια χούφτα γνωστά σημεία - τα πρώτα Story Islands, ένα Raid, ένα Kizuna Clash και ένα Treasure Map - και για καθένα λέει αν το επιλεγμένο box μπορεί να στήσει ομάδα, αν του λείπει ένας χαρακτήρας, ή αν είναι πιο μακριά, ονομάζοντας τι λείπει. Μια γραμμή **Επόμενος στόχος** δείχνει το πρώτο που δεν μπορείς ακόμη να στήσεις. Όπου οι αριθμοί πίσω από μια γραμμή είναι αφετηρία και όχι επιβεβαιωμένη απαίτηση, η γραμμή το λέει.',
+      },
+    ],
+    improved: [],
+    fixed: [],
+  },
+  {
     version: '0.4.30',
     date: '2026-09-14',
     userVisible: true,
