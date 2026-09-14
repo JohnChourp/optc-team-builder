@@ -121,6 +121,15 @@ export const SCRIPT_SUITES = {
     label: 'Public asset shadowing tests',
     command: 'npm run test:public-asset-shadowing',
   },
+  /*
+   * 869f12x56. 27 constants named `*_KEY`, of which four touch no storage at
+   * all, and nothing in the code could tell the difference - which is how a
+   * whole category of a reader's data stayed out of the full-data export.
+   */
+  'storage-keys': {
+    label: 'Browser storage key registry tests',
+    command: 'npm run test:storage-keys',
+  },
   'public-entry-synthetics': {
     label: 'Public entry synthetic monitor tests',
     command: 'npm run test:public-entry-synthetics',
@@ -351,6 +360,23 @@ function isRouteSitemapCoveragePath(filePath) {
  * writing this - a `continue` here stripped Angular, e2e and 32 script suites
  * from a route change, which is a far larger hole than the one being fixed.
  */
+function isStorageKeyRegistryPath(filePath) {
+  return (
+    filePath === 'scripts/check-browser-storage-keys.mjs' ||
+    filePath === 'scripts/check-browser-storage-keys.spec.ts' ||
+    filePath === 'scripts/lib/browser-storage-registry.mjs'
+  );
+}
+
+/* Non-terminating: the registry is app source and also routes to the Angular lane. */
+function touchesStorageKeySources(filePath) {
+  return (
+    filePath === 'src/app/core/data/browser-storage-keys.data.ts' ||
+    filePath === 'src/app/core/data/browser-storage-keys.data.spec.ts' ||
+    filePath === 'src/app/pages/settings/all-data-transfer.utils.ts'
+  );
+}
+
 function isPublicAssetShadowingPath(filePath) {
   return (
     filePath === 'scripts/check-public-asset-shadowing.mjs' ||
@@ -719,6 +745,15 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
 
     if (touchesPublicAssetShadowingSources(filePath)) {
       addScriptSuite(scriptSuites, 'public-asset-shadowing');
+    }
+
+    if (touchesStorageKeySources(filePath)) {
+      addScriptSuite(scriptSuites, 'storage-keys');
+    }
+
+    if (isStorageKeyRegistryPath(filePath)) {
+      addScriptSuite(scriptSuites, 'storage-keys');
+      continue;
     }
 
     if (isPublicAssetShadowingPath(filePath)) {
