@@ -31,6 +31,22 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.39',
+    date: '2026-09-15',
+    userVisible: false,
+    headline: {
+      en: 'Nothing changed on any screen',
+      el: 'Δεν άλλαξε τίποτα σε καμία οθόνη',
+    },
+    summaryEn:
+      'Work on the checks and the type safety behind the app, not on the app itself. A keyboard test that only failed because Safari moves focus differently now asks what the browser can do instead of assuming; the code that reads the character database is now checked for the case where a row or a field is simply missing, and sixty-two of those places were tightened without changing what any of them does; and the site now tells search engines straight away when it has been updated, instead of waiting to be found. No screen, setting or saved team changed.',
+    summaryEl:
+      'Δουλειά στους ελέγχους και στην ασφάλεια τύπων πίσω από την εφαρμογή, όχι στην ίδια την εφαρμογή. Ένας έλεγχος πληκτρολογίου που αποτύγχανε μόνο επειδή ο Safari μετακινεί αλλιώς την εστίαση ρωτάει πλέον τι μπορεί να κάνει ο browser αντί να το θεωρεί δεδομένο· ο κώδικας που διαβάζει τη βάση χαρακτήρων ελέγχεται τώρα και για την περίπτωση που μια γραμμή ή ένα πεδίο απλώς λείπει, και εξήντα δύο τέτοια σημεία σφίχτηκαν χωρίς να αλλάξει αυτό που κάνει κανένα τους· και η σελίδα ενημερώνει πλέον αμέσως τις μηχανές αναζήτησης ότι άλλαξε, αντί να περιμένει να τη βρουν. Καμία οθόνη, ρύθμιση ή αποθηκευμένη ομάδα δεν άλλαξε.',
+    added: [],
+    improved: [],
+    fixed: [],
+  },
+  {
     version: '0.4.38',
     date: '2026-09-14',
     userVisible: false,
