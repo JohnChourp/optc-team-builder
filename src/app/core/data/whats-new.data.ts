@@ -31,6 +31,32 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.34',
+    date: '2026-09-14',
+    userVisible: true,
+    headline: {
+      en: 'Boosted units now count for the Captain seats too',
+      el: 'Οι boosted μονάδες μετράνε πλέον και στις θέσεις Captain',
+    },
+    summaryEn:
+      'The boosted list you keep on Auto Team Builder now counts when the builder picks your Captain and Friend Captain, not only the four subs. It still never bends a rule to fit someone in, never beats a Captain you locked yourself, and never beats one that covers more of what you asked for - it only decides between Captains the builder had no reason to separate. One more thing worth knowing: if you had already marked some units before today, the builder was quietly ignoring that list on every fresh visit. It reads it properly now.',
+    summaryEl:
+      'Η λίστα boosted που κρατάς στο Auto Team Builder μετράει πλέον και όταν ο builder διαλέγει Captain και Friend Captain, όχι μόνο τα τέσσερα subs. Εξακολουθεί να μην λυγίζει ποτέ κανόνα για να χωρέσει κάποιον, να μην κερδίζει ποτέ έναν Captain που κλείδωσες εσύ, και να μην κερδίζει έναν που καλύπτει περισσότερα από όσα ζήτησες - αποφασίζει μόνο ανάμεσα σε Captains που ο builder δεν είχε λόγο να ξεχωρίσει. Και κάτι ακόμη: αν είχες ήδη σημειώσει μονάδες πριν από σήμερα, ο builder αγνοούσε αθόρυβα εκείνη τη λίστα σε κάθε νέα επίσκεψη. Τώρα τη διαβάζει σωστά.',
+    added: [
+      {
+        en: 'The **Boosted this event** list on **Auto Team Builder** now also decides between Captains. Where two Captains were equally good for what you asked, the boosted one gets the seat.',
+        el: 'Η λίστα **Boosted σε αυτό το event** στο **Auto Team Builder** αποφασίζει πλέον και ανάμεσα σε Captains. Εκεί που δύο Captains ήταν εξίσου καλοί για ό,τι ζήτησες, τη θέση παίρνει ο boosted.',
+      },
+    ],
+    improved: [],
+    fixed: [
+      {
+        en: 'Units you had marked as boosted are read again when you open **Auto Team Builder** fresh. Until now the list was only picked up after you tapped something in it during that visit, so a list saved earlier was ignored on every build and nothing on screen said so.',
+        el: 'Οι μονάδες που είχες σημειώσει ως boosted διαβάζονται ξανά όταν ανοίγεις το **Auto Team Builder** από την αρχή. Μέχρι τώρα η λίστα λαμβανόταν υπόψη μόνο αφού πατούσες κάτι μέσα της σε εκείνη την επίσκεψη, οπότε μια λίστα αποθηκευμένη νωρίτερα αγνοούνταν σε κάθε build χωρίς τίποτα στην οθόνη να το λέει.',
+      },
+    ],
+  },
+  {
     version: '0.4.33',
     date: '2026-09-14',
     userVisible: true,
