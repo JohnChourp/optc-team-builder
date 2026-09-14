@@ -11,6 +11,10 @@ import {
   type CrewForgeImageRecognitionSlotResult,
   type CrewForgeImageSlotDefinition,
 } from '../models/optc.models';
+import {
+  calculateCrewForgeFingerprintVariance,
+  compareCrewForgeFingerprints,
+} from './crew-forge-fingerprint.utils';
 
 interface LoadedCrewForgeImageFile {
   dataUrl: string;
@@ -179,7 +183,7 @@ export class CrewForgeImageImportService {
       }
 
       const fingerprint = await this.fingerprintImageDataUrl(cropDataUrl, profile.preprocess);
-      const variance = this.calculateVariance(fingerprint);
+      const variance = calculateCrewForgeFingerprintVariance(fingerprint);
 
       if (variance <= profile.preprocess.emptyVarianceThreshold) {
         slots.push(
@@ -198,12 +202,12 @@ export class CrewForgeImageImportService {
         .filter((exemplar) => exemplar.slotKey === slotDefinition.key)
         .map((exemplar) => ({
           characterId: exemplar.characterId,
-          confidence: this.compareFingerprints(fingerprint, exemplar.fingerprint),
+          confidence: compareCrewForgeFingerprints(fingerprint, exemplar.fingerprint),
           source: 'exemplar' as const,
         }));
       const catalogCandidates = catalogFingerprints.map((entry) => ({
         characterId: entry.characterId,
-        confidence: this.compareFingerprints(fingerprint, entry.fingerprint),
+        confidence: compareCrewForgeFingerprints(fingerprint, entry.fingerprint),
         source: 'catalog' as const,
       }));
       const candidates = [...exemplarCandidates, ...catalogCandidates]
@@ -488,41 +492,6 @@ export class CrewForgeImageImportService {
     }
 
     return fingerprint;
-  }
-
-  private compareFingerprints(left: number[], right: number[]): number {
-    const length = Math.min(left.length, right.length);
-
-    if (!length) {
-      return 0;
-    }
-
-    let sum = 0;
-
-    for (let index = 0; index < length; index += 1) {
-      const difference = (left[index] ?? 0) - (right[index] ?? 0);
-      sum += difference * difference;
-    }
-
-    const rootMeanSquareError = Math.sqrt(sum / length);
-
-    return Math.max(0, 1 - rootMeanSquareError);
-  }
-
-  private calculateVariance(fingerprint: number[]): number {
-    if (!fingerprint.length) {
-      return 0;
-    }
-
-    const mean = fingerprint.reduce((sum, value) => sum + value, 0) / fingerprint.length;
-
-    return (
-      fingerprint.reduce((sum, value) => {
-        const difference = value - mean;
-
-        return sum + difference * difference;
-      }, 0) / fingerprint.length
-    );
   }
 
   private serializePreprocess(preprocess: CrewForgeImagePreprocessConfig): string {
