@@ -31,6 +31,27 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.32',
+    date: '2026-09-14',
+    userVisible: true,
+    headline: {
+      en: 'Example teams you can copy and make your own',
+      el: 'Ενδεικτικές ομάδες που αντιγράφεις και κάνεις δικές σου',
+    },
+    summaryEn:
+      'Saved Teams now has a short shelf of example teams that ship with the app, each built around something you can check - one is six characters whose specials all do something extra on a Treasure Map, another is a full Free Spirit crew. Copy one and it lands in your own saved teams, where you can change it freely. Nobody sent these in and none of them claims to have beaten anything: there is nowhere to send a team, so they are worked examples and each one says so.',
+    summaryEl:
+      'Οι Αποθηκευμένες ομάδες έχουν πλέον ένα μικρό ράφι με ενδεικτικές ομάδες που έρχονται με την εφαρμογή, καθεμία χτισμένη γύρω από κάτι που μπορείς να ελέγξεις - η μία είναι έξι χαρακτήρες που τα specials τους κάνουν κάτι επιπλέον σε Treasure Map, η άλλη ένα ολόκληρο crew Free Spirit. Αν αντιγράψεις μία, μπαίνει στις δικές σου αποθηκευμένες ομάδες και την αλλάζεις ελεύθερα. Κανείς δεν τις έστειλε και καμία δεν ισχυρίζεται ότι πέρασε κάτι: δεν υπάρχει πουθενά να στείλεις ομάδα, οπότε είναι ενδεικτικά παραδείγματα και καθεμία το λέει.',
+    added: [
+      {
+        en: 'A new **Example teams** shelf on **Saved Teams**, above your own list. Each team names the place it was built for, lists its six characters, and says in one line what it was built around. **Copy to my saved teams** puts it in your list as a normal team you can edit, rename or delete - with a note kept on it saying where it came from.',
+        el: 'Ένα νέο ράφι **Ενδεικτικές ομάδες** στις **Αποθηκευμένες ομάδες**, πάνω από τη δική σου λίστα. Κάθε ομάδα ονομάζει το σημείο για το οποίο χτίστηκε, δείχνει τους έξι χαρακτήρες της, και λέει σε μία γραμμή γύρω από τι χτίστηκε. Η **Αντιγραφή στις ομάδες μου** τη βάζει στη λίστα σου ως κανονική ομάδα που μπορείς να αλλάξεις, να μετονομάσεις ή να σβήσεις - με μια σημείωση πάνω της που λέει από πού ήρθε.',
+      },
+    ],
+    improved: [],
+    fixed: [],
+  },
+  {
     version: '0.4.31',
     date: '2026-09-14',
     userVisible: true,
