@@ -51,6 +51,39 @@ type RecognitionPreviewSlotView = {
   candidates: RecognitionPreviewCandidateView[];
 };
 
+/**
+ * 869f12x41. A slot is worth reviewing when it holds something and the reader
+ * has not yet said they are happy with it.
+ *
+ * `empty` and `no_profile` slots hold nothing to look at - `empty` means the
+ * crop's variance was below the profile's threshold, so no comparison was even
+ * made. Their confidence is 0 for that reason, not because the match is bad.
+ */
+function needsReview(item: RecognitionPreviewSlotView, reviewed: ReadonlySet<string>): boolean {
+  if (reviewed.has(item.slot.slotKey)) {
+    return false;
+  }
+
+  return item.slot.status === 'ambiguous' || item.slot.status === 'matched';
+}
+
+/** Lower sorts first. See `recognitionReviewSlots` for why this is not a plain confidence sort. */
+function reviewRank(item: RecognitionPreviewSlotView, reviewed: ReadonlySet<string>): number {
+  if (reviewed.has(item.slot.slotKey)) {
+    return 3;
+  }
+
+  if (item.slot.status === 'ambiguous') {
+    return 0;
+  }
+
+  if (item.slot.status === 'matched') {
+    return 1;
+  }
+
+  return 2;
+}
+
 @Component({
   selector: 'app-crew-forge-page',
   standalone: true,
@@ -92,6 +125,20 @@ export class CrewForgePage implements OnInit {
   public readonly selectedImageProfileId = signal<string | null>(null);
   public readonly imageImportRecognition = signal<CrewForgeImageRecognitionResult | null>(null);
   public readonly activeRecognitionSlotKey = signal<string | null>(null);
+  /**
+   * 869f12x41. Slot keys the reader has looked at and accepted.
+   *
+   * The import preview already showed the crop, the confidence, the top three
+   * candidates and one-tap correction - what it could not do was tell a reader
+   * WHICH of forty matches deserved their attention, or let them mark one as
+   * dealt with. Without that they either trust everything or re-check
+   * everything, which is why the confidence score existed and no surface used
+   * it.
+   *
+   * Cleared whenever a new image is recognised, because the keys refer to that
+   * recognition's slots and nothing else.
+   */
+  public readonly reviewedSlotKeys = signal<ReadonlySet<string>>(new Set());
   public readonly recognitionPickerOpen = signal(false);
 
   public readonly crewForgeImageProfiles;
@@ -157,6 +204,51 @@ export class CrewForgePage implements OnInit {
     })),
   );
 
+  /**
+   * The same preview cards, lowest confidence first, with everything already
+   * dealt with pushed to the end.
+   *
+   * The order is deliberately not a plain confidence sort. An `empty` slot
+   * scores 0 because nothing was compared - the crop was blank - so a pure
+   * ascending sort would fill the top of the queue with the slots that need no
+   * attention at all. Order of attention:
+   *
+   *   1. unreviewed slots the matcher could not resolve (`ambiguous`), worst
+   *      confidence first - these are the ones most likely to be wrong;
+   *   2. unreviewed matches, worst confidence first;
+   *   3. slots with nothing in them;
+   *   4. anything the reader has already confirmed.
+   */
+  public readonly recognitionReviewSlots = computed<RecognitionPreviewSlotView[]>(() => {
+    const reviewed = this.reviewedSlotKeys();
+
+    return [...this.recognitionPreviewSlots()].sort((left, right) => {
+      const leftRank = reviewRank(left, reviewed);
+      const rightRank = reviewRank(right, reviewed);
+
+      if (leftRank !== rightRank) {
+        return leftRank - rightRank;
+      }
+
+      if (left.slot.confidence !== right.slot.confidence) {
+        return left.slot.confidence - right.slot.confidence;
+      }
+
+      return left.slot.slotKey.localeCompare(right.slot.slotKey);
+    });
+  });
+
+  /** Slots still worth a look: everything with a crop in it that is not yet confirmed. */
+  public readonly recognitionPendingReviewCount = computed(
+    () =>
+      this.recognitionPreviewSlots().filter((item) => needsReview(item, this.reviewedSlotKeys()))
+        .length,
+  );
+
+  public readonly recognitionReviewComplete = computed(
+    () => Boolean(this.imageImportRecognition()) && this.recognitionPendingReviewCount() === 0,
+  );
+
   public constructor(
     private readonly characterCatalogCache: CharacterCatalogCacheService,
     private readonly autoTeamBuilder: AutoTeamBuilderService,
@@ -203,6 +295,7 @@ export class CrewForgePage implements OnInit {
     this.imageImportLoading.set(true);
     this.imageImportErrorMessage.set('');
     this.imageImportRecognition.set(null);
+    this.reviewedSlotKeys.set(new Set());
     this.results.set([]);
     this.errorMessage.set('');
     this.visibleResultCount.set(RESULT_PAGE_SIZE);
@@ -268,6 +361,7 @@ export class CrewForgePage implements OnInit {
       const normalizedRecognitionResult = this.applyDefaultRecognitionSelections(recognitionResult);
 
       this.imageImportRecognition.set(normalizedRecognitionResult);
+      this.reviewedSlotKeys.set(new Set());
 
       if (recognitionResult.reason !== 'matched') {
         this.imageImportErrorMessage.set(
@@ -278,6 +372,7 @@ export class CrewForgePage implements OnInit {
       }
     } catch {
       this.imageImportRecognition.set(null);
+      this.reviewedSlotKeys.set(new Set());
       this.imageImportErrorMessage.set(this.t('imageImport.errors.recognitionFailed'));
     } finally {
       this.imageImportProcessing.set(false);
@@ -309,6 +404,31 @@ export class CrewForgePage implements OnInit {
     this.recognitionPickerOpen.set(false);
   }
 
+  /** Accept a slot as it stands; it drops to the end of the queue. */
+  public confirmRecognitionSlot(slotKey: string): void {
+    this.reviewedSlotKeys.update((keys) => new Set([...keys, slotKey]));
+  }
+
+  public reopenRecognitionSlot(slotKey: string): void {
+    this.reviewedSlotKeys.update((keys) => {
+      const next = new Set(keys);
+
+      next.delete(slotKey);
+
+      return next;
+    });
+  }
+
+  public isRecognitionSlotReviewed(slotKey: string): boolean {
+    return this.reviewedSlotKeys().has(slotKey);
+  }
+
+  public confirmAllRecognitionSlots(): void {
+    this.reviewedSlotKeys.set(
+      new Set(this.recognitionPreviewSlots().map((item) => item.slot.slotKey)),
+    );
+  }
+
   public applyRecognitionCandidate(
     slotKey: string,
     characterId: number | null,
@@ -328,6 +448,11 @@ export class CrewForgePage implements OnInit {
         confidence,
       ),
     );
+    /*
+     * Choosing a candidate IS reviewing the slot - the reader has just looked
+     * at it and decided. Making them confirm afterwards would be asking twice.
+     */
+    this.confirmRecognitionSlot(slotKey);
     this.results.set([]);
     this.errorMessage.set('');
     this.visibleResultCount.set(RESULT_PAGE_SIZE);

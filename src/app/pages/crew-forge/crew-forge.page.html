@@ -127,7 +127,29 @@
                 <div>
                   <h3>{{ t('imageImport.previewTitle') }}</h3>
                   <p>{{ t('imageImport.previewCopy', { count: recognizedRosterCount() }) }}</p>
+                  @if (recognitionReviewComplete()) {
+                    <p class="build-hint" data-test="crew-forge-review-complete">
+                      {{ t('imageImport.review.allChecked') }}
+                    </p>
+                  } @else {
+                    <p class="build-hint" data-test="crew-forge-review-pending">
+                      {{
+                        t('imageImport.review.pending', { count: recognitionPendingReviewCount() })
+                      }}
+                    </p>
+                  }
                 </div>
+                @if (!recognitionReviewComplete()) {
+                  <ion-button
+                    fill="outline"
+                    size="small"
+                    color="light"
+                    data-test="crew-forge-confirm-all"
+                    (click)="confirmAllRecognitionSlots()"
+                  >
+                    {{ t('imageImport.review.confirmAll') }}
+                  </ion-button>
+                }
                 <ion-button
                   color="warning"
                   [disabled]="
@@ -143,8 +165,14 @@
               </div>
 
               <div class="image-import-recognition-grid">
-                @for (item of recognitionPreviewSlots(); track item.slot.slotKey) {
-                  <article class="image-import-slot-card">
+                @for (item of recognitionReviewSlots(); track item.slot.slotKey) {
+                  <article
+                    class="image-import-slot-card"
+                    [class.image-import-slot-card--reviewed]="
+                      isRecognitionSlotReviewed(item.slot.slotKey)
+                    "
+                    [attr.data-test]="'crew-forge-slot-' + item.slot.slotKey"
+                  >
                     <div class="image-import-slot-card__head">
                       <div>
                         <strong>{{ item.slot.label }}</strong>
@@ -192,6 +220,27 @@
                       >
                         {{ t('imageImport.actions.chooseCharacter') }}
                       </ion-button>
+                      @if (isRecognitionSlotReviewed(item.slot.slotKey)) {
+                        <ion-button
+                          fill="clear"
+                          size="small"
+                          color="medium"
+                          [attr.data-test]="'crew-forge-reopen-' + item.slot.slotKey"
+                          (click)="reopenRecognitionSlot(item.slot.slotKey)"
+                        >
+                          {{ t('imageImport.review.reopen') }}
+                        </ion-button>
+                      } @else {
+                        <ion-button
+                          fill="outline"
+                          size="small"
+                          color="success"
+                          [attr.data-test]="'crew-forge-confirm-' + item.slot.slotKey"
+                          (click)="confirmRecognitionSlot(item.slot.slotKey)"
+                        >
+                          {{ t('imageImport.review.confirm') }}
+                        </ion-button>
+                      }
                     </div>
 
                     @if (item.character) {

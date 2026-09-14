@@ -394,6 +394,138 @@ describe('CrewForgePage', () => {
     expect(template).not.toContain('{{ item.character.name }}');
     expect(template).not.toContain('{{ item.character.type }} • {{ item.character.primaryClass }}');
   });
+  /*
+   * 869f12x41. The import preview already showed the crop, the confidence, the
+   * top three candidates and one-tap correction. What it could not do was tell a
+   * reader WHICH of forty matches deserved attention, or let them mark one as
+   * dealt with - so they either trusted everything or re-checked everything.
+   *
+   * These cover the two things that were missing: the order, and the transition
+   * that empties the queue.
+   */
+  it('puts the least certain matches first, and slots with nothing in them last', async () => {
+    const { page, crewForgeImageImport } = createPage();
+    const recognitionResult = createRecognitionResult([101, 102, 103, 104, 105]);
+
+    recognitionResult.slots[0] = { ...recognitionResult.slots[0], confidence: 0.99, status: 'matched' };
+    recognitionResult.slots[1] = { ...recognitionResult.slots[1], confidence: 0.93, status: 'matched' };
+    recognitionResult.slots[2] = { ...recognitionResult.slots[2], confidence: 0.71, status: 'ambiguous' };
+    recognitionResult.slots[3] = { ...recognitionResult.slots[3], confidence: 0.88, status: 'ambiguous' };
+    /*
+     * An empty slot scores 0 because nothing was compared - the crop was blank.
+     * A plain ascending sort would put it first, which is the whole trap: it is
+     * the one slot that needs no attention at all.
+     */
+    recognitionResult.slots[4] = {
+      ...recognitionResult.slots[4],
+      characterId: null,
+      confidence: 0,
+      status: 'empty',
+    };
+    crewForgeImageImport.recognizeImage.mockResolvedValue(recognitionResult);
+
+    await page.ngOnInit();
+    page.imageImportDataUrl.set('data:image/png;base64,ZmFrZQ==');
+    page.imageImportWidth.set(1080);
+    page.imageImportHeight.set(1920);
+    await page.runImageRecognition();
+
+    expect(page.recognitionReviewSlots().map((item) => item.slot.slotKey)).toEqual([
+      'sub-1', // ambiguous 0.71
+      'sub-2', // ambiguous 0.88
+      'leader-2', // matched 0.93
+      'leader-1', // matched 0.99
+      'sub-3', // empty, nothing to look at
+    ]);
+    expect(page.recognitionPendingReviewCount()).toBe(4);
+    expect(page.recognitionReviewComplete()).toBe(false);
+  });
+
+  it('drops a slot out of the queue once it is confirmed', async () => {
+    const { page, crewForgeImageImport } = createPage();
+
+    crewForgeImageImport.recognizeImage.mockResolvedValue(
+      createRecognitionResult([101, 102, 103, 104, 105]),
+    );
+
+    await page.ngOnInit();
+    page.imageImportDataUrl.set('data:image/png;base64,ZmFrZQ==');
+    page.imageImportWidth.set(1080);
+    page.imageImportHeight.set(1920);
+    await page.runImageRecognition();
+
+    const before = page.recognitionPendingReviewCount();
+
+    expect(before).toBeGreaterThan(0);
+
+    page.confirmRecognitionSlot('sub-1');
+
+    expect(page.isRecognitionSlotReviewed('sub-1')).toBe(true);
+    expect(page.recognitionPendingReviewCount()).toBe(before - 1);
+    expect(
+      page.recognitionReviewSlots().at(-1)?.slot.slotKey,
+      'a confirmed slot settles at the end',
+    ).toBe('sub-1');
+
+    page.reopenRecognitionSlot('sub-1');
+
+    expect(page.isRecognitionSlotReviewed('sub-1')).toBe(false);
+    expect(page.recognitionPendingReviewCount()).toBe(before);
+  });
+
+  it('treats correcting a slot as having reviewed it', async () => {
+    /*
+     * The reader has just looked at the slot and decided. Asking them to confirm
+     * afterwards would be asking twice for the same judgement.
+     */
+    const { page, crewForgeImageImport } = createPage();
+
+    crewForgeImageImport.recognizeImage.mockResolvedValue(
+      createRecognitionResult([101, 102, 103, 104, 105]),
+    );
+    crewForgeImageImport.applyManualSelection.mockImplementation((recognition) => recognition);
+
+    await page.ngOnInit();
+    page.imageImportDataUrl.set('data:image/png;base64,ZmFrZQ==');
+    page.imageImportWidth.set(1080);
+    page.imageImportHeight.set(1920);
+    await page.runImageRecognition();
+
+    expect(page.isRecognitionSlotReviewed('sub-1')).toBe(false);
+
+    page.applyRecognitionCandidate('sub-1', 110, 0.8);
+
+    expect(page.isRecognitionSlotReviewed('sub-1')).toBe(true);
+  });
+
+  it('empties the queue with one action, and refills it for a new screenshot', async () => {
+    const { page, crewForgeImageImport } = createPage();
+
+    crewForgeImageImport.recognizeImage.mockResolvedValue(
+      createRecognitionResult([101, 102, 103, 104, 105]),
+    );
+
+    await page.ngOnInit();
+    page.imageImportDataUrl.set('data:image/png;base64,ZmFrZQ==');
+    page.imageImportWidth.set(1080);
+    page.imageImportHeight.set(1920);
+    await page.runImageRecognition();
+
+    page.confirmAllRecognitionSlots();
+
+    expect(page.recognitionPendingReviewCount()).toBe(0);
+    expect(page.recognitionReviewComplete()).toBe(true);
+
+    /*
+     * The keys refer to THAT recognition's slots. A second screenshot reuses the
+     * same slot keys, so carrying them over would mark the new import as already
+     * checked - the worst possible failure for a review queue.
+     */
+    await page.runImageRecognition();
+
+    expect(page.recognitionPendingReviewCount()).toBeGreaterThan(0);
+    expect(page.recognitionReviewComplete()).toBe(false);
+  });
 });
 
 function createPage(options: {

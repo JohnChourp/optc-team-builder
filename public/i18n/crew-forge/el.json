@@ -29,6 +29,13 @@
     "previewFallbackName": "Ανεβασμένο screenshot",
     "previewTitle": "Αναγνωρισμένα slots",
     "previewCopy": "{{count}} μοναδικοί χαρακτήρες είναι έτοιμοι για build.",
+    "review": {
+      "allChecked": "Έλεγξες κάθε αντιστοίχιση. Ό,τι διόρθωσες κρατιέται.",
+      "confirm": "Σωστό",
+      "confirmAll": "Αποδοχή των υπολοίπων",
+      "pending": "{{count}} μένουν για έλεγχο - πρώτα οι λιγότερο σίγουρες.",
+      "reopen": "Έλεγξε ξανά"
+    },
     "confidence": "Βεβαιότητα",
     "picker": {
       "title": "Επιλογή χαρακτήρα",
