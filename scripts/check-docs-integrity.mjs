@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 import { access, readdir, readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
+
+import { loadPublicRoutes, publishedPaths } from './lib/public-routes.mjs';
 import { pathToFileURL } from 'node:url';
 
 const OPTC_CLICKUP_WORKSPACE_ID = '90121749478';
@@ -85,39 +87,35 @@ const GENERATED_FILE_REFERENCES = new Set([
   'public/app-config.js',
 ]);
 
-const KNOWN_PUBLIC_PATHS = new Set([
-  '',
-  'cookies',
-  'guides/guided-build-compare-team-sharing',
-  'guides/how-to-build-an-optc-team',
-  'guides/optc-pirate-rumble-team-building',
-  'privacy',
+/*
+ * 869f12x57. The published routes come from the app's own registry; only the
+ * non-route files the site serves are listed here.
+ *
+ * This was the fifth copy of the public route list, and the one that stayed
+ * wrong longest: `/faq` shipped in v0.4.17 and this set never learned about it,
+ * so any doc linking to `https://optcteambuilder.com/faq/` failed the lane -
+ * demonstrated on 2026-09-14, while the identical link to `/privacy/` passed.
+ */
+const SERVED_NON_ROUTE_PATHS = [
   'robots.txt',
   'sitemap.html',
   'sitemap.xml',
-  'tabs/account',
-  'tabs/auto-team-builder',
-  'tabs/auto-team-builder-rumble',
-  'tabs/captain-coverage',
+];
+
+const KNOWN_PUBLIC_PATHS = new Set([
+  ...publishedPaths(loadPublicRoutes()),
+  ...SERVED_NON_ROUTE_PATHS,
+  /*
+   * Routes the app serves that the registry deliberately does not publish:
+   * screens holding the reader's own data, plus the `tabs/collection` redirect.
+   * A doc may still link to them; they simply are not indexed.
+   */
   'tabs/character-boxes',
-  'tabs/characters',
   'tabs/collection',
-  'tabs/cookies',
-  'tabs/crew-forge',
-  'tabs/drive-sync',
-  'tabs/manual-team-builder',
-  'tabs/privacy',
-  'tabs/rumble-characters',
   'tabs/saved-enemies',
   'tabs/saved-rumble-teams',
   'tabs/saved-teams',
   'tabs/settings',
-  'tabs/terms',
-  'terms',
-  'tools/optc-auto-team-builder',
-  'tools/optc-character-database',
-  'tools/optc-rumble-team-builder',
-  'tools/optc-team-builder',
 ]);
 
 export async function checkDocsIntegrity(options = {}) {

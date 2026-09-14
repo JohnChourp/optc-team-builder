@@ -6,33 +6,37 @@ import { fileURLToPath } from 'node:url';
 
 import ts from 'typescript';
 
+import { loadPublicRoutes } from './lib/public-routes.mjs';
+
 /**
- * Every route the router declares must be in the generated sitemap, or be
- * excluded on purpose.
+ * The router and the public route registry must describe the same site.
  *
- * 869f12x4k. `/faq` shipped across v0.4.17-v0.4.19 as a top-level public route
- * beside `privacy`, `cookies` and `terms` - all three of which are in the
- * sitemap. It reached 0 of the 4,637 live URLs, because the sitemap's route
- * list is a second hand-written copy in `scripts/generate-seo-pages.mjs` and
- * nothing connected the two. An FAQ is the highest-intent search surface this
- * app has; it was invisible to search engines for three releases.
+ * 869f12x4k found the first half: `/faq` shipped as a top-level public route
+ * and reached 0 of the 4,637 generated sitemap URLs, because the sitemap's
+ * route list was a second hand-written copy. 869f12x57 found the second half in
+ * production - `/faq` also had no `data.seo`, so the app served it
+ * `noindex,follow` with a home-page canonical while the sitemap advertised it.
  *
- * Adding `faq` to the generator fixes that one row and leaves the next new
- * route to be found by hand, which is exactly how this one got here. So the
- * check asks the general question instead:
+ * `src/app/core/data/public-routes.data.ts` is now the one list, and this is
+ * what binds the router to it:
  *
- *   A. a router route that is neither generated, aliased, nor excluded fails;
- *   B. an exclusion naming a route that no longer exists fails, so the
- *      registry cannot rot into a list of ghosts that silently permit;
- *   C. a route that is both generated and excluded fails, because the two
- *      answers disagree and neither can be trusted;
- *   D. a generated path with no router route behind it fails - a sitemap entry
- *      for a page that 404s is worse than a missing one.
+ *   A. a router route that is neither registered, aliased, nor excluded fails;
+ *   B. a registered route that the router does not declare fails, so the
+ *      registry cannot describe pages the app does not serve;
+ *   C. a registered route whose router declaration has no
+ *      `seo: publicRouteSeo(...)` fails - without it the app marks the page
+ *      `noindex,follow`, which is how `/faq` was advertised and disowned;
+ *   D. `publicRouteSeo('x')` called from a route whose path is not `x` fails,
+ *      because that silently gives a page another page's title and canonical;
+ *   E. an exclusion naming a route that no longer exists fails, so the registry
+ *      cannot rot into ghosts that silently permit;
+ *   F. a route both registered and excluded fails, because the two answers
+ *      disagree and neither can be trusted.
  *
- * Both lists are read from source rather than imported: `app.routes.ts` is
- * Angular's config with lazy `loadComponent` calls, and the generator writes
- * files at import time. A single shared registry is the wave-2 data-clarity
- * job (869f12x57); this is the guard that stops the bleeding meanwhile.
+ * Both sides are read from source rather than imported: `app.routes.ts` is
+ * Angular config full of lazy `loadComponent` calls, and the registry is
+ * TypeScript the app depends on. `scripts/lib/public-routes.mjs` does the
+ * reading, and every other consumer uses it too.
  *
  * Run: npm run routes:sitemap-coverage
  */
@@ -117,6 +121,26 @@ function readArrayProperty(objectLiteral, name) {
   return property.initializer;
 }
 
+/** The argument of `seo: publicRouteSeo('...')`, or null when the route declares none. */
+function readPublicRouteSeoArgument(seoProperty) {
+  if (!seoProperty || !ts.isPropertyAssignment(seoProperty)) {
+    return null;
+  }
+
+  const call = seoProperty.initializer;
+
+  if (
+    !ts.isCallExpression(call) ||
+    call.expression.getText() !== 'publicRouteSeo' ||
+    call.arguments.length !== 1 ||
+    !ts.isStringLiteralLike(call.arguments[0])
+  ) {
+    return null;
+  }
+
+  return call.arguments[0].text;
+}
+
 function joinRoutePath(prefix, segment) {
   return [prefix, segment].filter((part) => part !== '').join('/');
 }
@@ -157,14 +181,14 @@ export function readAppRoutes(source, fileName = 'app.routes.ts') {
       routes.push({
         path: fullPath,
         redirectTo: readStringProperty(element, 'redirectTo') ?? null,
-        seo:
-          seo && ts.isObjectLiteralExpression(seo.initializer)
-            ? {
-                title: readStringProperty(seo.initializer, 'title') ?? null,
-                description: readStringProperty(seo.initializer, 'description') ?? null,
-                canonicalPath: readStringProperty(seo.initializer, 'canonicalPath') ?? null,
-              }
-            : null,
+        /*
+         * The path the route asks the registry for. `null` means the route
+         * declared no `data.seo` at all; a string means it called
+         * `publicRouteSeo(<that string>)`, which check D compares to its own
+         * path - a typo there hands a page another page's title and canonical
+         * and nothing else would notice.
+         */
+        seoLookup: readPublicRouteSeoArgument(seo),
       });
 
       if (children) {
@@ -191,88 +215,81 @@ export function readAppRoutes(source, fileName = 'app.routes.ts') {
   return routes;
 }
 
-/** The paths and aliases `generate-seo-pages.mjs` writes into the sitemap. */
-export function readGeneratedRoutes(source, fileName = 'generate-seo-pages.mjs') {
-  const sourceFile = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true);
-  const paths = [];
-  const aliases = [];
-  const copyByPath = new Map();
-
-  function visit(node) {
-    if (
-      ts.isVariableDeclaration(node) &&
-      node.name.getText() === 'publicRoutes' &&
-      node.initializer &&
-      ts.isArrayLiteralExpression(node.initializer)
-    ) {
-      for (const element of node.initializer.elements) {
-        if (!ts.isObjectLiteralExpression(element)) {
-          continue;
-        }
-
-        const routePath = readStringProperty(element, 'path');
-
-        if (typeof routePath === 'string') {
-          paths.push(routePath);
-          copyByPath.set(routePath, {
-            title: readStringProperty(element, 'title') ?? null,
-            description: readStringProperty(element, 'description') ?? null,
-          });
-        }
-
-        const aliasArray = readArrayProperty(element, 'aliases');
-
-        for (const alias of aliasArray?.elements ?? []) {
-          if (isStringLiteral(alias)) {
-            aliases.push(alias.text);
-          }
-        }
-      }
-    }
-
-    ts.forEachChild(node, visit);
-  }
-
-  visit(sourceFile);
-
-  return { paths, aliases, copyByPath };
-}
-
 export function inspectRouteSitemapCoverage({
   routesSource,
-  generatorSource,
+  publicRoutes = loadPublicRoutes(),
   exclusions = ROUTE_SITEMAP_EXCLUSIONS,
 }) {
   const routes = readAppRoutes(routesSource);
-  const { paths, aliases, copyByPath } = readGeneratedRoutes(generatorSource);
   const routePaths = new Set(routes.map((route) => route.path));
-  const generated = new Set([...paths, ...aliases]);
+  const routesByPath = new Map(routes.map((route) => [route.path, route]));
   const excluded = new Map(exclusions.map((entry) => [entry.route, entry.reason]));
   const errors = [];
+
+  /** Every path the registry accounts for: where it lives, where it publishes, and its aliases. */
+  const registered = new Set();
+
+  for (const record of publicRoutes) {
+    registered.add(record.routePath);
+    registered.add(record.canonicalPath);
+
+    for (const alias of record.aliases) {
+      registered.add(alias);
+    }
+  }
 
   if (routes.length === 0) {
     errors.push('No routes found in app.routes.ts - the router config could not be read.');
   }
 
-  if (paths.length === 0) {
-    errors.push('No publicRoutes found in generate-seo-pages.mjs - the generator could not be read.');
+  if (publicRoutes.length === 0) {
+    errors.push('No records found in the public route registry - it could not be read.');
   }
 
   for (const route of routePaths) {
-    const isGenerated = generated.has(route);
+    const isRegistered = registered.has(route);
     const exclusionReason = excluded.get(route);
 
-    if (isGenerated && exclusionReason !== undefined) {
+    if (isRegistered && exclusionReason !== undefined) {
       errors.push(
-        `Route "${route}" is both generated into the sitemap and excluded from it. Remove one of the two.`,
+        `Route "${route}" is both in the public route registry and excluded from it. Remove one of the two.`,
       );
       continue;
     }
 
-    if (!isGenerated && exclusionReason === undefined) {
+    if (!isRegistered && exclusionReason === undefined) {
       errors.push(
-        `Route "${route}" is declared in app.routes.ts but has no sitemap entry and no exclusion. ` +
-          'Add it to publicRoutes in scripts/generate-seo-pages.mjs, or add it to ROUTE_SITEMAP_EXCLUSIONS with a reason.',
+        `Route "${route}" is declared in app.routes.ts but is not in the public route registry and has ` +
+          'no exclusion. Add it to PUBLIC_ROUTES in src/app/core/data/public-routes.data.ts, or add it ' +
+          'to ROUTE_SITEMAP_EXCLUSIONS with a reason.',
+      );
+    }
+  }
+
+  for (const record of publicRoutes) {
+    const route = routesByPath.get(record.routePath);
+
+    if (!route) {
+      errors.push(
+        `The public route registry lists "${record.routePath}", which app.routes.ts does not declare. ` +
+          'The registry would publish a page the app does not serve.',
+      );
+      continue;
+    }
+
+    if (route.seoLookup === null) {
+      errors.push(
+        `Route "${record.routePath}" is published by the registry but its router declaration has no ` +
+          "`seo: publicRouteSeo(...)`. Without it the app writes noindex,follow and a canonical " +
+          'pointing at the home page once it hydrates - so the URL is advertised and then disowned.',
+      );
+      continue;
+    }
+
+    if (route.seoLookup !== record.routePath) {
+      errors.push(
+        `Route "${record.routePath}" calls publicRouteSeo("${route.seoLookup}"), which is a different ` +
+          "route. That hands this page another page's title, description and canonical.",
       );
     }
   }
@@ -291,80 +308,9 @@ export function inspectRouteSitemapCoverage({
     }
   }
 
-  /*
-   * 869f12x57. A route in the sitemap must ALSO be indexable at runtime.
-   *
-   * `AppComponent.findSeoDataForUrl` treats a route with no `data.seo` as
-   * private: it falls back to `defaultSeo`, whose `indexable` is false, and
-   * writes `noindex,follow` plus a canonical pointing at the home page. So a
-   * page can be advertised in the sitemap and tell crawlers to ignore it as a
-   * duplicate, which is exactly what `/faq` did in production for one release -
-   * measured 2026-09-14, static `index,follow`, hydrated `noindex,follow`.
-   *
-   * Googlebot runs the JS, so the runtime tag is the one that counts. The
-   * generator's list and the router's `data.seo` are two copies of "which
-   * routes are public", and this binds them until 869f12x57 makes them one.
-   */
-  const canonicalToRoute = new Map();
-
-  for (const route of routes) {
-    if (route.seo?.canonicalPath !== null && route.seo?.canonicalPath !== undefined) {
-      canonicalToRoute.set(route.seo.canonicalPath, route);
-    }
-  }
-
-  for (const generatedPath of paths) {
-    if (generatedPath === '') {
-      continue;
-    }
-
-    const servingRoute =
-      canonicalToRoute.get(generatedPath) ??
-      routes.find((route) => route.path === generatedPath && route.seo) ??
-      null;
-
-    if (!servingRoute) {
-      errors.push(
-        `The sitemap generator publishes "${generatedPath}", but no router route declares \`data.seo\` for it. ` +
-          'Without that, the app writes noindex,follow and a canonical pointing at the home page once it ' +
-          'hydrates - so the URL is advertised and then disowned.',
-      );
-      continue;
-    }
-
-    const generated = copyByPath.get(generatedPath);
-
-    if (generated?.title && servingRoute.seo.title && generated.title !== servingRoute.seo.title) {
-      errors.push(
-        `"${generatedPath}" has a different <title> in the router and in the sitemap generator. ` +
-          'They are two copies of one string and must agree.',
-      );
-    }
-
-    if (
-      generated?.description &&
-      servingRoute.seo.description &&
-      generated.description !== servingRoute.seo.description
-    ) {
-      errors.push(
-        `"${generatedPath}" has a different meta description in the router and in the sitemap generator. ` +
-          'They are two copies of one string and must agree.',
-      );
-    }
-  }
-
-  for (const generatedPath of generated) {
-    if (!routePaths.has(generatedPath)) {
-      errors.push(
-        `The sitemap generator emits "${generatedPath}", which no router route serves. ` +
-          'A sitemap entry that 404s is worse than a missing one.',
-      );
-    }
-  }
-
   return {
     routeCount: routePaths.size,
-    generatedCount: generated.size,
+    registeredCount: publicRoutes.length,
     excludedCount: excluded.size,
     errors,
   };
@@ -377,7 +323,7 @@ export function formatRouteSitemapCoverageResult(result) {
 
   return (
     `[routes:sitemap] ${result.routeCount} router routes: ` +
-    `${result.generatedCount} in the generated sitemap, ${result.excludedCount} excluded on purpose.`
+    `${result.registeredCount} in the public route registry, ${result.excludedCount} excluded on purpose.`
   );
 }
 
@@ -385,7 +331,7 @@ function main() {
   const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
   const result = inspectRouteSitemapCoverage({
     routesSource: readFileSync(path.join(projectRoot, 'src', 'app', 'app.routes.ts'), 'utf8'),
-    generatorSource: readFileSync(path.join(projectRoot, 'scripts', 'generate-seo-pages.mjs'), 'utf8'),
+    publicRoutes: loadPublicRoutes(projectRoot),
   });
   const output = formatRouteSitemapCoverageResult(result);
 

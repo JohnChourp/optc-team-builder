@@ -1,6 +1,8 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { loadPublicRoutes } from './lib/public-routes.mjs';
+
 const projectRoot = path.resolve(import.meta.dirname, '..');
 const defaultOutputDir = path.join(projectRoot, 'dist', 'optc-team-builder', 'browser');
 const defaultSeedPath = path.join(projectRoot, 'public', 'assets', 'data', 'optc-seed.sql');
@@ -51,11 +53,9 @@ const homeFallbackHeroCharacters = [
   },
 ];
 
-const publicRoutes = [
+const publicRouteContent = [
   {
     path: '',
-    title: homePageTitle,
-    description: siteDescription,
     heading: 'OPTC Team Builder for One Piece Treasure Cruise',
     paragraphs: [
       'OPTC Team Builder is a fan-made workspace for One Piece Treasure Cruise players who want a faster way to find characters, compare abilities, check Rumble rankings and captain coverage, plan crews, and keep useful setups organized. The app combines a searchable character catalog, manual and automatic team building, Pirate Rumble tools, Crew Forge screenshot imports, saved teams, saved enemies, character boxes, Drive sync, and settings for import/export and backups.',
@@ -80,9 +80,6 @@ const publicRoutes = [
   },
   {
     path: 'tabs/characters',
-    title: 'OPTC Characters | OPTC Team Builder',
-    description:
-      'Browse the One Piece Treasure Cruise character catalog with stats, classes, abilities, and team-building data.',
     heading: 'OPTC Character Catalog',
     paragraphs: [
       'Browse the One Piece Treasure Cruise character catalog by id, name, type, class, stars, cost, and ability data. Character pages include searchable OPTC details for captain abilities, specials, support effects, rumble information, and team-building notes.',
@@ -96,9 +93,6 @@ const publicRoutes = [
   },
   {
     path: 'tabs/rumble-characters',
-    title: 'Rumble Characters | OPTC Team Builder',
-    description:
-      'Rank One Piece Treasure Cruise Pirate Rumble characters by full Rumble score, favorites, core filters, and custom stat focus.',
     heading: 'OPTC Rumble Characters',
     paragraphs: [
       'Rumble Characters ranks One Piece Treasure Cruise Pirate Rumble units by score, favorites, core filters, and custom stat focus.',
@@ -112,9 +106,6 @@ const publicRoutes = [
   },
   {
     path: 'tabs/auto-team-builder',
-    title: 'Auto Team Builder | OPTC Team Builder',
-    description:
-      'Find OPTC team candidates by enemy mechanics, character abilities, type filters, and team-building requirements.',
     heading: 'OPTC Auto Team Builder',
     paragraphs: [
       'Auto Team Builder helps find One Piece Treasure Cruise crew candidates by enemy mechanics, character abilities, type filters, class filters, manual locks, and team-building requirements.',
@@ -128,9 +119,6 @@ const publicRoutes = [
   },
   {
     path: 'tabs/manual-team-builder',
-    title: 'Manual Team Builder | OPTC Team Builder',
-    description:
-      'Build and save fixed OPTC crews manually with character slots, an optional ship, and a local cost budget.',
     heading: 'OPTC Manual Team Builder',
     paragraphs: [
       'Manual Team Builder is the fixed crew workspace for One Piece Treasure Cruise players who already know the exact characters they want to save.',
@@ -144,9 +132,6 @@ const publicRoutes = [
   },
   {
     path: 'tabs/captain-coverage',
-    title: 'Captain Coverage | OPTC Team Builder',
-    description:
-      'Pick an OPTC Captain and see which characters that Captain Ability boosts, with the full catalogue still listed and only your own filters narrowing it.',
     heading: 'OPTC Captain Coverage',
     paragraphs: [
       'Captain Coverage starts from a selected OPTC Captain and shows characters covered by that Captain Ability under strict type, class, cost, universal, and self-scope matching.',
@@ -159,9 +144,6 @@ const publicRoutes = [
   },
   {
     path: 'tabs/auto-team-builder-rumble',
-    title: 'Auto Team Rumble Builder | OPTC Team Builder',
-    description:
-      'Build a Pirate Rumble team from local OPTC rumble data with deterministic scoring and synergy ranking.',
     heading: 'OPTC Auto Team Rumble Builder',
     paragraphs: [
       'Auto Team Rumble Builder builds Pirate Rumble teams from local OPTC rumble data with deterministic scoring and synergy ranking.',
@@ -174,9 +156,6 @@ const publicRoutes = [
   },
   {
     path: 'tabs/crew-forge',
-    title: 'Crew Forge | OPTC Team Builder',
-    description:
-      'Import crew screenshots and match recognized slots against the OPTC character catalog.',
     heading: 'OPTC Crew Forge',
     paragraphs: [
       'Crew Forge imports One Piece Treasure Cruise crew screenshots and matches recognized slots against the OPTC character catalog. It helps turn an existing crew image into editable team data.',
@@ -189,9 +168,6 @@ const publicRoutes = [
   },
   {
     path: 'tabs/account',
-    title: 'Account | OPTC Team Builder',
-    description:
-      'Manage your optional Google account connection and Google Drive backup for OPTC Team Builder.',
     heading: 'OPTC Team Builder Account and Drive Sync',
     paragraphs: [
       'The account page manages optional Google sign-in and Google Drive sync for OPTC Team Builder.',
@@ -202,13 +178,9 @@ const publicRoutes = [
       { label: 'Open saved teams', path: 'tabs/saved-teams' },
       { label: 'Open character boxes', path: 'tabs/character-boxes' },
     ],
-    aliases: ['tabs/drive-sync'],
   },
   {
     path: 'tools/optc-team-builder',
-    title: 'OPTC Team Builder Tool | One Piece Treasure Cruise Crew Planner',
-    description:
-      'Use OPTC Team Builder to search One Piece Treasure Cruise characters, compare abilities, plan crews, and jump into auto team-building tools.',
     heading: 'OPTC Team Builder Tool',
     schemaType: 'SoftwareApplication',
     paragraphs: [
@@ -225,9 +197,6 @@ const publicRoutes = [
   },
   {
     path: 'tools/optc-auto-team-builder',
-    title: 'OPTC Auto Team Builder | Enemy Mechanics and Ability Filters',
-    description:
-      'Build One Piece Treasure Cruise teams by enemy mechanics, ability requirements, manual slots, type filters, class filters, and character candidates.',
     heading: 'OPTC Auto Team Builder',
     schemaType: 'SoftwareApplication',
     paragraphs: [
@@ -243,9 +212,6 @@ const publicRoutes = [
   },
   {
     path: 'tools/optc-rumble-team-builder',
-    title: 'OPTC Pirate Rumble Team Builder | Rumble Rankings and Synergy',
-    description:
-      'Build Pirate Rumble teams in OPTC with local Rumble data, active and bench slots, score ranking, type focus, and synergy checks.',
     heading: 'OPTC Pirate Rumble Team Builder',
     schemaType: 'SoftwareApplication',
     paragraphs: [
@@ -261,9 +227,6 @@ const publicRoutes = [
   },
   {
     path: 'tools/optc-character-database',
-    title: 'OPTC Character Database | One Piece Treasure Cruise Search',
-    description:
-      'Search the OPTC character database by id, name, type, class, specials, captain abilities, support effects, and Pirate Rumble data.',
     heading: 'OPTC Character Database',
     schemaType: 'CollectionPage',
     paragraphs: [
@@ -279,9 +242,6 @@ const publicRoutes = [
   },
   {
     path: 'guides/how-to-build-an-optc-team',
-    title: 'How to Build an OPTC Team | One Piece Treasure Cruise Guide',
-    description:
-      'Learn a practical OPTC team-building workflow: pick captains, cover enemy mechanics, choose utility, lock manual slots, and compare candidates.',
     heading: 'How to Build an OPTC Team',
     schemaType: 'WebPage',
     paragraphs: [
@@ -297,9 +257,6 @@ const publicRoutes = [
   },
   {
     path: 'guides/guided-build-compare-team-sharing',
-    title: 'Guided Build, Compare Mode, and Team Sharing | OPTC Team Builder',
-    description:
-      'Learn how to use guided Auto Team Builder, compare current, saved, and imported teams, and move saved teams with JSON, share links, and share codes.',
     heading: 'Guided Build, Compare Mode, and Team Sharing',
     schemaType: 'WebPage',
     paragraphs: [
@@ -318,9 +275,6 @@ const publicRoutes = [
   },
   {
     path: 'guides/optc-pirate-rumble-team-building',
-    title: 'OPTC Pirate Rumble Team Building Guide | Rumble Builder',
-    description:
-      'Build better OPTC Pirate Rumble teams by comparing Rumble passives, specials, stats, roles, active slots, bench slots, and type synergy.',
     heading: 'OPTC Pirate Rumble Team Building',
     schemaType: 'WebPage',
     paragraphs: [
@@ -336,9 +290,6 @@ const publicRoutes = [
   },
   {
     path: 'faq',
-    title: 'OPTC Team Builder FAQ | Questions About Building a Team',
-    description:
-      'Answers to common OPTC Team Builder questions: where to start, what the filters mean, why a result changed, and what to do when a suggested team looks wrong.',
     heading: 'OPTC Team Builder FAQ',
     paragraphs: [
       'The OPTC Team Builder FAQ answers the questions players ask while building a One Piece Treasure Cruise team: where to start between the two builders, what the filters and tags actually mean, and how they combine.',
@@ -351,39 +302,66 @@ const publicRoutes = [
       { label: 'Open Manual Team Builder', path: 'tabs/manual-team-builder' },
       { label: 'Read the team-building guide', path: 'guides/how-to-build-an-optc-team' },
     ],
-    aliases: ['tabs/faq'],
   },
   {
     path: 'privacy',
-    title: 'Privacy Policy | OPTC Team Builder',
-    description: 'Read the privacy policy for OPTC Team Builder.',
     heading: 'Privacy Policy',
     paragraphs: [
       'Read how OPTC Team Builder handles privacy for the web app, including local app data, optional analytics consent, and related browser storage.',
     ],
-    aliases: ['tabs/privacy'],
   },
   {
     path: 'cookies',
-    title: 'Cookie Policy | OPTC Team Builder',
-    description: 'Read the cookie policy for OPTC Team Builder.',
     heading: 'Cookie Policy',
     paragraphs: [
       'Read how OPTC Team Builder uses cookies or browser storage for app preferences, consent choices, and optional analytics behavior.',
     ],
-    aliases: ['tabs/cookies'],
   },
   {
     path: 'terms',
-    title: 'Terms of Service | OPTC Team Builder',
-    description: 'Read the terms of service for OPTC Team Builder.',
     heading: 'Terms of Service',
     paragraphs: [
       'Read the terms for using OPTC Team Builder, a fan-made One Piece Treasure Cruise planning tool and character catalog.',
     ],
-    aliases: ['tabs/terms'],
   },
 ];
+
+/*
+ * 869f12x57. The list above holds only what the generator alone renders -
+ * headings, paragraphs, in-page links, schema type. Every route's path,
+ * `<title>`, meta description and aliases now come from the app's own registry,
+ * because those four were also written in `app.routes.ts` and drifted: four
+ * routes carried two different descriptions and one carried two different
+ * titles, and `/faq` was published here while the app served it `noindex`.
+ */
+const publicRouteRecords = loadPublicRoutes(projectRoot);
+const publicRoutes = publicRouteRecords.map((record) => {
+  const content = publicRouteContent.find((entry) => entry.path === record.canonicalPath);
+
+  if (!content) {
+    throw new Error(
+      `No page content for public route "${record.canonicalPath}". Add it to publicRouteContent, ` +
+        'or remove the record from src/app/core/data/public-routes.data.ts.',
+    );
+  }
+
+  return {
+    ...content,
+    path: record.canonicalPath,
+    title: record.title,
+    description: record.description,
+    ...(record.aliases.length > 0 ? { aliases: record.aliases } : {}),
+  };
+});
+
+for (const content of publicRouteContent) {
+  if (!publicRouteRecords.some((record) => record.canonicalPath === content.path)) {
+    throw new Error(
+      `publicRouteContent has an entry for "${content.path}", which the public route registry ` +
+        'does not list. One of the two is wrong.',
+    );
+  }
+}
 
 const indexHtmlPath = path.join(outputDir, 'index.html');
 const indexHtml = await readFile(indexHtmlPath, 'utf8');

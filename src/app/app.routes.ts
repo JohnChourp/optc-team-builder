@@ -1,5 +1,7 @@
 import { type Routes } from '@angular/router';
 
+import { publicRouteSeo } from './core/data/public-routes.data';
+
 const loadSeoContentPage = () =>
   import('./pages/seo-content/seo-content.page').then((module) => module.SeoContentPage);
 
@@ -12,12 +14,7 @@ export const routes: Routes = [
         path: '',
         pathMatch: 'full',
         data: {
-          seo: {
-            title: 'OPTC Team Builder | One Piece Treasure Cruise Tools',
-            description:
-              'Plan OPTC crews with character search, Rumble rankings, captain coverage, auto team building, Crew Forge, saved teams, enemies, boxes, Drive sync, and offline tools.',
-            canonicalPath: '',
-          },
+          seo: publicRouteSeo(''),
         },
         loadComponent: () => import('./pages/home/home.page').then((module) => module.HomePage),
       },
@@ -32,12 +29,7 @@ export const routes: Routes = [
           {
             path: 'characters',
             data: {
-              seo: {
-                title: 'OPTC Characters | OPTC Team Builder',
-                description:
-                  'Browse the One Piece Treasure Cruise character catalog with stats, classes, abilities, and team-building data.',
-                canonicalPath: 'tabs/characters',
-              },
+              seo: publicRouteSeo('tabs/characters'),
             },
             loadComponent: () =>
               import('./pages/characters/characters.page').then((module) => module.CharactersPage),
@@ -45,12 +37,7 @@ export const routes: Routes = [
           {
             path: 'auto-team-builder',
             data: {
-              seo: {
-                title: 'Auto Team Builder | OPTC Team Builder',
-                description:
-                  'Find OPTC team candidates by enemy mechanics, character abilities, type filters, and team-building requirements.',
-                canonicalPath: 'tabs/auto-team-builder',
-              },
+              seo: publicRouteSeo('tabs/auto-team-builder'),
             },
             loadComponent: () =>
               import('./pages/auto-team-builder/auto-team-builder.page').then(
@@ -60,12 +47,7 @@ export const routes: Routes = [
           {
             path: 'manual-team-builder',
             data: {
-              seo: {
-                title: 'Manual Team Builder | OPTC Team Builder',
-                description:
-                  'Build and save fixed OPTC crews manually with character slots, an optional ship, and a local cost budget.',
-                canonicalPath: 'tabs/manual-team-builder',
-              },
+              seo: publicRouteSeo('tabs/manual-team-builder'),
             },
             loadComponent: () =>
               import('./pages/manual-team-builder/manual-team-builder.page').then(
@@ -75,12 +57,7 @@ export const routes: Routes = [
           {
             path: 'captain-coverage',
             data: {
-              seo: {
-                title: 'Captain Coverage | OPTC Team Builder',
-                description:
-                  'Pick an OPTC Captain and see which characters that Captain Ability boosts, with the full catalogue still listed and only your own filters narrowing it.',
-                canonicalPath: 'tabs/captain-coverage',
-              },
+              seo: publicRouteSeo('tabs/captain-coverage'),
             },
             loadComponent: () =>
               import('./pages/captain-coverage/captain-coverage.page').then(
@@ -90,12 +67,7 @@ export const routes: Routes = [
           {
             path: 'auto-team-builder-rumble',
             data: {
-              seo: {
-                title: 'Auto Team Rumble Builder | OPTC Team Builder',
-                description:
-                  'Build a Pirate Rumble team from local OPTC rumble data with deterministic scoring and synergy ranking.',
-                canonicalPath: 'tabs/auto-team-builder-rumble',
-              },
+              seo: publicRouteSeo('tabs/auto-team-builder-rumble'),
             },
             loadComponent: () =>
               import('./pages/auto-team-builder-rumble/auto-team-builder-rumble.page').then(
@@ -105,12 +77,7 @@ export const routes: Routes = [
           {
             path: 'rumble-characters',
             data: {
-              seo: {
-                title: 'Rumble Characters | OPTC Team Builder',
-                description:
-                  'Rank One Piece Treasure Cruise Pirate Rumble characters by full Rumble score, favorites, core filters, and custom stat focus.',
-                canonicalPath: 'tabs/rumble-characters',
-              },
+              seo: publicRouteSeo('tabs/rumble-characters'),
             },
             loadComponent: () =>
               import('./pages/rumble-characters/rumble-characters.page').then(
@@ -120,12 +87,7 @@ export const routes: Routes = [
           {
             path: 'crew-forge',
             data: {
-              seo: {
-                title: 'Crew Forge | OPTC Team Builder',
-                description:
-                  'Import crew screenshots and match recognized slots against the OPTC character catalog.',
-                canonicalPath: 'tabs/crew-forge',
-              },
+              seo: publicRouteSeo('tabs/crew-forge'),
             },
             loadComponent: () =>
               import('./pages/crew-forge/crew-forge.page').then((module) => module.CrewForgePage),
@@ -171,12 +133,7 @@ export const routes: Routes = [
           {
             path: 'account',
             data: {
-              seo: {
-                title: 'Account | OPTC Team Builder',
-                description:
-                  'Manage your optional Google account connection and Google Drive backup for OPTC Team Builder.',
-                canonicalPath: 'tabs/account',
-              },
+              seo: publicRouteSeo('tabs/account'),
             },
             loadComponent: () =>
               import('./pages/account/account.page').then((module) => module.AccountPage),
@@ -189,42 +146,27 @@ export const routes: Routes = [
           {
             path: 'faq',
             /*
-             * 869f12x57. Without `data.seo` the app treats a route as private:
-             * `findSeoDataForUrl` falls back to `defaultSeo`, whose `indexable`
-             * is false, so `AppComponent` writes `noindex,follow` and rewrites
-             * the canonical to the home page once Angular hydrates.
+             * 869f12x57. A route with no `data.seo` is private as far as the app
+             * is concerned: `findSeoDataForUrl` falls back to `defaultSeo`,
+             * whose `indexable` is false, so `AppComponent` writes
+             * `noindex,follow` and rewrites the canonical to the home page.
              *
-             * That is what shipped. 869f12x4k put `/faq` into the generated
-             * sitemap and the static page carries `index,follow`, but measured
-             * against production on 2026-09-14 the hydrated page served
-             * `noindex,follow` with `canonical=https://optcteambuilder.com/` -
-             * advertising a URL and then telling crawlers to ignore it as a
-             * duplicate of the home page. Googlebot runs the JS, so the runtime
-             * tag is the one that counts.
-             *
-             * The title and description are byte-identical to the generator's
-             * entry for `faq` on purpose, which is the duplication 869f12x57
-             * exists to remove; `npm run routes:sitemap-coverage` fails if the
-             * two ever disagree.
+             * That is what `/faq` did. 869f12x4k put it in the generated sitemap
+             * and the static page carried `index,follow`, but measured against
+             * production on 2026-09-14 the hydrated page served `noindex,follow`
+             * with `canonical=https://optcteambuilder.com/` - advertising a URL
+             * and then disowning it. Googlebot runs the JS, so the runtime tag
+             * is the one that counts.
              */
             data: {
-              seo: {
-                title: 'OPTC Team Builder FAQ | Questions About Building a Team',
-                description:
-                  'Answers to common OPTC Team Builder questions: where to start, what the filters mean, why a result changed, and what to do when a suggested team looks wrong.',
-                canonicalPath: 'faq',
-              },
+              seo: publicRouteSeo('tabs/faq'),
             },
             loadComponent: () => import('./pages/faq/faq.page').then((module) => module.FaqPage),
           },
           {
             path: 'privacy',
             data: {
-              seo: {
-                title: 'Privacy Policy | OPTC Team Builder',
-                description: 'Read the privacy policy for OPTC Team Builder.',
-                canonicalPath: 'privacy',
-              },
+              seo: publicRouteSeo('tabs/privacy'),
             },
             loadComponent: () =>
               import('./pages/privacy-policy/privacy-policy.page').then(
@@ -234,11 +176,7 @@ export const routes: Routes = [
           {
             path: 'cookies',
             data: {
-              seo: {
-                title: 'Cookie Policy | OPTC Team Builder',
-                description: 'Read the cookie policy for OPTC Team Builder.',
-                canonicalPath: 'cookies',
-              },
+              seo: publicRouteSeo('tabs/cookies'),
             },
             loadComponent: () =>
               import('./pages/cookie-policy/cookie-policy.page').then(
@@ -248,11 +186,7 @@ export const routes: Routes = [
           {
             path: 'terms',
             data: {
-              seo: {
-                title: 'Terms of Service | OPTC Team Builder',
-                description: 'Read the terms of service for OPTC Team Builder.',
-                canonicalPath: 'terms',
-              },
+              seo: publicRouteSeo('tabs/terms'),
             },
             loadComponent: () =>
               import('./pages/terms-of-service/terms-of-service.page').then(
@@ -281,12 +215,7 @@ export const routes: Routes = [
     path: 'tools/optc-team-builder',
     data: {
       contentIcon: 'tools',
-      seo: {
-        title: 'OPTC Team Builder Tool | One Piece Treasure Cruise Crew Planner',
-        description:
-          'Use OPTC Team Builder to search One Piece Treasure Cruise characters, compare abilities, plan crews, and jump into auto team-building tools.',
-        canonicalPath: 'tools/optc-team-builder',
-      },
+      seo: publicRouteSeo('tools/optc-team-builder'),
       content: {
         eyebrow: 'OPTC tool',
         title: 'OPTC Team Builder Tool',
@@ -318,12 +247,7 @@ export const routes: Routes = [
     path: 'tools/optc-auto-team-builder',
     data: {
       contentIcon: 'flash',
-      seo: {
-        title: 'OPTC Auto Team Builder | Enemy Mechanics and Ability Filters',
-        description:
-          'Build One Piece Treasure Cruise teams by enemy mechanics, ability requirements, manual slots, type filters, class filters, and character candidates.',
-        canonicalPath: 'tools/optc-auto-team-builder',
-      },
+      seo: publicRouteSeo('tools/optc-auto-team-builder'),
       content: {
         eyebrow: 'Auto builder',
         title: 'OPTC Auto Team Builder',
@@ -355,12 +279,7 @@ export const routes: Routes = [
     path: 'tools/optc-rumble-team-builder',
     data: {
       contentIcon: 'rumble',
-      seo: {
-        title: 'OPTC Pirate Rumble Team Builder | Rumble Rankings and Synergy',
-        description:
-          'Build Pirate Rumble teams in OPTC with local Rumble data, active and bench slots, score ranking, type focus, and synergy checks.',
-        canonicalPath: 'tools/optc-rumble-team-builder',
-      },
+      seo: publicRouteSeo('tools/optc-rumble-team-builder'),
       content: {
         eyebrow: 'Pirate Rumble',
         title: 'OPTC Pirate Rumble Team Builder',
@@ -392,12 +311,7 @@ export const routes: Routes = [
     path: 'tools/optc-character-database',
     data: {
       contentIcon: 'catalog',
-      seo: {
-        title: 'OPTC Character Database | One Piece Treasure Cruise Search',
-        description:
-          'Search the OPTC character database by id, name, type, class, specials, captain abilities, support effects, and Pirate Rumble data.',
-        canonicalPath: 'tools/optc-character-database',
-      },
+      seo: publicRouteSeo('tools/optc-character-database'),
       content: {
         eyebrow: 'Character database',
         title: 'OPTC Character Database',
@@ -429,12 +343,7 @@ export const routes: Routes = [
     path: 'guides/how-to-build-an-optc-team',
     data: {
       contentIcon: 'tools',
-      seo: {
-        title: 'How to Build an OPTC Team | One Piece Treasure Cruise Guide',
-        description:
-          'Learn a practical OPTC team-building workflow: pick captains, cover enemy mechanics, choose utility, lock manual slots, and compare candidates.',
-        canonicalPath: 'guides/how-to-build-an-optc-team',
-      },
+      seo: publicRouteSeo('guides/how-to-build-an-optc-team'),
       content: {
         eyebrow: 'Team-building guide',
         title: 'How to Build an OPTC Team',
@@ -466,12 +375,7 @@ export const routes: Routes = [
     path: 'guides/guided-build-compare-team-sharing',
     data: {
       contentIcon: 'flash',
-      seo: {
-        title: 'Guided Build, Compare Mode, and Team Sharing | OPTC Team Builder',
-        description:
-          'Learn how to use guided Auto Team Builder, compare current, saved, and imported teams, and move saved teams with JSON, share links, and share codes.',
-        canonicalPath: 'guides/guided-build-compare-team-sharing',
-      },
+      seo: publicRouteSeo('guides/guided-build-compare-team-sharing'),
       content: {
         eyebrow: 'Feature guide',
         title: 'Guided Build, Compare Mode, and Team Sharing',
@@ -511,12 +415,7 @@ export const routes: Routes = [
     path: 'guides/optc-pirate-rumble-team-building',
     data: {
       contentIcon: 'rumble',
-      seo: {
-        title: 'OPTC Pirate Rumble Team Building Guide | Rumble Builder',
-        description:
-          'Build better OPTC Pirate Rumble teams by comparing Rumble passives, specials, stats, roles, active slots, bench slots, and type synergy.',
-        canonicalPath: 'guides/optc-pirate-rumble-team-building',
-      },
+      seo: publicRouteSeo('guides/optc-pirate-rumble-team-building'),
       content: {
         eyebrow: 'Pirate Rumble guide',
         title: 'OPTC Pirate Rumble Team Building',

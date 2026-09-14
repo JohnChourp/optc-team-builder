@@ -367,8 +367,21 @@ function extractPlaceholders(value) {
 function checkPublicGuideSources({ appRoot, publicGuideCases, errors }) {
   const appRoutesPath = path.join(appRoot, 'src', 'app', 'app.routes.ts');
   const seoGeneratorPath = path.join(appRoot, 'scripts', 'generate-seo-pages.mjs');
+  /*
+   * 869f12x57. A guide's canonical path and `<title>` used to be asserted in
+   * BOTH of the files above, which is precisely why they were a duplication:
+   * this check was the sixth place the public route list was written down, and
+   * it kept the first five honest by grepping them for each other's strings.
+   *
+   * They now live once, in the registry, so that is where they are asserted.
+   * What stays pointed at the router and the generator is what each of them
+   * genuinely owns: the route declaration itself, the in-page heading, and the
+   * prose fragments that prove the guide still says what it is meant to say.
+   */
+  const registryPath = path.join(appRoot, 'src', 'app', 'core', 'data', 'public-routes.data.ts');
   const appRoutes = readSourceFile(appRoot, appRoutesPath, errors);
   const seoGenerator = readSourceFile(appRoot, seoGeneratorPath, errors);
+  const publicRouteRegistry = readSourceFile(appRoot, registryPath, errors);
 
   for (const guide of publicGuideCases) {
     expectSourceContains({
@@ -378,11 +391,17 @@ function checkPublicGuideSources({ appRoot, publicGuideCases, errors }) {
       guideId: guide.id,
       values: [
         routePathAssignment('path', guide.path),
-        routePathAssignment('canonicalPath', guide.path),
-        guide.seoTitle,
         guide.heading,
         ...guide.appRouteFragments,
       ],
+      errors,
+    });
+    expectSourceContains({
+      source: publicRouteRegistry,
+      appRoot,
+      filePath: registryPath,
+      guideId: guide.id,
+      values: [routePathAssignment('canonicalPath', guide.path), guide.seoTitle],
       errors,
     });
     expectSourceContains({
@@ -390,7 +409,7 @@ function checkPublicGuideSources({ appRoot, publicGuideCases, errors }) {
       appRoot,
       filePath: seoGeneratorPath,
       guideId: guide.id,
-      values: [guide.path, guide.seoTitle, guide.heading, ...guide.seoGeneratorFragments],
+      values: [guide.path, guide.heading, ...guide.seoGeneratorFragments],
       errors,
     });
 
