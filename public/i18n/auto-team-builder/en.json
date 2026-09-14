@@ -779,7 +779,7 @@
     "label": "Mode",
     "boosted": {
       "title": "Boosted this event",
-      "copy": "Tap anyone your event screen says is boosted. Unlike the list above, this one does change what the builder picks: a boosted character is preferred among the characters it would have chosen anyway - it never makes an illegal team legal. It stays until you change it, so clear it when the event ends.",
+      "copy": "Tap anyone your event screen says is boosted. Unlike the list above, this one does change what the builder picks - in the Captain seats as well as the subs: a boosted character is preferred among the characters it would have chosen anyway. It never makes an illegal team legal, and it never beats a Captain you picked yourself or one that covers more of what you asked for. It stays until you change it, so clear it when the event ends.",
       "summary": "{{marked}} marked, {{onTeam}} on this team",
       "clear": "Clear the boosted list"
     },

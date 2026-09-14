@@ -333,6 +333,161 @@ describe('runAutoTeamBuildSearch', () => {
   });
 
   /*
+   * 869f1rmuu. Boost weighting for the LEADER seats, and where it sits in the order.
+   *
+   * The same three-captain fixture the test below uses: all equal on requirements, so the newest
+   * id decides and 5990 wins. That makes the boost's position testable one boundary at a time -
+   * it must beat the arbitrary id fallback, and it must lose to everything the reader asked for.
+   */
+  describe('boosted leaders', () => {
+    const captain = (id: number, secondaryClass: string) =>
+      createCharacterRecord({
+        id,
+        primaryClass: 'Fighter',
+        secondaryClass,
+        classes: secondaryClass ? ['Fighter', secondaryClass] : ['Fighter'],
+        detail: {
+          captainAbility: 'Boosts ATK of DEX and Fighter characters by 4x.',
+          specialText: 'Deals 50x character ATK in typeless damage to one enemy.',
+        },
+      });
+    const subs = () =>
+      [5701, 5702, 5703, 5704].map((id) =>
+        createCharacterRecord({
+          id,
+          primaryClass: 'Fighter',
+          secondaryClass: 'Slasher',
+          detail: { specialText: 'Boosts ATK of Fighter characters by 2.5x for 1 turn.' },
+        }),
+      );
+    const records = () => [captain(5990, 'Slasher'), captain(5970, ''), captain(5960, ''), ...subs()];
+    const captainOf = (result: ReturnType<typeof runAutoTeamBuildSearch>) =>
+      result?.slots.find((slot) => slot.role === 'captain')?.character.id;
+
+    it('without a boost the newest id wins', () => {
+      expect(captainOf(runAutoTeamBuildSearch(records(), createInput(['DEX'], ['Fighter', 'Slasher']))))
+        .toBe(5990);
+    });
+
+    it('a boosted leader beats the newest-id fallback', () => {
+      const result = runAutoTeamBuildSearch(records(), {
+        ...createInput(['DEX'], ['Fighter', 'Slasher']),
+        boostedCharacterIds: [5960],
+      });
+
+      // 5960 is the OLDEST of the three and would never have won on id alone.
+      expect(captainOf(result)).toBe(5960);
+    });
+
+    /*
+     * The half that matters. Requirement coverage is what the reader asked for; a boost is a fact
+     * about this week, and it must not overrule them. 5970 is given the requirement and 5960 the
+     * boost, so the two signals point at different captains and only one can win.
+     */
+    it('a boost does not beat a leader that covers more of the requirements', () => {
+      const requirementCaptain = createCharacterRecord({
+        id: 5970,
+        primaryClass: 'Fighter',
+        classes: ['Fighter'],
+        detail: {
+          captainAbility: 'Boosts ATK of DEX and Fighter characters by 4x.',
+          specialText: 'Reduces Bind duration by 5 turns.',
+          builderAbilities: [
+            {
+              key: 'remove_bind',
+              label: 'Remove Bind',
+              minTurns: 5,
+              isCompleteRemoval: false,
+              slotTokens: ['captain'],
+              source: 'specialText',
+            },
+          ],
+        },
+      });
+      const withRequirement = [
+        captain(5990, 'Slasher'),
+        requirementCaptain,
+        captain(5960, ''),
+        ...subs(),
+      ];
+      const result = runAutoTeamBuildSearch(withRequirement, {
+        ...createInput(['DEX'], ['Fighter', 'Slasher'], {
+          requiredAbilities: [
+            {
+              abilityKey: 'remove_bind',
+              minTurns: 5,
+              slotTokens: [],
+              requiredCharacterCount: 1,
+              /*
+               * `slotScope: 'leader'` is what makes a requirement leader-scoped -
+               * `isLeaderScopedAbilityRequirement` reads the scope, never the slot tokens. With
+               * tokens alone the leader requirement score stayed 0 for every captain and the boost
+               * decided, which looked like the boost outranking a requirement and was not.
+               */
+              slotScope: 'leader',
+            },
+          ],
+        }),
+        boostedCharacterIds: [5960],
+      });
+
+      // The requirement step runs before the boost step, so the boosted 5960 does not take the seat.
+      expect(captainOf(result)).toBe(5970);
+    });
+
+    it('boosting every leader changes nothing, because it is a tie', () => {
+      const boostedAll = runAutoTeamBuildSearch(records(), {
+        ...createInput(['DEX'], ['Fighter', 'Slasher']),
+        boostedCharacterIds: [5990, 5970, 5960],
+      });
+
+      expect(captainOf(boostedAll)).toBe(
+        captainOf(runAutoTeamBuildSearch(records(), createInput(['DEX'], ['Fighter', 'Slasher']))),
+      );
+    });
+
+    it('an empty boost list leaves the whole team identical', () => {
+      const empty = runAutoTeamBuildSearch(records(), {
+        ...createInput(['DEX'], ['Fighter', 'Slasher']),
+        boostedCharacterIds: [],
+      });
+      const control = runAutoTeamBuildSearch(records(), createInput(['DEX'], ['Fighter', 'Slasher']));
+
+      expect((empty?.slots ?? []).map((slot) => slot.character.id)).toEqual(
+        (control?.slots ?? []).map((slot) => slot.character.id),
+      );
+    });
+
+    it('a manual Captain still wins over a boosted one', () => {
+      const result = runAutoTeamBuildSearch(records(), {
+        ...createInput(['DEX'], ['Fighter', 'Slasher'], {
+          manualSlots: createEmptyAutoBuildManualSlots().map((slot) =>
+            slot.role === 'captain' ? { ...slot, characterIds: [5970] } : slot,
+          ),
+        }),
+        boostedCharacterIds: [5960],
+      });
+
+      // A lock is not a ranking signal at all - the boost cannot reach past it.
+      expect(captainOf(result)).toBe(5970);
+    });
+
+    it('the losing leader is named as a tie-break, which is what a boost is', () => {
+      const result = runAutoTeamBuildSearch(records(), {
+        ...createInput(['DEX'], ['Fighter', 'Slasher']),
+        boostedCharacterIds: [5960],
+      });
+      const rejected = result?.slots
+        .find((slot) => slot.role === 'captain')
+        ?.explanation?.rejectedCandidates.find((candidate) => candidate.characterId === 5990);
+
+      // 5990 also lands in the Friend Captain seat, so `alreadySelected` rides along - what this
+      // pins is that the ranking reason given is a TIE-BREAK, which is exactly what a boost is.
+      expect(rejected?.reasons).toContainEqual({ code: 'rankingTieBreak' });
+    });
+  });
+
+  /*
    * 869exmmgk: leaders are ranked on requirements and then the newest id - never on selected
    * filters - so "matches fewer selected filters" was never why a leader lost. And a leader that
    * ranks ahead but lost to a manual Captain lost to the lock alone.
