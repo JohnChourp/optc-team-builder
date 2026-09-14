@@ -236,6 +236,7 @@ describe('ci-check-routing', () => {
       'i18n-ownership',
       'engine-divergences',
       'content-ladder',
+      'published-teams',
       'public-entry-synthetics',
       'i18n-regression',
       'drive-sync-server',

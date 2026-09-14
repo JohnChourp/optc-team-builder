@@ -50,6 +50,12 @@ import {
   type SavedTeam,
   type ShipRecord,
 } from '../../core/models/optc.models';
+import {
+  buildPublishedTeamCards,
+  buildSavedTeamFromPublished,
+  publishedTeamCharacterIds,
+  type PublishedTeamCard,
+} from './published-teams.utils';
 import { AppI18nService } from '../../core/services/app-i18n.service';
 import { resolveBrowserStorageFailureDiagnostic } from '../../core/services/browser-storage-error.utils';
 import {
@@ -279,6 +285,13 @@ export class SavedTeamsPage implements OnInit {
 
   public readonly loading = signal(true);
   public readonly savedTeams;
+  /**
+   * 869f1p4wx. The zero-backend half of 869f12xc8: a curated read-only set, shipped in the bundle.
+   * Nothing is submitted, so there is nothing to moderate and nothing stored on anyone's behalf.
+   */
+  public readonly publishedTeamCards = signal<PublishedTeamCard[]>([]);
+  /** The team just imported, so the card can confirm it rather than looking inert. */
+  public readonly publishedImportedId = signal<string | null>(null);
   public readonly savedTeamCards = signal<SavedTeamPreviewCard[]>([]);
   /**
    * Flat mirror of the tag sets, kept so anything still holding the legacy
@@ -410,7 +423,64 @@ export class SavedTeamsPage implements OnInit {
     this.applySavedTeamsStorageRecoveryFeedback();
     this.seedAbilityTagSetSelections();
     this.restoreViewState();
+    await Promise.all([this.refreshSavedTeamCards(), this.loadPublishedTeams()]);
+  }
+
+  /**
+   * 869f1p4wx. The read-only published set, resolved against the shipped dataset.
+   *
+   * Never rejects: this is an extra shelf on the page, and a dataset read that fails must not take
+   * the reader's own saved teams down with it.
+   */
+  private async loadPublishedTeams(): Promise<void> {
+    try {
+      const characters = await this.repository.getCharactersByIds(publishedTeamCharacterIds());
+
+      this.publishedTeamCards.set(
+        buildPublishedTeamCards(new Map(characters.map((character) => [character.id, character]))),
+      );
+    } catch {
+      this.publishedTeamCards.set([]);
+    }
+  }
+
+  /**
+   * Copies a published team into the reader's own saved teams.
+   *
+   * The provenance rides along in the notes: once it is in Saved Teams it is indistinguishable
+   * from a team the reader built, and a worked example that loses the sentence saying so becomes a
+   * claim nobody made.
+   */
+  /** The rationale in the reader's language, like every other player-facing string here. */
+  public publishedTeamRationale(card: PublishedTeamCard): string {
+    return this.i18n.activeLanguage() === 'el'
+      ? card.team.rationale.el
+      : card.team.rationale.en;
+  }
+
+  public publishedTeamMemberNames(card: PublishedTeamCard): string {
+    return card.members
+      .map((member) => member?.name ?? this.i18n.translate('published.emptySeat', undefined, 'saved-teams'))
+      .join(' · ');
+  }
+
+  public async importPublishedTeam(card: PublishedTeamCard): Promise<void> {
+    if (!card.complete) {
+      return;
+    }
+
+    await this.userState.saveTeam(
+      buildSavedTeamFromPublished(
+        card.team,
+        this.i18n.translate(
+          'published.importedNote',
+          { stage: card.team.stage, group: card.team.group },
+          'saved-teams',
+        ),
+      ),
+    );
     await this.refreshSavedTeamCards();
+    this.publishedImportedId.set(card.team.id);
   }
 
   public async ionViewWillEnter(): Promise<void> {
