@@ -1165,6 +1165,22 @@ export class SettingsPage implements OnInit {
       });
     }
 
+    if (payload.crewForgeProfiles !== undefined) {
+      await this.collectAllDataSectionResult({
+        failedSections,
+        label: this.resolveAllDataSectionLabel('crewForgeProfiles'),
+        run: async () =>
+          this.buildCrewForgeProfilesImportFeedback({
+            ...(await this.userDataTransfer.importCrewForgeProfilesPayload(
+              payload.crewForgeProfiles as unknown,
+            )),
+            fileName,
+          }),
+        successfulSections,
+        resolveError: (error) => this.resolveAllDataImportError(error),
+      });
+    }
+
     if (payload.savedEnemies !== undefined) {
       await this.collectAllDataSectionResult({
         failedSections,
@@ -1250,6 +1266,7 @@ export class SettingsPage implements OnInit {
     section:
       | 'characterBoxes'
       | 'characterOverrides'
+      | 'crewForgeProfiles'
       | 'favoriteShips'
       | 'favorites'
       | 'savedEnemies'
@@ -1265,6 +1282,8 @@ export class SettingsPage implements OnInit {
         return this.i18n.translate('management.characterBoxes.title', undefined, 'settings');
       case 'characterOverrides':
         return this.i18n.translate('management.characterOverrides.title', undefined, 'settings');
+      case 'crewForgeProfiles':
+        return this.i18n.translate('management.crewForgeProfiles.title', undefined, 'settings');
       case 'savedTeams':
         return this.i18n.translate('management.savedTeams.title', undefined, 'settings');
       case 'savedRumbleTeams':
@@ -1728,6 +1747,59 @@ export class SettingsPage implements OnInit {
       ...stats,
       fileName: input.fileName,
     });
+  }
+
+  private buildCrewForgeProfilesImportFeedback(stats: {
+    addedCount: number;
+    builtInProfileCount: number;
+    duplicateProfileCount: number;
+    fileName: string;
+    invalidProfileCount: number;
+    updatedCount: number;
+  }): TransferFeedback {
+    const details = [
+      this.i18n.translate(
+        'management.crewForgeProfiles.feedback.loadedFromFile',
+        { fileName: stats.fileName },
+        'settings',
+      ),
+    ];
+    const statLines: [number, string][] = [
+      [stats.addedCount, 'added'],
+      [stats.updatedCount, 'updated'],
+      [stats.invalidProfileCount, 'invalid'],
+      [stats.duplicateProfileCount, 'duplicates'],
+      [stats.builtInProfileCount, 'builtIn'],
+    ];
+
+    for (const [count, key] of statLines) {
+      if (count > 0) {
+        details.push(
+          this.i18n.translate(
+            `management.crewForgeProfiles.feedback.stats.${key}`,
+            { count },
+            'settings',
+          ),
+        );
+      }
+    }
+
+    const hasWarnings =
+      stats.invalidProfileCount > 0 ||
+      stats.duplicateProfileCount > 0 ||
+      stats.builtInProfileCount > 0;
+
+    return {
+      tone: hasWarnings ? 'warning' : 'success',
+      title: this.i18n.translate(
+        hasWarnings
+          ? 'management.crewForgeProfiles.feedback.warningTitle'
+          : 'management.crewForgeProfiles.feedback.successTitle',
+        undefined,
+        'settings',
+      ),
+      details,
+    };
   }
 
   private buildCharacterOverridesImportFeedback(stats: {

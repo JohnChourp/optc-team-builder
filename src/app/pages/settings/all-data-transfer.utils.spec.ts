@@ -439,7 +439,7 @@ describe('every scope survives the round trip', () => {
 
   it('guards against the list itself shrinking', () => {
     // A guard that reads an empty list passes for the wrong reason; this is how that would rot.
-    expect(ALL_DATA_TRANSFER_SCOPES).toHaveLength(7);
+    expect(ALL_DATA_TRANSFER_SCOPES).toHaveLength(8);
     expect(new Set(ALL_DATA_TRANSFER_SCOPES).size).toBe(ALL_DATA_TRANSFER_SCOPES.length);
   });
 
@@ -459,6 +459,61 @@ describe('every scope survives the round trip', () => {
 
     for (const scope of ALL_DATA_TRANSFER_SCOPES) {
       expect(body, `importAllDataBundle restores ${scope}`).toContain(`payload.${scope} !== undefined`);
+    }
+  });
+
+  /*
+   * 869f12x4p. A third hole, found while adding the eighth scope, and the one the two tests above
+   * cannot see: the PRODUCER.
+   *
+   * `UserDataTransferService.buildAllDataPayload` hands a `sections` object to the builder, and
+   * every field of `AllDataTransferSections` is optional - it has to be, because a caller may
+   * legitimately export a subset. So a scope the service never supplies reaches the builder as
+   * `undefined`, the builder still writes the key, and `names every scope on a payload built from
+   * nothing` above still passes: the key is present, its value is not.
+   *
+   * That is the same silent hole as the other two, one step upstream, and it is the step that
+   * actually fills the reader's backup. Bound the same way, by reading the source.
+   */
+  it('SUPPLIES every scope from the service that builds the real payload', () => {
+    const service = readFileSync(
+      resolve(process.cwd(), 'src/app/core/services/user-data-transfer.service.ts'),
+      'utf8',
+    );
+    const builder = service.slice(service.indexOf('public async buildAllDataPayload'));
+    /*
+     * Only the object literal handed to the builder, not the whole method: `favorites` and
+     * `favoriteShips` are also local `const` names a few lines above, so a looser slice would
+     * pass on the destructuring line and certify the two scopes it never checked.
+     */
+    const sections = builder.slice(
+      builder.indexOf('buildAllDataTransferPayload('),
+      builder.indexOf('exportedAt,\n    );'),
+    );
+
+    for (const scope of ALL_DATA_TRANSFER_SCOPES) {
+      // Shorthand (`favorites,`) and explicit (`savedTeams: ...`) both count as supplied.
+      expect(sections, `buildAllDataPayload supplies ${scope}`).toMatch(
+        new RegExp(`\\b${scope}\\s*[,:]`, 'u'),
+      );
+    }
+  });
+
+  it('APPLIES every scope on the Drive sync path too', () => {
+    /*
+     * `applyAllDataPayload` is the Drive-sync twin of `importAllDataBundle`, with the same
+     * hand-written per-scope blocks and the same failure mode. A scope exported to Drive and never
+     * applied back is a backup that restores short, which is the defect this subtask started from.
+     */
+    const service = readFileSync(
+      resolve(process.cwd(), 'src/app/core/services/user-data-transfer.service.ts'),
+      'utf8',
+    );
+    const applier = service.slice(service.indexOf('public async applyAllDataPayload'));
+    const body = applier.slice(0, applier.indexOf('\n  public '));
+
+    for (const scope of ALL_DATA_TRANSFER_SCOPES) {
+      expect(body, `applyAllDataPayload restores ${scope}`).toContain(`payload.${scope} !== undefined`);
     }
   });
 });

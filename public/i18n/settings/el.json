@@ -212,6 +212,7 @@
       "characterOverrides": "{{count}} character overrides",
       "favorites": "{{count}} favorites",
       "favoriteShips": "{{count}} αγαπημένα καράβια",
+      "crewForgeProfiles": "{{count}} image profiles του Crew Forge",
       "savedEnemies": "{{count}} saved enemies",
       "savedRumbleTeams": "{{count}} saved Rumble teams",
       "savedTeams": "{{count}} saved teams"
@@ -289,6 +290,21 @@
       "import": "Εισαγωγή character overrides",
       "processing": "Γίνεται import των character overrides...",
       "title": "Character Overrides"
+    },
+    "crewForgeProfiles": {
+      "feedback": {
+        "loadedFromFile": "Φορτώθηκε από το {{fileName}}.",
+        "stats": {
+          "added": "Προστέθηκαν {{count}} νέα image profiles του Crew Forge.",
+          "builtIn": "Παραλείφθηκαν {{count}} έτοιμα profiles, που τα φέρνει ήδη η εφαρμογή.",
+          "duplicates": "Συγχωνεύτηκαν {{count}} διπλά ids profiles του Crew Forge.",
+          "invalid": "Αγνοήθηκαν {{count}} μη έγκυρες εγγραφές profiles του Crew Forge.",
+          "updated": "Ενημερώθηκαν {{count}} υπάρχοντα image profiles του Crew Forge."
+        },
+        "successTitle": "Το import των image profiles του Crew Forge ολοκληρώθηκε",
+        "warningTitle": "Το import των image profiles του Crew Forge ολοκληρώθηκε με παρατηρήσεις"
+      },
+      "title": "Crew Forge Image Profiles"
     },
     "favorites": {
       "copy": "Κάνε export ή import του OPTCbx-compatible favorites αρχείου σου ή καθάρισε όλη τη λίστα favorites από αυτή τη συσκευή.",

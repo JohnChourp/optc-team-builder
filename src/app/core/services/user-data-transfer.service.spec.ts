@@ -137,6 +137,7 @@ describe('UserDataTransferService', () => {
     ).toEqual({
       characterBoxesCount: 1,
       characterOverridesCount: 0,
+      crewForgeProfilesCount: 0,
       favoriteCharacterCount: 2,
       favoriteShipCount: 1,
       savedEnemiesCount: 1,
@@ -256,6 +257,12 @@ function createDependencies() {
     clearAllSavedTeams: vi.fn().mockResolvedValue(undefined),
     clearAllSavedEnemies: vi.fn().mockResolvedValue(undefined),
     clearAllSavedRumbleTeams: vi.fn().mockResolvedValue(undefined),
+    crewForgeImageProfiles: () => [],
+    crewForgeLastImageProfileId: () => null,
+    readyCrewForgeImageProfiles: vi.fn().mockResolvedValue(undefined),
+    saveCrewForgeImageProfile: vi.fn().mockResolvedValue(null),
+    setCrewForgeLastImageProfileId: vi.fn().mockResolvedValue(undefined),
+    clearAllCrewForgeImageProfiles: vi.fn().mockResolvedValue(undefined),
     mergeImportedCharacterBoxes: vi.fn().mockResolvedValue({
       addedCount: 1,
       boxes: [],

@@ -9,6 +9,7 @@ import { type SavedRumbleTeamsTransferPayload } from '../saved-rumble-teams/save
 import { type SavedEnemiesTransferPayload } from '../saved-enemies/saved-enemies-transfer.utils';
 import { type CharacterBoxesTransferPayload } from '../character-boxes/character-boxes-transfer.utils';
 import { type CharacterOverridesTransferPayload } from '../character-detail/character-overrides-transfer.utils';
+import { type CrewForgeProfilesTransferPayload } from '../crew-forge/crew-forge-profiles-transfer.utils';
 import { cloneRequiredCharacterGroups } from '../../core/services/required-character-groups.utils';
 
 export interface AllDataTransferPayload {
@@ -22,6 +23,7 @@ export interface AllDataTransferPayload {
   savedEnemies?: SavedEnemiesTransferPayload;
   characterBoxes?: CharacterBoxesTransferPayload;
   characterOverrides?: CharacterOverridesTransferPayload;
+  crewForgeProfiles?: CrewForgeProfilesTransferPayload;
 }
 
 /**
@@ -46,6 +48,14 @@ export const ALL_DATA_TRANSFER_SCOPES = [
   'savedEnemies',
   'characterBoxes',
   'characterOverrides',
+  /*
+   * 869f12x4p. Added after the list already existed: the Crew Forge image
+   * profiles a player tuned were the only durable user data the "export all
+   * data" file had never carried, so an export/import round trip lost them
+   * silently. The compile-enforced SCOPE_CLONERS record below is what made
+   * adding this one edit-and-follow-the-errors rather than a hunt.
+   */
+  'crewForgeProfiles',
 ] as const;
 
 export type AllDataTransferScope = (typeof ALL_DATA_TRANSFER_SCOPES)[number];
@@ -210,6 +220,28 @@ function cloneCharacterOverridesPayload(
   };
 }
 
+function cloneCrewForgeProfilesPayload(
+  payload: CrewForgeProfilesTransferPayload | undefined,
+): CrewForgeProfilesTransferPayload | undefined {
+  if (!payload) {
+    return undefined;
+  }
+
+  return {
+    ...payload,
+    profiles: payload.profiles.map((profile) => ({
+      ...profile,
+      slotDefinitions: profile.slotDefinitions.map((slot) => ({ ...slot })),
+      preprocess: { ...profile.preprocess },
+      examples: profile.examples.map((example) => ({ ...example })),
+      exemplars: profile.exemplars.map((exemplar) => ({
+        ...exemplar,
+        fingerprint: [...exemplar.fingerprint],
+      })),
+    })),
+  };
+}
+
 /**
  * One cloner per scope. Typed as a complete record on purpose: **drop a scope here and the build
  * fails**, which is the guarantee the hand-written object literal could not give.
@@ -226,6 +258,7 @@ const SCOPE_CLONERS: {
   savedEnemies: cloneSavedEnemiesPayload,
   characterBoxes: cloneCharacterBoxesPayload,
   characterOverrides: cloneCharacterOverridesPayload,
+  crewForgeProfiles: cloneCrewForgeProfilesPayload,
 };
 
 export function buildAllDataTransferPayload(

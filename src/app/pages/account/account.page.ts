@@ -369,6 +369,7 @@ export class AccountPage {
     key:
       | 'characterBoxes'
       | 'characterOverrides'
+      | 'crewForgeProfiles'
       | 'favorites'
       | 'favoriteShips'
       | 'savedEnemies'

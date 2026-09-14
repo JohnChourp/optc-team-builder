@@ -212,6 +212,7 @@
       "characterOverrides": "{{count}} character overrides",
       "favorites": "{{count}} favorites",
       "favoriteShips": "{{count}} favorite ships",
+      "crewForgeProfiles": "{{count}} Crew Forge image profiles",
       "savedEnemies": "{{count}} saved enemies",
       "savedRumbleTeams": "{{count}} saved Rumble teams",
       "savedTeams": "{{count}} saved teams"
@@ -289,6 +290,21 @@
       "import": "Import character overrides",
       "processing": "Importing character overrides...",
       "title": "Character Overrides"
+    },
+    "crewForgeProfiles": {
+      "feedback": {
+        "loadedFromFile": "Loaded from {{fileName}}.",
+        "stats": {
+          "added": "Added {{count}} new Crew Forge image profiles.",
+          "builtIn": "Skipped {{count}} built-in profiles, which this app already ships.",
+          "duplicates": "Collapsed {{count}} duplicate Crew Forge profile ids.",
+          "invalid": "Ignored {{count}} invalid Crew Forge profile entries.",
+          "updated": "Updated {{count}} existing Crew Forge image profiles."
+        },
+        "successTitle": "Crew Forge image profiles import completed",
+        "warningTitle": "Crew Forge image profiles import completed with warnings"
+      },
+      "title": "Crew Forge Image Profiles"
     },
     "favorites": {
       "copy": "Export or import your OPTCbx-compatible favorites file, or clear the full favorites list on this device.",
