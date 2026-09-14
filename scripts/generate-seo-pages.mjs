@@ -114,7 +114,7 @@ const publicRoutes = [
     path: 'tabs/auto-team-builder',
     title: 'Auto Team Builder | OPTC Team Builder',
     description:
-      'Find OPTC team candidates by enemy mechanics, character abilities, type filters, manual locks, and team-building requirements.',
+      'Find OPTC team candidates by enemy mechanics, character abilities, type filters, and team-building requirements.',
     heading: 'OPTC Auto Team Builder',
     paragraphs: [
       'Auto Team Builder helps find One Piece Treasure Cruise crew candidates by enemy mechanics, character abilities, type filters, class filters, manual locks, and team-building requirements.',
@@ -130,7 +130,7 @@ const publicRoutes = [
     path: 'tabs/manual-team-builder',
     title: 'Manual Team Builder | OPTC Team Builder',
     description:
-      'Build and save fixed One Piece Treasure Cruise crews manually with character slots, an optional ship, and a local cost budget.',
+      'Build and save fixed OPTC crews manually with character slots, an optional ship, and a local cost budget.',
     heading: 'OPTC Manual Team Builder',
     paragraphs: [
       'Manual Team Builder is the fixed crew workspace for One Piece Treasure Cruise players who already know the exact characters they want to save.',
@@ -146,7 +146,7 @@ const publicRoutes = [
     path: 'tabs/captain-coverage',
     title: 'Captain Coverage | OPTC Team Builder',
     description:
-      'Choose an OPTC Captain and find characters covered by that Captain Ability under strict type, class, cost, universal, and self-scope matching.',
+      'Pick an OPTC Captain and see which characters that Captain Ability boosts, with the full catalogue still listed and only your own filters narrowing it.',
     heading: 'OPTC Captain Coverage',
     paragraphs: [
       'Captain Coverage starts from a selected OPTC Captain and shows characters covered by that Captain Ability under strict type, class, cost, universal, and self-scope matching.',
@@ -189,9 +189,9 @@ const publicRoutes = [
   },
   {
     path: 'tabs/account',
-    title: 'Account and Drive Sync | OPTC Team Builder',
+    title: 'Account | OPTC Team Builder',
     description:
-      'Manage optional Google sign-in, Google Drive backup, reviewed sync, restore, and local OPTC Team Builder data transfer.',
+      'Manage your optional Google account connection and Google Drive backup for OPTC Team Builder.',
     heading: 'OPTC Team Builder Account and Drive Sync',
     paragraphs: [
       'The account page manages optional Google sign-in and Google Drive sync for OPTC Team Builder.',

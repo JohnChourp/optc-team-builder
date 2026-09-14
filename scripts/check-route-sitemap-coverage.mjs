@@ -140,10 +140,31 @@ export function readAppRoutes(source, fileName = 'app.routes.ts') {
 
       const fullPath = joinRoutePath(prefix, routePath);
       const children = readArrayProperty(element, 'children');
+      const data = element.properties.find(
+        (candidate) =>
+          ts.isPropertyAssignment(candidate) &&
+          candidate.name.getText().replace(/['"]/gu, '') === 'data',
+      );
+      const seo =
+        data && ts.isObjectLiteralExpression(data.initializer)
+          ? data.initializer.properties.find(
+              (candidate) =>
+                ts.isPropertyAssignment(candidate) &&
+                candidate.name.getText().replace(/['"]/gu, '') === 'seo',
+            )
+          : undefined;
 
       routes.push({
         path: fullPath,
         redirectTo: readStringProperty(element, 'redirectTo') ?? null,
+        seo:
+          seo && ts.isObjectLiteralExpression(seo.initializer)
+            ? {
+                title: readStringProperty(seo.initializer, 'title') ?? null,
+                description: readStringProperty(seo.initializer, 'description') ?? null,
+                canonicalPath: readStringProperty(seo.initializer, 'canonicalPath') ?? null,
+              }
+            : null,
       });
 
       if (children) {
@@ -175,6 +196,7 @@ export function readGeneratedRoutes(source, fileName = 'generate-seo-pages.mjs')
   const sourceFile = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true);
   const paths = [];
   const aliases = [];
+  const copyByPath = new Map();
 
   function visit(node) {
     if (
@@ -192,6 +214,10 @@ export function readGeneratedRoutes(source, fileName = 'generate-seo-pages.mjs')
 
         if (typeof routePath === 'string') {
           paths.push(routePath);
+          copyByPath.set(routePath, {
+            title: readStringProperty(element, 'title') ?? null,
+            description: readStringProperty(element, 'description') ?? null,
+          });
         }
 
         const aliasArray = readArrayProperty(element, 'aliases');
@@ -209,7 +235,7 @@ export function readGeneratedRoutes(source, fileName = 'generate-seo-pages.mjs')
 
   visit(sourceFile);
 
-  return { paths, aliases };
+  return { paths, aliases, copyByPath };
 }
 
 export function inspectRouteSitemapCoverage({
@@ -218,7 +244,7 @@ export function inspectRouteSitemapCoverage({
   exclusions = ROUTE_SITEMAP_EXCLUSIONS,
 }) {
   const routes = readAppRoutes(routesSource);
-  const { paths, aliases } = readGeneratedRoutes(generatorSource);
+  const { paths, aliases, copyByPath } = readGeneratedRoutes(generatorSource);
   const routePaths = new Set(routes.map((route) => route.path));
   const generated = new Set([...paths, ...aliases]);
   const excluded = new Map(exclusions.map((entry) => [entry.route, entry.reason]));
@@ -262,6 +288,68 @@ export function inspectRouteSitemapCoverage({
   for (const entry of exclusions) {
     if (typeof entry.reason !== 'string' || entry.reason.trim().length < 12) {
       errors.push(`ROUTE_SITEMAP_EXCLUSIONS entry "${entry.route}" needs a real reason, not a placeholder.`);
+    }
+  }
+
+  /*
+   * 869f12x57. A route in the sitemap must ALSO be indexable at runtime.
+   *
+   * `AppComponent.findSeoDataForUrl` treats a route with no `data.seo` as
+   * private: it falls back to `defaultSeo`, whose `indexable` is false, and
+   * writes `noindex,follow` plus a canonical pointing at the home page. So a
+   * page can be advertised in the sitemap and tell crawlers to ignore it as a
+   * duplicate, which is exactly what `/faq` did in production for one release -
+   * measured 2026-09-14, static `index,follow`, hydrated `noindex,follow`.
+   *
+   * Googlebot runs the JS, so the runtime tag is the one that counts. The
+   * generator's list and the router's `data.seo` are two copies of "which
+   * routes are public", and this binds them until 869f12x57 makes them one.
+   */
+  const canonicalToRoute = new Map();
+
+  for (const route of routes) {
+    if (route.seo?.canonicalPath !== null && route.seo?.canonicalPath !== undefined) {
+      canonicalToRoute.set(route.seo.canonicalPath, route);
+    }
+  }
+
+  for (const generatedPath of paths) {
+    if (generatedPath === '') {
+      continue;
+    }
+
+    const servingRoute =
+      canonicalToRoute.get(generatedPath) ??
+      routes.find((route) => route.path === generatedPath && route.seo) ??
+      null;
+
+    if (!servingRoute) {
+      errors.push(
+        `The sitemap generator publishes "${generatedPath}", but no router route declares \`data.seo\` for it. ` +
+          'Without that, the app writes noindex,follow and a canonical pointing at the home page once it ' +
+          'hydrates - so the URL is advertised and then disowned.',
+      );
+      continue;
+    }
+
+    const generated = copyByPath.get(generatedPath);
+
+    if (generated?.title && servingRoute.seo.title && generated.title !== servingRoute.seo.title) {
+      errors.push(
+        `"${generatedPath}" has a different <title> in the router and in the sitemap generator. ` +
+          'They are two copies of one string and must agree.',
+      );
+    }
+
+    if (
+      generated?.description &&
+      servingRoute.seo.description &&
+      generated.description !== servingRoute.seo.description
+    ) {
+      errors.push(
+        `"${generatedPath}" has a different meta description in the router and in the sitemap generator. ` +
+          'They are two copies of one string and must agree.',
+      );
     }
   }
 
