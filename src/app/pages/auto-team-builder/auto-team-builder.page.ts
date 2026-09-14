@@ -4871,12 +4871,23 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       );
     }
 
+    /*
+     * A special that never speeds up reads oddly as "at max special level - at level 1 it takes
+     * the same". `character-progression.presenter.ts` already collapses that case for the same
+     * reason, and a live pass caught this one repeating the mistake.
+     */
+    const speedsUp = entry.baseTurns !== entry.maxLevelTurns;
+
     if (entry.spareTurns === 0) {
-      return this.i18n.translate('chargeTimeline.entryExact', undefined, 'auto-team-builder');
+      return this.i18n.translate(
+        speedsUp ? 'chargeTimeline.entryExact' : 'chargeTimeline.entryExactFixed',
+        undefined,
+        'auto-team-builder',
+      );
     }
 
     return this.i18n.translate(
-      'chargeTimeline.entryReady',
+      speedsUp ? 'chargeTimeline.entryReady' : 'chargeTimeline.entryReadyFixed',
       { turns: entry.spareTurns ?? 0, base: entry.baseTurns },
       'auto-team-builder',
     );

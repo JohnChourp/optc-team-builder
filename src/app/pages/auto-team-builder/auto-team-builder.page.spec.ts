@@ -784,6 +784,43 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
+  /*
+   * A special that never speeds up read as "with N to spare, at max special level - at level 1 it
+   * takes N", which says the same number twice. A live pass caught it; Character Detail already
+   * collapses the identical case.
+   */
+  it('does not claim a special speeds up when its cooldown never changes', async () => {
+    const { page, autoTeamBuilder, repository } = await createPage();
+
+    repository.getSpecialCooldownsByIds.mockImplementation(async (ids: number[]) =>
+      ids.map((characterId) => ({ characterId, baseTurns: 10, maxLevelTurns: 10 })),
+    );
+    autoTeamBuilder.buildTeam.mockResolvedValue(createAutoBuildResult());
+    await page.ngOnInit();
+    await page.buildTeam();
+
+    const label = page.chargeTimelineEntryLabel(page.specialChargeTimeline()!.entries[0]);
+
+    expect(label).toContain('does not speed up');
+    expect(label).not.toContain('At level 1');
+  });
+
+  it('still says what levelling buys when the special does speed up', async () => {
+    const { page, autoTeamBuilder, repository } = await createPage();
+
+    repository.getSpecialCooldownsByIds.mockImplementation(async (ids: number[]) =>
+      ids.map((characterId) => ({ characterId, baseTurns: 25, maxLevelTurns: 18 })),
+    );
+    autoTeamBuilder.buildTeam.mockResolvedValue(createAutoBuildResult());
+    await page.ngOnInit();
+    await page.buildTeam();
+
+    const label = page.chargeTimelineEntryLabel(page.specialChargeTimeline()!.entries[0]);
+
+    expect(label).toContain('At level 1 it takes 25');
+    expect(label).not.toContain('does not speed up');
+  });
+
   it('has no timeline before anything is built', async () => {
     const { page } = await createPage();
 
