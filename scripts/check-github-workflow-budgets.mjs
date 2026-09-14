@@ -10,6 +10,25 @@ import YAML from 'yaml';
 // run is isolated by run id and is never cancelled. See docs/ci-trigger-policy.md.
 const MANUAL_RUN_GROUP = '${{ github.workflow }}-${{ github.run_id }}';
 
+/**
+ * 869f1ujj9. The obsolete Android SDK package, and why a budget guard cares.
+ *
+ * `android-actions/setup-android` defaults to `packages: 'tools platform-tools'`. `tools` is the
+ * superseded SDK Tools package, and its dependency graph pulls in the Android **Emulator** -
+ * roughly 300MB - into a release job that never starts one. Measured on the v0.4.35 release run:
+ * 11.4s of a 23s SDK step went on downloading and unzipping `emulator/`.
+ *
+ * The seconds are not the point. The run immediately before that one FAILED there, on a corrupt
+ * download ("Error reading Zip content from a SeekableByteChannel"), taking the whole release with
+ * it. An unused 300MB download is a way for a release to fail that buys nothing, which is a cost
+ * this file exists to refuse.
+ *
+ * Note `platform-tools` ends in `tools` - the comparison below is over whole tokens for exactly
+ * that reason, because a substring test would reject the package we mean to keep.
+ */
+const ANDROID_SDK_ACTION = 'android-actions/setup-android';
+const OBSOLETE_ANDROID_SDK_PACKAGES = ['tools'];
+
 export const APP_WORKFLOW_BUDGET_EXEMPTIONS = [
   '.github/workflows/codeql.yml',
   '.github/workflows/dataset-change-digest.yml',
@@ -258,6 +277,63 @@ function inspectWorkflowFileCoverage({ findings, repo, root, contracts, exemptio
   }
 }
 
+/**
+ * Every `setup-android` step in the repo states its packages, and none asks for an obsolete one.
+ *
+ * This walks every workflow file rather than only the contracted ones: a workflow exempt from the
+ * concurrency and timeout contract can still download 300MB it does not use, and the exemption was
+ * never a decision about that.
+ */
+function inspectAndroidSdkPackages({ findings, repo, root }) {
+  for (const workflowPath of listWorkflowFiles(root)) {
+    const { workflow, error } = readWorkflow(root, workflowPath);
+
+    if (error || !workflow?.jobs || typeof workflow.jobs !== 'object') {
+      continue;
+    }
+
+    for (const [jobId, job] of Object.entries(workflow.jobs)) {
+      const steps = Array.isArray(job?.steps) ? job.steps : [];
+
+      for (const [index, step] of steps.entries()) {
+        if (!String(step?.uses ?? '').startsWith(`${ANDROID_SDK_ACTION}@`)) {
+          continue;
+        }
+
+        const scope = `jobs.${jobId}.steps[${index}]`;
+        const packages = step?.with?.packages;
+
+        if (packages === undefined) {
+          findings.push({
+            repo,
+            workflowPath,
+            scope,
+            message:
+              `${ANDROID_SDK_ACTION} does not state its packages, so it takes the action default ` +
+              "'tools platform-tools' - and `tools` drags in the ~300MB Android Emulator. State " +
+              'packages explicitly.',
+          });
+          continue;
+        }
+
+        const requested = String(packages).split(/\s+/u).filter((token) => token.length > 0);
+        const obsolete = requested.filter((token) => OBSOLETE_ANDROID_SDK_PACKAGES.includes(token));
+
+        if (obsolete.length > 0) {
+          findings.push({
+            repo,
+            workflowPath,
+            scope,
+            message:
+              `${ANDROID_SDK_ACTION} asks for the obsolete package(s) ${obsolete.join(', ')}, which ` +
+              'pull in the ~300MB Android Emulator that no job here starts. Remove them.',
+          });
+        }
+      }
+    }
+  }
+}
+
 function inspectBudgetedJobCoverage({ findings, repo, workflowPath, workflow, contract }) {
   const actualJobs = workflow?.jobs && typeof workflow.jobs === 'object' ? Object.keys(workflow.jobs) : [];
   const contractedJobs = new Set(Object.keys(contract.jobs));
@@ -313,6 +389,8 @@ export function inspectWorkflowBudgets({
       contracts: target.contracts,
       exemptions: target.exemptions,
     });
+
+    inspectAndroidSdkPackages({ findings, repo: target.repo, root: target.root });
 
     for (const contract of target.contracts) {
       const workflowPath = normalizePath(contract.workflowPath);
