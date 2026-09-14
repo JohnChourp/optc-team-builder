@@ -2272,7 +2272,13 @@ export class AutoTeamBuilderService {
     }
 
     for (let index = startIndex; index < candidateIds.length; index += 1) {
-      currentSelection.push(candidateIds[index]);
+      const candidateId = candidateIds[index];
+
+      if (candidateId === undefined) {
+        continue;
+      }
+
+      currentSelection.push(candidateId);
       yield* this.enumerateSubCombinations(
         candidateIds,
         requiredCount,

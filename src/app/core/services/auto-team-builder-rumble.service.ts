@@ -11,6 +11,7 @@ import {
 import { type CharacterDetailRecord } from '../models/optc.models';
 import {
   RumbleTeamBuilderEngine,
+  firstResult,
   normalizeRumbleBuildInput,
   runRumbleTeamBuildSearches,
 } from './auto-team-builder-rumble.engine';
@@ -38,7 +39,7 @@ export class AutoTeamBuilderRumbleService {
     input: Partial<RumbleBuildInput> = {},
     executionOptions: RumbleTeamBuildExecutionOptions = {},
   ): Promise<RumbleTeamResult> {
-    return (await this.buildBestTeams(input, executionOptions, 1))[0];
+    return firstResult(await this.buildBestTeams(input, executionOptions, 1));
   }
 
   public async buildBestTeams(

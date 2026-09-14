@@ -13,6 +13,20 @@
     "verbatimModuleSyntax": true,
     "forceConsistentCasingInFileNames": true,
     "noErrorTruncation": true,
+    /*
+     * 869f17h5m. `arr[i]` and `map[key]` yield `T | undefined`, which is the
+     * truth: this app's core is data access - rows out of SQLite, JSON columns
+     * parsed with defaults, lookups by id across 9,303 rows - and without this
+     * every index read was a silent assertion that the element exists. Enabling
+     * it surfaced 62 such assertions, all fixed rather than cast away.
+     *
+     * Scoped to the application rather than the shared base on purpose. Nothing
+     * type-checks `tsconfig.spec.json` - `dead-code:check` runs against this
+     * config alone - so putting it in the base would light up 202 errors in
+     * editors with no lane that owns them. Spec coverage is the recorded
+     * remainder, not a claim that it passes.
+     */
+    "noUncheckedIndexedAccess": true,
     "types": []
   },
   "angularCompilerOptions": {

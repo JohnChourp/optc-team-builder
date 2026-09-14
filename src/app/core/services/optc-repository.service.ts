@@ -694,7 +694,12 @@ function parseJsonArray<T>(value: unknown): T[] {
   }
 }
 
-function parseNullableNumber(value: string | number | null): number | null {
+/**
+ * `undefined` is admitted because that is what indexing a `SqlRow` yields for an
+ * absent column under `noUncheckedIndexedAccess`, and the body has always
+ * treated it exactly as `null`. Only the signature was untrue.
+ */
+function parseNullableNumber(value: string | number | null | undefined): number | null {
   if (value === null || value === undefined || value === '') {
     return null;
   }
@@ -703,7 +708,8 @@ function parseNullableNumber(value: string | number | null): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function parseBoostNumber(value: string | number | null): number {
+/** Same widening as parseNullableNumber: `Number(undefined)` is NaN, already floored to 0. */
+function parseBoostNumber(value: string | number | null | undefined): number {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
 }
@@ -1631,11 +1637,11 @@ export class OptcRepositoryService {
     const database = await this.databasePromise;
     const result = database.exec(query, params);
 
-    if (!result.length) {
+    const statement = result[0];
+
+    if (!statement) {
       return [];
     }
-
-    const [statement] = result;
 
     return (statement.values as Array<Array<string | number | null>>).map((valueRow) =>
       (statement.columns as string[]).reduce<SqlRow>((row, column, index) => {

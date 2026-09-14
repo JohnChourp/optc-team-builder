@@ -25,6 +25,7 @@ export const APP_DOCS = [
   'docs/post-merge-smoke-pack.md',
   'docs/post-dispatch-production-smoke.md',
   'docs/maintainer-validation-guide.md',
+  'docs/typescript-strictness.md',
   'docs/fixture-ownership-guide.md',
   'e2e/README.md',
   'server/README.md',
