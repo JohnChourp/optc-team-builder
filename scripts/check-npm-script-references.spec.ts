@@ -153,7 +153,7 @@ describe('npm script reference check', () => {
 
     const { errors } = run({ sources });
 
-    expect(errors.some((error) => error.includes('registered as manual but is referenced'))).toBe(
+    expect(errors.some((error) => error.includes('registered as manual but is invoked'))).toBe(
       true,
     );
   });
@@ -176,7 +176,7 @@ describe('npm script reference check', () => {
     const { errors } = run({ sources });
 
     expect(
-      errors.some((error) => error.includes('registered as manual but is referenced')),
+      errors.some((error) => error.includes('registered as manual but is invoked')),
       'the registry describing cap:sync must not count as calling it',
     ).toBe(false);
   });
@@ -206,9 +206,45 @@ describe('npm script reference check', () => {
       ],
     });
 
-    expect(errors.some((error) => error.includes('registered as unwired but is referenced'))).toBe(
+    expect(errors.some((error) => error.includes('registered as unwired but is invoked'))).toBe(
       true,
     );
+  });
+
+  /*
+   * D and A ask different questions, and conflating them broke a real doc.
+   * `docs/ios-platform-footprint.md` is an inventory written precisely to explain
+   * why `ios:open` is unreferenced - and it made the guard demand the deletion of
+   * the registry entry saying the same thing. Prose names a script; it never runs
+   * one.
+   */
+  it('does not treat a doc naming a manual script as invoking it', () => {
+    const sources = new Map(CLEAN_SOURCES);
+
+    sources.set('docs/ios-platform-footprint.md', '`cap:sync` runs `npx cap sync`.');
+
+    const { errors } = run({ sources });
+
+    expect(
+      errors.some((error) => error.includes('cap:sync')),
+      'a doc describing cap:sync must not retire its manual entry',
+    ).toBe(false);
+  });
+
+  it('still counts a doc as knowing about a script, so it is not an orphan', () => {
+    const sources = new Map(CLEAN_SOURCES);
+
+    sources.set('docs/runbook.md', 'Run `npm run data:import:all` before a release.');
+
+    const { errors } = run({
+      scripts: { ...CLEAN_SCRIPTS, 'data:import:all': 'node ./scripts/import.mjs' },
+      sources,
+    });
+
+    expect(
+      errors.some((error) => error.includes('data:import:all is called by nothing')),
+      'a documented script is known, so the orphan clause must stay quiet',
+    ).toBe(false);
   });
 
   /* E. */
