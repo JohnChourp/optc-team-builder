@@ -29,6 +29,7 @@ const publicToolPaths = new Set([
   'guides/how-to-build-an-optc-team',
   'guides/guided-build-compare-team-sharing',
   'guides/optc-pirate-rumble-team-building',
+  'faq',
   'privacy',
   'cookies',
   'terms',

@@ -229,6 +229,7 @@ describe('ci-check-routing', () => {
       'docs-commands',
       'docs-drift',
       'discoverability',
+      'route-sitemap-coverage',
       'public-entry-synthetics',
       'i18n-regression',
       'drive-sync-server',
