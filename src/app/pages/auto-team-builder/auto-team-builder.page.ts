@@ -138,6 +138,7 @@ import {
   collectRequestedAbilityRequirements,
   type MechanicChecklistEntry,
 } from '../../core/services/auto-team-builder-mechanic-checklist.utils';
+import { type GameMode, GAME_MODES } from '../../core/services/character-mode-effects.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { PreferencesAdapterService } from '../../core/services/preferences-adapter.service';
 import {
@@ -147,6 +148,11 @@ import {
   restoreAutoTeamBuilderResult,
   snapshotCharacterIds,
 } from './auto-team-builder-result-snapshot.utils';
+import {
+  buildTeamModeEffects,
+  type TeamModeEffectMember,
+  type TeamModeEffects,
+} from './team-mode-effects.utils';
 import {
   buildSpecialChargeTimeline,
   clampTimelineTurns,
@@ -1100,6 +1106,19 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
    * The turn count cannot come from the dataset - its whole schema is six tables and none is a
    * stage table - so it is one field the reader enters, which 869f12xbm established up front.
    */
+  /**
+   * 869f1mcdv. Which mode the reader is about to play, so the team can be read against it.
+   *
+   * `null` is "not asked", and the card stays away entirely - the app has never had a notion of a
+   * game mode, and appearing unasked on every build would be a claim that the mode shaped the
+   * result. It did not, and the card says so in as many words.
+   */
+  public readonly selectedGameMode = signal<GameMode | null>(null);
+  public readonly availableGameModes = GAME_MODES;
+  public readonly teamModeEffects = computed<TeamModeEffects | null>(() =>
+    buildTeamModeEffects(this.result(), this.selectedGameMode()),
+  );
+
   public readonly timelineTurns = signal(DEFAULT_TIMELINE_TURNS);
   private readonly specialCooldowns = signal<ReadonlyMap<number, SpecialCooldownRecord>>(new Map());
   public readonly specialChargeTimeline = computed<SpecialChargeTimeline | null>(() =>
@@ -4889,6 +4908,52 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     return this.i18n.translate(
       speedsUp ? 'chargeTimeline.entryReady' : 'chargeTimeline.entryReadyFixed',
       { turns: entry.spareTurns ?? 0, base: entry.baseTurns },
+      'auto-team-builder',
+    );
+  }
+
+  public onGameModeChange(event: CustomEvent<{ value?: string | null }>): void {
+    const value = event.detail.value;
+
+    this.selectedGameMode.set(
+      GAME_MODES.includes(value as GameMode) ? (value as GameMode) : null,
+    );
+  }
+
+  public gameModeLabel(mode: GameMode): string {
+    return this.i18n.translate(`gameMode.modes.${mode}`, undefined, 'auto-team-builder');
+  }
+
+  public teamModeEffectLabel(member: TeamModeEffectMember): string {
+    if (!member.effect) {
+      return this.i18n.translate('gameMode.memberUnaffected', undefined, 'auto-team-builder');
+    }
+
+    if (member.effect.conditional && member.effect.scaling) {
+      return this.i18n.translate('gameMode.memberBoth', undefined, 'auto-team-builder');
+    }
+
+    return this.i18n.translate(
+      member.effect.conditional ? 'gameMode.memberConditional' : 'gameMode.memberScaling',
+      undefined,
+      'auto-team-builder',
+    );
+  }
+
+  public teamModeEffectsSummaryLabel(): string {
+    const effects = this.teamModeEffects();
+
+    if (!effects) {
+      return '';
+    }
+
+    return this.i18n.translate(
+      effects.affectedCount === 0 ? 'gameMode.summaryNone' : 'gameMode.summary',
+      {
+        affected: effects.affectedCount,
+        total: effects.members.length,
+        mode: this.gameModeLabel(effects.mode),
+      },
       'auto-team-builder',
     );
   }

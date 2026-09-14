@@ -773,6 +773,23 @@
       "noTypeCoverage": "No type coverage"
     }
   },
+  "gameMode": {
+    "title": "This mode",
+    "copy": "Some specials do something extra on a Treasure Map or in Kizuna Clash, or hit harder the higher your level in that mode. Pick the mode you are about to play and this says which of your team care.",
+    "label": "Mode",
+    "any": "Not set",
+    "modes": {
+      "treasureMap": "Treasure Map",
+      "kizunaClash": "Kizuna Clash"
+    },
+    "summary": "{{affected}} of {{total}} on this team do something different in {{mode}}.",
+    "summaryNone": "Nobody on this team does anything different in {{mode}}.",
+    "memberConditional": "extra effect in this mode",
+    "memberScaling": "scales with your level in this mode",
+    "memberBoth": "extra effect, scaling with your level",
+    "memberUnaffected": "same as anywhere else",
+    "doesNotChangeSearch": "This does not change which characters the builder picks - it reads the team you already have. Event boosts are not in the app data at all, so nothing here knows which units are boosted this week."
+  },
   "chargeTimeline": {
     "charges": "charges in {{turns}}",
     "copy": "How long each special on this team takes to charge, against a run of the length you enter. It is charge time from the start of the battle - it does not model using a special and charging it again.",
