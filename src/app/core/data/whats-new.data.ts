@@ -31,6 +31,27 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.27',
+    date: '2026-09-14',
+    userVisible: true,
+    added: [],
+    improved: [],
+    headline: {
+      en: 'The FAQ really is findable now',
+      el: 'Το FAQ βρίσκεται πλέον στ\u2019 αλήθεια',
+    },
+    summaryEn:
+      "The last release said the FAQ screen could now be found from a search engine. It could not, quite: the address had been added to the list search engines read, but the app itself was still telling them to skip that page and treat it as a copy of the home page. That is fixed, and checked against the live site. Everything else in this release is groundwork on our side and changes nothing you can see.",
+    summaryEl:
+      'Η προηγούμενη έκδοση έλεγε ότι η οθόνη FAQ μπορεί πλέον να βρεθεί από μηχανή αναζήτησης. Δεν μπορούσε, όχι εντελώς: η διεύθυνση είχε μπει στη λίστα που διαβάζουν οι μηχανές αναζήτησης, αλλά η ίδια η εφαρμογή τους έλεγε ακόμη να προσπεράσουν εκείνη τη σελίδα και να τη θεωρήσουν αντίγραφο της αρχικής. Αυτό διορθώθηκε, και ελέγχθηκε στο ζωντανό site. Όλα τα υπόλοιπα σε αυτή την έκδοση είναι υποδομή από τη δική μας πλευρά και δεν αλλάζουν κάτι που βλέπεις.',
+    fixed: [
+      {
+        en: 'The FAQ screen is now offered to search engines instead of being hidden from them. Version 0.4.26 put its address on the list they read, but the app kept marking the page itself as one to skip - so the fix only half worked, and this is the other half.',
+        el: 'Η οθόνη FAQ προσφέρεται πλέον στις μηχανές αναζήτησης αντί να τους κρύβεται. Η έκδοση 0.4.26 έβαλε τη διεύθυνσή της στη λίστα που διαβάζουν, αλλά η εφαρμογή συνέχιζε να σημειώνει την ίδια τη σελίδα ως προσπεραστέα - οπότε η διόρθωση δούλεψε μόνο κατά το ήμισυ, και αυτό είναι το άλλο μισό.',
+      },
+    ],
+  },
+  {
     version: '0.4.26',
     date: '2026-09-14',
     userVisible: true,
