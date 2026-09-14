@@ -138,6 +138,7 @@ describe('UserDataTransferService', () => {
       characterBoxesCount: 1,
       characterOverridesCount: 0,
       crewForgeProfilesCount: 0,
+      savedRumbleOpponentsCount: 0,
       favoriteCharacterCount: 2,
       favoriteShipCount: 1,
       savedEnemiesCount: 1,
@@ -263,6 +264,14 @@ function createDependencies() {
     saveCrewForgeImageProfile: vi.fn().mockResolvedValue(null),
     setCrewForgeLastImageProfileId: vi.fn().mockResolvedValue(undefined),
     clearAllCrewForgeImageProfiles: vi.fn().mockResolvedValue(undefined),
+    savedRumbleOpponents: () => [],
+    readySavedRumbleOpponents: vi.fn().mockResolvedValue(undefined),
+    saveRumbleOpponent: vi.fn().mockResolvedValue(null),
+    deleteRumbleOpponent: vi.fn().mockResolvedValue(undefined),
+    clearAllSavedRumbleOpponents: vi.fn().mockResolvedValue(undefined),
+    mergeImportedRumbleOpponents: vi
+      .fn()
+      .mockResolvedValue({ addedCount: 0, updatedCount: 0, opponents: [] }),
     mergeImportedCharacterBoxes: vi.fn().mockResolvedValue({
       addedCount: 1,
       boxes: [],

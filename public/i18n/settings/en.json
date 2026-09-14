@@ -215,7 +215,8 @@
       "crewForgeProfiles": "{{count}} Crew Forge image profiles",
       "savedEnemies": "{{count}} saved enemies",
       "savedRumbleTeams": "{{count}} saved Rumble teams",
-      "savedTeams": "{{count}} saved teams"
+      "savedTeams": "{{count}} saved teams",
+      "savedRumbleOpponents": "{{count}} saved Rumble opponents"
     },
     "allData": {
       "copy": "Export a full device backup bundle or import a smart backup that can contain all data, only one section, or even a single favorites, ships, character boxes, character overrides, saved teams, or saved enemies export.",
@@ -424,6 +425,20 @@
         "successTitle": "Saved Rumble teams imported"
       },
       "title": "Saved Rumble Teams"
+    },
+    "savedRumbleOpponents": {
+      "feedback": {
+        "loadedFromFile": "Loaded from {{fileName}}.",
+        "stats": {
+          "added": "Added {{count}} new saved opponents.",
+          "duplicates": "Collapsed {{count}} duplicate saved opponent ids.",
+          "invalid": "Ignored {{count}} invalid saved opponent entries.",
+          "updated": "Updated {{count}} existing saved opponents."
+        },
+        "successTitle": "Saved opponents import completed",
+        "warningTitle": "Saved opponents import completed with warnings"
+      },
+      "title": "Saved Rumble Opponents"
     }
   },
   "sections": {

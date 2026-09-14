@@ -1186,6 +1186,14 @@ function createPage() {
     saveCrewForgeImageProfile: vi.fn().mockResolvedValue(null),
     setCrewForgeLastImageProfileId: vi.fn().mockResolvedValue(undefined),
     clearAllCrewForgeImageProfiles: vi.fn().mockResolvedValue(undefined),
+    savedRumbleOpponents: () => [],
+    readySavedRumbleOpponents: vi.fn().mockResolvedValue(undefined),
+    saveRumbleOpponent: vi.fn().mockResolvedValue(null),
+    deleteRumbleOpponent: vi.fn().mockResolvedValue(undefined),
+    clearAllSavedRumbleOpponents: vi.fn().mockResolvedValue(undefined),
+    mergeImportedRumbleOpponents: vi
+      .fn()
+      .mockResolvedValue({ addedCount: 0, updatedCount: 0, opponents: [] }),
     setAutoTeamBuilderWorkerPreference: vi
       .fn()
       .mockImplementation(

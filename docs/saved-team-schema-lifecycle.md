@@ -51,6 +51,49 @@ under `savedTeams`. Auto Team Builder preset exports may embed the same payload
 as `savedTeamImport`; that embedded payload follows this lifecycle, while the
 Auto Team Builder preset itself keeps its own independent schema version.
 
+## Saved Rumble Opponents
+
+Added by [869f12x45](https://app.clickup.com/t/90121749478/869f12x45). Declared in
+`src/app/pages/auto-team-builder-rumble/saved-rumble-opponents-transfer.utils.ts`:
+
+- `schemaVersion: 1`
+- `source: 'saved-rumble-opponents'`
+
+```json
+{
+  "schemaVersion": 1,
+  "source": "saved-rumble-opponents",
+  "exportedAt": "2026-09-14T00:00:00.000Z",
+  "opponents": []
+}
+```
+
+Each opponent carries `id`, `name`, `activeCharacterIds`, `benchCharacterIds`,
+`createdAt` and `updatedAt`. The two id arrays are positional and may contain
+`null` for a slot the reader left empty - dropping the nulls would move the
+remaining characters into the wrong slots.
+
+**It is deliberately not a saved team.** A `SavedRumbleTeam` already stores the
+opponent it was built against, and loading one restores it; what it cannot do is
+reuse that opponent in a different build. So this entity stores only what
+identifies a crew - no settings, no results, and no `opponentAwarenessEnabled`,
+because whether the next build should counter this crew is a choice about the
+build being run now rather than a property of the crew.
+
+Its storage key `savedRumbleOpponents` is registered in
+`src/app/core/data/browser-storage-keys.data.ts` as `durable-user-data` naming
+the `savedRumbleOpponents` export scope. That registration is not optional and is
+not a convention: `npm run storage:keys` refuses a durable key with no export
+scope, and it is what stopped this entity shipping outside the full-data export
+the way `crewForgeImageProfiles` did before 869f12x4p.
+
+**Migration rule.** A character id the current dataset does not know is kept in
+the payload and reported on load as a count of characters that could not be
+restored - never silently dropped, because a missing opponent slot changes what
+a build counters. A payload whose `schemaVersion` or `source` does not match is
+rejected with the unsupported-schema diagnostic before anything is persisted, the
+same as every other format above.
+
 ## Compatibility Rules
 
 - The payload boundary is strict: importers accept only the declared

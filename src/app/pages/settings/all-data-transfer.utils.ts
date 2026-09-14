@@ -10,6 +10,7 @@ import { type SavedEnemiesTransferPayload } from '../saved-enemies/saved-enemies
 import { type CharacterBoxesTransferPayload } from '../character-boxes/character-boxes-transfer.utils';
 import { type CharacterOverridesTransferPayload } from '../character-detail/character-overrides-transfer.utils';
 import { type CrewForgeProfilesTransferPayload } from '../crew-forge/crew-forge-profiles-transfer.utils';
+import { type SavedRumbleOpponentsTransferPayload } from '../auto-team-builder-rumble/saved-rumble-opponents-transfer.utils';
 import { cloneRequiredCharacterGroups } from '../../core/services/required-character-groups.utils';
 
 export interface AllDataTransferPayload {
@@ -24,6 +25,7 @@ export interface AllDataTransferPayload {
   characterBoxes?: CharacterBoxesTransferPayload;
   characterOverrides?: CharacterOverridesTransferPayload;
   crewForgeProfiles?: CrewForgeProfilesTransferPayload;
+  savedRumbleOpponents?: SavedRumbleOpponentsTransferPayload;
 }
 
 /**
@@ -56,6 +58,8 @@ export const ALL_DATA_TRANSFER_SCOPES = [
    * adding this one edit-and-follow-the-errors rather than a hunt.
    */
   'crewForgeProfiles',
+  /* 869f12x45. A new stored entity is in the export from the day it exists. */
+  'savedRumbleOpponents',
 ] as const;
 
 export type AllDataTransferScope = (typeof ALL_DATA_TRANSFER_SCOPES)[number];
@@ -242,6 +246,23 @@ function cloneCrewForgeProfilesPayload(
   };
 }
 
+function cloneSavedRumbleOpponentsPayload(
+  payload: SavedRumbleOpponentsTransferPayload | undefined,
+): SavedRumbleOpponentsTransferPayload | undefined {
+  if (!payload) {
+    return undefined;
+  }
+
+  return {
+    ...payload,
+    opponents: payload.opponents.map((opponent) => ({
+      ...opponent,
+      activeCharacterIds: [...opponent.activeCharacterIds],
+      benchCharacterIds: [...opponent.benchCharacterIds],
+    })),
+  };
+}
+
 /**
  * One cloner per scope. Typed as a complete record on purpose: **drop a scope here and the build
  * fails**, which is the guarantee the hand-written object literal could not give.
@@ -259,6 +280,7 @@ const SCOPE_CLONERS: {
   characterBoxes: cloneCharacterBoxesPayload,
   characterOverrides: cloneCharacterOverridesPayload,
   crewForgeProfiles: cloneCrewForgeProfilesPayload,
+  savedRumbleOpponents: cloneSavedRumbleOpponentsPayload,
 };
 
 export function buildAllDataTransferPayload(
