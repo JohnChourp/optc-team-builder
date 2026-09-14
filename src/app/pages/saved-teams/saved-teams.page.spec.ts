@@ -1353,7 +1353,7 @@ describe('SavedTeamsPage', () => {
   });
 
   /*
-   * 869f1p4wx. The read-only published set - the zero-backend half of 869f12xc8. Nothing is
+   * 869f1pu2u. The read-only published set - the zero-backend half of 869f12xc8. Nothing is
    * submitted, so these assertions are about a shipped constant, never about stored user content.
    */
   it('resolves the shipped published teams on load', async () => {
@@ -1417,7 +1417,7 @@ describe('SavedTeamsPage', () => {
     });
 
     /*
-     * 869f1p4wx. Keyed on the ids this test cares about rather than on call ORDER. `ngOnInit` now
+     * 869f1pu2u. Keyed on the ids this test cares about rather than on call ORDER. `ngOnInit` now
      * also resolves the shipped published team set, so a `mockReturnValueOnce` here would be
      * consumed by that call and the import would wait forever - which is exactly what happened.
      * Deferring only the import's own lookup makes the test independent of how many other reads

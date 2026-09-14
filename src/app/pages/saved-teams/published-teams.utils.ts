@@ -5,7 +5,7 @@ import {
 import { type CharacterListItem, type SavedTeam } from '../../core/models/optc.models';
 
 /**
- * 869f1p4wx. Reading the shipped published teams, and turning one into a saved team.
+ * 869f1pu2u. Reading the shipped published teams, and turning one into a saved team.
  *
  * The half of 869f12xc8 that needs no backend. Nothing is submitted here, so there is nothing to
  * moderate and nothing stored on anyone's behalf - the set ships in the bundle and is read-only.

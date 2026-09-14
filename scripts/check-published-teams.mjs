@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * 869f1p4wx. The guard that keeps the read-only published team set honest.
+ * 869f1pu2u. The guard that keeps the read-only published team set honest.
  *
  * `src/app/core/data/published-teams.data.ts` is hand-curated and ships in the bundle, so it rots
  * the same way the content ladder would: a character retired upstream, a stage renamed, and the
