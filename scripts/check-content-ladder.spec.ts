@@ -74,6 +74,87 @@ describe('content ladder guard', () => {
     ).toBe(true);
   });
 
+  /*
+   * 869f1t8wv. The inverse, added when the owner confirmed the first four floors. Flipping the
+   * flag and leaving the note is a half-done edit that reads on screen as a warning the entry no
+   * longer carries, and nothing else would have caught it.
+   */
+  it('MUTATION - a confirmed entry whose note still says provisional goes red', () => {
+    const result = check([milestone({ sourceNote: `${REAL_NOTE} PROVISIONAL.` })]);
+
+    expect(result.ok).toBe(false);
+    expect(result.errors[0]).toContain('no longer provisional but its note still says so');
+  });
+
+  it('rejects an entry claiming both provisional and confirmedOn', () => {
+    const result = check([
+      milestone({
+        provisional: true,
+        confirmedOn: '2026-09-14',
+        sourceNote: `${REAL_NOTE} PROVISIONAL.`,
+      }),
+    ]);
+
+    expect(result.ok).toBe(false);
+    expect(result.errors.some((error) => error.includes('claims both provisional and confirmedOn'))).toBe(
+      true,
+    );
+  });
+
+  it('accepts an owner-confirmed entry', () => {
+    expect(
+      check([
+        milestone({
+          confirmedOn: '2026-09-14',
+          sourceNote: `${REAL_NOTE} Owner-confirmed on 2026-09-14.`,
+        }),
+      ]).ok,
+    ).toBe(true);
+  });
+
+  it.each([
+    ['a confirmation that is not an ISO date', '14/09/2026', 'not an ISO date'],
+    ['a confirmation in the future', '2027-01-01', 'confirmed in the future'],
+  ])('rejects %s', (_label, confirmedOn, expected) => {
+    const result = check([milestone({ confirmedOn })]);
+
+    expect(result.ok).toBe(false);
+    expect(result.errors.some((error) => error.includes(expected))).toBe(true);
+  });
+
+  /*
+   * 869f1t8wv. A confirmation older than the numbers it covers. Revising a requirement and moving
+   * `curatedOn` without going back to the owner leaves an entry that shows no warning for a number
+   * nobody confirmed - the same defect as a stale "provisional" note, in the other direction.
+   */
+  it('MUTATION - rejects a confirmation older than the curation it covers', () => {
+    const result = check([
+      milestone({
+        curatedOn: '2026-09-14',
+        confirmedOn: '2026-09-10',
+        sourceNote: `${REAL_NOTE} Owner-confirmed on 2026-09-10.`,
+      }),
+    ]);
+
+    expect(result.ok).toBe(false);
+    expect(result.errors[0]).toContain('older than the numbers it covers');
+  });
+
+  it.each([
+    ['confirmed the same day it was curated', '2026-09-13'],
+    ['confirmed after it was curated', '2026-09-14'],
+  ])('accepts an entry %s', (_label, confirmedOn) => {
+    expect(
+      check([
+        milestone({
+          curatedOn: '2026-09-13',
+          confirmedOn,
+          sourceNote: `${REAL_NOTE} Owner-confirmed on ${confirmedOn}.`,
+        }),
+      ]).ok,
+    ).toBe(true);
+  });
+
   it('rejects a placeholder note', () => {
     const result = check([milestone({ sourceNote: 'TODO' })]);
 

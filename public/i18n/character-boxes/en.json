@@ -22,7 +22,7 @@
     "summary": "Ready for {{ready}} of {{total}}",
     "nextGoalLabel": "Next up:",
     "provisional": "The numbers for this one are a starting point, not a confirmed requirement.",
-    "note": "Content names come from the app data and are checked against it on every build, so a renamed stage shows up as a problem instead of sitting here quietly. The requirements beside them are hand-written.",
+    "note": "Content names come from the app data and are checked against it on every build, so a renamed stage shows up as a problem instead of sitting here quietly. The requirements beside them are set by hand, by the person who maintains the app, and dated.",
     "verdict": {
       "ready": "you can field this",
       "oneAway": "one character away",
