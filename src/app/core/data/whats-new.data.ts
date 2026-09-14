@@ -31,6 +31,22 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.25',
+    date: '2026-09-14',
+    userVisible: false,
+    added: [],
+    improved: [],
+    headline: {
+      en: 'Nothing changed for you in this one',
+      el: 'Σε αυτή την έκδοση δεν άλλαξε τίποτα για σένα',
+    },
+    summaryEn:
+      "Nothing in this release changes anything you can see or do. Both changes are safety nets for us: the full-data export can no longer be built with one of its seven sections missing, and a text label that points at nothing is now caught before a build ships instead of showing up on your screen. Your exports, your teams and every screen behave exactly as they did in 0.4.24.",
+    summaryEl:
+      'Τίποτα σε αυτή την έκδοση δεν αλλάζει κάτι που βλέπεις ή κάνεις. Και οι δύο αλλαγές είναι δίχτυα ασφαλείας για εμάς: το πλήρες export δεδομένων δεν μπορεί πια να χτιστεί με μία από τις επτά ενότητές του να λείπει, και ένα κείμενο που δείχνει στο πουθενά πιάνεται πλέον πριν βγει η έκδοση, αντί να εμφανιστεί στην οθόνη σου. Τα exports σου, οι ομάδες σου και κάθε οθόνη συμπεριφέρονται ακριβώς όπως στην 0.4.24.',
+    fixed: [],
+  },
+  {
     version: '0.4.24',
     date: '2026-09-13',
     userVisible: true,
