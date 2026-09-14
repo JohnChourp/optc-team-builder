@@ -238,13 +238,33 @@ export const SCRIPT_SUITES = {
   /*
    * The TypeScript half of `audit:dead-code`, and deliberately only that half.
    *
-   * `npx knip --include files,exports,types` reports 236 unused exports and 13
-   * unused types against this tree, and the ones sampled are false positives -
+   * The two scripts are near-identical in name and are not the same check:
+   *
+   *   dead-code:check   tsc --noEmit --noUnusedLocals --noUnusedParameters.
+   *                     Wired here, through `test:dead-code`. This is the gate.
+   *   audit:dead-code   that same tsc run PLUS `npx knip --include
+   *                     files,exports,types`. A manual superset. Nothing runs it,
+   *                     and that is the decision below rather than an oversight.
+   *
+   * Re-measured 2026-09-15: knip reports 240 unused exports and 29 unused
+   * exported types against this tree, and the ones sampled are false positives -
    * knip counts a symbol used only inside its own file (an Angular standalone
-   * component listed in a sibling `imports:` array, a type annotating a
-   * constant beside it) as an unused export. That is a question about whether
-   * something should be exported, not about whether it is dead, and 250 of them
-   * attached to the single gate is a noise generator rather than a check.
+   * component listed in a sibling `imports:` array, a type annotating a constant
+   * beside it) as an unused export. That is a question about whether something
+   * should be exported, not about whether it is dead, and 269 of them attached to
+   * the single gate is a noise generator rather than a check.
+   *
+   * The figures recorded when that decision was first made were 236 and 13. The
+   * export count barely moved; the type count more than doubled. The conclusion
+   * is unchanged, but a justification carrying stale numbers invites the next
+   * reader to re-litigate it, so re-measure and re-date rather than trusting
+   * these. `npx knip --include exports,types` prints both totals in its headers.
+   *
+   * knip is a real dependency (^6.35.1), not a suggestion: it is the only tool
+   * here that finds an unused PUBLIC class member, which `--noUnusedLocals`
+   * cannot see and no standard lint rule covers either - see
+   * docs/linting-position.md. Run `npm run audit:dead-code` by hand when hunting
+   * one; do not wire it into the gate without first making its output precise.
    *
    * `--noUnusedLocals --noUnusedParameters` has no such ambiguity: it found ten
    * genuinely unreachable declarations, all ten were removed, and it is clean.
