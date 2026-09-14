@@ -31,6 +31,27 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.30',
+    date: '2026-09-14',
+    userVisible: true,
+    headline: {
+      en: 'Your team, read against the mode you are about to play',
+      el: 'Η ομάδα σου, διαβασμένη για το mode που πας να παίξεις',
+    },
+    summaryEn:
+      'Some specials do something extra on a Treasure Map or in Kizuna Clash, or hit harder the higher your level in that mode - and until now nothing in the app told you which of your units were like that. A new card under the Final team report on Auto Team Builder lets you pick the mode you are heading into and says, for each member of the team you just built, whether they do anything different there, quoting the game\'s own words for it. It does not change which characters the builder picks, and it says so: which units are boosted this week is not something the app knows.',
+    summaryEl:
+      'Κάποια specials κάνουν κάτι επιπλέον σε Treasure Map ή σε Kizuna Clash, ή χτυπούν πιο δυνατά όσο πιο ψηλό είναι το level σου σε εκείνο το mode - και μέχρι τώρα τίποτα στην εφαρμογή δεν σου έλεγε ποιες από τις μονάδες σου είναι έτσι. Μια νέα κάρτα κάτω από το Τελικό report ομάδας στο Auto Team Builder σε αφήνει να διαλέξεις το mode που πας να παίξεις και σου λέει, για κάθε μέλος της ομάδας που μόλις έχτισες, αν κάνει κάτι διαφορετικό εκεί, με τα ίδια τα λόγια του παιχνιδιού. Δεν αλλάζει ποιους χαρακτήρες διαλέγει ο builder, και το λέει καθαρά: ποιες μονάδες είναι boosted αυτή την εβδομάδα δεν είναι κάτι που ξέρει η εφαρμογή.',
+    added: [
+      {
+        en: 'A new **This mode** card under the Final team report on **Auto Team Builder**. Pick Treasure Map or Kizuna Clash and it goes through the team you built, saying for each member whether their special does something extra in that mode, scales with your level in it, or behaves the same as anywhere else - with the game’s own wording quoted for the ones that differ.',
+        el: 'Μια νέα κάρτα **Αυτό το mode** κάτω από το Τελικό report ομάδας στο **Auto Team Builder**. Διάλεξε Treasure Map ή Kizuna Clash και περνάει την ομάδα που έχτισες, λέγοντας για κάθε μέλος αν το special του κάνει κάτι επιπλέον σε εκείνο το mode, αν κλιμακώνεται με το level σου εκεί, ή αν είναι ίδιο όπως παντού - με τα ίδια τα λόγια του παιχνιδιού για όσα διαφέρουν.',
+      },
+    ],
+    improved: [],
+    fixed: [],
+  },
+  {
     version: '0.4.29',
     date: '2026-09-14',
     userVisible: true,
