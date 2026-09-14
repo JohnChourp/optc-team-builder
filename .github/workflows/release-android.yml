@@ -85,13 +85,22 @@ jobs:
           distribution: temurin
           java-version: 21
           cache: gradle
-          # Both pins hold v6 to v5.7.0's behaviour. v6 dropped `default: false`
-          # from verify-signature, so an unset input now falls back to the
-          # distribution, and Temurin reports that it supports verification -
-          # silently turning on a GPG check that throws if the Adoptium API
-          # returns no signature. It stays invisible while Temurin 21 is in the
-          # runner tool cache and would first fire on a cold download, which is
-          # the worst moment for the job that signs the release APK.
+          # Both pins hold v6 to v5.7.0's behaviour. v6.0.0 dropped
+          # `default: false` from verify-signature, so an unset input fell back
+          # to the distribution, and Temurin reports that it supports
+          # verification - silently turning on a GPG check that THREW if the
+          # Adoptium API returned no signature. It stayed invisible while
+          # Temurin 21 sat in the runner tool cache and would first have fired
+          # on a cold download, which is the worst moment for the job that signs
+          # the release APK.
+          #
+          # 869f1v7cn. v6.0.1 softened that: its own docs now say an omitted
+          # input makes a verification failure a WARNING, and only an explicit
+          # `true` makes it fatal. So the sharp edge above is gone upstream and
+          # this pin is no longer load-bearing against a throw. It stays anyway,
+          # because `false` is the only value that states what we want rather
+          # than inheriting it, and the default has now moved twice in two
+          # releases. Re-read this if the input is ever removed.
           verify-signature: false
           # cache-jdk has no static default; unset it resolves to Boolean(cache),
           # which is true here, so the post step would upload the ~300MB JDK as a
