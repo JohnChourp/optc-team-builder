@@ -14,6 +14,13 @@ The Playwright suite has two layers:
   activation checks, explicit state/feedback assertions, and focused axe scans
   for serious structural regressions. The axe helper intentionally excludes
   `color-contrast`; contrast reviews remain a separate visual/design pass.
+  It holds **two** describe blocks, and the difference between them matters:
+  the original slice is `serial`, so one failure abandons the rest of it, while
+  the FAQ and Settings block added by 869f12x4r is not. A flake in a serial
+  block reports "did not run" for tests that were never attempted, which reads
+  as broader breakage than actually happened - measured on clean `main`, where
+  one control run failed a single test and hid two others, and a second control
+  run passed all four. Keep new, independent screens in the independent block.
 - `public-entry-visual.spec.ts` keeps Chromium desktop and mobile visual
   baselines for the public team-building guide, guided/compare/share guide, and
   deterministic Manual Team Builder share-link landing.
