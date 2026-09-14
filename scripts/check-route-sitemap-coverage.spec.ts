@@ -110,6 +110,57 @@ describe('route sitemap coverage', () => {
     expect(result.errors.join('\n')).toContain('which no router route serves');
   });
 
+  /*
+   * 869f12x57. The second half of "is this route public": the app decides at
+   * runtime, from `data.seo`, and it disagreed with the sitemap in production.
+   */
+  it('goes red when a published route has no runtime data.seo - the live defect', () => {
+    const faqSeoStart = routesSource.indexOf("            path: 'faq',\n            /*");
+    const faqSeoEnd = routesSource.indexOf(
+      "            loadComponent: () => import('./pages/faq/faq.page')",
+    );
+
+    expect(faqSeoStart).toBeGreaterThan(-1);
+
+    const withoutFaqSeo =
+      routesSource.slice(0, faqSeoStart) + "            path: 'faq',\n" + routesSource.slice(faqSeoEnd);
+    const result = inspectRouteSitemapCoverage({ routesSource: withoutFaqSeo, generatorSource });
+
+    expect(result.errors.join('\n')).toContain('no router route declares');
+    expect(result.errors.join('\n')).toContain('advertised and then disowned');
+  });
+
+  it('goes red when a title exists twice and the copies disagree', () => {
+    const result = inspectRouteSitemapCoverage({
+      routesSource,
+      generatorSource: generatorSource.replace(
+        "title: 'Account | OPTC Team Builder',",
+        "title: 'Account and Drive Sync | OPTC Team Builder',",
+      ),
+    });
+
+    expect(result.errors.join('\n')).toContain('different <title>');
+  });
+
+  it('goes red when a meta description exists twice and the copies disagree', () => {
+    const result = inspectRouteSitemapCoverage({
+      routesSource,
+      generatorSource: generatorSource.replace(
+        'Manage your optional Google account connection',
+        'Manage optional Google sign-in',
+      ),
+    });
+
+    expect(result.errors.join('\n')).toContain('different meta description');
+  });
+
+  it('reads a route\'s data.seo alongside its path', () => {
+    const faq = readAppRoutes(routesSource).find((route) => route.path === 'tabs/faq');
+
+    expect(faq?.seo?.canonicalPath).toBe('faq');
+    expect(faq?.seo?.title).toContain('FAQ');
+  });
+
   it('rejects a placeholder reason', () => {
     const result = inspectRouteSitemapCoverage({
       routesSource,

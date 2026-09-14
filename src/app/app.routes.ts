@@ -188,6 +188,33 @@ export const routes: Routes = [
           },
           {
             path: 'faq',
+            /*
+             * 869f12x57. Without `data.seo` the app treats a route as private:
+             * `findSeoDataForUrl` falls back to `defaultSeo`, whose `indexable`
+             * is false, so `AppComponent` writes `noindex,follow` and rewrites
+             * the canonical to the home page once Angular hydrates.
+             *
+             * That is what shipped. 869f12x4k put `/faq` into the generated
+             * sitemap and the static page carries `index,follow`, but measured
+             * against production on 2026-09-14 the hydrated page served
+             * `noindex,follow` with `canonical=https://optcteambuilder.com/` -
+             * advertising a URL and then telling crawlers to ignore it as a
+             * duplicate of the home page. Googlebot runs the JS, so the runtime
+             * tag is the one that counts.
+             *
+             * The title and description are byte-identical to the generator's
+             * entry for `faq` on purpose, which is the duplication 869f12x57
+             * exists to remove; `npm run routes:sitemap-coverage` fails if the
+             * two ever disagree.
+             */
+            data: {
+              seo: {
+                title: 'OPTC Team Builder FAQ | Questions About Building a Team',
+                description:
+                  'Answers to common OPTC Team Builder questions: where to start, what the filters mean, why a result changed, and what to do when a suggested team looks wrong.',
+                canonicalPath: 'faq',
+              },
+            },
             loadComponent: () => import('./pages/faq/faq.page').then((module) => module.FaqPage),
           },
           {

@@ -12,6 +12,7 @@ const ROUTES = [
   { path: '/tabs/saved-teams', titleFragment: 'OPTC' },
   { path: '/tabs/saved-enemies', titleFragment: 'OPTC' },
   { path: '/tabs/settings', titleFragment: 'OPTC' },
+  { path: '/tabs/faq', titleFragment: 'FAQ' },
   { path: '/tabs/account', titleFragment: 'Account' },
   { path: '/tabs/privacy', titleFragment: 'Privacy' },
   { path: '/tabs/cookies', titleFragment: 'Cookie' },
@@ -145,6 +146,46 @@ test.describe('cross-browser smoke', () => {
    * pass whose replies never arrive leaves the heading reading "0 matching
    * characters", which looks like a rendered page.
    */
+  /*
+   * 869f12x57. A route can be in the sitemap and still tell crawlers to ignore
+   * it, because indexability is decided at RUNTIME from each route's
+   * `data.seo`: without it `AppComponent` falls back to `defaultSeo`, writes
+   * `noindex,follow`, and rewrites the canonical to the home page.
+   *
+   * That is what `/faq` did in production for a release - static
+   * `index,follow`, hydrated `noindex,follow` with the home page as its
+   * canonical. `npm run routes:sitemap-coverage` now catches the source-level
+   * cause; this catches the behaviour, which is what a crawler actually sees.
+   *
+   * The private route is not decoration. It proves the mechanism still works:
+   * a test that only asserted "everything is indexable" would pass just as well
+   * if the noindex path had been deleted outright.
+   */
+  test('published routes are indexable at runtime, private ones are not @post-merge-smoke', async ({
+    page,
+  }) => {
+    const readHead = () =>
+      page.evaluate(() => ({
+        robots: document.querySelector('meta[name="robots"]')?.getAttribute('content') ?? 'ABSENT',
+        canonical:
+          document.querySelector('link[rel="canonical"]')?.getAttribute('href') ?? 'ABSENT',
+      }));
+
+    for (const { path, canonical } of [
+      { path: '/tabs/faq', canonical: 'https://optcteambuilder.com/faq/' },
+      { path: '/tabs/privacy', canonical: 'https://optcteambuilder.com/privacy/' },
+    ]) {
+      await page.goto(path);
+      await waitForAppAttached(page);
+      await expect.poll(async () => (await readHead()).robots).toBe('index,follow');
+      expect((await readHead()).canonical, `${path} owns its canonical`).toBe(canonical);
+    }
+
+    await page.goto('/tabs/settings');
+    await waitForAppAttached(page);
+    await expect.poll(async () => (await readHead()).robots).toBe('noindex,follow');
+  });
+
   test('captain coverage fills its results from the filter worker @post-merge-smoke', async ({
     page,
   }) => {
