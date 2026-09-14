@@ -31,6 +31,43 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.28',
+    date: '2026-09-14',
+    userVisible: true,
+    headline: {
+      en: 'Five screens that had been left half-finished',
+      el: 'Πέντε οθόνες που είχαν μείνει στη μέση',
+    },
+    summaryEn:
+      'Five things you could already half-do now finish. Crew Forge puts the matches it is least sure about at the top of the results list and lets you tick them off one by one. Pirate Rumble can save an opponent crew on its own and drop it into any later build. Character Boxes tells you, from the box card, whether that box alone can build a team - and takes you there. Settings shows what this device is actually holding, how close to full it is, and can hand you a counts-only file to attach to a problem report. And the Character Overrides card in Settings finally lists which characters you have edited and what each edit changed, with a Revert beside each one.',
+    summaryEl:
+      'Πέντε πράγματα που μπορούσες ήδη να κάνεις μισά, τώρα ολοκληρώνονται. Το Crew Forge βάζει στην κορυφή της λίστας αποτελεσμάτων τις αντιστοιχίσεις για τις οποίες είναι λιγότερο σίγουρο, και σου επιτρέπει να τις κλείνεις μία μία. Το Pirate Rumble μπορεί να αποθηκεύσει μόνη της μια ομάδα αντιπάλου και να τη φορτώσει σε οποιοδήποτε επόμενο στήσιμο. Τα Character Boxes σου λένε, από την κάρτα του box, αν αυτό το box μόνο του φτάνει για ομάδα - και σε πηγαίνουν εκεί. Οι Ρυθμίσεις δείχνουν τι κρατάει στ’ αλήθεια αυτή η συσκευή, πόσο κοντά στο όριο είσαι, και μπορούν να σου δώσουν ένα αρχείο μόνο με αριθμούς για να το συννάψεις σε μια αναφορά προβλήματος. Και η κάρτα Character Overrides στις Ρυθμίσεις δείχνει επιτέλους ποιους χαρακτήρες έχεις αλλάξει και τι άλλαξε η κάθε αλλαγή, με μια Αναίρεση δίπλα σε καθέναν.',
+    added: [
+      {
+        en: 'The results list on Crew Forge now puts the matches it is least sure about first, and each one has a Confirm button so you can work through them. Confirmed matches move out of the way, and there is a Confirm all when you have seen enough.',
+        el: 'Η λίστα αποτελεσμάτων στο Crew Forge βάζει πλέον πρώτες τις αντιστοιχίσεις για τις οποίες είναι λιγότερο σίγουρο, και καθεμία έχει κουμπί Επιβεβαίωσης ώστε να τις περάσεις μία μία. Όσες επιβεβαιώνεις φεύγουν από τη μέση, και υπάρχει και Επιβεβαίωση όλων όταν έχεις δει αρκετά.',
+      },
+      {
+        en: 'An opponent crew on Pirate Rumble can now be saved on its own, under a name you pick, and loaded into any later build from the opponent area of the screen. Until now an opponent only lived inside a saved Rumble team.',
+        el: 'Μια ομάδα αντιπάλου στο Pirate Rumble μπορεί πλέον να αποθηκευτεί μόνη της, με όνομα που διαλέγεις, και να φορτωθεί σε οποιοδήποτε επόμενο στήσιμο από την περιοχή του αντιπάλου. Μέχρι τώρα ο αντίπαλος ζούσε μόνο μέσα σε μια αποθηκευμένη ομάδα Rumble.',
+      },
+      {
+        en: 'The box card on Character Boxes now says whether that box on its own has enough characters to build a team, and takes you to Auto Team Builder with the box already selected.',
+        el: 'Η κάρτα του box στα Character Boxes λέει πλέον αν αυτό το box μόνο του έχει αρκετούς χαρακτήρες για ομάδα, και σε πάει στο Auto Team Builder με το box ήδη επιλεγμένο.',
+      },
+      {
+        en: 'Settings now shows what this device is holding - how many favorites, boxes, teams and the rest - how close the browser is to its storage limit, and a Download diagnostics button that gives you a counts-only file you can attach to a problem report. It carries no character names and no team contents.',
+        el: 'Οι Ρυθμίσεις δείχνουν πλέον τι κρατάει αυτή η συσκευή - πόσα favorites, boxes, ομάδες και τα υπόλοιπα - πόσο κοντά στο όριο αποθήκευσης είναι ο browser, και ένα κουμπί λήψης διαγνωστικών που σου δίνει ένα αρχείο μόνο με αριθμούς, για να το συννάψεις σε μια αναφορά προβλήματος. Δεν περιέχει ονόματα χαρακτήρων ούτε περιεχόμενο ομάδων.',
+      },
+      {
+        en: 'The Character Overrides card in Settings now lists every character you have edited locally and what each edit changed, newest first, with a Revert button beside each one. Until now the only thing that told you an edit existed was a small "Edited locally" chip on that one character’s own screen.',
+        el: 'Η κάρτα Character Overrides στις Ρυθμίσεις δείχνει πλέον κάθε χαρακτήρα που έχεις αλλάξει local και τι άλλαξε η κάθε αλλαγή, με τις πιο πρόσφατες πρώτα, και κουμπί Αναίρεσης δίπλα σε καθέναν. Μέχρι τώρα το μόνο που σου έλεγε ότι υπήρχε αλλαγή ήταν ένα μικρό σημάδι «Αλλαγμένο local» στην οθόνη του συγκεκριμένου χαρακτήρα.',
+      },
+    ],
+    improved: [],
+    fixed: [],
+  },
+  {
     version: '0.4.27',
     date: '2026-09-14',
     userVisible: true,
