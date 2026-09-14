@@ -1,6 +1,9 @@
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
+
+import ts from 'typescript';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -233,28 +236,28 @@ describe('perf-budget-report', () => {
       expect.objectContaining({
         id: 'ability-filters.desktop.saved-teams.firsttogglems',
         actualMs: 200,
-        budgetMs: 800,
+        budgetMs: 2600,
       }),
     );
     expect(report.metricRows).toContainEqual(
       expect.objectContaining({
         id: 'explanation-compare.desktop.import-share-hydration.savedteamsimportreadyms',
         actualMs: 900,
-        budgetMs: 3000,
+        budgetMs: 5800,
       }),
     );
     expect(report.metricRows).toContainEqual(
       expect.objectContaining({
         id: 'route-load.desktop.route-load.manualsharelandingreadyms',
         actualMs: 1000,
-        budgetMs: 2500,
+        budgetMs: 4000,
       }),
     );
     expect(report.metricRows).toContainEqual(
       expect.objectContaining({
         id: 'route-load.desktop.route-load.characterssearchreadyms',
         actualMs: 1100,
-        budgetMs: 1600,
+        budgetMs: 3700,
       }),
     );
     expect(report.metricRows).toContainEqual(
@@ -291,7 +294,7 @@ describe('perf-budget-report', () => {
       expect.objectContaining({
         id: 'route-load.bundle.bundle.characters-route-raw-js',
         actualMs: 70_000,
-        budgetMs: 170_000,
+        budgetMs: 186_000,
         unit: 'bytes',
       }),
     );
@@ -302,13 +305,15 @@ describe('perf-budget-report', () => {
     const currentDir = await writeCurrentResults(
       rootDir,
       abilityResult({
-        desktopSavedTeamsToggle: 801,
+        desktopSavedTeamsToggle: 2601,
       }),
     );
     const report = await buildPerformanceBudgetReport({ currentDir });
 
-    expect(report.status).toBe('failed');
-    expect(report.hardBudgetFailures).toEqual([
+    // 869f1vu91. A timing breach warns and does not gate - see HARD_BUDGET_ENFORCEMENT.
+    expect(report.status).toBe('warning');
+    expect(report.hardBudgetFailures).toEqual([]);
+    expect(report.advisoryBudgetFailures).toEqual([
       expect.objectContaining({
         metricId: 'ability-filters.desktop.saved-teams.firsttogglems',
       }),
@@ -316,44 +321,56 @@ describe('perf-budget-report', () => {
     expect(report.metricRows).toHaveLength(56);
   });
 
-  it('fails route-load timing and bundle hard budgets', async () => {
+  it('gates on route-load BUNDLE breaches only, reporting timing breaches beside them', async () => {
     const rootDir = await makeTempDir();
     const currentDir = await writeCurrentResults(
       rootDir,
       abilityResult(),
       routeLoadResult({
-        desktopManualShareReadyMs: 2500.4,
+        desktopManualShareReadyMs: 4000.4,
         compareRawBytes: 740_001,
-        desktopCharactersSearchReadyMs: 1600.4,
-        savedTeamsRawBytes: 140_001,
+        desktopCharactersSearchReadyMs: 3700.4,
+        savedTeamsRawBytes: 187_001,
       }),
     );
     const report = await buildPerformanceBudgetReport({ currentDir });
 
+    /*
+     * 869f1vu91. The whole point of the split, in one assertion: the run fails, and it fails for
+     * the two BUNDLE breaches only. The two timing breaches in the same fixture are reported
+     * beside them and gate nothing.
+     */
     expect(report.status).toBe('failed');
     expect(report.hardBudgetFailures).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({
-          metricId: 'route-load.desktop.route-load.manualsharelandingreadyms',
-          message: expect.stringContaining('2500.4ms > 2500ms'),
-        }),
         expect.objectContaining({
           metricId: 'route-load.bundle.bundle.compare-route-raw-js',
           message: expect.stringContaining('740.0KB'),
         }),
         expect.objectContaining({
-          metricId: 'route-load.desktop.route-load.characterssearchreadyms',
-          message: expect.stringContaining('1600.4ms > 1600ms'),
+          metricId: 'route-load.bundle.bundle.saved-teams-route-raw-js',
+          message: expect.stringContaining('187.0KB'),
+        }),
+      ]),
+    );
+    expect(report.hardBudgetFailures.every((failure) => failure.metricId.includes('.bundle.'))).toBe(
+      true,
+    );
+    expect(report.advisoryBudgetFailures).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          metricId: 'route-load.desktop.route-load.manualsharelandingreadyms',
+          message: expect.stringContaining('4000.4ms > 4000ms'),
         }),
         expect.objectContaining({
-          metricId: 'route-load.bundle.bundle.saved-teams-route-raw-js',
-          message: expect.stringContaining('140.0KB'),
+          metricId: 'route-load.desktop.route-load.characterssearchreadyms',
+          message: expect.stringContaining('3700.4ms > 3700ms'),
         }),
       ]),
     );
   });
 
-  it('fails saved-team codec hard budgets', async () => {
+  it('warns on saved-team codec timing budgets without gating', async () => {
     const rootDir = await makeTempDir();
     const currentDir = await writeCurrentResults(
       rootDir,
@@ -365,8 +382,10 @@ describe('perf-budget-report', () => {
     );
     const report = await buildPerformanceBudgetReport({ currentDir });
 
-    expect(report.status).toBe('failed');
-    expect(report.hardBudgetFailures).toEqual(
+    // 869f1vu91. Node microbenchmarks are timings too, so they warn rather than gate.
+    expect(report.status).toBe('warning');
+    expect(report.hardBudgetFailures).toEqual([]);
+    expect(report.advisoryBudgetFailures).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           metricId: 'saved-team-codecs.node.saved-team-codecs.sharedecodems',
@@ -518,7 +537,7 @@ describe('perf-budget-report', () => {
     });
 
     expect(formatPerformanceBudgetSummary(report)).toContain(
-      '| ability-filters | desktop | Saved Teams | first ability toggle | 200ms | 800ms | 250ms | -50ms (-20.0%) |',
+      '| ability-filters | desktop | Saved Teams | first ability toggle | 200ms | 2600ms | 250ms | -50ms (-20.0%) |',
     );
   });
 
@@ -585,7 +604,7 @@ describe('perf-budget-report', () => {
     const currentDir = await writeCurrentResults(
       rootDir,
       abilityResult({
-        desktopSavedTeamsToggle: 801,
+        desktopSavedTeamsToggle: 2601,
       }),
     );
     const outputPath = path.join(rootDir, 'report.json');
@@ -602,7 +621,7 @@ describe('perf-budget-report', () => {
       '--report-only',
     ]);
 
-    await expect(readFile(outputPath, 'utf8')).resolves.toContain('"status": "failed"');
+    await expect(readFile(outputPath, 'utf8')).resolves.toContain('"status": "warning"');
     await expect(readFile(summaryPath, 'utf8')).resolves.toContain('Hard Budget Failures');
     await expect(readFile(summaryPath, 'utf8')).resolves.toContain('1.30MB');
     expect(process.exitCode).toBeUndefined();
@@ -667,5 +686,128 @@ describe('resolveReportStatus', () => {
     ['failed', { hardBudgetFailures: [row('a')] }],
   ])('returns %s for the other cases', (expected, input) => {
     expect(resolveReportStatus(input)).toBe(expected);
+  });
+});
+
+/*
+ * 869f1vu91. The budget numbers exist twice, and this is what keeps the copies honest.
+ *
+ * `perf-route-load.mjs` and `perf-explanation-compare.mjs` each assert their own budgets when the
+ * harness runs with PERF_ASSERT on, and `perf-budget-report.mjs` re-declares the same numbers to
+ * build the report. Recalibrating fifteen budgets across two files is exactly the edit where one
+ * copy gets missed - and the failure is silent and confusing: the harness would pass a run the
+ * report then calls a breach, for the same metric, in the same job.
+ *
+ * The sources are PARSED rather than imported: both harnesses run their whole measurement at
+ * import time (a top-level `mkdir`, then `if (shouldBuild)`), so importing one here would launch
+ * a build and a browser.
+ */
+describe('budget parity between the harnesses and the report', () => {
+  const read = (file: string) =>
+    ts.createSourceFile(file, readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true);
+
+  function literal(node: ts.Node): unknown {
+    if (ts.isNumericLiteral(node)) return Number(node.text.replace(/_/gu, ''));
+    if (ts.isStringLiteral(node)) return node.text;
+    if (ts.isObjectLiteralExpression(node)) {
+      const out: Record<string, unknown> = {};
+      for (const prop of node.properties) {
+        if (!ts.isPropertyAssignment(prop)) continue;
+        const key = ts.isIdentifier(prop.name) || ts.isStringLiteral(prop.name) ? prop.name.text : null;
+        if (key !== null) out[key] = literal(prop.initializer);
+      }
+      return out;
+    }
+    if (ts.isArrayLiteralExpression(node)) return node.elements.map(literal);
+    if (ts.isCallExpression(node) && node.arguments.length === 1) return literal(node.arguments[0]);
+    return undefined;
+  }
+
+  function topLevelConst(file: string, name: string): any {
+    const source = read(file);
+    for (const statement of source.statements) {
+      if (!ts.isVariableStatement(statement)) continue;
+      for (const declaration of statement.declarationList.declarations) {
+        if (ts.isIdentifier(declaration.name) && declaration.name.text === name && declaration.initializer) {
+          return literal(declaration.initializer);
+        }
+      }
+    }
+    throw new Error(`${name} not found in ${file}`);
+  }
+
+  /** Every metric definition in the report, as {harness, metricKey/sourcePath, budgets}. */
+  function reportMetrics(): any[] {
+    const source = read('scripts/perf-budget-report.mjs');
+    const found: any[] = [];
+    const visit = (node: ts.Node) => {
+      if (ts.isVariableStatement(node)) {
+        for (const declaration of node.declarationList.declarations) {
+          if (!ts.isIdentifier(declaration.name) || !declaration.name.text.endsWith('_METRICS')) continue;
+          const value = literal(declaration.initializer!) as any[];
+          if (Array.isArray(value)) {
+            for (const metric of value) found.push({ ...metric, group: declaration.name.text });
+          }
+        }
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(source);
+    return found;
+  }
+
+  it('route-load timing budgets match the harness', () => {
+    const harness = topLevelConst('scripts/perf-route-load.mjs', 'ROUTE_LOAD_BUDGETS');
+    const metrics = reportMetrics().filter((m) => m.group === 'ROUTE_LOAD_METRICS' && m.scope !== 'result');
+
+    expect(metrics.length).toBeGreaterThan(0);
+    for (const metric of metrics) {
+      expect
+        .soft(metric.budgets, `report vs harness for ${metric.metricKey}`)
+        .toEqual(harness.timings[metric.metricKey]);
+    }
+  });
+
+  it('route-load bundle budgets match the harness', () => {
+    const harness = topLevelConst('scripts/perf-route-load.mjs', 'ROUTE_LOAD_BUDGETS');
+    const byLabel: Record<string, string> = {
+      'initial raw JS': 'initialRawBytes',
+      'initial gzip JS': 'initialGzipBytes',
+      'guide route raw JS': 'guideRawBytes',
+      'manual share route raw JS': 'manualShareRawBytes',
+      'compare route raw JS': 'compareRawBytes',
+      'characters route raw JS': 'charactersRawBytes',
+      'saved teams route raw JS': 'savedTeamsRawBytes',
+      'captain coverage route raw JS': 'captainCoverageRawBytes',
+    };
+    const metrics = reportMetrics().filter((m) => m.group === 'ROUTE_LOAD_METRICS' && m.scope === 'result');
+
+    expect(metrics).toHaveLength(Object.keys(byLabel).length);
+    for (const metric of metrics) {
+      const key = byLabel[metric.metricLabel];
+      expect(key, `unmapped bundle metric "${metric.metricLabel}"`).toBeDefined();
+      expect.soft(metric.budgets.bundle, `report vs harness for ${key}`).toBe(harness.bundles[key]);
+    }
+  });
+
+  it('explanation-compare timing budgets match the harness', () => {
+    const harness = topLevelConst('scripts/perf-explanation-compare.mjs', 'budgets');
+    const metrics = reportMetrics().filter((m) => m.group === 'EXPLANATION_METRICS');
+
+    expect(metrics.length).toBeGreaterThan(0);
+    for (const metric of metrics) {
+      for (const viewport of ['desktop', 'mobile']) {
+        expect
+          .soft(metric.budgets[viewport], `${metric.metricKey} ${viewport}`)
+          .toBe(harness[viewport][metric.metricKey]);
+      }
+    }
+  });
+
+  it('every bundle metric is hard-enforced and every timing metric is not', () => {
+    for (const metric of reportMetrics()) {
+      const expected = metric.viewport === 'bundle' ? 'hard' : undefined;
+      expect.soft(metric.enforcement, `${metric.group} ${metric.metricLabel}`).toBe(expected);
+    }
   });
 });

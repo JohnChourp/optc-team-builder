@@ -10,7 +10,11 @@ on:
       fail_on_regression:
         description: Fail the workflow when hard performance budgets are exceeded
         required: false
-        default: false
+        # 869f1vu91. Was false, which meant a breach was recorded and never seen - the report said
+        # `failed` on every run from 2026-09-03 while this workflow stayed green. Only the HARD
+        # (bundle) budgets gate; timings are advisory and reported. A dispatch can still pass false
+        # to take a measurement without the gate.
+        default: true
         type: boolean
   schedule:
     - cron: '23 6 * * 1-5'
@@ -167,7 +171,7 @@ jobs:
         id: budget_report
         env:
           BASELINE_REPORT_PATH: ${{ steps.baseline.outputs.baseline_report_path }}
-          FAIL_ON_REGRESSION: ${{ github.event.inputs.fail_on_regression || 'false' }}
+          FAIL_ON_REGRESSION: ${{ github.event.inputs.fail_on_regression || 'true' }}
         run: |
           report_args=(
             --current-dir perf-artifacts/current
@@ -184,7 +188,7 @@ jobs:
           cat perf-artifacts/performance-budget-summary.md >> "${GITHUB_STEP_SUMMARY}"
 
           if [[ "${FAIL_ON_REGRESSION}" == "true" ]]; then
-            node -e "const fs = require('node:fs'); const report = JSON.parse(fs.readFileSync('perf-artifacts/performance-budget-report.json', 'utf8')); const failures = Array.isArray(report.hardBudgetFailures) ? report.hardBudgetFailures.length : 0; if (failures > 0) { console.error('Hard performance budgets failed for ' + failures + ' metric(s).'); process.exit(1); }"
+            node -e "const fs = require('node:fs'); const report = JSON.parse(fs.readFileSync('perf-artifacts/performance-budget-report.json', 'utf8')); const hard = Array.isArray(report.hardBudgetFailures) ? report.hardBudgetFailures.length : 0; const invalid = Array.isArray(report.invalidMetricFailures) ? report.invalidMetricFailures.length : 0; const advisory = Array.isArray(report.advisoryBudgetFailures) ? report.advisoryBudgetFailures.length : 0; if (advisory > 0) { console.log('Advisory (timing) budgets exceeded for ' + advisory + ' metric(s); reported, not gating.'); } if (hard + invalid > 0) { console.error('Hard performance budgets failed for ' + hard + ' metric(s); ' + invalid + ' metric(s) produced no value.'); process.exit(1); }"
           fi
 
       - name: Build performance trend history

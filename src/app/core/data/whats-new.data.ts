@@ -31,6 +31,22 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.38',
+    date: '2026-09-14',
+    userVisible: false,
+    headline: {
+      en: 'Nothing changed on any screen',
+      el: 'Δεν άλλαξε τίποτα σε καμία οθόνη',
+    },
+    summaryEn:
+      'Housekeeping on the speed and size checks that run against the app after every build. The limits they measured against had drifted so far from reality that they were failing every night without anyone being told, so they have been reset to honest numbers and the ones that can be measured exactly now stop a build when they are exceeded. No screen, setting or saved data changed.',
+    summaryEl:
+      'Συγύρισμα στους ελέγχους ταχύτητας και μεγέθους που τρέχουν πάνω στην εφαρμογή μετά από κάθε build. Τα όρια με τα οποία συγκρίνονταν είχαν απομακρυνθεί τόσο από την πραγματικότητα που αποτύγχαναν κάθε βράδυ χωρίς να το μαθαίνει κανείς, οπότε ξαναμπήκαν σε τίμια νούμερα και όσα μετριούνται με ακρίβεια σταματούν πλέον ένα build όταν ξεπεραστούν. Καμία οθόνη, ρύθμιση ή αποθηκευμένο δεδομένο δεν άλλαξε.',
+    added: [],
+    improved: [],
+    fixed: [],
+  },
+  {
     version: '0.4.37',
     date: '2026-09-14',
     userVisible: false,
