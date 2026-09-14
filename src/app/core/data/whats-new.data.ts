@@ -31,6 +31,22 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.37',
+    date: '2026-09-14',
+    userVisible: false,
+    headline: {
+      en: 'Nothing changed on any screen',
+      el: 'Δεν άλλαξε τίποτα σε καμία οθόνη',
+    },
+    summaryEn:
+      'Routine updates to the building blocks the app is made from, and to the tools that build it. Every one of them is a small maintenance release from the people who make those pieces, and none of them changes anything you can see or do. Nothing on any screen is different.',
+    summaryEl:
+      'Ρουτίνας ενημερώσεις στα δομικά κομμάτια από τα οποία φτιάχνεται η εφαρμογή, και στα εργαλεία που τη χτίζουν. Όλες τους είναι μικρές εκδόσεις συντήρησης από αυτούς που φτιάχνουν εκείνα τα κομμάτια, και καμία δεν αλλάζει κάτι που βλέπεις ή κάνεις. Τίποτα σε καμία οθόνη δεν είναι διαφορετικό.',
+    added: [],
+    improved: [],
+    fixed: [],
+  },
+  {
     version: '0.4.36',
     date: '2026-09-14',
     userVisible: false,
