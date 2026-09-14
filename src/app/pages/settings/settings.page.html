@@ -765,6 +765,36 @@
         </div>
       </section>
 
+      <section class="glass-card stored-data-card" data-test="settings-stored-data">
+        <div class="section-head section-head--compact">
+          <div>
+            <h2>{{ t('management.storedData.title') }}</h2>
+            <p>{{ t('management.storedData.copy', { count: storedDataTotal() }) }}</p>
+          </div>
+          <ion-button
+            fill="outline"
+            size="small"
+            color="light"
+            data-test="settings-diagnostics-export"
+            (click)="downloadStorageDiagnostics()"
+          >
+            {{ t('management.storedData.exportDiagnostics') }}
+          </ion-button>
+        </div>
+
+        <dl class="about-grid stored-data-grid">
+          @for (row of storedDataRows(); track row.key) {
+            <div [attr.data-test]="'settings-stored-' + row.key">
+              <dt>{{ t('management.' + row.key + '.title') }}</dt>
+              <dd>{{ row.count }}</dd>
+            </div>
+          }
+        </dl>
+
+        <p class="build-hint" data-test="settings-storage-quota">{{ storageQuotaLabel() }}</p>
+        <p class="build-hint">{{ t('management.storedData.diagnosticsCopy') }}</p>
+      </section>
+
       <section class="glass-card about-card" data-test="settings-about">
         <div class="section-head">
           <div>
