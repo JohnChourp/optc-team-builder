@@ -218,6 +218,14 @@ export const BROWSER_STORAGE_KEYS: readonly BrowserStorageKeyRecord[] = [
     note: 'Browsing history, rebuilt by browsing. Deliberately not exported - it is a record of looking, not of choosing.',
   },
   {
+    key: 'autoTeamBuilderResultV1',
+    constantName: 'AUTO_TEAM_BUILDER_RESULT_KEY',
+    owner: 'src/app/pages/auto-team-builder/auto-team-builder-result-snapshot.utils.ts',
+    backend: 'preferences',
+    classification: 'transient-ui-state',
+    note: 'The last built Auto Team Builder team, so a reload does not throw it away - 869f12xbc measured a completed build writing zero bytes and losing the result on a plain reload. Preferences rather than session because the case is a phone killing a backgrounded app, which sessionStorage does not survive. It stores character IDs and re-reads the records, so it is a cache the reader rebuilds by pressing Build; the durable thing is a Saved Team, which is why this is neither exported nor synced. Carries its own V1 because the snapshot shape can change.',
+  },
+  {
     key: 'optc_google_account_session',
     constantName: 'GOOGLE_ACCOUNT_SESSION_KEY',
     owner: 'src/app/core/services/google-account.service.ts',

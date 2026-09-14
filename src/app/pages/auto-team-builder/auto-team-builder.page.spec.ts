@@ -653,6 +653,114 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     expect(page.manualSlots().every((slot) => slot.characterIds.length === 0)).toBe(true);
   });
 
+  /*
+   * 869f1k0zv. 869f12xbc measured a completed build writing zero bytes of storage, so the result
+   * did not survive a plain reload. These drive the whole round trip through the page.
+   */
+  it('parks the built result so a later visit can restore it', async () => {
+    const { page, autoTeamBuilder, preferences } = await createPage();
+
+    autoTeamBuilder.buildTeam.mockResolvedValue(createAutoBuildResult());
+    await page.ngOnInit();
+    await page.buildTeam();
+
+    const raw = preferences.store.get('autoTeamBuilderResultV1');
+
+    expect(raw).toBeTruthy();
+
+    const snapshot = JSON.parse(raw!) as { version: number; result: { slots: unknown[] } };
+
+    expect(snapshot.version).toBe(1);
+    expect(snapshot.result.slots).toHaveLength(6);
+    // Ids, not records: a six-slot result's character details alone average 26 KB.
+    expect(raw).not.toContain('detailImageUrl');
+  });
+
+  it('restores the built team on a later page load', async () => {
+    const first = await createPage();
+
+    first.autoTeamBuilder.buildTeam.mockResolvedValue(createAutoBuildResult());
+    await first.page.ngOnInit();
+    await first.page.buildTeam();
+
+    const parked = first.preferences.store.get('autoTeamBuilderResultV1');
+    const second = await createPage();
+
+    second.preferences.store.set('autoTeamBuilderResultV1', parked!);
+    await second.page.ngOnInit();
+
+
+    expect(second.page.result()?.slots.map((slot) => slot.character.id)).toEqual([
+      101, 102, 103, 104, 105, 106,
+    ]);
+    expect(second.page.result()?.slots.map((slot) => slot.role)).toEqual([
+      'captain',
+      'friendCaptain',
+      'sub',
+      'sub',
+      'sub',
+      'sub',
+    ]);
+  });
+
+  it('clears the parked result when the page is reset', async () => {
+    const { page, autoTeamBuilder, preferences } = await createPage();
+
+    autoTeamBuilder.buildTeam.mockResolvedValue(createAutoBuildResult());
+    await page.ngOnInit();
+    await page.buildTeam();
+
+    expect(preferences.store.get('autoTeamBuilderResultV1')).toBeTruthy();
+
+    await page.resetPage();
+
+    expect(preferences.store.get('autoTeamBuilderResultV1')).toBe('');
+    expect(page.result()).toBeNull();
+  });
+
+  /*
+   * Character data moves at every dataset release. A five-member team the builder never produced
+   * looks like a result, so the whole snapshot is abandoned and dropped rather than half-restored.
+   */
+  it('abandons a parked result whose character has left the dataset', async () => {
+    const first = await createPage();
+
+    first.autoTeamBuilder.buildTeam.mockResolvedValue(createAutoBuildResult());
+    await first.page.ngOnInit();
+    await first.page.buildTeam();
+
+    const parked = first.preferences.store.get('autoTeamBuilderResultV1');
+    const second = await createPage();
+
+    second.preferences.store.set('autoTeamBuilderResultV1', parked!);
+    second.repository.getDetailedCharactersByIds.mockResolvedValue([]);
+    await second.page.ngOnInit();
+
+    expect(second.page.result()).toBeNull();
+    expect(second.preferences.store.get('autoTeamBuilderResultV1')).toBe('');
+  });
+
+  it('ignores a parked result that is not the shape this build writes', async () => {
+    const { page, preferences } = await createPage();
+
+    preferences.store.set('autoTeamBuilderResultV1', JSON.stringify({ version: 99, slots: [] }));
+    await page.ngOnInit();
+
+    expect(page.result()).toBeNull();
+  });
+
+  it('survives a store that throws instead of losing the page', async () => {
+    const { page, autoTeamBuilder, preferences } = await createPage();
+
+    preferences.set.mockRejectedValue(new Error('QuotaExceededError'));
+    autoTeamBuilder.buildTeam.mockResolvedValue(createAutoBuildResult());
+    await page.ngOnInit();
+    await page.buildTeam();
+
+    // The build still shows. Only the parking failed.
+    expect(page.result()?.slots).toHaveLength(6);
+  });
+
   it('guided auto build fills and requires only captain on the first run', async () => {
     const { page, autoTeamBuilder } = await createPage();
 
@@ -10521,12 +10629,18 @@ async function createPage(
     getShips: ReturnType<typeof vi.fn>;
     getCharacterById: ReturnType<typeof vi.fn>;
     getCharactersByIds: ReturnType<typeof vi.fn>;
+    getDetailedCharactersByIds: ReturnType<typeof vi.fn>;
     searchDetailedCharacters: ReturnType<typeof vi.fn>;
     searchCharacters: ReturnType<typeof vi.fn>;
   };
   autoTeamBuilder: {
     buildTeam: ReturnType<typeof vi.fn>;
     resolveCaptainCoveredCandidateRecords: ReturnType<typeof vi.fn>;
+  };
+  preferences: {
+    store: Map<string, string>;
+    get: ReturnType<typeof vi.fn>;
+    set: ReturnType<typeof vi.fn>;
   };
   router: { navigate: ReturnType<typeof vi.fn> };
   route: { snapshot: { queryParamMap: { get: ReturnType<typeof vi.fn> } } };
@@ -10665,6 +10779,13 @@ async function createPage(
       characterId > 0 && characterId < 900 ? createCharacterRecord(characterId) : null,
     ),
     getCharactersByIds: vi
+      .fn()
+      .mockImplementation(async (characterIds: number[]) =>
+        characterIds
+          .filter((characterId) => characterId > 0 && characterId < 900)
+          .map((characterId) => createCharacterRecord(characterId)),
+      ),
+    getDetailedCharactersByIds: vi
       .fn()
       .mockImplementation(async (characterIds: number[]) =>
         characterIds
@@ -10839,6 +10960,20 @@ async function createPage(
   const characterOverrides = {
     overridesByCharacterId: signal(new Map<number, unknown>()),
   };
+  /*
+   * 869f1k0zv. An in-memory Preferences stand-in, so the result snapshot can be driven without a
+   * real store. `get` on an unwritten key returns `{ value: null }`, which is what the adapter does.
+   */
+  const preferencesStore = new Map<string, string>();
+  const preferences = {
+    store: preferencesStore,
+    get: vi.fn().mockImplementation(async ({ key }: { key: string }) => ({
+      value: preferencesStore.get(key) ?? null,
+    })),
+    set: vi.fn().mockImplementation(async ({ key, value }: { key: string; value: string }) => {
+      preferencesStore.set(key, value);
+    }),
+  };
 
   return {
     page: new AutoTeamBuilderPage(
@@ -10850,7 +10985,9 @@ async function createPage(
       router as never,
       alertController as never,
       characterOverrides as never,
+      preferences as never,
     ),
+    preferences,
     repository,
     autoTeamBuilder,
     router,
