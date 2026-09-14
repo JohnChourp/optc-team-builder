@@ -773,6 +773,19 @@
       "noTypeCoverage": "No type coverage"
     }
   },
+  "chargeTimeline": {
+    "charges": "charges in {{turns}}",
+    "copy": "How long each special on this team takes to charge, against a run of the length you enter. It is charge time from the start of the battle - it does not model using a special and charging it again.",
+    "entryExact": "Charges on the last turn of the run, at max special level. Level it up and it arrives earlier.",
+    "entryReady": "Charges with {{turns}} turns to spare, at max special level. At level 1 it takes {{base}}.",
+    "entryShort": "Does not charge in time - {{turns}} turns short, even at max special level.",
+    "limitBreakNote": "Charge times are for special level 1 up to max special level. Limit Break lowers them further in game, and the app data does not carry that - so the fastest number here is a floor before Limit Break, not the fastest a real box can reach.",
+    "summary": "{{ready}} of {{total}} specials charge within {{turns}} turns.",
+    "summaryNone": "No special on this team has a charge time in the app data.",
+    "title": "Special charge timeline",
+    "turnsLabel": "Stages in this run",
+    "unknown": "No charge time in the app data for: {{names}}. Those specials are not listed above."
+  },
   "compare": {
     "title": "Compare teams",
     "copy": "Check slot changes and summary deltas without rebuilding the current result.",
