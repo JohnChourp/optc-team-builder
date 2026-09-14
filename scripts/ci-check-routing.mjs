@@ -92,6 +92,16 @@ export const SCRIPT_SUITES = {
     label: 'Guide discoverability tests',
     command: 'npm run test:discoverability',
   },
+  /*
+   * 869f12x4k. `/faq` was a top-level public route for three releases and
+   * reached 0 of the 4,637 generated sitemap URLs, because the sitemap's route
+   * list is a second hand-written copy of the router's. The lane routes on both
+   * files, so touching either one re-proves they still agree.
+   */
+  'route-sitemap-coverage': {
+    label: 'Router / sitemap coverage tests',
+    command: 'npm run test:route-sitemap-coverage',
+  },
   'public-entry-synthetics': {
     label: 'Public entry synthetic monitor tests',
     command: 'npm run test:public-entry-synthetics',
@@ -306,6 +316,24 @@ function isDiscoverabilityPath(filePath) {
     filePath === 'scripts/verify-guide-discoverability.mjs' ||
     filePath === 'scripts/verify-guide-discoverability.spec.ts'
   );
+}
+
+function isRouteSitemapCoveragePath(filePath) {
+  return (
+    filePath === 'scripts/check-route-sitemap-coverage.mjs' ||
+    filePath === 'scripts/check-route-sitemap-coverage.spec.ts'
+  );
+}
+
+/*
+ * The two sources the guard compares. Deliberately NOT terminating: on main,
+ * `src/app/app.routes.ts` routes to the Angular and e2e lanes and
+ * `scripts/generate-seo-pages.mjs` routes to the full plan. Measured before
+ * writing this - a `continue` here stripped Angular, e2e and 32 script suites
+ * from a route change, which is a far larger hole than the one being fixed.
+ */
+function touchesRouteSitemapSources(filePath) {
+  return filePath === 'src/app/app.routes.ts' || filePath === 'scripts/generate-seo-pages.mjs';
 }
 
 function isPublicEntrySyntheticsPath(filePath) {
@@ -609,6 +637,15 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
   }
 
   for (const filePath of changedFiles) {
+    if (touchesRouteSitemapSources(filePath)) {
+      addScriptSuite(scriptSuites, 'route-sitemap-coverage');
+    }
+
+    if (isRouteSitemapCoveragePath(filePath)) {
+      addScriptSuite(scriptSuites, 'route-sitemap-coverage');
+      continue;
+    }
+
     if (isWorkflowOrDependencyPath(filePath)) {
       categories.add('full-risk');
       reasons.add(`${filePath} can affect dependency, workflow, or CI routing behavior`);

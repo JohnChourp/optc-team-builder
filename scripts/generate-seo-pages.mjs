@@ -335,6 +335,25 @@ const publicRoutes = [
     ],
   },
   {
+    path: 'faq',
+    title: 'OPTC Team Builder FAQ | Questions About Building a Team',
+    description:
+      'Answers to common OPTC Team Builder questions: where to start, what the filters mean, why a result changed, and what to do when a suggested team looks wrong.',
+    heading: 'OPTC Team Builder FAQ',
+    paragraphs: [
+      'The OPTC Team Builder FAQ answers the questions players ask while building a One Piece Treasure Cruise team: where to start between the two builders, what the filters and tags actually mean, and how they combine.',
+      'It also covers the results themselves - when an Auto Team Builder result changes, what happens when nothing fits every requirement, how to check a team before saving it, and what to do when a suggested team looks wrong.',
+      'The in-app version of this page is available in English and Greek, with links that open the screen each answer describes.',
+    ],
+    links: [
+      { label: 'Open the FAQ', path: 'tabs/faq' },
+      { label: 'Open Auto Team Builder', path: 'tabs/auto-team-builder' },
+      { label: 'Open Manual Team Builder', path: 'tabs/manual-team-builder' },
+      { label: 'Read the team-building guide', path: 'guides/how-to-build-an-optc-team' },
+    ],
+    aliases: ['tabs/faq'],
+  },
+  {
     path: 'privacy',
     title: 'Privacy Policy | OPTC Team Builder',
     description: 'Read the privacy policy for OPTC Team Builder.',
