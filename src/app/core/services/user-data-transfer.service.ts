@@ -43,6 +43,10 @@ import {
   sanitizeSavedRumbleOpponentsImportPayload,
 } from '../../pages/auto-team-builder-rumble/saved-rumble-opponents-transfer.utils';
 import {
+  buildBoostedCharactersTransferPayload,
+  parseBoostedCharactersTransferPayload,
+} from '../../pages/auto-team-builder/boosted-characters-transfer.utils';
+import {
   buildCrewForgeProfilesTransferPayload,
   parseCrewForgeProfilesImportPayloadValue,
   sanitizeCrewForgeProfilesImportPayload,
@@ -99,6 +103,12 @@ export interface CharacterBoxesImportSummary {
   updatedCount: number;
 }
 
+export interface BoostedCharactersImportSummary {
+  appliedCount: number;
+  /** True when a list was actually read; false when the payload was not one. */
+  replaced: boolean;
+}
+
 export interface SavedRumbleOpponentsImportSummary {
   addedCount: number;
   duplicateIdCount: number;
@@ -147,6 +157,7 @@ export interface AllDataApplySummary {
   characterOverrides?: CharacterOverridesImportSummary;
   crewForgeProfiles?: CrewForgeProfilesImportSummary;
   savedRumbleOpponents?: SavedRumbleOpponentsImportSummary;
+  boostedCharacterIds?: BoostedCharactersImportSummary;
   favoriteShips?: FavoriteShipsImportSummary;
   favorites?: FavoritesImportSummary;
   savedEnemies?: SavedEnemiesImportSummary;
@@ -228,7 +239,36 @@ export class UserDataTransferService {
       );
     }
 
+    if (payload.boostedCharacterIds !== undefined) {
+      summary.boostedCharacterIds = await this.importBoostedCharactersPayload(
+        payload.boostedCharacterIds as unknown,
+      );
+    }
+
     return summary;
+  }
+
+  /**
+   * 869f1q90b. Replaces the list rather than merging it.
+   *
+   * Every other scope here merges, because two devices can both have saved teams worth keeping. A
+   * boost list describes ONE event, so merging two of them would produce a set that was never true
+   * of any event - and the builder would prefer characters for a week that has passed.
+   */
+  public async importBoostedCharactersPayload(
+    payload: unknown,
+  ): Promise<BoostedCharactersImportSummary> {
+    await this.ready();
+
+    const parsed = parseBoostedCharactersTransferPayload(payload);
+
+    if (!parsed) {
+      return { appliedCount: 0, replaced: false };
+    }
+
+    await this.userState.setBoostedCharacterIds(parsed.characterIds);
+
+    return { appliedCount: parsed.characterIds.length, replaced: true };
   }
 
   public async buildAllDataPayload(
@@ -255,6 +295,9 @@ export class UserDataTransferService {
         ),
         savedRumbleOpponents: buildSavedRumbleOpponentsTransferPayload(
           this.userState.savedRumbleOpponents(),
+        ),
+        boostedCharacterIds: buildBoostedCharactersTransferPayload(
+          this.userState.boostedCharacterIds(),
         ),
       },
       exportedAt,

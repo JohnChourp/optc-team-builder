@@ -439,7 +439,7 @@ describe('every scope survives the round trip', () => {
 
   it('guards against the list itself shrinking', () => {
     // A guard that reads an empty list passes for the wrong reason; this is how that would rot.
-    expect(ALL_DATA_TRANSFER_SCOPES).toHaveLength(9);
+    expect(ALL_DATA_TRANSFER_SCOPES).toHaveLength(10);
     expect(new Set(ALL_DATA_TRANSFER_SCOPES).size).toBe(ALL_DATA_TRANSFER_SCOPES.length);
   });
 

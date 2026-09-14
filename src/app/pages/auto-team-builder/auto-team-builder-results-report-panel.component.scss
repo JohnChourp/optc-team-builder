@@ -137,3 +137,47 @@
 .charge-list__item--muted .charge-list__head strong {
   color: rgba(248, 251, 255, 0.72);
 }
+
+/* 869f1q90b. The boosted-unit list, edited from the team on screen. */
+.boosted-block {
+  display: grid;
+  gap: 8px;
+  padding-top: 4px;
+  justify-items: start;
+}
+
+.boosted-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.boosted-toggle {
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(248, 251, 255, 0.82);
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.boosted-toggle:focus-visible {
+  outline: 2px solid rgba(245, 200, 76, 0.4);
+  outline-offset: 2px;
+}
+
+.boosted-toggle--on {
+  border-color: rgba(245, 200, 76, 0.55);
+  background: rgba(245, 200, 76, 0.18);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.boosted-block ion-button {
+  margin: 0;
+}

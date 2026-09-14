@@ -226,6 +226,7 @@ function createInput(
 ): AutoBuildInput {
   return {
     types,
+    boostedCharacterIds: [],
     selectedClasses,
     selectedCharacterTags: overrides.selectedCharacterTags ?? [],
     selectedCharacterNames: overrides.selectedCharacterNames ?? [],

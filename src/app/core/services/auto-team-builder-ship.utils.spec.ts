@@ -191,6 +191,7 @@ function createResult(
 ): Pick<AutoBuildResult, 'slots' | 'input'> {
   const input: AutoBuildInput = {
     types: ['DEX'],
+    boostedCharacterIds: [],
     selectedClasses: ['Free Spirit'],
     selectedCharacterTags: [],
     selectedCharacterNames: [],

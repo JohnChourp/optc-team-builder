@@ -126,6 +126,15 @@ export const BROWSER_STORAGE_KEYS: readonly BrowserStorageKeyRecord[] = [
     note: 'Opponent crews the reader saved to face again across a Rumble season. Added by 869f12x45; this guard is what required the export scope before the key could ship.',
   },
   {
+    key: 'boostedCharacterIds',
+    constantName: 'BOOSTED_CHARACTER_IDS_KEY',
+    owner: 'src/app/core/services/user-state.service.ts',
+    backend: 'preferences',
+    classification: 'durable-user-data',
+    exportedAs: 'boostedCharacterIds',
+    note: 'Characters the reader marked as boosted for the event they are playing, entered by hand because there is no boost data in the dataset at all and a boost list is event-scoped and time-bound. Durable rather than transient: it is the reader\'s own work and it should survive a reinstall. Added by 869f1q90b.',
+  },
+  {
     key: 'characterBoxes',
     constantName: 'CHARACTER_BOXES_KEY',
     owner: 'src/app/core/services/user-state.service.ts',

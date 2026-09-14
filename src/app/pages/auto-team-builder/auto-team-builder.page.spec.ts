@@ -10673,6 +10673,7 @@ function createAutoBuildResult(
 ): AutoBuildResult {
   const input: AutoBuildResult['input'] = {
     types: ['DEX', 'PSY'],
+    boostedCharacterIds: [],
     selectedClasses: ['Fighter', 'Slasher'],
     selectedCharacterTags: [],
     selectedCharacterNames: [],

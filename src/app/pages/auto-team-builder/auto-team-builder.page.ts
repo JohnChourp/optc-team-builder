@@ -1114,6 +1114,19 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
    * result. It did not, and the card says so in as many words.
    */
   public readonly selectedGameMode = signal<GameMode | null>(null);
+  /**
+   * 869f1q90b. The reader's own boosted-unit list. Hand-entered because there is no boost data in
+   * the dataset at all, and it steers RANKING rather than legality - a boosted character is
+   * preferred among candidates the search would have accepted anyway.
+   */
+  public readonly boostedCharacterIds;
+  public readonly boostedTeamMemberIds = computed(() => {
+    const boosted = new Set(this.boostedCharacterIds());
+
+    return (this.result()?.slots ?? [])
+      .map((slot) => slot.character.id)
+      .filter((characterId) => boosted.has(characterId));
+  });
   public readonly availableGameModes = GAME_MODES;
   public readonly teamModeEffects = computed<TeamModeEffects | null>(() =>
     buildTeamModeEffects(this.result(), this.selectedGameMode()),
@@ -3502,6 +3515,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     private readonly preferences: PreferencesAdapterService,
   ) {
     this.favoriteCharacterIds = this.userState.favoriteCharacterIds;
+    this.boostedCharacterIds = this.userState.boostedCharacterIds;
     this.favoriteShipIds = this.userState.favoriteShipIds;
     this.characterBoxes = this.userState.characterBoxes;
     this.savedTeams = this.userState.savedTeams;
@@ -4917,6 +4931,33 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
     this.selectedGameMode.set(
       GAME_MODES.includes(value as GameMode) ? (value as GameMode) : null,
+    );
+  }
+
+  /**
+   * 869f1q90b. Marks the character boosted, or unmarks it.
+   *
+   * The reader edits this from the team in front of them - they read the event screen, then tick
+   * the units it names. There is no picker because the list they care about is almost always
+   * already on screen: the team the builder just produced.
+   */
+  public async toggleBoostedCharacter(characterId: number): Promise<void> {
+    await this.userState.toggleBoostedCharacter(characterId);
+  }
+
+  public async clearBoostedCharacters(): Promise<void> {
+    await this.userState.clearBoostedCharacterIds();
+  }
+
+  public isBoostedCharacter(characterId: number): boolean {
+    return this.boostedCharacterIds().includes(characterId);
+  }
+
+  public boostedSummaryLabel(): string {
+    return this.i18n.translate(
+      'gameMode.boosted.summary',
+      { marked: this.boostedCharacterIds().length, onTeam: this.boostedTeamMemberIds().length },
+      'auto-team-builder',
     );
   }
 
@@ -6552,6 +6593,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       battleRequirements: this.pageBattleRequirements(),
       enemyMechanics: this.pageEnemyMechanics(),
       favoritesOnly: this.favoritesOnly(),
+      boostedCharacterIds: [...this.boostedCharacterIds()],
       allowAnyFriendCaptainAutoFill: this.allowAnyFriendCaptainAutoFill(),
       favoriteCharacterIds: this.favoriteCharacterIds(),
       favoriteShipsOnly: this.favoriteShipsOnly(),

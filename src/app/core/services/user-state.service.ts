@@ -61,6 +61,14 @@ const SAVED_TEAMS_KEY = 'savedTeams';
 const SAVED_ENEMIES_KEY = 'savedEnemies';
 const SAVED_RUMBLE_TEAMS_KEY = 'savedRumbleTeams';
 const SAVED_RUMBLE_OPPONENTS_KEY = 'savedRumbleOpponents';
+/**
+ * 869f1q90b. Characters the reader has marked as boosted for the event they are playing.
+ *
+ * Hand-entered because there is no boost data in the dataset at all and a boost list is
+ * event-scoped and time-bound - a shipped one would be stale within days. Durable rather than
+ * transient: it is the reader's own work, it survives a reinstall, and it travels in the backup.
+ */
+const BOOSTED_CHARACTER_IDS_KEY = 'boostedCharacterIds';
 const CREW_FORGE_IMAGE_PROFILES_KEY = 'crewForgeImageProfiles';
 const CREW_FORGE_LAST_IMAGE_PROFILE_ID_KEY = 'crewForgeLastImageProfileId';
 const AUTO_TEAM_BUILDER_WORKER_PREFERENCE_KEY = 'autoTeamBuilderWorkerPreference';
@@ -110,8 +118,31 @@ type UserStateHydrationDomain =
   | 'savedRumbleTeams'
   | 'crewForgeImageProfiles'
   | 'savedRumbleOpponents'
+  | 'boostedCharacterIds'
   | 'autoTeamBuilderWorkerPreference'
   | 'builderIntroDismissed';
+
+/**
+ * 869f1q90b. Deduplicated, positive integers only, insertion order kept.
+ *
+ * Order is the reader's - they add units as they read the event screen - so it is preserved rather
+ * than sorted. A stored value that is not a list of ids is dropped rather than repaired: it can
+ * only come from a hand-edited backup, and a half-read boost list quietly changes what the builder
+ * prefers.
+ */
+export function normalizeBoostedCharacterIds(value: unknown): number[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return [
+    ...new Set(
+      value.filter(
+        (entry): entry is number => typeof entry === 'number' && Number.isInteger(entry) && entry > 0,
+      ),
+    ),
+  ];
+}
 
 @Injectable({ providedIn: 'root' })
 export class UserStateService {
@@ -126,6 +157,7 @@ export class UserStateService {
   public readonly savedEnemies = signal<SavedEnemy[]>([]);
   public readonly savedRumbleTeams = signal<SavedRumbleTeam[]>([]);
   public readonly savedRumbleOpponents = signal<SavedRumbleOpponent[]>([]);
+  public readonly boostedCharacterIds = signal<number[]>([]);
   public readonly crewForgeImageProfiles = computed<CrewForgeImageProfile[]>(() => [
     ...BUILT_IN_CREW_FORGE_IMAGE_PROFILES,
     ...this.userCrewForgeImageProfiles(),
@@ -175,6 +207,43 @@ export class UserStateService {
     await this.ensureHydrated('favoriteShips', async () => {
       this.favoriteShipIds.set(await this.readJson<number[]>(FAVORITE_SHIPS_KEY, []));
     });
+  }
+
+  public async readyBoostedCharacterIds(): Promise<void> {
+    await this.ensureHydrated('boostedCharacterIds', async () => {
+      const stored = await this.readJson<number[]>(BOOSTED_CHARACTER_IDS_KEY, []);
+
+      this.boostedCharacterIds.set(normalizeBoostedCharacterIds(stored));
+    });
+  }
+
+  /**
+   * 869f1q90b. Replaces the whole list, because that is how the reader edits it - they read the
+   * event screen and say who is boosted this week, rather than accumulating across events.
+   */
+  public async setBoostedCharacterIds(characterIds: readonly number[]): Promise<void> {
+    await this.readyBoostedCharacterIds();
+
+    const next = normalizeBoostedCharacterIds(characterIds);
+
+    this.boostedCharacterIds.set(next);
+    await this.persistJson(BOOSTED_CHARACTER_IDS_KEY, next);
+  }
+
+  public async toggleBoostedCharacter(characterId: number): Promise<void> {
+    await this.readyBoostedCharacterIds();
+
+    const current = this.boostedCharacterIds();
+
+    await this.setBoostedCharacterIds(
+      current.includes(characterId)
+        ? current.filter((id) => id !== characterId)
+        : [...current, characterId],
+    );
+  }
+
+  public async clearBoostedCharacterIds(): Promise<void> {
+    await this.setBoostedCharacterIds([]);
   }
 
   public async readyRecentCharacterIds(): Promise<void> {

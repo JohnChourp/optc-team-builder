@@ -120,6 +120,108 @@ describe('auto team build fallback timing estimates', () => {
 });
 
 describe('runAutoTeamBuildSearch', () => {
+  /*
+   * 869f1q90b. The boost list steers RANKING, never legality.
+   *
+   * Driven through the same fixture the tie-break tests use, because it isolates exactly the term
+   * this adds: four subs matching two selected classes, and one alternative matching fewer. The
+   * alternative loses on `lowerSelectedFilterScore` - so whether a boost closes that gap is a
+   * precise, visible question rather than a guess about which team came out.
+   */
+  describe('boosted characters', () => {
+    const pickedSubs = () =>
+      [5701, 5702, 5703, 5704].map((id) =>
+        createCharacterRecord({
+          id,
+          primaryClass: 'Fighter',
+          secondaryClass: 'Slasher',
+          detail: { specialText: 'Boosts ATK of Fighter characters by 2.5x for 1 turn.' },
+        }),
+      );
+
+    /** Matches `matchedClasses` of the two selected classes, so its filter score is known. */
+    const alternative = (matchedClasses: 1 | 0) =>
+      createCharacterRecord({
+        id: 5799,
+        primaryClass: matchedClasses === 1 ? 'Fighter' : 'Striker',
+        secondaryClass: '',
+        classes: [matchedClasses === 1 ? 'Fighter' : 'Striker'],
+        detail: { specialText: 'Deals 50x character ATK in typeless damage to one enemy.' },
+      });
+
+    const rejectionReasons = (
+      result: ReturnType<typeof runAutoTeamBuildSearch>,
+      characterId: number,
+    ) =>
+      (result?.slots ?? [])
+        .filter((slot) => slot.role === 'sub')
+        .flatMap(
+          (slot) =>
+            slot.explanation?.rejectedCandidates
+              .find((candidate) => candidate.characterId === characterId)
+              ?.reasons.map((reason) => reason.code) ?? [],
+        );
+
+    it('without a boost, the alternative loses on selected filters', () => {
+      const result = runAutoTeamBuildSearch(
+        [createCaptainRecord(), ...pickedSubs(), alternative(1)],
+        createInput(['DEX'], ['Fighter', 'Slasher']),
+      );
+
+      expect(rejectionReasons(result, 5799)).toContain('lowerSelectedFilterScore');
+    });
+
+    it('a boost closes a one-point filter gap', () => {
+      const result = runAutoTeamBuildSearch(
+        [createCaptainRecord(), ...pickedSubs(), alternative(1)],
+        { ...createInput(['DEX'], ['Fighter', 'Slasher']), boostedCharacterIds: [5799] },
+      );
+
+      // One matched class plus the boost equals two matched classes: it no longer ranks lower.
+      expect(rejectionReasons(result, 5799)).not.toContain('lowerSelectedFilterScore');
+    });
+
+    /*
+     * The important half. A boost is a fact about this week; the filters are what the reader
+     * actually asked for, so a boost must not outrank them.
+     */
+    it('a boost does not outrank what the reader asked for', () => {
+      const result = runAutoTeamBuildSearch(
+        [createCaptainRecord(), ...pickedSubs(), alternative(0)],
+        { ...createInput(['DEX'], ['Fighter', 'Slasher']), boostedCharacterIds: [5799] },
+      );
+
+      // Zero matched classes plus the boost is still one, against two: it loses on filters.
+      expect(rejectionReasons(result, 5799)).toContain('lowerSelectedFilterScore');
+      expect(
+        (result?.slots ?? []).filter((slot) => slot.role === 'sub').map((slot) => slot.character.id),
+      ).not.toContain(5799);
+    });
+
+    it('changes nothing when the list is empty', () => {
+      const records = [createCaptainRecord(), ...pickedSubs(), alternative(1)];
+      const empty = runAutoTeamBuildSearch(records, {
+        ...createInput(['DEX'], ['Fighter', 'Slasher']),
+        boostedCharacterIds: [],
+      });
+      const control = runAutoTeamBuildSearch(records, createInput(['DEX'], ['Fighter', 'Slasher']));
+
+      expect((empty?.slots ?? []).map((slot) => slot.character.id)).toEqual(
+        (control?.slots ?? []).map((slot) => slot.character.id),
+      );
+    });
+
+    it('never makes an illegal team legal', () => {
+      // Nothing of the required type exists, so boosting cannot conjure one.
+      const result = runAutoTeamBuildSearch([createCaptainRecord(), ...pickedSubs()], {
+        ...createInput(['QCK'], []),
+        boostedCharacterIds: [5701],
+      });
+
+      expect((result?.slots ?? []).some((slot) => slot.character.type === 'QCK')).toBe(false);
+    });
+  });
+
   it('records close rejected leader and sub candidates with structured reasons', () => {
     const result = runAutoTeamBuildSearch(
       [
@@ -3893,7 +3995,7 @@ function createInput(
       | 'excludedShipIds'
       | 'requiredAbilities'
       | 'battleRequirements'
-    >
+    | 'boostedCharacterIds'>
   > = {},
 ): AutoBuildInput {
   const lockedCharacterIds = overrides.lockedCharacterIds ?? [];
@@ -3903,6 +4005,7 @@ function createInput(
 
   return {
     types,
+    boostedCharacterIds: overrides.boostedCharacterIds ?? [],
     selectedClasses,
     selectedCharacterTags: overrides.selectedCharacterTags ?? [],
     selectedCharacterNames: overrides.selectedCharacterNames ?? [],

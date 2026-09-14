@@ -3466,6 +3466,49 @@
 
                   <p class="charge-list__note">{{ t('gameMode.doesNotChangeSearch') }}</p>
                 }
+
+                <!--
+                  869f1q90b. The boosted list, edited from the team in front of the reader. There is
+                  no boost data in the dataset at all, so this is hand-entered - and unlike the card
+                  above it DOES steer the search: a boosted character is preferred among candidates
+                  the search would have accepted anyway.
+                -->
+                @if (result(); as built) {
+                  <div class="boosted-block" data-testid="auto-build-boosted">
+                    <div class="charge-list__head">
+                      <strong>{{ t('gameMode.boosted.title') }}</strong>
+                      <small class="coverage-chip">{{ boostedSummaryLabel() }}</small>
+                    </div>
+                    <p class="charge-list__note">{{ t('gameMode.boosted.copy') }}</p>
+
+                    <ul class="boosted-list">
+                      @for (slot of built.slots; track $index) {
+                        <li>
+                          <button
+                            type="button"
+                            class="boosted-toggle"
+                            [class.boosted-toggle--on]="isBoostedCharacter(slot.character.id)"
+                            [attr.aria-pressed]="isBoostedCharacter(slot.character.id)"
+                            (click)="toggleBoostedCharacter(slot.character.id)"
+                          >
+                            {{ slot.character.name }}
+                          </button>
+                        </li>
+                      }
+                    </ul>
+
+                    @if (boostedCharacterIds().length) {
+                      <ion-button
+                        fill="clear"
+                        size="small"
+                        color="warning"
+                        (click)="clearBoostedCharacters()"
+                      >
+                        {{ t('gameMode.boosted.clear') }}
+                      </ion-button>
+                    }
+                  </div>
+                }
               </section>
 
               <!--

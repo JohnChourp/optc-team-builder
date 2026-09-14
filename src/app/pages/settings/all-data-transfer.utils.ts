@@ -11,6 +11,10 @@ import { type CharacterBoxesTransferPayload } from '../character-boxes/character
 import { type CharacterOverridesTransferPayload } from '../character-detail/character-overrides-transfer.utils';
 import { type CrewForgeProfilesTransferPayload } from '../crew-forge/crew-forge-profiles-transfer.utils';
 import { type SavedRumbleOpponentsTransferPayload } from '../auto-team-builder-rumble/saved-rumble-opponents-transfer.utils';
+import {
+  parseBoostedCharactersTransferPayload,
+  type BoostedCharactersTransferPayload,
+} from '../auto-team-builder/boosted-characters-transfer.utils';
 import { cloneRequiredCharacterGroups } from '../../core/services/required-character-groups.utils';
 
 export interface AllDataTransferPayload {
@@ -26,6 +30,7 @@ export interface AllDataTransferPayload {
   characterOverrides?: CharacterOverridesTransferPayload;
   crewForgeProfiles?: CrewForgeProfilesTransferPayload;
   savedRumbleOpponents?: SavedRumbleOpponentsTransferPayload;
+  boostedCharacterIds?: BoostedCharactersTransferPayload;
 }
 
 /**
@@ -60,6 +65,8 @@ export const ALL_DATA_TRANSFER_SCOPES = [
   'crewForgeProfiles',
   /* 869f12x45. A new stored entity is in the export from the day it exists. */
   'savedRumbleOpponents',
+  /* 869f1q90b. Same rule. The storage-keys guard demanded this before the key could ship. */
+  'boostedCharacterIds',
 ] as const;
 
 export type AllDataTransferScope = (typeof ALL_DATA_TRANSFER_SCOPES)[number];
@@ -246,6 +253,17 @@ function cloneCrewForgeProfilesPayload(
   };
 }
 
+/**
+ * 869f1q90b. Re-parsed rather than spread, because a boost list quietly changes which characters
+ * the builder prefers - a malformed one imported wholesale would show the reader different teams
+ * with nothing on screen to explain why.
+ */
+function cloneBoostedCharactersPayload(
+  payload: BoostedCharactersTransferPayload | undefined,
+): BoostedCharactersTransferPayload | undefined {
+  return payload ? (parseBoostedCharactersTransferPayload(payload) ?? undefined) : undefined;
+}
+
 function cloneSavedRumbleOpponentsPayload(
   payload: SavedRumbleOpponentsTransferPayload | undefined,
 ): SavedRumbleOpponentsTransferPayload | undefined {
@@ -281,6 +299,7 @@ const SCOPE_CLONERS: {
   characterOverrides: cloneCharacterOverridesPayload,
   crewForgeProfiles: cloneCrewForgeProfilesPayload,
   savedRumbleOpponents: cloneSavedRumbleOpponentsPayload,
+  boostedCharacterIds: cloneBoostedCharactersPayload,
 };
 
 export function buildAllDataTransferPayload(

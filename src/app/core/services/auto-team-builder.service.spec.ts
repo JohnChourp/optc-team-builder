@@ -39810,6 +39810,7 @@ function createInput(
 
   return {
     types,
+    boostedCharacterIds: [],
     selectedClasses,
     selectedCharacterTags: overrides.selectedCharacterTags ?? [],
     characterTagSets: overrides.characterTagSets,
