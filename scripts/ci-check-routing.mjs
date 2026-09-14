@@ -224,6 +224,18 @@ export const SCRIPT_SUITES = {
     command: 'npm run test:whats-new',
   },
   /*
+   * 869f17h48. Every npm script is referenced, or registered with a reason that
+   * can be falsified. The naive form of this check - grep the name, fail on zero -
+   * is what reported `test:e2e:webkit` as orphaned while `verify-local.mjs` ran it
+   * on every `verify:local:full`, because that file builds the name rather than
+   * writing it. So the guard resolves interpolation, and an `interpolated` entry
+   * has to name a file that really constructs the name.
+   */
+  'scripts-references': {
+    label: 'npm script reference registry tests',
+    command: 'npm run test:scripts-references',
+  },
+  /*
    * The TypeScript half of `audit:dead-code`, and deliberately only that half.
    *
    * `npx knip --include files,exports,types` reports 236 unused exports and 13
@@ -366,6 +378,14 @@ function isWorkflowBudgetPath(filePath) {
   return (
     filePath === 'scripts/check-github-workflow-budgets.mjs' ||
     filePath === 'scripts/check-github-workflow-budgets.spec.ts'
+  );
+}
+
+function isScriptReferencePath(filePath) {
+  return (
+    filePath === 'scripts/check-npm-script-references.mjs' ||
+    filePath === 'scripts/check-npm-script-references.spec.ts' ||
+    filePath === 'scripts/npm-script-registry.mjs'
   );
 }
 
@@ -948,6 +968,12 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
     if (isWorkflowBudgetPath(filePath)) {
       categories.add('workflow-budgets');
       addScriptSuite(scriptSuites, 'workflow-budgets');
+      continue;
+    }
+
+    if (isScriptReferencePath(filePath)) {
+      categories.add('scripts-references');
+      addScriptSuite(scriptSuites, 'scripts-references');
       continue;
     }
 
