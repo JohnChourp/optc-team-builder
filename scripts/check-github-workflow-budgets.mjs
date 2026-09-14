@@ -92,6 +92,13 @@ export const APP_WORKFLOW_BUDGET_CONTRACT = [
     jobs: {
       build: { timeoutMinutes: 25 },
       deploy: { timeoutMinutes: 15 },
+      /*
+       * 869f17h5v. Submits the deployed sitemap's priority URLs to IndexNow.
+       * Cheap by construction - it downloads the sitemap the build job already
+       * produced and runs a script that needs no `npm ci`, so 10 minutes is
+       * generous for one HTTP POST.
+       */
+      indexnow: { timeoutMinutes: 10 },
       'cache-freshness': { timeoutMinutes: 25 },
     },
   },

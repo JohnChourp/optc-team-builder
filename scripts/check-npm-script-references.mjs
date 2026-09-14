@@ -153,10 +153,14 @@ export function checkNpmScriptReferences({ scripts, sources, registry = NPM_SCRI
 
     const state = status.get(entry.script);
 
-    /* D. A real reference behind a manual label hides the reference. */
-    if (entry.class === 'manual' && state.referenced) {
+    /*
+     * D. A real reference behind a `manual` label hides the reference, and an
+     * `unwired` entry that has since been wired is a finding someone fixed. Both
+     * are stale, and the entry has to go rather than outlive what it described.
+     */
+    if ((entry.class === 'manual' || entry.class === 'unwired') && state.referenced) {
       errors.push(
-        `${entry.script} is registered as manual but is referenced by ${describeReferences(state)}. Remove the entry.`,
+        `${entry.script} is registered as ${entry.class} but is referenced by ${describeReferences(state)}. Remove the entry.`,
       );
     }
 
