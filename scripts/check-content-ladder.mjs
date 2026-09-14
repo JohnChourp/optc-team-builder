@@ -17,9 +17,13 @@
  *  4. **every entry carries a substantive source note.** A difficulty requirement with no
  *     traceable basis is an opinion, and opinions about difficulty are exactly what this file must
  *     not ship;
- *  5. **a provisional entry says so in its note.** The dataset supports what a box can FIELD, not
- *     what it can CLEAR; any number that is a starting point has to be visible as one, or the
- *     distinction survives only in a comment nobody reads.
+ *  5. **a provisional entry says so in its note, and a confirmed one does not.** The dataset
+ *     supports what a box can FIELD, not what it can CLEAR; any number that is a starting point
+ *     has to be visible as one, or the distinction survives only in a comment nobody reads. The
+ *     inverse matters just as much: after the owner confirms a number, a note still saying
+ *     "provisional" is a warning the entry no longer carries. An entry claiming both states, or a
+ *     `confirmedOn` that is not a past ISO date, is rejected too - as is a confirmation older than
+ *     the `curatedOn` it covers, which means the numbers were revised after the owner saw them.
  *
  * The ladder is read from the TypeScript source rather than a build output, so the check runs
  * before anything is compiled - the same approach the other data-registry guards here use.
@@ -236,6 +240,50 @@ export function validateContentLadder({ entries, found, stages, today = new Date
         `${label} is provisional but its note does not say so. The dataset supports what a box ` +
           'can FIELD, not what it can CLEAR - a starting point has to be visible as one.',
       );
+    } else if (entry.provisional !== true && /provisional/iu.test(note)) {
+      /*
+       * 869f1t8wv. The inverse, added when the owner confirmed the first four floors. Flipping the
+       * flag and leaving the note is a half-done edit that reads on screen as a warning the entry
+       * no longer carries - and nothing else would have caught it.
+       */
+      errors.push(
+        `${label} is no longer provisional but its note still says so. Rewrite the note to say ` +
+          'what the requirement now rests on.',
+      );
+    }
+
+    /*
+     * 869f1t8wv. "Confirmed" and "not yet confirmed" cannot both be true of one number.
+     */
+    if (entry.confirmedOn !== undefined) {
+      if (entry.provisional === true) {
+        errors.push(
+          `${label} claims both provisional and confirmedOn. A requirement is one or the other.`,
+        );
+      }
+
+      if (typeof entry.confirmedOn !== 'string' || !isoDate.test(entry.confirmedOn)) {
+        errors.push(`${label} has a confirmedOn that is not an ISO date.`);
+      } else if (new Date(`${entry.confirmedOn}T00:00:00Z`).getTime() > today.getTime()) {
+        errors.push(`${label} is confirmed in the future (${entry.confirmedOn}).`);
+      } else if (
+        typeof entry.curatedOn === 'string' &&
+        isoDate.test(entry.curatedOn) &&
+        new Date(`${entry.confirmedOn}T00:00:00Z`).getTime() <
+          new Date(`${entry.curatedOn}T00:00:00Z`).getTime()
+      ) {
+        /*
+         * The confirmation is older than the numbers it is supposed to cover: somebody revised the
+         * requirement and moved `curatedOn` without going back to the owner. That is the same
+         * failure this whole entry is about, inverted - a number nobody confirmed, showing no
+         * warning, because a stale date says it was confirmed.
+         */
+        errors.push(
+          `${label} was confirmed on ${entry.confirmedOn} but re-curated on ${entry.curatedOn}. ` +
+            'The confirmation is older than the numbers it covers - re-confirm it, or mark the ' +
+            'entry provisional again until somebody does.',
+        );
+      }
     }
 
     const requirement = entry.requirement;

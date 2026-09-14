@@ -22,6 +22,11 @@
  * a starting point rather than an established fact carries `provisional: true` and says why in its
  * own note. A guard rejects a provisional entry with no note.
  *
+ * **As of 2026-09-14 no entry is provisional**: the four rarity floors that shipped that way were
+ * confirmed by the owner, and each carries `confirmedOn` and says so in its note. The field stays
+ * because the next milestone added may need it - and the guard rejects an entry that claims both
+ * states, or one whose note still says "provisional" after the flag is gone.
+ *
  * **Not a tier list, and nothing about spending money.** Both were ruled out by the brief.
  *
  * The past does not accumulate here. This is deliberately a handful of well-known milestones rather
@@ -54,9 +59,25 @@ export interface ContentLadderMilestone {
   readonly sourceNote: string;
   /** True when the numbers are a starting point the owner has not confirmed. */
   readonly provisional?: boolean;
+  /**
+   * When the owner confirmed this milestone's requirement, if they have.
+   *
+   * Mutually exclusive with `provisional` - a guard rejects an entry that claims both, because
+   * "confirmed" and "not yet confirmed" cannot both be true of one number.
+   */
+  readonly confirmedOn?: string;
 }
 
 const CURATED_ON = '2026-09-14';
+/**
+ * 869f1t8wv. When the owner confirmed the requirement numbers below.
+ *
+ * The four rarity floors shipped as `provisional` because difficulty is game-balance knowledge and
+ * this dataset carries none of it - the values were a starting point with nothing behind them. The
+ * owner is the authority for this project, so their confirmation IS the source, and it is recorded
+ * with its date rather than dressed up as something derived.
+ */
+const OWNER_CONFIRMED_ON = '2026-09-14';
 
 /**
  * Ordered easiest-box-requirement first. The Story Island entries follow the game's own story
@@ -96,9 +117,9 @@ export const CONTENT_LADDER: readonly ContentLadderMilestone[] = [
     stage: 'Arlong Park',
     requirement: { teamSize: 6, minStars: { stars: 3, count: 4 } },
     curatedOn: CURATED_ON,
-    provisional: true,
+    confirmedOn: OWNER_CONFIRMED_ON,
     sourceNote:
-      'Fifth island in story order. The 3-star floor on four members is a PROVISIONAL starting point, not an established requirement - it describes a box that has begun evolving its units rather than a measured difficulty threshold. Owner to confirm or replace.',
+      'Fifth island in story order. The 3-star floor on four members describes a box that has begun evolving its units. Owner-confirmed on 2026-09-14 - the number is theirs to set, and this project has no other source for a difficulty requirement.',
   },
   {
     id: 'raid-buster-call',
@@ -106,9 +127,9 @@ export const CONTENT_LADDER: readonly ContentLadderMilestone[] = [
     stage: 'Clash!! Buster Call',
     requirement: { teamSize: 6, minStars: { stars: 5, count: 5 } },
     curatedOn: CURATED_ON,
-    provisional: true,
+    confirmedOn: OWNER_CONFIRMED_ON,
     sourceNote:
-      'The Raid with the most drops in the dataset (22), so it is well-known content rather than a corner case. The 5-star floor is PROVISIONAL: it describes a developed box, and the owner has not confirmed it as a requirement.',
+      'The Raid with the most drops in the dataset (22), so it is well-known content rather than a corner case. The 5-star floor on five members describes a developed box. Owner-confirmed on 2026-09-14.',
   },
   {
     id: 'kizuna-shanks',
@@ -116,9 +137,9 @@ export const CONTENT_LADDER: readonly ContentLadderMilestone[] = [
     stage: 'Shanks',
     requirement: { teamSize: 6, minStars: { stars: 5, count: 6 } },
     curatedOn: CURATED_ON,
-    provisional: true,
+    confirmedOn: OWNER_CONFIRMED_ON,
     sourceNote:
-      'Kizuna Clash is repeated runs for a shared score rather than one clear, so a full developed team is what the box needs to contribute at all. PROVISIONAL - the rarity floor is a starting point, and Kizuna crews are usually class-restricted in ways this dataset does not record.',
+      'Kizuna Clash is repeated runs for a shared score rather than one clear, so a full developed team is what the box needs to contribute at all. Owner-confirmed on 2026-09-14. Still unrecorded either way: Kizuna crews are usually class-restricted, and this dataset does not carry that.',
   },
   {
     id: 'treasure-map-garp',
@@ -126,8 +147,8 @@ export const CONTENT_LADDER: readonly ContentLadderMilestone[] = [
     stage: 'Garp',
     requirement: { teamSize: 6, minStars: { stars: 5, count: 6 } },
     curatedOn: CURATED_ON,
-    provisional: true,
+    confirmedOn: OWNER_CONFIRMED_ON,
     sourceNote:
-      'Treasure Map scores rather than clears, so nothing here claims a clear. PROVISIONAL - the rarity floor is a starting point, and which units are boosted on a given map is not in this dataset at all.',
+      'Treasure Map scores rather than clears, so nothing here claims a clear. Owner-confirmed on 2026-09-14. Still unrecorded either way: which units are boosted on a given map is not in this dataset, and the reader enters that separately on Auto Team Builder.',
   },
 ];
