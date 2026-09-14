@@ -31,6 +31,35 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.26',
+    date: '2026-09-14',
+    userVisible: true,
+    added: [],
+    improved: [],
+    headline: {
+      en: 'Your Crew Forge setup now travels with your backup',
+      el: 'Το setup σου στο Crew Forge ταξιδεύει πλέον μαζί με το backup σου',
+    },
+    summaryEn:
+      "If you tuned Crew Forge so it reads your own screenshots - the slot positions, the matching settings, and the corrections it learned from you - none of that was in \"Export all data\" in Settings. Move to a new phone, import your backup, and the tuning was simply gone, with nothing on screen to tell you. It is now part of the export and part of Google Drive sync, so it comes back with everything else. Built-in profiles are left out on purpose: the app already ships those.",
+    summaryEl:
+      'Αν είχες ρυθμίσει το Crew Forge ώστε να διαβάζει τα δικά σου screenshots - τις θέσεις των slots, τις ρυθμίσεις αντιστοίχισης, και τις διορθώσεις που έμαθε από σένα - τίποτα από αυτά δεν έμπαινε στην «Εξαγωγή όλων» στις Ρυθμίσεις. Άλλαζες κινητό, έκανες import το backup σου, και οι ρυθμίσεις σου απλώς είχαν χαθεί, χωρίς τίποτα στην οθόνη να σου το πει. Τώρα μπαίνουν στο export και στο συγχρονισμό με το Google Drive, οπότε επιστρέφουν μαζί με όλα τα υπόλοιπα. Τα έτοιμα profiles μένουν απ’ έξω επίτηδες: τα φέρνει ήδη η εφαρμογή.',
+    fixed: [
+      {
+        en: '"Export all data" in Settings now carries your Crew Forge image profiles, and importing that file brings them back. Until now they were the one kind of thing you had set up that a full backup quietly left behind.',
+        el: 'Η «Εξαγωγή όλων» στις Ρυθμίσεις περιλαμβάνει πλέον τα image profiles σου στο Crew Forge, και το import εκείνου του αρχείου τα επαναφέρει. Μέχρι τώρα ήταν το μόνο πράγμα που είχες ρυθμίσει και το πλήρες backup το άφηνε αθόρυβα πίσω.',
+      },
+      {
+        en: 'The Google Drive panel on the Account screen counts those profiles too, so what it says it is about to move now matches what it actually moves.',
+        el: 'Το πάνελ του Google Drive στην οθόνη Λογαριασμός μετράει πλέον και αυτά τα profiles, οπότε αυτό που λέει ότι θα μεταφέρει ταιριάζει με αυτό που όντως μεταφέρει.',
+      },
+      {
+        en: 'The FAQ screen can now be found from a search engine. It had been live for three releases without ever appearing in the site map search engines read, so the page written for players in trouble was the one page they could not find.',
+        el: 'Η οθόνη FAQ μπορεί πλέον να βρεθεί από μηχανή αναζήτησης. Ήταν ζωντανή για τρεις εκδόσεις χωρίς να εμφανίζεται ποτέ στον χάρτη σελίδων που διαβάζουν οι μηχανές αναζήτησης, οπότε η σελίδα που γράφτηκε για όποιον έχει πρόβλημα ήταν η μόνη που δεν μπορούσε να βρει.',
+      },
+    ],
+  },
+  {
     version: '0.4.25',
     date: '2026-09-14',
     userVisible: false,
