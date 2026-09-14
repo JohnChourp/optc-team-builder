@@ -230,16 +230,28 @@ export class UserStateService {
     await this.persistJson(BOOSTED_CHARACTER_IDS_KEY, next);
   }
 
+  /**
+   * 869f1q90b. The signal is updated SYNCHRONOUSLY after the single await, before anything else
+   * suspends.
+   *
+   * Delegating to `setBoostedCharacterIds` read naturally and was wrong: that method awaits
+   * readiness again, so two quick taps both suspended, both resumed reading the pre-tap list, and
+   * the second write overwrote the first. Measured live - tapping two units 400ms apart stored
+   * both, tapping them back to back stored only the second, silently. A reader ticking five
+   * boosted units off the event screen is exactly the fast case.
+   */
   public async toggleBoostedCharacter(characterId: number): Promise<void> {
     await this.readyBoostedCharacterIds();
 
     const current = this.boostedCharacterIds();
-
-    await this.setBoostedCharacterIds(
+    const next = normalizeBoostedCharacterIds(
       current.includes(characterId)
         ? current.filter((id) => id !== characterId)
         : [...current, characterId],
     );
+
+    this.boostedCharacterIds.set(next);
+    await this.persistJson(BOOSTED_CHARACTER_IDS_KEY, next);
   }
 
   public async clearBoostedCharacterIds(): Promise<void> {

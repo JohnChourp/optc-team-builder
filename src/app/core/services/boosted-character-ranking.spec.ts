@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { normalizeBoostedCharacterIds } from './user-state.service';
+import { normalizeBoostedCharacterIds, UserStateService } from './user-state.service';
 import {
   buildBoostedCharactersTransferPayload,
   parseBoostedCharactersTransferPayload,
@@ -43,6 +43,48 @@ describe('boosted character list', () => {
 
     it('keeps the good ids when only some are bad', () => {
       expect(normalizeBoostedCharacterIds([100, '200', 300, null])).toEqual([100, 300]);
+    });
+  });
+
+  /*
+   * 869f1q90b. The race a live pass found: two quick taps both read the pre-tap list and the
+   * second write overwrote the first, so the first unit was silently dropped. Measured - 400ms
+   * apart stored both, back to back stored only one.
+   */
+  describe('toggling without losing a tap', () => {
+    function createService() {
+      const store = new Map<string, string>();
+      const preferences = {
+        get: async ({ key }: { key: string }) => ({ value: store.get(key) ?? null }),
+        set: async ({ key, value }: { key: string; value: string }) => {
+          store.set(key, value);
+        },
+      };
+
+      const i18n = { translate: (key: string) => key } as never;
+
+      return { service: new UserStateService(i18n, preferences as never), store };
+    }
+
+    it('keeps both units when two taps land back to back', async () => {
+      const { service, store } = createService();
+
+      await Promise.all([
+        service.toggleBoostedCharacter(101),
+        service.toggleBoostedCharacter(202),
+      ]);
+
+      expect(service.boostedCharacterIds()).toEqual([101, 202]);
+      expect(JSON.parse(store.get('boostedCharacterIds') ?? '[]')).toEqual([101, 202]);
+    });
+
+    it('still removes on a second tap of the same unit', async () => {
+      const { service } = createService();
+
+      await service.toggleBoostedCharacter(101);
+      await service.toggleBoostedCharacter(101);
+
+      expect(service.boostedCharacterIds()).toEqual([]);
     });
   });
 
