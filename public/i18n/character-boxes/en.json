@@ -17,6 +17,13 @@
     "updatedAt": "Updated {{timestamp}}"
   },
   "editor": {
+    "buildFromBoxAction": "Build from this box",
+    "buildFromBoxLabel": "What can I build with this box?",
+    "buildFromBoxSupport": {
+      "noBox": "Pick a box first.",
+      "ready": "Opens Auto Team Builder with only these {{count}} characters available.",
+      "tooSmall": "Add {{count}} more characters - a crew needs five different ones."
+    },
     "eyebrow": "Editor",
     "title": "Selected box",
     "copy": "Search the roster and add or remove characters from this box. Current count: {{count}}.",

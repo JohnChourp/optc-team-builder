@@ -120,6 +120,24 @@
                   }
                 </div>
 
+                <div class="favorites-bulk-action box-build-action" data-test="box-build-action">
+                  <div class="favorites-bulk-action__copy">
+                    <span>{{ t('editor.buildFromBoxLabel') }}</span>
+                    <small>{{ buildFromBoxSupportLabel() }}</small>
+                  </div>
+
+                  <ion-button
+                    fill="outline"
+                    color="warning"
+                    [disabled]="!canBuildFromSelectedBox()"
+                    [routerLink]="['/tabs/auto-team-builder']"
+                    [queryParams]="{ characterBoxId: selectedBox()?.id }"
+                    data-test="box-build-link"
+                  >
+                    {{ t('editor.buildFromBoxAction') }}
+                  </ion-button>
+                </div>
+
                 <div class="bulk-actions-grid">
                   <div class="favorites-bulk-action">
                     <div class="favorites-bulk-action__copy">

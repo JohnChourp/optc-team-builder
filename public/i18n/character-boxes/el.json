@@ -17,6 +17,13 @@
     "updatedAt": "Ενημερώθηκε {{timestamp}}"
   },
   "editor": {
+    "buildFromBoxAction": "Build από αυτό το box",
+    "buildFromBoxLabel": "Τι μπορώ να χτίσω με αυτό το box;",
+    "buildFromBoxSupport": {
+      "noBox": "Διάλεξε πρώτα ένα box.",
+      "ready": "Ανοίγει το Auto Team Builder με διαθέσιμους μόνο αυτούς τους {{count}} χαρακτήρες.",
+      "tooSmall": "Πρόσθεσε {{count}} χαρακτήρες ακόμη - μια ομάδα χρειάζεται πέντε διαφορετικούς."
+    },
     "eyebrow": "Editor",
     "title": "Επιλεγμένο box",
     "copy": "Κάνε search στο roster και πρόσθεσε ή αφαίρεσε χαρακτήρες από αυτό το box. Τρέχον πλήθος: {{count}}.",

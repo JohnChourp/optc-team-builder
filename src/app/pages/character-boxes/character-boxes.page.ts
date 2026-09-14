@@ -76,6 +76,13 @@ import {
 } from '../../shared/character-tag-filter/character-tag-filter.component';
 import { CharacterBoxesStylePanelsComponent } from './character-boxes-style-panels.component';
 
+/*
+ * 869f12x47. Captain, Friend Captain and four subs is six seats, but the Friend
+ * Captain may be the same character as the Captain, so five distinct characters
+ * can fill a legal crew.
+ */
+const MINIMUM_BUILDABLE_BOX_SIZE = 5;
+
 const PAGE_SIZE = 48;
 const FILTERED_SELECT_PAGE_SIZE = 500;
 type CharacterBoxesFavoriteFilter = 'all' | 'favorites' | 'hideFavorites';
@@ -370,6 +377,33 @@ export class CharacterBoxesPage implements OnInit {
   public readonly canAddFavoritesToSelectedBox = computed(
     () => Boolean(this.selectedBox()) && this.missingFavoriteCount() > 0,
   );
+
+  /**
+   * 869f12x47. A box with too few characters cannot fill a crew, so the link is
+   * disabled rather than leading to a builder that can only fail.
+   *
+   * Six is the crew size: Captain, Friend Captain and four subs. The Friend
+   * Captain may be the same character as the Captain - that is the game's rule
+   * and this project's own - so five distinct characters are enough, and the
+   * threshold is deliberately not six.
+   */
+  public readonly canBuildFromSelectedBox = computed(
+    () => (this.selectedBox()?.characterIds.length ?? 0) >= MINIMUM_BUILDABLE_BOX_SIZE,
+  );
+
+  public readonly buildFromBoxSupportLabel = computed(() => {
+    const characterCount = this.selectedBox()?.characterIds.length ?? 0;
+
+    if (!this.selectedBox()) {
+      return this.t('editor.buildFromBoxSupport.noBox');
+    }
+
+    return characterCount >= MINIMUM_BUILDABLE_BOX_SIZE
+      ? this.t('editor.buildFromBoxSupport.ready', { count: characterCount })
+      : this.t('editor.buildFromBoxSupport.tooSmall', {
+          count: MINIMUM_BUILDABLE_BOX_SIZE - characterCount,
+        });
+  });
   public readonly hasInvalidCostRange = computed(() => {
     const range = this.costRange();
 
