@@ -31,6 +31,31 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.35',
+    date: '2026-09-14',
+    userVisible: true,
+    headline: {
+      en: 'Four goals on Character Boxes are no longer marked unconfirmed',
+      el: 'Τέσσερις στόχοι στο Character Boxes δεν είναι πια σημειωμένοι ως ανεπιβεβαίωτοι',
+    },
+    summaryEn:
+      'In the What this box can field list on Character Boxes, four of the seven goals carried a line saying their numbers were only a starting point: Arlong Park, Clash!! Buster Call, Shanks and Garp. Those numbers have now been set deliberately, so the line is gone and all seven goals read the same way. The note at the foot of the list also says where the requirements come from - they are set by hand, by the person who maintains the app, and dated - instead of only saying they were written by hand. Nothing about which goals you can reach has changed.',
+    summaryEl:
+      'Στη λίστα Τι μπορεί να στήσει αυτό το box, στην οθόνη Character Boxes, τέσσερις από τους επτά στόχους είχαν από κάτω μια γραμμή που έλεγε ότι οι αριθμοί τους είναι απλώς αφετηρία: Arlong Park, Clash!! Buster Call, Shanks και Garp. Οι αριθμοί αυτοί ορίστηκαν πλέον συνειδητά, οπότε η γραμμή έφυγε και οι επτά στόχοι διαβάζονται το ίδιο. Και η σημείωση στο τέλος της λίστας λέει τώρα από πού έρχονται οι απαιτήσεις - ορίζονται στο χέρι, από αυτόν που συντηρεί την εφαρμογή, και έχουν ημερομηνία - αντί να λέει μόνο ότι γράφτηκαν στο χέρι. Τίποτα δεν άλλαξε στο ποιους στόχους μπορείς να φτάσεις.',
+    added: [],
+    improved: [
+      {
+        en: 'The **What this box can field** list on **Character Boxes** no longer marks Arlong Park, Clash!! Buster Call, Shanks and Garp as unconfirmed. Their requirements have been set, so all seven goals now read the same way.',
+        el: 'Η λίστα **Τι μπορεί να στήσει αυτό το box** στην οθόνη **Character Boxes** δεν σημειώνει πια ως ανεπιβεβαίωτα τα Arlong Park, Clash!! Buster Call, Shanks και Garp. Οι απαιτήσεις τους ορίστηκαν, οπότε και οι επτά στόχοι διαβάζονται πλέον το ίδιο.',
+      },
+      {
+        en: 'The note under the **What this box can field** list on **Character Boxes** now says who sets the requirements beside each goal, and that they carry a date, rather than only that they are written by hand.',
+        el: 'Η σημείωση κάτω από τη λίστα **Τι μπορεί να στήσει αυτό το box** στην οθόνη **Character Boxes** λέει πλέον ποιος ορίζει τις απαιτήσεις δίπλα σε κάθε στόχο και ότι έχουν ημερομηνία, αντί να λέει μόνο ότι είναι γραμμένες στο χέρι.',
+      },
+    ],
+    fixed: [],
+  },
+  {
     version: '0.4.34',
     date: '2026-09-14',
     userVisible: true,
