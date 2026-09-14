@@ -10858,6 +10858,13 @@ async function createPage(
   router: { navigate: ReturnType<typeof vi.fn> };
   route: { snapshot: { queryParamMap: { get: ReturnType<typeof vi.fn> } } };
   userState: {
+    /* 869f1q90b. The reader's boosted-unit list, read when a build is assembled. */
+    boostedCharacterIds: {
+      (): number[];
+      set(value: number[]): void;
+    };
+    toggleBoostedCharacter: ReturnType<typeof vi.fn>;
+    clearBoostedCharacterIds: ReturnType<typeof vi.fn>;
     favoriteCharacterIds: {
       (): number[];
       set(value: number[]): void;
@@ -11088,6 +11095,10 @@ async function createPage(
   });
   const builderIntroDismissed = signal({ autoTeamBuilder: false, manualTeamBuilder: false });
   const userState = {
+    boostedCharacterIds: signal<number[]>([]),
+    toggleBoostedCharacter: vi.fn().mockResolvedValue(undefined),
+    clearBoostedCharacterIds: vi.fn().mockResolvedValue(undefined),
+    readyBoostedCharacterIds: vi.fn().mockResolvedValue(undefined),
     favoriteCharacterIds: signal<number[]>([101, 102, 103]),
     favoriteShipIds: signal<number[]>([9001]),
     characterBoxes: signal([
