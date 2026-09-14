@@ -139,6 +139,14 @@ import {
   type MechanicChecklistEntry,
 } from '../../core/services/auto-team-builder-mechanic-checklist.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
+import { PreferencesAdapterService } from '../../core/services/preferences-adapter.service';
+import {
+  AUTO_TEAM_BUILDER_RESULT_KEY,
+  buildAutoTeamBuilderResultSnapshot,
+  parseAutoTeamBuilderResultSnapshot,
+  restoreAutoTeamBuilderResult,
+  snapshotCharacterIds,
+} from './auto-team-builder-result-snapshot.utils';
 import {
   AUTO_TEAM_BUILDER_SELECTION_SESSION_KEY,
   isDefaultSelectionState,
@@ -3451,6 +3459,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     private readonly router: Router,
     private readonly alertController: AlertController,
     private readonly characterOverrides: CharacterOverridesService,
+    private readonly preferences: PreferencesAdapterService,
   ) {
     this.favoriteCharacterIds = this.userState.favoriteCharacterIds;
     this.favoriteShipIds = this.userState.favoriteShipIds;
@@ -3516,6 +3525,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     void this.loadAvailableCharacterTags();
     await this.resetPageState();
     this.restoreSelectionState();
+    await this.restoreResultSnapshot();
     await this.refreshAllCompareSnapshots();
 
     this.pageReady.set(true);
@@ -3590,6 +3600,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
      * preset restores filter state wholesale and would otherwise wipe it.
      */
     await this.applyCharacterBoxPoolFromRoute();
+
+    /*
+     * 869f1k0zv. Last, and only when nothing above produced a result. A preset link says what to
+     * build NOW; handing back the previous build over it would answer a question the reader did
+     * not ask - the same ordering rule the box pool follows, for the same reason.
+     */
+    await this.restoreResultSnapshot();
 
     await this.refreshAllCompareSnapshots();
   }
@@ -4757,6 +4774,112 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
    * `reset` and the preset paths OUT of the write path, which is what they should be - none of
    * those is the reader choosing a filter.
    */
+  /**
+   * 869f1k0zv. The one seam every result write goes through, so persistence cannot be forgotten
+   * at a new call site the way it was at all five of the existing ones.
+   *
+   * Writing is fire-and-forget on purpose: a result that cannot be parked is not a reason to
+   * hold up the render, which is how `persistSelectionState` already degrades.
+   *
+   * **A null result does not forget the parked team.** `resetPageState()` runs on every page
+   * load, so clearing here wiped the snapshot moments before the restore could read it - the
+   * feature silently did nothing, and a test caught it. Forgetting is an intent, not a side
+   * effect: it happens where the READER asks for it (`resetPage`, and applying a preset), and
+   * when a restore is abandoned.
+   */
+  private applyResult(next: AutoBuildResult | null): void {
+    this.result.set(next);
+
+    if (next) {
+      void this.persistResultSnapshot(next);
+    }
+  }
+
+  private async persistResultSnapshot(next: AutoBuildResult | null): Promise<void> {
+    try {
+      if (!next) {
+        await this.preferences.set({ key: AUTO_TEAM_BUILDER_RESULT_KEY, value: '' });
+        return;
+      }
+
+      await this.preferences.set({
+        key: AUTO_TEAM_BUILDER_RESULT_KEY,
+        value: JSON.stringify(buildAutoTeamBuilderResultSnapshot(next)),
+      });
+    } catch {
+      // Private browsing, a blocked store and a full quota all throw here. None of them is a
+      // reason to lose the result that is already on screen.
+    }
+  }
+
+  /**
+   * Restores the last built team, or leaves the page as it is.
+   *
+   * Called after the route presets on purpose: a preset link says what to build NOW, so the
+   * previous build is stale and must not be handed back over it. That is the same ordering rule
+   * `applyCharacterBoxPoolFromRoute` follows, for the same reason.
+   */
+  private async restoreResultSnapshot(): Promise<void> {
+    if (this.result()) {
+      return;
+    }
+
+    let raw: string | null = null;
+
+    try {
+      raw = (await this.preferences.get({ key: AUTO_TEAM_BUILDER_RESULT_KEY })).value;
+    } catch {
+      return;
+    }
+
+    if (!raw) {
+      return;
+    }
+
+    let parsed: unknown;
+
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return;
+    }
+
+    const snapshot = parseAutoTeamBuilderResultSnapshot(parsed);
+
+    if (!snapshot) {
+      return;
+    }
+
+    let characters: CharacterDetailRecord[] = [];
+
+    try {
+      characters = await this.repository.getDetailedCharactersByIds(snapshotCharacterIds(snapshot));
+    } catch {
+      return;
+    }
+
+    const restored = restoreAutoTeamBuilderResult(
+      snapshot,
+      new Map(characters.map((character) => [character.id, character])),
+    );
+
+    /*
+     * `null` means the dataset can no longer supply every slot. The snapshot is dropped rather
+     * than kept: it will never restore again, and leaving it there costs the reader quota for a
+     * team they can no longer be shown.
+     */
+    if (!restored) {
+      await this.persistResultSnapshot(null);
+      return;
+    }
+
+    for (const slot of restored.slots) {
+      this.cacheCharacterRecord(slot.character);
+    }
+
+    this.result.set(restored);
+  }
+
   private persistSelectionState(): void {
     const state = {
       selectedTypes: [...this.selectedTypes()],
@@ -6161,7 +6284,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         } else {
           for (const slot of nextResult.slots) this.cacheCharacterRecord(slot.character);
 
-          this.result.set(nextResult);
+          this.applyResult(nextResult);
         }
       } else {
         this.failBuild('noTeam', this.resolveBuildFailureMessage());
@@ -6184,7 +6307,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         this.forgetCapturedBuildState();
 
         if (this.pauseAfterBuildCancellation) {
-          this.result.set(previousResult);
+          this.applyResult(previousResult);
           this.currentTeamId.set(previousTeamId);
           this.errorMessage.set('');
           this.buildPaused.set(true);
@@ -6192,7 +6315,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           return;
         }
 
-        this.result.set(previousResult);
+        this.applyResult(previousResult);
         this.currentTeamId.set(previousTeamId);
         this.errorMessage.set('');
         return;
@@ -6400,6 +6523,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     }
 
     await this.resetPageState();
+    await this.persistResultSnapshot(null);
   }
 
   public buildTeamExportPayload(
@@ -6836,7 +6960,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.buildPaused.set(false);
     this.buildProgress.set(null);
     this.buildProgressFloorPercent.set(0);
-    this.result.set(null);
+    this.applyResult(null);
     this.errorMessage.set('');
     this.lastBuildFailure.set(null);
     this.lastBuildStats.set(null);
@@ -7216,6 +7340,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     availableLockedCharacters: CharacterListItem[] = [],
   ): Promise<void> {
     await this.resetPageState();
+    await this.persistResultSnapshot(null);
 
     this.selectedTypes.set([...state.selectedTypes]);
     this.selectedClasses.set([...state.selectedClasses]);
@@ -7985,7 +8110,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     };
 
     nextResult.shipSelection = resolveAutoBuildShipSelection(nextResult, this.ships());
-    this.result.set(nextResult);
+    this.applyResult(nextResult);
     this.currentTeamId.set(null);
   }
 
