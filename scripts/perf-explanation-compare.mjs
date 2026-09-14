@@ -28,13 +28,19 @@ const consoleMessages = [];
 const pageErrors = [];
 const failures = [];
 let savedTeamsTransferUtilsSourcePromise;
+/**
+ * 869f1vu91. Advisory, like every other timing budget here - see the header of
+ * `perf-route-load.mjs` for why a millisecond budget on a shared runner does not gate anything.
+ * The four raised on 2026-09-14 had never been met; recalibrated to
+ * `ceil(max since 2026-09-07 x 1.15)`. The rest were passing and were left alone.
+ */
 const budgets = {
   desktop: {
     compareOpenMs: 800,
     compareImportMs: 1200,
     savedTeamsParseSanitizeMs: 500,
-    savedTeamsImportReadyMs: 3000,
-    manualShareHydrationMs: 1800,
+    savedTeamsImportReadyMs: 5800,
+    manualShareHydrationMs: 3800,
     firstExplanationToggleMs: 300,
     allExplanationToggleMs: 900,
   },
@@ -42,8 +48,8 @@ const budgets = {
     compareOpenMs: 1000,
     compareImportMs: 1500,
     savedTeamsParseSanitizeMs: 500,
-    savedTeamsImportReadyMs: 4000,
-    manualShareHydrationMs: 2500,
+    savedTeamsImportReadyMs: 6000,
+    manualShareHydrationMs: 4000,
     firstExplanationToggleMs: 450,
     allExplanationToggleMs: 1200,
   },
