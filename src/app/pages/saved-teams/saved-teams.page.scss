@@ -1,1 +1,73 @@
 /* Page styles are split into saved-teams style panels. */
+
+/* 869f1p4wx. The read-only published team set. */
+.published-copy,
+.published-note,
+.published-list__rationale,
+.published-list__members,
+.published-list__incomplete {
+  margin: 0;
+  color: rgba(248, 251, 255, 0.72);
+  font-size: 0.92rem;
+}
+
+.published-note {
+  font-style: italic;
+}
+
+.published-list {
+  display: grid;
+  gap: 12px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.published-list__item {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  justify-items: start;
+}
+
+.published-list__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+}
+
+.published-list__head strong {
+  color: #ffffff;
+}
+
+.published-chip {
+  flex: 0 0 auto;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(248, 251, 255, 0.82);
+  font-size: 0.82rem;
+}
+
+.published-list__members {
+  color: #ffffff;
+}
+
+.published-list__imported {
+  margin: 0;
+  color: #86efac;
+  font-size: 0.92rem;
+}
+
+.published-list__incomplete {
+  color: #f7a7ce;
+}
+
+.published-list__item ion-button {
+  margin: 0;
+}

@@ -1352,6 +1352,63 @@ describe('SavedTeamsPage', () => {
     );
   });
 
+  /*
+   * 869f1p4wx. The read-only published set - the zero-backend half of 869f12xc8. Nothing is
+   * submitted, so these assertions are about a shipped constant, never about stored user content.
+   */
+  it('resolves the shipped published teams on load', async () => {
+    const { page, repository } = createPage();
+
+    await page.ngOnInit();
+
+    expect(repository.getCharactersByIds).toHaveBeenCalled();
+    expect(page.publishedTeamCards().length).toBeGreaterThan(0);
+    expect(page.publishedTeamCards().every((card) => card.team.workedExample)).toBe(true);
+  });
+
+  it('copies a published team into the reader own saved teams, provenance and all', async () => {
+    const { page, userState } = createPage();
+
+    await page.ngOnInit();
+
+    const card = page.publishedTeamCards()[0]!;
+
+    await page.importPublishedTeam(card);
+
+    expect(userState.saveTeam).toHaveBeenCalledTimes(1);
+
+    const saved = userState.saveTeam.mock.calls[0]![0] as { name: string; notes: string };
+
+    expect(saved.name).toBe(card.team.stage);
+    // Once it is in Saved Teams it looks like the reader's own, so the note has to say otherwise.
+    expect(saved.notes).toContain('published.importedNote');
+    expect(page.publishedImportedId()).toBe(card.team.id);
+  });
+
+  it('refuses to copy a team the dataset can no longer assemble', async () => {
+    const { page, userState, repository } = createPage();
+
+    repository.getCharactersByIds.mockResolvedValue([]);
+    await page.ngOnInit();
+
+    const card = page.publishedTeamCards()[0]!;
+
+    expect(card.complete).toBe(false);
+
+    await page.importPublishedTeam(card);
+
+    expect(userState.saveTeam).not.toHaveBeenCalled();
+  });
+
+  it('keeps the page alive when the published lookup fails', async () => {
+    const { page, repository } = createPage();
+
+    repository.getCharactersByIds.mockRejectedValue(new Error('no database'));
+    await page.ngOnInit();
+
+    expect(page.publishedTeamCards()).toEqual([]);
+  });
+
   it('clears unavailable imported slots before persisting imported teams', async () => {
     const { page, repository, userState } = createPage();
     let resolveLookup: (characters: ReturnType<typeof createCharacter>[]) => void = () => {};
@@ -1359,7 +1416,16 @@ describe('SavedTeamsPage', () => {
       resolveLookup = resolve;
     });
 
-    repository.getCharactersByIds.mockReturnValueOnce(characterLookup);
+    /*
+     * 869f1p4wx. Keyed on the ids this test cares about rather than on call ORDER. `ngOnInit` now
+     * also resolves the shipped published team set, so a `mockReturnValueOnce` here would be
+     * consumed by that call and the import would wait forever - which is exactly what happened.
+     * Deferring only the import's own lookup makes the test independent of how many other reads
+     * the page does.
+     */
+    repository.getCharactersByIds.mockImplementation((ids: number[]) =>
+      ids.includes(999999) ? characterLookup : Promise.resolve([]),
+    );
 
     await page.ngOnInit();
 

@@ -156,6 +156,16 @@ export const SCRIPT_SUITES = {
     label: 'Content ladder tests',
     command: 'npm run test:content-ladder',
   },
+  /*
+   * 869f1p4wx. The read-only published team set is hand-curated and ships in the bundle, so it
+   * rots the same way: a retired character or a renamed stage leaves a team the app cannot
+   * assemble. Its lane also owns the sub-slot conflict rule, where the leader-seat exception is
+   * the easy thing to get backwards.
+   */
+  'published-teams': {
+    label: 'Published team set tests',
+    command: 'npm run test:published-teams',
+  },
   'public-entry-synthetics': {
     label: 'Public entry synthetic monitor tests',
     command: 'npm run test:public-entry-synthetics',
@@ -386,6 +396,21 @@ function isRouteSitemapCoveragePath(filePath) {
  * writing this - a `continue` here stripped Angular, e2e and 32 script suites
  * from a route change, which is a far larger hole than the one being fixed.
  */
+function isPublishedTeamsPath(filePath) {
+  return (
+    filePath === 'scripts/check-published-teams.mjs' ||
+    filePath === 'scripts/check-published-teams.spec.ts'
+  );
+}
+
+/* Non-terminating: app sources that also route to the Angular lane. */
+function touchesPublishedTeamsSources(filePath) {
+  return (
+    filePath === 'src/app/core/data/published-teams.data.ts' ||
+    filePath === 'src/app/pages/saved-teams/published-teams.utils.ts'
+  );
+}
+
 function isContentLadderPath(filePath) {
   return (
     filePath === 'scripts/check-content-ladder.mjs' ||
@@ -838,8 +863,19 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
       addScriptSuite(scriptSuites, 'content-ladder');
     }
 
+    if (touchesPublishedTeamsSources(filePath)) {
+      addScriptSuite(scriptSuites, 'published-teams');
+    }
+
+    if (isPublishedTeamsPath(filePath)) {
+      addScriptSuite(scriptSuites, 'published-teams');
+      continue;
+    }
+
     if (isContentLadderPath(filePath)) {
       addScriptSuite(scriptSuites, 'content-ladder');
+      /* check-published-teams.mjs imports readDatasetStages from it, so it rides along. */
+      addScriptSuite(scriptSuites, 'published-teams');
       continue;
     }
 

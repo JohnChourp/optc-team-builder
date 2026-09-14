@@ -85,6 +85,57 @@
           </section>
         }
 
+        <!--
+          869f1p4wx. The read-only published set - the zero-backend half of 869f12xc8. Nothing here
+          was submitted by a player and nothing claims a clear, so the card says what these teams
+          are before it lists one.
+        -->
+        @if (!loading() && publishedTeamCards().length) {
+          <section class="glass-card section-card" data-testid="published-teams">
+            <div class="section-head">
+              <div>
+                <h2>{{ t('published.title') }}</h2>
+                <span>{{ t('published.count', { count: publishedTeamCards().length }) }}</span>
+              </div>
+            </div>
+            <p class="published-copy">{{ t('published.copy') }}</p>
+
+            <ul class="published-list">
+              @for (card of publishedTeamCards(); track card.team.id) {
+                <li class="published-list__item">
+                  <div class="published-list__head">
+                    <strong>{{ card.team.stage }}</strong>
+                    <small class="published-chip">{{ card.team.group }}</small>
+                  </div>
+
+                  <p class="published-list__members">
+                    {{ publishedTeamMemberNames(card) }}
+                  </p>
+                  <p class="published-list__rationale">{{ card.team.rationale }}</p>
+
+                  @if (card.complete) {
+                    <ion-button
+                      fill="outline"
+                      color="light"
+                      size="small"
+                      (click)="importPublishedTeam(card)"
+                    >
+                      {{ t('published.import') }}
+                    </ion-button>
+                    @if (publishedImportedId() === card.team.id) {
+                      <p class="published-list__imported">{{ t('published.imported') }}</p>
+                    }
+                  } @else {
+                    <p class="published-list__incomplete">{{ t('published.incomplete') }}</p>
+                  }
+                </li>
+              }
+            </ul>
+
+            <p class="published-note">{{ t('published.note') }}</p>
+          </section>
+        }
+
         @if (!loading() && savedTeamCards().length) {
           <section class="glass-card section-card">
             <div class="section-head">

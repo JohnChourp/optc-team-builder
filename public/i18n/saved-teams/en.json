@@ -227,6 +227,17 @@
     "import": "Import teams"
   },
   "title": "Saved Teams",
+  "published": {
+    "title": "Example teams that ship with the app",
+    "copy": "A few teams put together from the app data to show what a crew for a particular place looks like. Nobody sent these in and none of them claims to have beaten anything - they are worked examples, and each one says what it was built around. Importing one copies it into your own saved teams, where you can change it freely.",
+    "count": "{{count}} example teams",
+    "import": "Copy to my saved teams",
+    "imported": "Copied. It is in your saved teams now, and yours to change.",
+    "importedNote": "Copied from the example teams that ship with the app, for {{stage}} ({{group}}). A worked example built from the app data - not a team somebody sent in, and not a claimed win.",
+    "incomplete": "One of these characters is no longer in the app data, so this team cannot be copied as published.",
+    "emptySeat": "empty seat",
+    "note": "This list is read-only and ships inside the app. There is nowhere to send a team, so nothing here was submitted by another player."
+  },
   "total": "{{count}} total",
   "totalFiltered": "{{count}} matching of {{total}} total"
 }
