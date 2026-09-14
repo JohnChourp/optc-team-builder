@@ -93,7 +93,7 @@ function resolveNameDerivedPartyConflictKeys(name: string): string[] {
   }
 
   const parentheticalKeys = [...name.matchAll(/\(([^)]+)\)/g)]
-    .map((match) => normalizePartyConflictKey(match[1]))
+    .map((match) => normalizePartyConflictKey(match[1] ?? ''))
     .filter((value) => value.length > 0);
 
   parentheticalKeys.forEach((value) => keys.add(value));

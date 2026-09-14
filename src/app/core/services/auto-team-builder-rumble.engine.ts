@@ -178,12 +178,30 @@ export function normalizeRumbleBuildInput(input: Partial<RumbleBuildInput> = {})
   };
 }
 
+/**
+ * Every search path returns at least one result - `collectUniqueRumbleResults`
+ * is only reached behind `if (validResults.length)`, and the other two returns
+ * are non-empty by construction, an empty result being a result. The singular
+ * wrapper has always relied on that, silently: indexing `[0]` typed the value as
+ * present without checking it. This states the invariant and fails loudly if it
+ * is ever broken, instead of handing `undefined` to code that cannot take it.
+ */
+export function firstResult(results: RumbleTeamResult[]): RumbleTeamResult {
+  const [first] = results;
+
+  if (!first) {
+    throw new Error('runRumbleTeamBuildSearches returned no result.');
+  }
+
+  return first;
+}
+
 function runRumbleTeamBuildSearch(
   candidates: CharacterDetailRecord[],
   requestedInput: Partial<RumbleBuildInput> = {},
   options: RumbleBuildSearchOptions = {},
 ): RumbleTeamResult {
-  return runRumbleTeamBuildSearches(candidates, requestedInput, options, 1)[0];
+  return firstResult(runRumbleTeamBuildSearches(candidates, requestedInput, options, 1));
 }
 
 export function runRumbleTeamBuildSearches(
@@ -250,8 +268,7 @@ export function runRumbleTeamBuildSearches(
   let bestPartials: RumbleTeamResult[] = [];
   let totalCompletedMs = 0;
 
-  for (let index = 0; index < attempts.length; index += 1) {
-    const attempt = attempts[index];
+  for (const [index, attempt] of attempts.entries()) {
     const attemptStartedAt = now();
 
     emitProgress(options, {
@@ -349,12 +366,12 @@ export function runRumbleTeamBuildSearches(
     ? bestPartials
     : [
         engine.createEmptyResult(scoredCandidates.length, input, {
-          ...attempts[0],
+          ...(attempts[0] ?? createExactAttempt(input)),
           resolvedTypes: [...input.types],
           droppedTypes: [],
         }),
       ];
-  const primaryFallbackResult = fallbackResults[0];
+  const primaryFallbackResult = firstResult(fallbackResults);
 
   emitProgress(options, {
     stage: 'completed',
@@ -397,13 +414,15 @@ export class RumbleTeamBuilderEngine {
     attempt: RumbleBuildAttempt,
     opponentProfile: RumbleOpponentProfile = EMPTY_OPPONENT_PROFILE,
   ): RumbleTeamResult {
-    return this.buildTeamVariantsFromScoredCandidates(
-      scoredCandidates,
-      input,
-      attempt,
-      opponentProfile,
-      1,
-    )[0];
+    return firstResult(
+      this.buildTeamVariantsFromScoredCandidates(
+        scoredCandidates,
+        input,
+        attempt,
+        opponentProfile,
+        1,
+      ),
+    );
   }
 
   public buildTeamVariantsFromScoredCandidates(
@@ -1547,8 +1566,14 @@ export class RumbleTeamBuilderEngine {
       return null;
     }
 
-    const attribute = this.normalizeOpponentCounterAttribute(match[2]);
-    const chance = toFiniteNumber(match[1]);
+    const [, rawChance, rawAttribute] = match;
+
+    if (rawChance === undefined || rawAttribute === undefined) {
+      return null;
+    }
+
+    const attribute = this.normalizeOpponentCounterAttribute(rawAttribute);
+    const chance = toFiniteNumber(rawChance);
 
     return attribute && chance !== null ? { attribute, chance } : null;
   }
@@ -1560,8 +1585,14 @@ export class RumbleTeamBuilderEngine {
       return null;
     }
 
-    const percentage = toFiniteNumber(match[1]);
-    const type = match[2].toUpperCase();
+    const [, rawPercentage, rawType] = match;
+
+    if (rawPercentage === undefined || rawType === undefined) {
+      return null;
+    }
+
+    const percentage = toFiniteNumber(rawPercentage);
+    const type = rawType.toUpperCase();
 
     return percentage !== null ? { type, percentage } : null;
   }

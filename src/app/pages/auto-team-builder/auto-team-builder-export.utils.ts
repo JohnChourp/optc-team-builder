@@ -1373,14 +1373,18 @@ export function sanitizeAutoTeamSelectionImportPayload(
     let captainLeaderId: number | null = null;
     let friendCaptainLeaderId: number | null = null;
 
-    if (selectedLeaderIds.length === 1) {
-      captainLeaderId = selectedLeaderIds[0];
-      friendCaptainLeaderId = selectedLeaderIds[0];
-    } else if (selectedLeaderIds.length > 1) {
+    const [firstSelectedLeaderId] = selectedLeaderIds;
+
+    if (firstSelectedLeaderId === undefined) {
+      /* No leader selected. Both ids stay null, exactly as before. */
+    } else if (selectedLeaderIds.length === 1) {
+      captainLeaderId = firstSelectedLeaderId;
+      friendCaptainLeaderId = firstSelectedLeaderId;
+    } else {
       captainLeaderId =
         normalizedCaptainLeaderId && selectedLeaderIds.includes(normalizedCaptainLeaderId)
           ? normalizedCaptainLeaderId
-          : selectedLeaderIds[0];
+          : firstSelectedLeaderId;
       friendCaptainLeaderId =
         selectedLeaderIds.find((characterId) => characterId !== captainLeaderId) ?? captainLeaderId;
     }

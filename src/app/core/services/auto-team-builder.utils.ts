@@ -2371,6 +2371,12 @@ function* resolveConstrainedSubSelectionOptions(
     }
 
     const role = constrainedRoles[roleIndex];
+
+    if (role === undefined) {
+      yield selectedSubMap;
+      return;
+    }
+
     const requiredCandidate = requiredManualSlotCandidateMap.get(role);
     const slotCandidates = requiredCandidate
       ? [requiredCandidate]
@@ -4080,7 +4086,7 @@ function resolveSubSelectedFilterScore(
 
 function teamCostWithinBudget(
   input: Pick<AutoBuildInput, 'maxTotalCost'>,
-  captain: AutoBuildCandidate,
+  captain: AutoBuildCandidate | undefined,
   subs: AutoBuildCandidate[],
 ): boolean {
   void input;
@@ -4092,7 +4098,7 @@ function teamCostWithinBudget(
 
 function canAddSubWithinTeamCostBudget(
   input: Pick<AutoBuildInput, 'maxTotalCost'>,
-  captain: AutoBuildCandidate,
+  captain: AutoBuildCandidate | undefined,
   selectedSubs: AutoBuildCandidate[],
   candidate: AutoBuildCandidate,
 ): boolean {

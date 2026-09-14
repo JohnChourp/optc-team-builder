@@ -50,7 +50,7 @@ interface SectionConfig<T> {
   rowKey: (item: T) => string;
 }
 
-const sectionConfigs: SectionConfig<never>[] = [
+const sectionConfigs: [SectionConfig<never>, ...SectionConfig<never>[]] = [
   {
     buildPayload: (items, _exportedAt) => ({
       favorites: {

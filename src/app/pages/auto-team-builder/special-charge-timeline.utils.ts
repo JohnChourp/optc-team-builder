@@ -150,7 +150,7 @@ export function buildSpecialChargeTimeline(
     entries: sorted,
     unknownCharacterNames,
     readyCount: ready.length,
-    earliestTurns: sorted.length > 0 ? sorted[0].maxLevelTurns : null,
-    latestReadyTurns: ready.length > 0 ? ready[ready.length - 1].maxLevelTurns : null,
+    earliestTurns: sorted[0]?.maxLevelTurns ?? null,
+    latestReadyTurns: ready[ready.length - 1]?.maxLevelTurns ?? null,
   };
 }

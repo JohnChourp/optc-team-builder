@@ -1478,14 +1478,14 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
     return this.lockedCharacterIds()
       .map((characterId) => lockedRecords[characterId])
-      .filter(Boolean);
+      .filter((character): character is CharacterListItem => character !== undefined);
   });
   public readonly excludedCharacters = computed(() => {
     const cachedRecords = this.lockedCharacterRecords();
 
     return this.excludedCharacterIds()
       .map((characterId) => cachedRecords[characterId])
-      .filter(Boolean);
+      .filter((character): character is CharacterListItem => character !== undefined);
   });
   public readonly hasLockedCharacters = computed(() => this.lockedCharacterIds().length > 0);
   public readonly hasExcludedCharacters = computed(() => this.excludedCharacterIds().length > 0);
@@ -1541,7 +1541,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       requiredCharacterId: slot.requiredCharacterId ?? null,
       selectedCharacters: slot.characterIds
         .map((characterId) => lockedRecords[characterId])
-        .filter(Boolean)
+        .filter((character): character is CharacterListItem => character !== undefined)
         .map((character) => ({
           ...character,
           isRequiredInManualSlot: character.id === slot.requiredCharacterId,
@@ -5923,12 +5923,14 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
     const choosableActions = card.branchActions.filter((action) => !action.disabled);
 
-    if (choosableActions.length === 0) {
+    const [firstChoosableAction] = choosableActions;
+
+    if (!firstChoosableAction) {
       return;
     }
 
     const defaultMode =
-      choosableActions.find((action) => action.selected)?.mode ?? choosableActions[0].mode;
+      choosableActions.find((action) => action.selected)?.mode ?? firstChoosableAction.mode;
     const alert = await this.alertController.create({
       header: card.character.name,
       message: this.t('manual.branchPicker.message'),
@@ -9465,6 +9467,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     }
 
     const slot = slots[slotIndex];
+
+    if (!slot) {
+      return true;
+    }
 
     for (const record of slot.records) {
       const partyConflictKeys = resolveCharacterPartyConflictKeys(record);

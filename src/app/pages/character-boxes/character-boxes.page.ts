@@ -565,14 +565,14 @@ export class CharacterBoxesPage implements OnInit {
       }
 
       if (segments[0] === 'minStars') {
-        return this.t('ladder.missing.minStars', { count: shortfall, stars: segments[1] });
+        return this.t('ladder.missing.minStars', { count: shortfall, stars: segments[1] ?? '' });
       }
 
       if (segments[0] === 'class') {
-        return this.t('ladder.missing.class', { count: shortfall, name: segments[1] });
+        return this.t('ladder.missing.class', { count: shortfall, name: segments[1] ?? '' });
       }
 
-      return this.t('ladder.missing.type', { count: shortfall, name: segments[1] });
+      return this.t('ladder.missing.type', { count: shortfall, name: segments[1] ?? '' });
     });
 
     return parts.join(' ');
