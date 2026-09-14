@@ -410,6 +410,17 @@
       "processing": "Importing saved teams...",
       "title": "Saved Teams"
     },
+    "storedData": {
+      "copy": "{{count}} items are stored in this browser.",
+      "diagnosticsCopy": "The diagnostics file holds counts only - no team names, no characters, no account.",
+      "exportDiagnostics": "Export diagnostics",
+      "quota": {
+        "measured": "Using {{used}} of about {{total}} available to this site ({{percent}}%).",
+        "unavailable": "This browser would not report how much storage is in use.",
+        "unsupported": "This browser cannot report how much storage is in use."
+      },
+      "title": "What is stored on this device"
+    },
     "savedRumbleTeams": {
       "errors": {
         "generic": "The saved Rumble teams data could not be imported.",

@@ -34,6 +34,13 @@ import { OptcRepositoryService } from '../../core/services/optc-repository.servi
 import { UserDataTransferService } from '../../core/services/user-data-transfer.service';
 import { buildDatasetSummary, type DatasetSummary } from './dataset-summary.utils';
 import {
+  buildStorageDiagnosticsFilename,
+  buildStorageDiagnosticsPayload,
+  formatStorageBytes,
+  readStorageQuotaEstimate,
+  type StorageQuotaEstimate,
+} from './storage-diagnostics.utils';
+import {
   UserStateService,
   type AutoTeamBuilderWorkerMode,
 } from '../../core/services/user-state.service';
@@ -126,6 +133,21 @@ export class SettingsPage implements OnInit {
   public readonly appVersion = APP_VERSION;
   /** null until the manifest resolves, and again if it cannot be trusted. */
   public readonly datasetSummary = signal<DatasetSummary | null>(null);
+  /**
+   * 869f12x49. What this device is actually holding, and how close to full.
+   *
+   * The counts were already computed - `getSyncScopeSummary()` has always had
+   * them - they were just only rendered on the Account screen beside Drive
+   * sync. The quota is the genuinely new part: `browser-storage-error.utils.ts`
+   * exists because a full store has already happened, which means a reader
+   * currently meets that condition as a failure rather than as a warning.
+   */
+  public readonly storageQuota = signal<StorageQuotaEstimate>({
+    state: 'unsupported',
+    usageBytes: null,
+    quotaBytes: null,
+    usedPercent: null,
+  });
   public readonly favoriteIds;
   public readonly favoriteShipIds;
   public readonly characterBoxes;
@@ -300,11 +322,105 @@ export class SettingsPage implements OnInit {
     this.googleAccountStatus = this.googleAccount.status;
   }
 
+  public readonly storedDataRows = computed(() => {
+    const counts = this.localSyncScopeSummary();
+
+    return [
+      { key: 'savedTeams', count: counts.savedTeamsCount },
+      { key: 'savedRumbleTeams', count: counts.savedRumbleTeamsCount },
+      { key: 'savedRumbleOpponents', count: counts.savedRumbleOpponentsCount },
+      { key: 'savedEnemies', count: counts.savedEnemiesCount },
+      { key: 'characterBoxes', count: counts.characterBoxesCount },
+      { key: 'characterOverrides', count: counts.characterOverridesCount },
+      { key: 'crewForgeProfiles', count: counts.crewForgeProfilesCount },
+      { key: 'favorites', count: counts.favoriteCharacterCount },
+      { key: 'favoriteShips', count: counts.favoriteShipCount },
+    ] as const;
+  });
+
+  public readonly storedDataTotal = computed(() =>
+    this.storedDataRows().reduce((total, row) => total + row.count, 0),
+  );
+
+  public readonly storageQuotaLabel = computed(() => {
+    const quota = this.storageQuota();
+
+    if (quota.state !== 'measured') {
+      /*
+       * Said plainly rather than shown as 0%. A reader who cannot tell "we do
+       * not know" from "there is plenty of room" will keep saving into a store
+       * that is already full.
+       */
+      return this.i18n.translate(
+        `management.storedData.quota.${quota.state}`,
+        undefined,
+        'settings',
+      );
+    }
+
+    return this.i18n.translate(
+      'management.storedData.quota.measured',
+      {
+        used: formatStorageBytes(quota.usageBytes),
+        total: formatStorageBytes(quota.quotaBytes),
+        percent: quota.usedPercent ?? 0,
+      },
+      'settings',
+    );
+  });
+
+  public storedDataRowLabel(key: string, count: number): string {
+    return this.i18n.translate(`management.counts.${key}`, { count }, 'settings');
+  }
+
+  public async refreshStorageQuota(): Promise<void> {
+    this.storageQuota.set(await readStorageQuotaEstimate());
+  }
+
+  /**
+   * A problem report that carries facts instead of a description.
+   *
+   * Counts only - no names, no character ids, no account - so it is safe to
+   * paste into an issue. The payload is built from the summary object rather
+   * than from the stored data itself, which is what keeps that true when
+   * somebody later wants to add "just the names".
+   */
+  public downloadStorageDiagnostics(
+    documentRef: Document = document,
+    urlRef: Pick<typeof URL, 'createObjectURL' | 'revokeObjectURL'> = URL,
+  ): void {
+    const payload = buildStorageDiagnosticsPayload({
+      appVersion: this.appVersion,
+      dataset: this.datasetSummary(),
+      counts: this.localSyncScopeSummary(),
+      storage: this.storageQuota(),
+    });
+    const objectUrl = urlRef.createObjectURL(
+      new Blob([JSON.stringify(payload, null, 2) + '\n'], {
+        type: 'application/json;charset=utf-8',
+      }),
+    );
+    const anchor = documentRef.createElement('a');
+
+    anchor.href = objectUrl;
+    anchor.download = buildStorageDiagnosticsFilename(payload.generatedAt);
+    anchor.style.display = 'none';
+    documentRef.body.appendChild(anchor);
+
+    try {
+      anchor.click();
+    } finally {
+      documentRef.body.removeChild(anchor);
+      urlRef.revokeObjectURL(objectUrl);
+    }
+  }
+
   public async ngOnInit(): Promise<void> {
     await Promise.all([
       this.userState.ready(),
       this.characterOverrideState.ready(),
       this.loadDatasetSummary(),
+      this.refreshStorageQuota(),
     ]);
   }
 
