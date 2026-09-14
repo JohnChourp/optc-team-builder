@@ -369,6 +369,71 @@
             ></ion-toggle>
           </div>
 
+          <div class="opponent-saved-group" data-test="rumble-saved-opponents">
+            <span>{{ t('opponent.saved.title') }}</span>
+            <p class="build-hint">{{ t('opponent.saved.copy') }}</p>
+
+            <div class="opponent-saved-form">
+              <ion-searchbar
+                class="opponent-saved-name"
+                [value]="savedOpponentName()"
+                [placeholder]="t('opponent.saved.namePlaceholder')"
+                [debounce]="0"
+                data-test="rumble-opponent-name"
+                (ionInput)="savedOpponentName.set($any($event.detail.value) ?? '')"
+              ></ion-searchbar>
+              <ion-button
+                fill="outline"
+                size="small"
+                color="warning"
+                [disabled]="!canSaveOpponent"
+                data-test="rumble-save-opponent"
+                (click)="saveCurrentOpponent()"
+              >
+                {{ t('opponent.saved.save') }}
+              </ion-button>
+            </div>
+
+            @if (savedOpponentFeedback()) {
+              <p class="build-hint" data-test="rumble-opponent-feedback">
+                {{ savedOpponentFeedback() }}
+              </p>
+            }
+
+            @if (savedRumbleOpponents().length) {
+              <div class="opponent-saved-list">
+                @for (opponent of savedRumbleOpponents(); track opponent.id) {
+                  <div class="opponent-saved-item">
+                    <div class="opponent-saved-item__copy">
+                      <strong>{{ opponent.name }}</strong>
+                      <small>{{ opponentSlotLabel(opponent) }}</small>
+                    </div>
+                    <ion-button
+                      fill="outline"
+                      size="small"
+                      color="warning"
+                      [attr.data-test]="'rumble-load-opponent-' + opponent.id"
+                      (click)="loadSavedOpponent(opponent)"
+                    >
+                      {{ t('opponent.saved.load') }}
+                    </ion-button>
+                    <ion-button
+                      fill="clear"
+                      size="small"
+                      color="medium"
+                      [attr.data-test]="'rumble-delete-opponent-' + opponent.id"
+                      (click)="deleteSavedOpponent(opponent.id)"
+                    >
+                      {{ t('opponent.saved.delete') }}
+                    </ion-button>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="build-hint">{{ t('opponent.saved.empty') }}</p>
+            }
+          </div>
+
           <div class="opponent-team-group">
             <span>{{ t('opponent.activeTitle') }}</span>
             <div class="slot-grid">

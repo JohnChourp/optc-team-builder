@@ -117,6 +117,15 @@ export const BROWSER_STORAGE_KEYS: readonly BrowserStorageKeyRecord[] = [
     note: 'Enemies the reader described, with their links to teams.',
   },
   {
+    key: 'savedRumbleOpponents',
+    constantName: 'SAVED_RUMBLE_OPPONENTS_KEY',
+    owner: 'src/app/core/services/user-state.service.ts',
+    backend: 'preferences',
+    classification: 'durable-user-data',
+    exportedAs: 'savedRumbleOpponents',
+    note: 'Opponent crews the reader saved to face again across a Rumble season. Added by 869f12x45; this guard is what required the export scope before the key could ship.',
+  },
+  {
     key: 'characterBoxes',
     constantName: 'CHARACTER_BOXES_KEY',
     owner: 'src/app/core/services/user-state.service.ts',

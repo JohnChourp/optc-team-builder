@@ -215,7 +215,8 @@
       "crewForgeProfiles": "{{count}} image profiles του Crew Forge",
       "savedEnemies": "{{count}} saved enemies",
       "savedRumbleTeams": "{{count}} saved Rumble teams",
-      "savedTeams": "{{count}} saved teams"
+      "savedTeams": "{{count}} saved teams",
+      "savedRumbleOpponents": "{{count}} αποθηκευμένοι αντίπαλοι Rumble"
     },
     "allData": {
       "copy": "Κάνε export ένα πλήρες backup bundle ή import ένα έξυπνο backup που μπορεί να έχει όλα τα δεδομένα, μόνο ένα section ή ακόμα και export από ένα μόνο favorites, ships, character boxes, character overrides, saved teams ή saved enemies backup.",
@@ -424,6 +425,20 @@
         "successTitle": "Τα saved Rumble teams έγιναν import"
       },
       "title": "Saved Rumble Teams"
+    },
+    "savedRumbleOpponents": {
+      "feedback": {
+        "loadedFromFile": "Φορτώθηκε από το {{fileName}}.",
+        "stats": {
+          "added": "Προστέθηκαν {{count}} νέοι αποθηκευμένοι αντίπαλοι.",
+          "duplicates": "Συγχωνεύτηκαν {{count}} διπλά ids αποθηκευμένων αντιπάλων.",
+          "invalid": "Αγνοήθηκαν {{count}} μη έγκυρες εγγραφές αποθηκευμένων αντιπάλων.",
+          "updated": "Ενημερώθηκαν {{count}} υπάρχοντες αποθηκευμένοι αντίπαλοι."
+        },
+        "successTitle": "Το import των αποθηκευμένων αντιπάλων ολοκληρώθηκε",
+        "warningTitle": "Το import των αποθηκευμένων αντιπάλων ολοκληρώθηκε με παρατηρήσεις"
+      },
+      "title": "Saved Rumble Opponents"
     }
   },
   "sections": {

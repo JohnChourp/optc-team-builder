@@ -1165,6 +1165,59 @@ export class SettingsPage implements OnInit {
       });
     }
 
+    if (payload.savedRumbleOpponents !== undefined) {
+      await this.collectAllDataSectionResult({
+        failedSections,
+        label: this.resolveAllDataSectionLabel('savedRumbleOpponents'),
+        run: async () => {
+          const stats = await this.userDataTransfer.importSavedRumbleOpponentsPayload(
+            payload.savedRumbleOpponents as unknown,
+          );
+          const details = [
+            this.i18n.translate(
+              'management.savedRumbleOpponents.feedback.loadedFromFile',
+              { fileName },
+              'settings',
+            ),
+          ];
+          const statLines: [number, string][] = [
+            [stats.addedCount, 'added'],
+            [stats.updatedCount, 'updated'],
+            [stats.invalidOpponentCount, 'invalid'],
+            [stats.duplicateIdCount, 'duplicates'],
+          ];
+
+          for (const [count, key] of statLines) {
+            if (count > 0) {
+              details.push(
+                this.i18n.translate(
+                  `management.savedRumbleOpponents.feedback.stats.${key}`,
+                  { count },
+                  'settings',
+                ),
+              );
+            }
+          }
+
+          const hasWarnings = stats.invalidOpponentCount > 0 || stats.duplicateIdCount > 0;
+
+          return {
+            tone: hasWarnings ? ('warning' as const) : ('success' as const),
+            title: this.i18n.translate(
+              hasWarnings
+                ? 'management.savedRumbleOpponents.feedback.warningTitle'
+                : 'management.savedRumbleOpponents.feedback.successTitle',
+              undefined,
+              'settings',
+            ),
+            details,
+          };
+        },
+        successfulSections,
+        resolveError: (error) => this.resolveAllDataImportError(error),
+      });
+    }
+
     if (payload.crewForgeProfiles !== undefined) {
       await this.collectAllDataSectionResult({
         failedSections,
@@ -1267,6 +1320,7 @@ export class SettingsPage implements OnInit {
       | 'characterBoxes'
       | 'characterOverrides'
       | 'crewForgeProfiles'
+      | 'savedRumbleOpponents'
       | 'favoriteShips'
       | 'favorites'
       | 'savedEnemies'
@@ -1284,6 +1338,12 @@ export class SettingsPage implements OnInit {
         return this.i18n.translate('management.characterOverrides.title', undefined, 'settings');
       case 'crewForgeProfiles':
         return this.i18n.translate('management.crewForgeProfiles.title', undefined, 'settings');
+      case 'savedRumbleOpponents':
+        return this.i18n.translate(
+          'management.savedRumbleOpponents.title',
+          undefined,
+          'settings',
+        );
       case 'savedTeams':
         return this.i18n.translate('management.savedTeams.title', undefined, 'settings');
       case 'savedRumbleTeams':

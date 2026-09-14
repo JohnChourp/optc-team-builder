@@ -38,6 +38,11 @@ import {
   parseSavedRumbleTeamsImportPayloadValue,
 } from '../../pages/saved-rumble-teams/saved-rumble-teams-transfer.utils';
 import {
+  buildSavedRumbleOpponentsTransferPayload,
+  parseSavedRumbleOpponentsImportPayloadValue,
+  sanitizeSavedRumbleOpponentsImportPayload,
+} from '../../pages/auto-team-builder-rumble/saved-rumble-opponents-transfer.utils';
+import {
   buildCrewForgeProfilesTransferPayload,
   parseCrewForgeProfilesImportPayloadValue,
   sanitizeCrewForgeProfilesImportPayload,
@@ -61,6 +66,7 @@ export interface SyncScopeSummary {
   characterBoxesCount: number;
   characterOverridesCount: number;
   crewForgeProfilesCount: number;
+  savedRumbleOpponentsCount: number;
   favoriteCharacterCount: number;
   favoriteShipCount: number;
   savedEnemiesCount: number;
@@ -90,6 +96,13 @@ export interface CharacterBoxesImportSummary {
   duplicateIdCount: number;
   invalidBoxCount: number;
   unknownCharacterIdCount: number;
+  updatedCount: number;
+}
+
+export interface SavedRumbleOpponentsImportSummary {
+  addedCount: number;
+  duplicateIdCount: number;
+  invalidOpponentCount: number;
   updatedCount: number;
 }
 
@@ -133,6 +146,7 @@ export interface AllDataApplySummary {
   characterBoxes?: CharacterBoxesImportSummary;
   characterOverrides?: CharacterOverridesImportSummary;
   crewForgeProfiles?: CrewForgeProfilesImportSummary;
+  savedRumbleOpponents?: SavedRumbleOpponentsImportSummary;
   favoriteShips?: FavoriteShipsImportSummary;
   favorites?: FavoritesImportSummary;
   savedEnemies?: SavedEnemiesImportSummary;
@@ -208,6 +222,12 @@ export class UserDataTransferService {
       );
     }
 
+    if (payload.savedRumbleOpponents !== undefined) {
+      summary.savedRumbleOpponents = await this.importSavedRumbleOpponentsPayload(
+        payload.savedRumbleOpponents as unknown,
+      );
+    }
+
     return summary;
   }
 
@@ -233,6 +253,9 @@ export class UserDataTransferService {
           this.userState.crewForgeImageProfiles(),
           this.userState.crewForgeLastImageProfileId(),
         ),
+        savedRumbleOpponents: buildSavedRumbleOpponentsTransferPayload(
+          this.userState.savedRumbleOpponents(),
+        ),
       },
       exportedAt,
     );
@@ -249,6 +272,7 @@ export class UserDataTransferService {
       this.userState.clearAllSavedEnemies(),
       this.userState.clearAllSavedRumbleTeams(),
       this.userState.clearAllCrewForgeImageProfiles(),
+      this.userState.clearAllSavedRumbleOpponents(),
     ]);
   }
 
@@ -257,6 +281,7 @@ export class UserDataTransferService {
       characterBoxesCount: this.userState.characterBoxes().length,
       characterOverridesCount: this.characterOverrides.overrides().length,
       crewForgeProfilesCount: this.userState.crewForgeImageProfiles().length,
+      savedRumbleOpponentsCount: this.userState.savedRumbleOpponents().length,
       favoriteCharacterCount: this.userState.favoriteCharacterIds().length,
       favoriteShipCount: this.userState.favoriteShipIds().length,
       savedEnemiesCount: this.userState.savedEnemies().length,
@@ -276,7 +301,8 @@ export class UserDataTransferService {
       summary.savedTeamsCount > 0 ||
       summary.savedEnemiesCount > 0 ||
       summary.savedRumbleTeamsCount > 0 ||
-      summary.crewForgeProfilesCount > 0
+      summary.crewForgeProfilesCount > 0 ||
+      summary.savedRumbleOpponentsCount > 0
     );
   }
 
@@ -285,6 +311,7 @@ export class UserDataTransferService {
       characterBoxesCount: payload.characterBoxes?.boxes.length ?? 0,
       characterOverridesCount: payload.characterOverrides?.overrides.length ?? 0,
       crewForgeProfilesCount: payload.crewForgeProfiles?.profiles.length ?? 0,
+      savedRumbleOpponentsCount: payload.savedRumbleOpponents?.opponents.length ?? 0,
       favoriteCharacterCount: payload.favorites?.characters.length ?? 0,
       favoriteShipCount: payload.favoriteShips?.ships.length ?? 0,
       savedEnemiesCount: payload.savedEnemies?.enemies.length ?? 0,
@@ -343,6 +370,26 @@ export class UserDataTransferService {
       duplicateCharacterIdCount: sanitizedImport.duplicateCharacterIdCount,
       invalidOverrideCount: sanitizedImport.invalidOverrideCount,
       unknownCharacterIdCount: sanitizedImport.overrides.length - validOverrides.length,
+      updatedCount: mergeResult.updatedCount,
+    };
+  }
+
+  public async importSavedRumbleOpponentsPayload(
+    payload: unknown,
+  ): Promise<SavedRumbleOpponentsImportSummary> {
+    await this.ready();
+    await this.userState.readySavedRumbleOpponents();
+
+    const parsedPayload = parseSavedRumbleOpponentsImportPayloadValue(payload);
+    const sanitizedImport = sanitizeSavedRumbleOpponentsImportPayload(parsedPayload);
+    const mergeResult = await this.userState.mergeImportedRumbleOpponents(
+      sanitizedImport.opponents,
+    );
+
+    return {
+      addedCount: mergeResult.addedCount,
+      duplicateIdCount: sanitizedImport.duplicateIdCount,
+      invalidOpponentCount: sanitizedImport.invalidOpponentCount,
       updatedCount: mergeResult.updatedCount,
     };
   }

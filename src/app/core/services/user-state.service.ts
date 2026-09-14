@@ -43,6 +43,7 @@ import {
   type SavedRumbleTeamResult,
   type SavedRumbleTeamSlot,
 } from '../models/saved-rumble-team.models';
+import { type SavedRumbleOpponent } from '../models/saved-rumble-opponent.models';
 import { AppI18nService } from './app-i18n.service';
 import { toBrowserStoragePersistenceError } from './browser-storage-error.utils';
 import { DriveSyncStateService } from './drive-sync-state.service';
@@ -59,6 +60,7 @@ const CHARACTER_BOXES_KEY = 'characterBoxes';
 const SAVED_TEAMS_KEY = 'savedTeams';
 const SAVED_ENEMIES_KEY = 'savedEnemies';
 const SAVED_RUMBLE_TEAMS_KEY = 'savedRumbleTeams';
+const SAVED_RUMBLE_OPPONENTS_KEY = 'savedRumbleOpponents';
 const CREW_FORGE_IMAGE_PROFILES_KEY = 'crewForgeImageProfiles';
 const CREW_FORGE_LAST_IMAGE_PROFILE_ID_KEY = 'crewForgeLastImageProfileId';
 const AUTO_TEAM_BUILDER_WORKER_PREFERENCE_KEY = 'autoTeamBuilderWorkerPreference';
@@ -107,6 +109,7 @@ type UserStateHydrationDomain =
   | 'savedEnemies'
   | 'savedRumbleTeams'
   | 'crewForgeImageProfiles'
+  | 'savedRumbleOpponents'
   | 'autoTeamBuilderWorkerPreference'
   | 'builderIntroDismissed';
 
@@ -122,6 +125,7 @@ export class UserStateService {
   );
   public readonly savedEnemies = signal<SavedEnemy[]>([]);
   public readonly savedRumbleTeams = signal<SavedRumbleTeam[]>([]);
+  public readonly savedRumbleOpponents = signal<SavedRumbleOpponent[]>([]);
   public readonly crewForgeImageProfiles = computed<CrewForgeImageProfile[]>(() => [
     ...BUILT_IN_CREW_FORGE_IMAGE_PROFILES,
     ...this.userCrewForgeImageProfiles(),
@@ -223,6 +227,18 @@ export class UserStateService {
       const rumbleTeams = await this.readJson<SavedRumbleTeam[]>(SAVED_RUMBLE_TEAMS_KEY, []);
       this.savedRumbleTeams.set(
         rumbleTeams.map((rumbleTeam) => this.normalizeSavedRumbleTeam(rumbleTeam)),
+      );
+    });
+  }
+
+  public async readySavedRumbleOpponents(): Promise<void> {
+    await this.ensureHydrated('savedRumbleOpponents', async () => {
+      const opponents = await this.readJson<SavedRumbleOpponent[]>(SAVED_RUMBLE_OPPONENTS_KEY, []);
+
+      this.savedRumbleOpponents.set(
+        opponents
+          .map((opponent) => this.normalizeSavedRumbleOpponent(opponent))
+          .filter((opponent): opponent is SavedRumbleOpponent => Boolean(opponent)),
       );
     });
   }
@@ -1080,6 +1096,90 @@ export class UserStateService {
     await this.replaceSavedRumbleTeams(next);
   }
 
+  public async saveRumbleOpponent(
+    input: Omit<SavedRumbleOpponent, 'id' | 'createdAt' | 'updatedAt'> & { id?: string },
+  ): Promise<SavedRumbleOpponent | null> {
+    await this.readySavedRumbleOpponents();
+
+    const existing = this.savedRumbleOpponents().find((opponent) => opponent.id === input.id);
+    const opponent = this.normalizeSavedRumbleOpponent(
+      { ...input, id: input.id ?? this.createRumbleOpponentId() },
+      existing,
+    );
+
+    if (!opponent) {
+      return null;
+    }
+
+    const next = existing
+      ? this.savedRumbleOpponents().map((entry) =>
+          entry.id === opponent.id ? opponent : entry,
+        )
+      : [opponent, ...this.savedRumbleOpponents()];
+
+    await this.replaceSavedRumbleOpponents(next);
+
+    return opponent;
+  }
+
+  public async deleteRumbleOpponent(opponentId: string): Promise<void> {
+    await this.readySavedRumbleOpponents();
+    const normalizedId = this.normalizeEntityId(opponentId);
+
+    if (!normalizedId) {
+      return;
+    }
+
+    const next = this.savedRumbleOpponents().filter((opponent) => opponent.id !== normalizedId);
+
+    if (next.length === this.savedRumbleOpponents().length) {
+      return;
+    }
+
+    await this.replaceSavedRumbleOpponents(next);
+  }
+
+  public async clearAllSavedRumbleOpponents(): Promise<void> {
+    await this.readySavedRumbleOpponents();
+    await this.replaceSavedRumbleOpponents([]);
+  }
+
+  public async mergeImportedRumbleOpponents(
+    opponents: SavedRumbleOpponent[],
+  ): Promise<{ addedCount: number; updatedCount: number; opponents: SavedRumbleOpponent[] }> {
+    await this.readySavedRumbleOpponents();
+
+    const byId = new Map(this.savedRumbleOpponents().map((entry) => [entry.id, entry] as const));
+    let addedCount = 0;
+    let updatedCount = 0;
+
+    for (const candidate of opponents) {
+      const existing = candidate.id ? byId.get(candidate.id) : undefined;
+      const normalized = this.normalizeSavedRumbleOpponent(
+        { ...candidate, id: candidate.id || this.createRumbleOpponentId() },
+        existing,
+      );
+
+      if (!normalized) {
+        continue;
+      }
+
+      if (existing) {
+        updatedCount += 1;
+      } else {
+        addedCount += 1;
+      }
+
+      byId.set(normalized.id, normalized);
+    }
+
+    const next = [...byId.values()];
+
+    await this.replaceSavedRumbleOpponents(next);
+
+    return { addedCount, updatedCount, opponents: next };
+  }
+
   public async clearAllSavedRumbleTeams(): Promise<void> {
     await this.readySavedRumbleTeams();
     await this.replaceSavedRumbleTeams([]);
@@ -1341,6 +1441,59 @@ export class UserStateService {
   private async replaceSavedEnemies(enemies: SavedEnemy[]): Promise<void> {
     this.savedEnemies.set(enemies);
     await this.persistJson(SAVED_ENEMIES_KEY, enemies);
+  }
+
+  private async replaceSavedRumbleOpponents(opponents: SavedRumbleOpponent[]): Promise<void> {
+    this.savedRumbleOpponents.set(opponents);
+    await this.persistJson(SAVED_RUMBLE_OPPONENTS_KEY, opponents);
+  }
+
+  private createRumbleOpponentId(): string {
+    return `rumble-opponent-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  }
+
+  /**
+   * 869f12x45. Rejects an opponent with no name and no units.
+   *
+   * A nameless or empty entry is indistinguishable from a mis-click, and one in
+   * the list is worse than none: it cannot be told apart from a real opponent
+   * whose units the dataset no longer knows.
+   */
+  private normalizeSavedRumbleOpponent(
+    opponent: (Partial<SavedRumbleOpponent> & { name?: string }) | null | undefined,
+    existing?: SavedRumbleOpponent,
+  ): SavedRumbleOpponent | null {
+    if (!opponent) {
+      return null;
+    }
+
+    const name = typeof opponent.name === 'string' ? opponent.name.trim() : '';
+
+    if (!name.length) {
+      return null;
+    }
+
+    const normalizeSlots = (slots: unknown): Array<number | null> =>
+      (Array.isArray(slots) ? slots : []).map((slot) =>
+        typeof slot === 'number' && Number.isInteger(slot) && slot > 0 ? slot : null,
+      );
+    const activeCharacterIds = normalizeSlots(opponent.activeCharacterIds);
+    const benchCharacterIds = normalizeSlots(opponent.benchCharacterIds);
+
+    if (![...activeCharacterIds, ...benchCharacterIds].some((slot) => slot !== null)) {
+      return null;
+    }
+
+    const now = new Date().toISOString();
+
+    return {
+      id: this.normalizeEntityId(opponent.id) ?? existing?.id ?? this.createRumbleOpponentId(),
+      name,
+      activeCharacterIds,
+      benchCharacterIds,
+      createdAt: this.normalizeTimestamp(opponent.createdAt, existing?.createdAt ?? now),
+      updatedAt: this.normalizeTimestamp(opponent.updatedAt, now),
+    };
   }
 
   private async replaceSavedRumbleTeams(rumbleTeams: SavedRumbleTeam[]): Promise<void> {

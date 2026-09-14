@@ -95,6 +95,10 @@ import {
   type SavedRumbleTeamSlot,
 } from '../../core/models/saved-rumble-team.models';
 import {
+  countSavedRumbleOpponentSlots,
+  type SavedRumbleOpponent,
+} from '../../core/models/saved-rumble-opponent.models';
+import {
   AutoTeamBuilderRumbleControlsPanelComponent,
   AutoTeamBuilderRumbleResultsPanelComponent,
   AutoTeamBuilderRumbleRosterPanelComponent,
@@ -224,6 +228,18 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
     createEmptyRumbleSlots(RUMBLE_BENCH_SLOT_COUNT),
   );
   public readonly opponentAwarenessEnabled = signal(false);
+  /**
+   * 869f12x45. Opponents saved on their own, reusable across builds.
+   *
+   * A saved TEAM already carries the opponent it was built against, and
+   * `loadSavedRumbleTeam` restores it - so the gap was never "the opponent is
+   * not persisted". It was that an opponent could not be saved WITHOUT a team,
+   * or loaded into a fresh build, which is what turns facing the same crews
+   * across a season into re-typing.
+   */
+  public readonly savedRumbleOpponents;
+  public readonly savedOpponentName = signal('');
+  public readonly savedOpponentFeedback = signal<string>('');
   public readonly buffFocus = signal<RumbleBuffFocusPreference[]>(
     DEFAULT_RUMBLE_BUFF_FOCUS.map((preference) => ({ ...preference })),
   );
@@ -685,6 +701,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
     private readonly route: ActivatedRoute,
     private readonly router: Router,
   ) {
+    this.savedRumbleOpponents = this.userState.savedRumbleOpponents;
     this.favoriteCharacterIds = this.userState.favoriteCharacterIds;
     this.characterBoxes = this.userState.characterBoxes;
     this.autoTeamBuilderWorkerPreference = this.userState.autoTeamBuilderWorkerPreference;
@@ -699,6 +716,109 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
     );
   }
 
+  public opponentSlotLabel(opponent: SavedRumbleOpponent): string {
+    return this.t('opponent.saved.slotCount', { count: countSavedRumbleOpponentSlots(opponent) });
+  }
+
+  public get canSaveOpponent(): boolean {
+    return (
+      this.savedOpponentName().trim().length > 0 && this.collectOpponentTeamSlots().length > 0
+    );
+  }
+
+  public async saveCurrentOpponent(): Promise<void> {
+    const name = this.savedOpponentName().trim();
+
+    if (!name || !this.collectOpponentTeamSlots().length) {
+      return;
+    }
+
+    const saved = await this.userState.saveRumbleOpponent({
+      name,
+      activeCharacterIds: this.opponentActiveSlots().map((slot) => slot?.unit.character.id ?? null),
+      benchCharacterIds: this.opponentBenchSlots().map((slot) => slot?.unit.character.id ?? null),
+    });
+
+    this.savedOpponentFeedback.set(
+      saved ? this.t('opponent.saved.savedAs', { name: saved.name }) : '',
+    );
+    this.savedOpponentName.set('');
+  }
+
+  public async deleteSavedOpponent(opponentId: string): Promise<void> {
+    await this.userState.deleteRumbleOpponent(opponentId);
+    this.savedOpponentFeedback.set('');
+  }
+
+  /**
+   * Loads an opponent into the CURRENT build, leaving the player's own team and
+   * every filter alone.
+   *
+   * Awareness is deliberately not restored from the opponent, because it is not
+   * stored on one: whether the next build should counter this crew is a choice
+   * about the build being run now. It is switched ON, because loading an
+   * opponent with the toggle off would silently do nothing - the exact "the
+   * number is there and nothing uses it" shape this wave keeps finding.
+   */
+  public async loadSavedOpponent(opponent: SavedRumbleOpponent): Promise<void> {
+    const characterIds = [
+      ...opponent.activeCharacterIds,
+      ...opponent.benchCharacterIds,
+    ].filter((characterId): characterId is number => typeof characterId === 'number');
+    const characters = characterIds.length
+      ? await this.repository.getDetailedCharactersByIds(characterIds)
+      : [];
+    const scored = new Map(
+      this.rumbleBuilder
+        .scoreCandidates(characters)
+        .map((candidate) => [candidate.character.id, candidate] as const),
+    );
+    const toSlots = (ids: Array<number | null>, role: 'active' | 'bench') =>
+      ids.map((characterId, index) => {
+        const unit = characterId === null ? undefined : scored.get(characterId);
+
+        return unit
+          ? {
+              role: role === 'active' ? ('active' as const) : ('bench' as const),
+              index,
+              unit,
+              score: 0,
+              reasonChips: [],
+            }
+          : null;
+      });
+    const activeSlots = toSlots(opponent.activeCharacterIds, 'active');
+    const benchSlots = toSlots(opponent.benchCharacterIds, 'bench');
+    const requested = characterIds.length;
+    const restored = [...activeSlots, ...benchSlots].filter(Boolean).length;
+
+    this.opponentActiveSlots.set(this.padOpponentSlots(activeSlots, this.opponentActiveSlots()));
+    this.opponentBenchSlots.set(this.padOpponentSlots(benchSlots, this.opponentBenchSlots()));
+    this.opponentAwarenessEnabled.set(true);
+    this.savedOpponentFeedback.set(
+      restored === requested
+        ? this.t('opponent.saved.loaded', { name: opponent.name })
+        : this.t('opponent.saved.loadedPartial', {
+            name: opponent.name,
+            count: requested - restored,
+          }),
+    );
+  }
+
+  /**
+   * A saved opponent may hold fewer slots than the builder shows - the slot
+   * count is a build setting, and it can differ from the one in force when the
+   * opponent was saved. Keeping the current length means loading never shrinks
+   * the panel out from under the reader.
+   */
+  private padOpponentSlots<T>(loaded: T[], current: T[]): T[] {
+    if (loaded.length >= current.length) {
+      return loaded.slice(0, current.length);
+    }
+
+    return [...loaded, ...current.slice(loaded.length).map(() => null as T)];
+  }
+
   public async ngOnInit(): Promise<void> {
     await Promise.all([
       this.i18n.preloadScope('auto-team-builder-rumble'),
@@ -707,6 +827,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
       this.userState.readyFavoriteCharacterIds(),
       this.userState.readyCharacterBoxes(),
       this.userState.readyAutoTeamBuilderWorkerPreference(),
+      this.userState.readySavedRumbleOpponents(),
     ]);
     const manifest = await this.repository.getDatasetManifest();
 

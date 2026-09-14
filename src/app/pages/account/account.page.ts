@@ -370,6 +370,7 @@ export class AccountPage {
       | 'characterBoxes'
       | 'characterOverrides'
       | 'crewForgeProfiles'
+      | 'savedRumbleOpponents'
       | 'favorites'
       | 'favoriteShips'
       | 'savedEnemies'
