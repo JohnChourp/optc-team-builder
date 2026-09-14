@@ -38,6 +38,11 @@ import {
   parseSavedRumbleTeamsImportPayloadValue,
 } from '../../pages/saved-rumble-teams/saved-rumble-teams-transfer.utils';
 import {
+  buildCrewForgeProfilesTransferPayload,
+  parseCrewForgeProfilesImportPayloadValue,
+  sanitizeCrewForgeProfilesImportPayload,
+} from '../../pages/crew-forge/crew-forge-profiles-transfer.utils';
+import {
   buildAllDataTransferPayload,
   type AllDataTransferPayload,
 } from '../../pages/settings/all-data-transfer.utils';
@@ -55,6 +60,7 @@ export type DriveImportStrategy = 'merge' | 'restore';
 export interface SyncScopeSummary {
   characterBoxesCount: number;
   characterOverridesCount: number;
+  crewForgeProfilesCount: number;
   favoriteCharacterCount: number;
   favoriteShipCount: number;
   savedEnemiesCount: number;
@@ -84,6 +90,14 @@ export interface CharacterBoxesImportSummary {
   duplicateIdCount: number;
   invalidBoxCount: number;
   unknownCharacterIdCount: number;
+  updatedCount: number;
+}
+
+export interface CrewForgeProfilesImportSummary {
+  addedCount: number;
+  builtInProfileCount: number;
+  duplicateProfileCount: number;
+  invalidProfileCount: number;
   updatedCount: number;
 }
 
@@ -118,6 +132,7 @@ export interface SavedRumbleTeamsImportSummary {
 export interface AllDataApplySummary {
   characterBoxes?: CharacterBoxesImportSummary;
   characterOverrides?: CharacterOverridesImportSummary;
+  crewForgeProfiles?: CrewForgeProfilesImportSummary;
   favoriteShips?: FavoriteShipsImportSummary;
   favorites?: FavoritesImportSummary;
   savedEnemies?: SavedEnemiesImportSummary;
@@ -187,6 +202,12 @@ export class UserDataTransferService {
       );
     }
 
+    if (payload.crewForgeProfiles !== undefined) {
+      summary.crewForgeProfiles = await this.importCrewForgeProfilesPayload(
+        payload.crewForgeProfiles as unknown,
+      );
+    }
+
     return summary;
   }
 
@@ -208,6 +229,10 @@ export class UserDataTransferService {
         savedTeams: buildSavedTeamsTransferPayload(this.userState.savedTeams()),
         savedEnemies: buildSavedEnemiesTransferPayload(this.userState.savedEnemies()),
         savedRumbleTeams: buildSavedRumbleTeamsTransferPayload(this.userState.savedRumbleTeams()),
+        crewForgeProfiles: buildCrewForgeProfilesTransferPayload(
+          this.userState.crewForgeImageProfiles(),
+          this.userState.crewForgeLastImageProfileId(),
+        ),
       },
       exportedAt,
     );
@@ -223,6 +248,7 @@ export class UserDataTransferService {
       this.userState.clearAllSavedTeams(),
       this.userState.clearAllSavedEnemies(),
       this.userState.clearAllSavedRumbleTeams(),
+      this.userState.clearAllCrewForgeImageProfiles(),
     ]);
   }
 
@@ -230,6 +256,7 @@ export class UserDataTransferService {
     return {
       characterBoxesCount: this.userState.characterBoxes().length,
       characterOverridesCount: this.characterOverrides.overrides().length,
+      crewForgeProfilesCount: this.userState.crewForgeImageProfiles().length,
       favoriteCharacterCount: this.userState.favoriteCharacterIds().length,
       favoriteShipCount: this.userState.favoriteShipIds().length,
       savedEnemiesCount: this.userState.savedEnemies().length,
@@ -248,7 +275,8 @@ export class UserDataTransferService {
       summary.characterOverridesCount > 0 ||
       summary.savedTeamsCount > 0 ||
       summary.savedEnemiesCount > 0 ||
-      summary.savedRumbleTeamsCount > 0
+      summary.savedRumbleTeamsCount > 0 ||
+      summary.crewForgeProfilesCount > 0
     );
   }
 
@@ -256,6 +284,7 @@ export class UserDataTransferService {
     return {
       characterBoxesCount: payload.characterBoxes?.boxes.length ?? 0,
       characterOverridesCount: payload.characterOverrides?.overrides.length ?? 0,
+      crewForgeProfilesCount: payload.crewForgeProfiles?.profiles.length ?? 0,
       favoriteCharacterCount: payload.favorites?.characters.length ?? 0,
       favoriteShipCount: payload.favoriteShips?.ships.length ?? 0,
       savedEnemiesCount: payload.savedEnemies?.enemies.length ?? 0,
@@ -315,6 +344,58 @@ export class UserDataTransferService {
       invalidOverrideCount: sanitizedImport.invalidOverrideCount,
       unknownCharacterIdCount: sanitizedImport.overrides.length - validOverrides.length,
       updatedCount: mergeResult.updatedCount,
+    };
+  }
+
+  public async importCrewForgeProfilesPayload(
+    payload: unknown,
+  ): Promise<CrewForgeProfilesImportSummary> {
+    await this.ready();
+    await this.userState.readyCrewForgeImageProfiles();
+
+    const parsedPayload = parseCrewForgeProfilesImportPayloadValue(payload);
+    const sanitizedImport = sanitizeCrewForgeProfilesImportPayload(parsedPayload);
+    const existingIds = new Set(
+      this.userState.crewForgeImageProfiles().map((profile) => profile.id),
+    );
+    let addedCount = 0;
+    let updatedCount = 0;
+    let invalidProfileCount = sanitizedImport.invalidProfileCount;
+
+    for (const profile of sanitizedImport.profiles) {
+      const wasPresent = existingIds.has(profile.id);
+      /*
+       * The service's own normaliser runs here rather than a second copy in the
+       * transfer utils: it repairs slot blueprints, clamps thresholds, rebuilds
+       * timestamps, and drops an exemplar whose fingerprint length disagrees
+       * with the profile's preprocess size. A profile it rejects is counted as
+       * invalid instead of being written half-formed.
+       */
+      const saved = await this.userState.saveCrewForgeImageProfile(profile);
+
+      if (!saved) {
+        invalidProfileCount += 1;
+        continue;
+      }
+
+      if (wasPresent) {
+        updatedCount += 1;
+      } else {
+        addedCount += 1;
+        existingIds.add(saved.id);
+      }
+    }
+
+    if (sanitizedImport.lastProfileId) {
+      await this.userState.setCrewForgeLastImageProfileId(sanitizedImport.lastProfileId);
+    }
+
+    return {
+      addedCount,
+      builtInProfileCount: sanitizedImport.builtInProfileCount,
+      duplicateProfileCount: sanitizedImport.duplicateProfileCount,
+      invalidProfileCount,
+      updatedCount,
     };
   }
 

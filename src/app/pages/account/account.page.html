@@ -201,6 +201,12 @@
               <span>{{
                 getSummaryCountLabel('savedEnemies', localSyncScopeSummary().savedEnemiesCount)
               }}</span>
+              <span>{{
+                getSummaryCountLabel(
+                  'crewForgeProfiles',
+                  localSyncScopeSummary().crewForgeProfilesCount
+                )
+              }}</span>
             </div>
 
             <div class="drive-sync-panel">
@@ -224,6 +230,9 @@
                 }}</span>
                 <span>{{
                   getSummaryCountLabel('savedEnemies', remoteSummary.savedEnemiesCount)
+                }}</span>
+                <span>{{
+                  getSummaryCountLabel('crewForgeProfiles', remoteSummary.crewForgeProfilesCount)
                 }}</span>
               } @else {
                 <span>{{ getRemoteSummaryState() }}</span>

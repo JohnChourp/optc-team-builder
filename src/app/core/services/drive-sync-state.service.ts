@@ -59,6 +59,7 @@ function normalizeSyncScopeSummary(value: unknown): SyncScopeSummary | null {
   return {
     characterBoxesCount: normalizeSummaryCount(record['characterBoxesCount']),
     characterOverridesCount: normalizeSummaryCount(record['characterOverridesCount']),
+    crewForgeProfilesCount: normalizeSummaryCount(record['crewForgeProfilesCount']),
     favoriteCharacterCount: normalizeSummaryCount(record['favoriteCharacterCount']),
     favoriteShipCount: normalizeSummaryCount(record['favoriteShipCount']),
     savedEnemiesCount: normalizeSummaryCount(record['savedEnemiesCount']),

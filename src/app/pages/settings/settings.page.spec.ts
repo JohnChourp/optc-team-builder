@@ -1180,6 +1180,12 @@ function createPage() {
     clearAllSavedEnemies: vi.fn().mockImplementation(async () => {
       savedEnemies.set([]);
     }),
+    crewForgeImageProfiles: () => [],
+    crewForgeLastImageProfileId: () => null,
+    readyCrewForgeImageProfiles: vi.fn().mockResolvedValue(undefined),
+    saveCrewForgeImageProfile: vi.fn().mockResolvedValue(null),
+    setCrewForgeLastImageProfileId: vi.fn().mockResolvedValue(undefined),
+    clearAllCrewForgeImageProfiles: vi.fn().mockResolvedValue(undefined),
     setAutoTeamBuilderWorkerPreference: vi
       .fn()
       .mockImplementation(
