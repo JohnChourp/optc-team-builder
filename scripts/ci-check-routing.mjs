@@ -102,6 +102,16 @@ export const SCRIPT_SUITES = {
     label: 'Router / sitemap coverage tests',
     command: 'npm run test:route-sitemap-coverage',
   },
+  /*
+   * 869f12x4n. The FAQ shipped as a routed page with zero mentions in every
+   * maintainer surface, so the drift guard could never fire for it - and the
+   * sweep found four more pages in the same state. The lane routes on the page
+   * tree and on the drift map, the two lists that have to keep agreeing.
+   */
+  'page-doc-coverage': {
+    label: 'Page / docs coverage tests',
+    command: 'npm run test:page-doc-coverage',
+  },
   'public-entry-synthetics': {
     label: 'Public entry synthetic monitor tests',
     command: 'npm run test:public-entry-synthetics',
@@ -332,6 +342,30 @@ function isRouteSitemapCoveragePath(filePath) {
  * writing this - a `continue` here stripped Angular, e2e and 32 script suites
  * from a route change, which is a far larger hole than the one being fixed.
  */
+function isPageDocCoveragePath(filePath) {
+  return (
+    filePath === 'scripts/check-page-doc-coverage.mjs' ||
+    filePath === 'scripts/check-page-doc-coverage.spec.ts'
+  );
+}
+
+/*
+ * The drift map only - deliberately NOT every file under `src/app/pages/`.
+ *
+ * The lane compares the set of page DIRECTORIES against the map, and editing
+ * `saved-teams.page.ts` changes neither. Routing on the whole tree added the
+ * lane to every runtime page change and broke three existing routing contracts
+ * that assert a page change runs the Angular and e2e lanes and no script suite.
+ *
+ * A page directory added without touching the map is still caught, because
+ * `npm run verify:local` enumerates every lane in SCRIPT_SUITE_ORDER rather
+ * than a routed subset - and that is the command CLAUDE.md names as the gate.
+ * Non-terminating anyway, so the docs suites the map already routes to stay.
+ */
+function touchesPageDocCoverageSources(filePath) {
+  return filePath === 'docs/docs-drift-map.json';
+}
+
 function touchesRouteSitemapSources(filePath) {
   return filePath === 'src/app/app.routes.ts' || filePath === 'scripts/generate-seo-pages.mjs';
 }
@@ -639,6 +673,15 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
   for (const filePath of changedFiles) {
     if (touchesRouteSitemapSources(filePath)) {
       addScriptSuite(scriptSuites, 'route-sitemap-coverage');
+    }
+
+    if (touchesPageDocCoverageSources(filePath)) {
+      addScriptSuite(scriptSuites, 'page-doc-coverage');
+    }
+
+    if (isPageDocCoveragePath(filePath)) {
+      addScriptSuite(scriptSuites, 'page-doc-coverage');
+      continue;
     }
 
     if (isRouteSitemapCoveragePath(filePath)) {
