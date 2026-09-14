@@ -251,6 +251,7 @@ describe('ci-check-routing', () => {
       'dataset-provenance',
       'tag-picker-scoping',
       'whats-new',
+      'scripts-references',
       'dead-code',
       'worker-bundling',
     ]);
