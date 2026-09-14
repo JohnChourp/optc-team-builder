@@ -1,4 +1,3 @@
-import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
@@ -19,13 +18,19 @@ const driftMap = JSON.parse(
 );
 
 /**
- * The mutation that matters here is not synthetic.
+ * The mutation that matters here is not synthetic: it deletes the fix.
  *
- * `main` before this change is a tree where five real pages were unmapped, so
- * the guard is run against that exact drift map rather than against a fixture
- * somebody invented. A guard that has only seen a correct tree has not been
- * tested; this one is asked to reproduce the defect it was written for, from
- * git, by name.
+ * Five real pages were unmapped before this guard existed, so the headline case
+ * removes the two drift-map entries that mapped them and asserts the guard names
+ * exactly those five, by name, in order. A guard that has only seen a passing
+ * repository has not been tested.
+ *
+ * An earlier version read `main:docs/docs-drift-map.json` out of git instead.
+ * That was a mistake with a short fuse: the moment the fix merged, `main` WAS
+ * the fixed map, the case found nothing to report, and the lane went red on
+ * `main` itself - a test that asserts the repository is broken stops being true
+ * the moment somebody repairs it. Reconstructing the old state from the current
+ * one has no such expiry.
  */
 describe('page doc coverage', () => {
   it('accepts the repository as it stands', () => {
@@ -45,13 +50,16 @@ describe('page doc coverage', () => {
   });
 
   it('reports every page that was unmapped before this change', () => {
-    const mapOnMain = JSON.parse(
-      execFileSync('git', ['show', 'main:docs/docs-drift-map.json'], {
-        cwd: projectRoot,
-        encoding: 'utf8',
-      }),
-    );
-    const result = inspectPageDocCoverage({ pageDirectories, driftMap: mapOnMain });
+    const mapBeforeTheFix = {
+      ...driftMap,
+      entries: driftMap.entries.filter(
+        (entry: { id: string }) => entry.id !== 'player-faq' && entry.id !== 'public-static-pages',
+      ),
+    };
+
+    expect(mapBeforeTheFix.entries.length).toBe(driftMap.entries.length - 2);
+
+    const result = inspectPageDocCoverage({ pageDirectories, driftMap: mapBeforeTheFix });
     const named = result.errors.map((error) => error.match(/"([^"]+)"/u)?.[1]).filter(Boolean);
 
     expect(named).toEqual([
