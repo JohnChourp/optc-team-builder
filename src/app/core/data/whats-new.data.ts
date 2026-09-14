@@ -31,6 +31,32 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.29',
+    date: '2026-09-14',
+    userVisible: true,
+    headline: {
+      en: 'Your build stays put, and says when it can act',
+      el: 'Το build σου μένει στη θέση του, και λέει πότε μπορεί να δράσει',
+    },
+    summaryEn:
+      'Two things on Auto Team Builder. Your built team now survives leaving the app and coming back - until today, switching to the game and returning wiped the team and the report, and you had to build it again. And a new card under the Final team report tells you how long each special on that team takes to charge, against a run length you type in, so you can see at a glance which specials arrive in time and which do not.',
+    summaryEl:
+      'Δύο πράγματα στο Auto Team Builder. Η ομάδα που έχτισες επιβιώνει πλέον αν βγεις από την εφαρμογή και ξαναμπείς - μέχρι σήμερα, αν άλλαζες στο παιχνίδι και γύριζες πίσω, η ομάδα και το report είχαν σβηστεί και έπρεπε να ξαναχτίσεις. Και μια νέα κάρτα κάτω από το Τελικό report ομάδας σου λέει πόσους γύρους θέλει να φορτίσει το special του κάθε μέλους, για run του μήκους που γράφεις εσύ, ώστε να βλέπεις με μια ματιά ποια specials προλαβαίνουν και ποια όχι.',
+    added: [
+      {
+        en: 'A new **Special charge timeline** card sits under the Final team report on **Auto Team Builder**. Type how many stages the run has and it lists every member fastest first, how many turns their special needs, and whether it arrives with turns to spare or falls short. It says charge time from the start of the battle, and it tells you where Limit Break would change the answer.',
+        el: 'Μια νέα κάρτα **Χρόνος φόρτισης των specials** μπαίνει κάτω από το Τελικό report ομάδας στο **Auto Team Builder**. Γράφεις πόσα στάδια έχει το run και σου βγάζει κάθε μέλος με το γρηγορότερο πρώτο, πόσους γύρους θέλει το special του, και αν προλαβαίνει με περίσσευμα ή του λείπουν γύροι. Δείχνει χρόνο φόρτισης από την αρχή της μάχης, και σου λέει πού το Limit Break θα άλλαζε την απάντηση.',
+      },
+    ],
+    improved: [],
+    fixed: [
+      {
+        en: 'The team you built on **Auto Team Builder** is still there when you come back to the app. Switching out to the game and returning used to leave you on an empty "ready to build" screen with the team and the Final team report gone - now the results list and the report come back as you left them.',
+        el: 'Η ομάδα που έχτισες στο **Auto Team Builder** είναι ακόμη εκεί όταν ξαναμπείς στην εφαρμογή. Μέχρι τώρα, αν έβγαινες στο παιχνίδι και γύριζες, έβρισκες άδεια οθόνη «έτοιμο για build» με την ομάδα και το Τελικό report ομάδας χαμένα - τώρα η λίστα αποτελεσμάτων και το report επιστρέφουν όπως τα άφησες.',
+      },
+    ],
+  },
+  {
     version: '0.4.28',
     date: '2026-09-14',
     userVisible: true,
