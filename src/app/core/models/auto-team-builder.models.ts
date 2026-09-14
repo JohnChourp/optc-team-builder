@@ -182,6 +182,18 @@ export interface AutoBuildConstraints {
   enemyMechanics?: AutoBuildEnemyMechanicRequirement[];
   candidateCharacterIds?: number[];
   favoritesOnly?: boolean;
+  /**
+   * 869f1q90b. Characters the reader has told us are boosted for the event they are about to play.
+   *
+   * Hand-entered, because 869f12xa5's feasibility gate closed on the alternative: there is no
+   * event or boost data in this dataset at all, and a boost list is event-scoped and time-bound -
+   * a shipped one would be stale within days and no guard can repair that. The player has the
+   * event screen in front of them.
+   *
+   * It steers RANKING, never legality. Nothing here makes a team legal or illegal that was not
+   * already; a boosted character is preferred among candidates the search would accept anyway.
+   */
+  boostedCharacterIds?: number[];
   allowAnyFriendCaptainAutoFill?: boolean;
   favoriteCharacterIds?: number[];
   favoriteShipsOnly?: boolean;
@@ -252,6 +264,8 @@ export interface AutoBuildInput extends AutoBuildConstraints {
   battleRequirements?: AutoBuildBattleRequirement[];
   enemyMechanics: AutoBuildEnemyMechanicRequirement[];
   favoritesOnly: boolean;
+  /** See `AutoBuildConstraints.boostedCharacterIds`. Ranking only, never legality. */
+  boostedCharacterIds: number[];
   allowAnyFriendCaptainAutoFill: boolean;
   favoriteShipsOnly: boolean;
   favoriteShipIds: number[];

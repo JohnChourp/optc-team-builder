@@ -237,6 +237,12 @@ function createDependencies() {
   const userState = {
     ready: vi.fn().mockResolvedValue(undefined),
     favoriteCharacterIds,
+    /* 869f1q90b. The reader's boosted-unit list, read when a build is assembled. */
+    boostedCharacterIds: signal<number[]>([]),
+    setBoostedCharacterIds: vi.fn().mockResolvedValue(undefined),
+    toggleBoostedCharacter: vi.fn().mockResolvedValue(undefined),
+    clearBoostedCharacterIds: vi.fn().mockResolvedValue(undefined),
+    readyBoostedCharacterIds: vi.fn().mockResolvedValue(undefined),
     favoriteShipIds,
     characterBoxes,
     savedTeams,

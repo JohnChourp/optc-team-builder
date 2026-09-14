@@ -4007,6 +4007,17 @@ function resolveSubCoverageRoleScore(candidate: AutoBuildCandidate): number {
   );
 }
 
+/**
+ * 869f1q90b. What a boosted character is worth when two candidates are otherwise equal.
+ *
+ * The terms around it are counts - how many of the reader's selected types, classes, tags and
+ * names this candidate matches - so this sits in the same small scale deliberately. A boost is a
+ * TIEBREAKER, not an override: a character the reader's own filters match twice over still
+ * outranks a boosted one that matches nothing, because the filters are what they asked for and
+ * the boost is a fact about this week.
+ */
+export const BOOSTED_CHARACTER_SCORE = 1;
+
 function resolveSubSelectedFilterScore(
   candidate: AutoBuildCandidate,
   input: AutoBuildInput,
@@ -4016,7 +4027,8 @@ function resolveSubSelectedFilterScore(
     candidate.matchedSelectedClasses.length +
     candidate.matchedSelectedCharacterTags.length +
     candidate.matchedSelectedCharacterNames.length +
-    (input.requireAllSelectedClassesPerCharacter && candidate.matchesAllSelectedClasses ? 1 : 0)
+    (input.requireAllSelectedClassesPerCharacter && candidate.matchesAllSelectedClasses ? 1 : 0) +
+    (input.boostedCharacterIds?.includes(candidate.character.id) ? BOOSTED_CHARACTER_SCORE : 0)
   );
 }
 

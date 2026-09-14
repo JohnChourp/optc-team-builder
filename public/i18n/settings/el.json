@@ -266,6 +266,17 @@
       "processing": "Γίνεται import των character boxes...",
       "title": "Character Boxes"
     },
+    "boostedCharacters": {
+      "title": "Boosted χαρακτήρες",
+      "feedback": {
+        "loadedFromFile": "Φορτώθηκε από {{fileName}}.",
+        "stats": {
+          "applied": "Σημειώθηκαν {{count}} χαρακτήρες ως boosted, αντικαθιστώντας την προηγούμενη λίστα."
+        },
+        "successTitle": "Έγινε import των boosted χαρακτήρων",
+        "warningTitle": "Δεν βρέθηκαν boosted χαρακτήρες σε αυτό το αρχείο"
+      }
+    },
     "characterOverrides": {
       "copy": "Δες κάθε χαρακτήρα που έχεις αλλάξει local και τι άλλαξε η κάθε αλλαγή, αναίρεσε έναν χαρακτήρα ή όλους, κάνε export όλων των local character overrides σε JSON ή import ενός backup για local overrides.",
       "deleteAll": "Διαγραφή όλων των character overrides",

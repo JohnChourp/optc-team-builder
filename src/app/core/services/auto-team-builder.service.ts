@@ -248,6 +248,11 @@ export class AutoTeamBuilderService {
     executionOptions: AutoTeamBuildExecutionOptions = {},
   ): Promise<AutoBuildResult | null> {
     const favoritesOnly = constraints.favoritesOnly ?? false;
+    /*
+     * 869f1q90b. Copied rather than referenced: the input is handed to a worker and must not
+     * alias a signal the page keeps mutating.
+     */
+    const boostedCharacterIds = [...(constraints.boostedCharacterIds ?? [])];
     const allowAnyFriendCaptainAutoFill = constraints.allowAnyFriendCaptainAutoFill ?? false;
     const favoriteShipsOnly = constraints.favoriteShipsOnly ?? false;
     const requireAllSlotsInLeaderSuperEffectScope =
@@ -373,6 +378,7 @@ export class AutoTeamBuilderService {
       battleRequirements,
       enemyMechanics,
       favoritesOnly,
+      boostedCharacterIds,
       allowAnyFriendCaptainAutoFill,
       favoriteShipsOnly,
       favoriteShipIds,
@@ -2145,6 +2151,11 @@ export class AutoTeamBuilderService {
         conditionTags: [...mechanic.conditionTags],
       })),
       favoritesOnly: false,
+      /*
+       * 869f1q90b. The roster path answers "what could this pairing field", not "what should I
+       * play this week", so an event boost has no bearing on it.
+       */
+      boostedCharacterIds: [],
       allowAnyFriendCaptainAutoFill: false,
       favoriteShipsOnly: false,
       favoriteShipIds: [],

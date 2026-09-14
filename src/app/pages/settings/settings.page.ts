@@ -1423,6 +1423,43 @@ export class SettingsPage implements OnInit {
       });
     }
 
+    if (payload.boostedCharacterIds !== undefined) {
+      await this.collectAllDataSectionResult({
+        failedSections,
+        label: this.resolveAllDataSectionLabel('boostedCharacterIds'),
+        run: async () => {
+          const stats = await this.userDataTransfer.importBoostedCharactersPayload(
+            payload.boostedCharacterIds as unknown,
+          );
+
+          return {
+            tone: stats.replaced ? 'success' : 'warning',
+            title: this.i18n.translate(
+              stats.replaced
+                ? 'management.boostedCharacters.feedback.successTitle'
+                : 'management.boostedCharacters.feedback.warningTitle',
+              undefined,
+              'settings',
+            ),
+            details: [
+              this.i18n.translate(
+                'management.boostedCharacters.feedback.loadedFromFile',
+                { fileName },
+                'settings',
+              ),
+              this.i18n.translate(
+                'management.boostedCharacters.feedback.stats.applied',
+                { count: stats.appliedCount },
+                'settings',
+              ),
+            ],
+          };
+        },
+        successfulSections,
+        resolveError: (error) => this.resolveAllDataImportError(error),
+      });
+    }
+
     if (payload.crewForgeProfiles !== undefined) {
       await this.collectAllDataSectionResult({
         failedSections,
@@ -1524,6 +1561,7 @@ export class SettingsPage implements OnInit {
     section:
       | 'characterBoxes'
       | 'characterOverrides'
+      | 'boostedCharacterIds'
       | 'crewForgeProfiles'
       | 'savedRumbleOpponents'
       | 'favoriteShips'
@@ -1541,6 +1579,8 @@ export class SettingsPage implements OnInit {
         return this.i18n.translate('management.characterBoxes.title', undefined, 'settings');
       case 'characterOverrides':
         return this.i18n.translate('management.characterOverrides.title', undefined, 'settings');
+      case 'boostedCharacterIds':
+        return this.i18n.translate('management.boostedCharacters.title', undefined, 'settings');
       case 'crewForgeProfiles':
         return this.i18n.translate('management.crewForgeProfiles.title', undefined, 'settings');
       case 'savedRumbleOpponents':
@@ -2534,6 +2574,7 @@ export class SettingsPage implements OnInit {
     key:
       | 'characterBoxes'
       | 'characterOverrides'
+      | 'boostedCharacterIds'
       | 'favorites'
       | 'favoriteShips'
       | 'savedEnemies'

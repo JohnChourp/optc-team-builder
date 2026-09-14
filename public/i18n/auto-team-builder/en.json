@@ -777,6 +777,12 @@
     "title": "This mode",
     "copy": "Some specials do something extra on a Treasure Map or in Kizuna Clash, or hit harder the higher your level in that mode. Pick the mode you are about to play and this says which of your team care.",
     "label": "Mode",
+    "boosted": {
+      "title": "Boosted this event",
+      "copy": "Tap anyone your event screen says is boosted. Unlike the list above, this one does change what the builder picks: a boosted character is preferred among the characters it would have chosen anyway - it never makes an illegal team legal. It stays until you change it, so clear it when the event ends.",
+      "summary": "{{marked}} marked, {{onTeam}} on this team",
+      "clear": "Clear the boosted list"
+    },
     "any": "Not set",
     "modes": {
       "treasureMap": "Treasure Map",

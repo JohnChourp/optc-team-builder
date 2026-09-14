@@ -266,6 +266,17 @@
       "processing": "Importing character boxes...",
       "title": "Character Boxes"
     },
+    "boostedCharacters": {
+      "title": "Boosted characters",
+      "feedback": {
+        "loadedFromFile": "Loaded from {{fileName}}.",
+        "stats": {
+          "applied": "Marked {{count}} characters as boosted, replacing the previous list."
+        },
+        "successTitle": "Boosted characters imported",
+        "warningTitle": "No boosted characters found in that file"
+      }
+    },
     "characterOverrides": {
       "copy": "See every character you have edited locally and what each edit changed, revert one character or all of them, export all local character overrides as JSON, or import a local override backup.",
       "deleteAll": "Delete all character overrides",
