@@ -233,6 +233,7 @@ describe('ci-check-routing', () => {
       'page-doc-coverage',
       'public-asset-shadowing',
       'storage-keys',
+      'i18n-ownership',
       'public-entry-synthetics',
       'i18n-regression',
       'drive-sync-server',
@@ -308,7 +309,13 @@ describe('ci-check-routing', () => {
     expect(plan.fullPlan).toBe(false);
     expect(plan.runAngular).toBe(true);
     expect(plan.runE2e).toBe(true);
-    expect(plan.scriptSuites).toEqual(['i18n-regression']);
+    /*
+     * 869f12x61 added `i18n-ownership` here deliberately. Adding or removing a
+     * namespace folder is exactly when the ownership map changes, and a map
+     * that is only checked when its own script changes is a map that goes
+     * stale. Both lanes run; neither replaces the other.
+     */
+    expect(plan.scriptSuites).toEqual(['i18n-ownership', 'i18n-regression']);
   });
 
   it('routes branch cleanup report changes to the focused suite and docs gates', () => {
