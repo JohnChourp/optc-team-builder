@@ -326,6 +326,22 @@
       "notes": "Public SEO content, route, generation, audit, discoverability verification, multilingual guide-anchor checks, visual baselines, post-deploy synthetic public entry checks, PWA cache freshness checks, or deployment changes should update public-site docs and validation guidance."
     },
     {
+      "id": "player-faq",
+      "name": "Player-facing FAQ page",
+      "featurePaths": ["src/app/pages/faq/", "public/i18n/faq/"],
+      "docsPaths": ["README.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md", "docs/post-merge-smoke-pack.md", "docs/copy-review-checklist.md"],
+      "owner": "Player-facing help copy, its bilingual parity, and its quoted app labels",
+      "notes": "The FAQ shipped across v0.4.17-v0.4.19 as a public route with zero mentions in every maintainer surface, so this guard could never fire for it. Entry, bullet, link, or quoted-label changes should keep the coverage map, validation routing, smoke pack, and copy review aligned - a quote here names a button owned by another i18n namespace, which is how six wrong Greek labels reached production."
+    },
+    {
+      "id": "public-static-pages",
+      "name": "Landing page and the privacy, cookie, and terms pages",
+      "featurePaths": ["src/app/pages/home/", "src/app/pages/privacy-policy/", "src/app/pages/cookie-policy/", "src/app/pages/terms-of-service/", "public/i18n/privacy-policy/", "public/i18n/cookie-policy/", "public/i18n/terms-of-service/"],
+      "docsPaths": ["README.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md"],
+      "owner": "Public landing and policy copy",
+      "notes": "Distinct from seo-pages, which owns the generated SEO shell in src/app/pages/seo-content/. These four are the real pages a visitor from search lands on - the landing screen and the three policy screens, each with its own route and, for the policies, its own i18n namespace. All four were unmapped alongside the FAQ."
+    },
+    {
       "id": "android-release",
       "name": "Android release workflow",
       "featurePaths": [

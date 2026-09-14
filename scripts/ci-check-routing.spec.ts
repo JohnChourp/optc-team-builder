@@ -230,6 +230,7 @@ describe('ci-check-routing', () => {
       'docs-drift',
       'discoverability',
       'route-sitemap-coverage',
+      'page-doc-coverage',
       'public-entry-synthetics',
       'i18n-regression',
       'drive-sync-server',
