@@ -31,6 +31,22 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.36',
+    date: '2026-09-14',
+    userVisible: false,
+    headline: {
+      en: 'Nothing changed on any screen',
+      el: 'Δεν άλλαξε τίποτα σε καμία οθόνη',
+    },
+    summaryEn:
+      'This one is housekeeping on the machinery that builds and publishes the app, and nothing in it reaches any screen. The release build was downloading a large Android emulator it never runs, which had already made one release fail partway through; it no longer does. Nothing you can see or do in the app has changed.',
+    summaryEl:
+      'Αυτή η έκδοση είναι συγύρισμα στον μηχανισμό που χτίζει και δημοσιεύει την εφαρμογή, και τίποτα από αυτά δεν φτάνει σε καμία οθόνη. Το build της έκδοσης κατέβαζε έναν μεγάλο Android emulator που δεν τρέχει ποτέ, κάτι που είχε ήδη κάνει μία έκδοση να αποτύχει στη μέση· δεν το κάνει πια. Τίποτα από όσα βλέπεις ή κάνεις στην εφαρμογή δεν άλλαξε.',
+    added: [],
+    improved: [],
+    fixed: [],
+  },
+  {
     version: '0.4.35',
     date: '2026-09-14',
     userVisible: true,

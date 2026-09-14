@@ -100,6 +100,19 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
+        with:
+          # 869f1ujj9. The action's default is `tools platform-tools`, and `tools`
+          # is the superseded SDK Tools package whose dependency graph pulls in the
+          # Android Emulator - roughly 300MB, on a job that never starts one.
+          # Measured on the v0.4.35 release run: `sdkmanager tools` spent 11.4s of a
+          # 23s step downloading and unzipping `emulator/`. The run immediately
+          # before it died there - "Error reading Zip content from a
+          # SeekableByteChannel" - so this is a way for the release to fail that
+          # buys nothing. `assembleRelease` needs neither the emulator nor the
+          # obsolete `tools/` directory; nothing in this repo references either.
+          # platform-tools stays: 1.3s, not obsolete, and dropping it would add
+          # risk for no measurable gain.
+          packages: 'platform-tools'
 
       - name: Install dependencies
         run: npm ci

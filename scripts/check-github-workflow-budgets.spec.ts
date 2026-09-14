@@ -67,6 +67,39 @@ function appWorkflow({
   ].join('\n');
 }
 
+/**
+ * 869f1ujj9. A workflow whose only interesting feature is how it asks for the Android SDK.
+ *
+ * It is deliberately EXEMPT from the budget contract in every test below, because that is the case
+ * worth pinning: an exemption from the concurrency and timeout contract was never a decision to
+ * let a job download 300MB it does not use.
+ */
+function androidWorkflow(withBlock: string[] = []) {
+  return [
+    'name: Android',
+    'on:',
+    '  workflow_dispatch:',
+    'jobs:',
+    '  release:',
+    '    runs-on: ubuntu-latest',
+    '    steps:',
+    '      - name: Setup Android SDK',
+    '        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4',
+    ...withBlock,
+    '',
+  ].join('\n');
+}
+
+function androidResult(appRoot: string) {
+  return inspectWorkflowBudgets({
+    appRoot,
+    appOnly: true,
+    appContracts: [],
+    appWorkflowExemptions: ['.github/workflows/android.yml'],
+  });
+}
+
+
 describe('check-github-workflow-budgets', () => {
   it('reports missing workflows from the default app contract', async () => {
     const appRoot = await makeRoot({
@@ -300,5 +333,87 @@ describe('check-github-workflow-budgets', () => {
         message: expect.stringContaining('Missing workflow-budget summary step'),
       }),
     ]);
+  });
+
+  it('accepts a setup-android step that asks only for platform-tools', async () => {
+    const appRoot = await makeRoot({
+      '.github/workflows/android.yml': androidWorkflow([
+        '        with:',
+        "          packages: 'platform-tools'",
+      ]),
+    });
+
+    const result = androidResult(appRoot);
+
+    expect(result.findings).toEqual([]);
+    expect(result.ok).toBe(true);
+  });
+
+  /*
+   * The regression this guard exists to stop: somebody removes the input and the action's own
+   * default - `tools platform-tools` - quietly brings the emulator back. Nothing in a green run
+   * would say so; the release just downloads 300MB it never uses, until the day that download is
+   * corrupt and takes the release with it, which is how this was found.
+   */
+  it('MUTATION - rejects a setup-android step that states no packages at all', async () => {
+    const appRoot = await makeRoot({ '.github/workflows/android.yml': androidWorkflow() });
+
+    const result = androidResult(appRoot);
+
+    expect(result.ok).toBe(false);
+    expect(result.findings[0].scope).toBe('jobs.release.steps[0]');
+    expect(result.findings[0].message).toContain('does not state its packages');
+  });
+
+  it.each([
+    ["'tools platform-tools'", 'the action default'],
+    ["'tools'", 'the obsolete package alone'],
+  ])('MUTATION - rejects packages %s, %s', async (packages) => {
+    const appRoot = await makeRoot({
+      '.github/workflows/android.yml': androidWorkflow([
+        '        with:',
+        `          packages: ${packages}`,
+      ]),
+    });
+
+    const result = androidResult(appRoot);
+
+    expect(result.ok).toBe(false);
+    expect(result.findings[0].message).toContain('obsolete package(s) tools');
+  });
+
+  /*
+   * `platform-tools` ends in `tools`. A substring test would reject the package we mean to KEEP -
+   * the one way this guard could be wrong while still looking like it works, because it would go
+   * red on correct input and the obvious fix would be to delete the rule.
+   */
+  it('MUTATION - matches whole tokens, so platform-tools is not read as tools', async () => {
+    const appRoot = await makeRoot({
+      '.github/workflows/android.yml': androidWorkflow([
+        '        with:',
+        "          packages: 'platform-tools build-tools;36.0.0'",
+      ]),
+    });
+
+    expect(androidResult(appRoot).ok).toBe(true);
+  });
+
+  it('ignores a workflow with no setup-android step', async () => {
+    const appRoot = await makeRoot({
+      '.github/workflows/android.yml': [
+        'name: Android',
+        'on:',
+        '  workflow_dispatch:',
+        'jobs:',
+        '  release:',
+        '    runs-on: ubuntu-latest',
+        '    steps:',
+        '      - name: Checkout',
+        '        run: echo checkout',
+        '',
+      ].join('\n'),
+    });
+
+    expect(androidResult(appRoot).ok).toBe(true);
   });
 });
