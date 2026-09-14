@@ -99,11 +99,4 @@ export const NPM_SCRIPT_REGISTRY = [
       'Capacitor sync scoped to iOS. Same standing as ios:open under the PWA-is-the-iOS-path decision.',
     owner: '869f17h6e',
   },
-  {
-    script: 'seo:indexnow',
-    class: 'unwired',
-    reason:
-      'The IndexNow key file is generated into the build and served live at HTTP 200, so the site advertises participation while nothing ever submits. selectUrls() already narrows to the priority routes rather than all 4,619 pages, so only the deploy wiring is missing.',
-    owner: '869f17h5v',
-  },
 ];

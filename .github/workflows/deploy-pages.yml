@@ -57,6 +57,16 @@ jobs:
         with:
           path: dist/optc-team-builder/browser
 
+      # The sitemap of the build being deployed, kept so the IndexNow job can
+      # read it without running `build:pages` a second time.
+      - name: Upload sitemap for IndexNow
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: deployed-sitemap
+          path: dist/optc-team-builder/browser/sitemap.xml
+          if-no-files-found: error
+          retention-days: 7
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
@@ -83,6 +93,58 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run public-entry-synthetics.yml --repo "$GITHUB_REPOSITORY" --ref main -f base_url=https://optcteambuilder.com
+
+  # 869f17h5v. The IndexNow key file has been generated into every build and
+  # served at HTTP 200 since the feature was added, so the site has been
+  # advertising that it participates while nothing ever submitted.
+  #
+  # A job on the existing deploy workflow rather than a new workflow or trigger:
+  # the automatic-trigger allowlist is closed and deploy-pages is its only member.
+  # `needs: deploy` because submitting before the URLs are live tells a crawler to
+  # fetch the previous build.
+  indexnow:
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Summarize workflow budget
+        run: |
+          {
+            echo "### Workflow budget"
+            echo "- Timeout budget: 10 minutes"
+            echo "- Concurrency policy: GitHub Pages deploys favor the latest production artifact and cancel stale deploy attempts."
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Download deployed sitemap
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: deployed-sitemap
+          path: indexnow-sitemap
+
+      # No `npm ci`: submit-indexnow.mjs uses only Node builtins and `fetch`.
+      #
+      # `continue-on-error` because the deploy has already succeeded by the time
+      # this runs. IndexNow being unreachable is the search engine's outage, and
+      # painting a shipped production release red for it would teach everyone to
+      # ignore the colour. The step still reports what happened in the summary.
+      - name: Submit changed URLs to IndexNow
+        id: indexnow
+        continue-on-error: true
+        env:
+          SEO_OUTPUT_DIR: indexnow-sitemap
+        run: npm run seo:indexnow
+
+      - name: Summarize IndexNow submission
+        if: always()
+        run: |
+          {
+            echo "### IndexNow"
+            echo "- Outcome: ${{ steps.indexnow.outcome }}"
+            echo "- A failure here does not affect the deploy, which already succeeded."
+          } >> "${GITHUB_STEP_SUMMARY}"
 
   cache-freshness:
     needs: deploy

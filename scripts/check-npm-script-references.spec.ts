@@ -181,6 +181,36 @@ describe('npm script reference check', () => {
     ).toBe(false);
   });
 
+  /*
+   * D, the happier half: an `unwired` entry describes a finding, and wiring the
+   * script fixes it. The entry then describes something that is no longer true,
+   * which is how `seo:indexnow` would have kept claiming nothing submits after
+   * 869f17h5v wired it into the deploy.
+   */
+  it('fails when an unwired entry is stale because the script is now wired', () => {
+    const sources = new Map(CLEAN_SOURCES);
+
+    sources.set('.github/workflows/deploy-pages.yml', 'run: npm run seo:indexnow');
+
+    const { errors } = run({
+      scripts: { ...CLEAN_SCRIPTS, 'seo:indexnow': 'node ./scripts/submit-indexnow.mjs' },
+      sources,
+      registry: [
+        ...CLEAN_REGISTRY,
+        {
+          script: 'seo:indexnow',
+          class: 'unwired' as const,
+          reason: 'The key file is served live and nothing ever submits.',
+          owner: '869f17h5v',
+        },
+      ],
+    });
+
+    expect(errors.some((error) => error.includes('registered as unwired but is referenced'))).toBe(
+      true,
+    );
+  });
+
   /* E. */
   it('fails on an entry whose reason explains nothing', () => {
     const registry = [{ ...CLEAN_REGISTRY[1], reason: 'manual' }];
