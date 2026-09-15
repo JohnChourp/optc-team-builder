@@ -236,6 +236,16 @@ export const SCRIPT_SUITES = {
     command: 'npm run test:scripts-references',
   },
   /*
+   * 869f17h1t / 869f17h36. 247 of ~300 component declarations are styling
+   * wrappers, and the inventory describing them is generated from source rather
+   * than written, so it cannot drift into fiction the way a hand-written table
+   * would.
+   */
+  'style-panels': {
+    label: 'Style panel inventory tests',
+    command: 'npm run test:style-panels',
+  },
+  /*
    * The TypeScript half of `audit:dead-code`, and deliberately only that half.
    *
    * The two scripts are near-identical in name and are not the same check:
@@ -398,6 +408,15 @@ function isWorkflowBudgetPath(filePath) {
   return (
     filePath === 'scripts/check-github-workflow-budgets.mjs' ||
     filePath === 'scripts/check-github-workflow-budgets.spec.ts'
+  );
+}
+
+function isStylePanelInventoryPath(filePath) {
+  return (
+    filePath === 'scripts/check-style-panel-inventory.mjs' ||
+    filePath === 'scripts/check-style-panel-inventory.spec.ts' ||
+    filePath === 'docs/style-panel-pattern.md' ||
+    filePath.endsWith('-style-panels.component.ts')
   );
 }
 
@@ -988,6 +1007,12 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
     if (isWorkflowBudgetPath(filePath)) {
       categories.add('workflow-budgets');
       addScriptSuite(scriptSuites, 'workflow-budgets');
+      continue;
+    }
+
+    if (isStylePanelInventoryPath(filePath)) {
+      categories.add('style-panels');
+      addScriptSuite(scriptSuites, 'style-panels');
       continue;
     }
 

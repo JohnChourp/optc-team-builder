@@ -252,6 +252,7 @@ describe('ci-check-routing', () => {
       'tag-picker-scoping',
       'whats-new',
       'scripts-references',
+      'style-panels',
       'dead-code',
       'worker-bundling',
     ]);

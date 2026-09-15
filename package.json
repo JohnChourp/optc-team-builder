@@ -81,6 +81,8 @@
     "test:tag-picker-scoping": "vitest run scripts/check-tag-picker-panel-scoping.spec.ts && npm run styles:tag-picker-scoping",
     "styles:tag-picker-scoping": "node ./scripts/check-tag-picker-panel-scoping.mjs",
     "test:scripts-references": "vitest run scripts/check-npm-script-references.spec.ts && npm run scripts:references",
+    "test:style-panels": "vitest run scripts/check-style-panel-inventory.spec.ts && npm run styles:panel-inventory",
+    "styles:panel-inventory": "node ./scripts/check-style-panel-inventory.mjs",
     "scripts:references": "node ./scripts/check-npm-script-references.mjs",
     "theme:overlay-contrast": "node ./scripts/check-ionic-overlay-contrast.mjs",
     "test:ionic-host-property": "vitest run scripts/check-ionic-host-property.spec.ts && npm run ionic:host-property",
