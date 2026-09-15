@@ -1,0 +1,117 @@
+{
+  "note": [
+    "Why each hand-maintained overlay under scripts/data/ exists, and what would make",
+    "it unnecessary. 869f135t0.",
+    "",
+    "A correction exists because upstream was wrong when it was written. When upstream",
+    "fixes itself the correction keeps overriding the now-correct value - silently, and",
+    "in the direction of the older data. Nothing recorded why any entry was there, so a",
+    "still-needed correction and a stale one looked identical.",
+    "",
+    "Recorded per FILE, not per entry: the removal condition is a property of the",
+    "overlay, and 44 identical copies of 'upstream ships a thumbnail for this id' would",
+    "be noise rather than provenance.",
+    "",
+    "`kind` is the distinction that was missing entirely:",
+    "  correction  patches a value upstream got wrong. CAN expire. Should shrink.",
+    "  definition  declares what something MEANS to this app. Upstream can never catch",
+    "              up with it, and an expiry check against it would be nonsense.",
+    "",
+    "`staleSignal` says where 'upstream has caught up' is observable, because it is not",
+    "the same place for each - and for some it is only observable inside the importer,",
+    "which is worth knowing before going looking in the shipped data.",
+    "",
+    "Baseline measured 2026-09-15 against v0.4.48."
+  ],
+  "measuredOn": "2026-09-15",
+  "notOverlays": [
+    "component-style-budget-baseline.json",
+    "i18n-untranslated-register.json",
+    "manual-character-template.json",
+    "unused-public-members-register.json"
+  ],
+  "notOverlaysNote": "Registers and templates that describe the repository rather than patch the dataset. Listed so that 'this is not an overlay' and 'somebody forgot' stay distinguishable - the same split browser-storage-keys.data.ts makes for constants that are not storage keys.",
+  "overlays": [
+    {
+      "file": "manual-characters.json",
+      "kind": "correction",
+      "appliedBy": "scripts/import-optc-data.mjs via scripts/lib/manual-character-apply.mjs",
+      "why": "A character upstream does not carry yet, entered by hand so the app is not missing a unit the game already has.",
+      "removeWhen": "The import covers the id. This is the one overlay where that is already automated: scripts/lib/manual-character-prune.mjs removes the entry and its images when importedCharacterIds contains the id, which is why the file is empty rather than untended.",
+      "staleSignal": "Automatic - the prune runs at import and reports what it removed.",
+      "entryCount": 0
+    },
+    {
+      "file": "builder-ability-corrections.json",
+      "kind": "correction",
+      "appliedBy": "scripts/import-optc-data.mjs via scripts/lib/manual-character-apply.mjs",
+      "why": "A builder ability the parser read wrong from upstream text, corrected by hand so the team builders reason about the real effect.",
+      "removeWhen": "The parser derives the same value from upstream unaided - which happens when either the upstream text or the parser changes.",
+      "staleSignal": "Only inside the importer, which holds both the upstream text and the parsed result. Not derivable from the shipped dataset, because the seed carries the corrected value with no record that it was corrected.",
+      "entryCount": 0
+    },
+    {
+      "file": "character-image-overrides.json",
+      "kind": "correction",
+      "appliedBy": "scripts/import-optc-data.mjs",
+      "why": "A character whose portrait upstream has not published, or published broken, served from scripts/data/character-images/ instead so the card is not a placeholder.",
+      "removeWhen": "Upstream publishes a usable image for the id.",
+      "staleSignal": "Only inside the importer. The seed records assets_json after resolution and keeps no note of whether upstream offered an image, so the shipped data cannot answer this.",
+      "entryCount": 44
+    },
+    {
+      "file": "ship-thumbnail-overrides.json",
+      "kind": "correction",
+      "appliedBy": "scripts/import-optc-data.mjs, applyShipThumbnailOverrides",
+      "why": "A ship upstream ships without a thumbnail, given one from a recorded source page so the ship picker is not a row of blanks.",
+      "removeWhen": "Upstream ships a thumb for the id. applyShipThumbnailOverrides already skips the override in that case, so the entry goes inert rather than wrong - which is exactly how a correction outlives its reason unnoticed.",
+      "staleSignal": "The shipped dataset. ships.thumb is in optc-seed.sql, so an override whose file is not the shipped value has been superseded. This is the one overlay npm run data:overlay-register can check by itself.",
+      "entryCount": 4
+    },
+    {
+      "file": "party-conflict-overrides.json",
+      "kind": "correction",
+      "appliedBy": "scripts/import-optc-data.mjs and src/app/core/services/character-party-conflict-keys.utils.ts",
+      "why": "Conflict keys are derived from a character's name, and a name the derivation reads wrong produces a unit that does not conflict with itself, or conflicts with the wrong character.",
+      "removeWhen": "The derivation produces the same key set from the shipped name unaided.",
+      "staleSignal": "The derivation util itself, which is TypeScript the app consumes. Re-implementing it here would create a second source of truth for the rule this overlay exists to patch, so it is checked by a unit test that calls the real util rather than by this script.",
+      "entryCount": 1
+    },
+    {
+      "file": "crewmate-ability-definitions.json",
+      "kind": "definition",
+      "appliedBy": "scripts/auto-team-builder-ability-parser.mjs",
+      "why": "Declares what each sailor ability MEANS to this app - the vocabulary the builders match against. Upstream publishes prose, not a taxonomy, so there is nothing to be corrected against.",
+      "removeWhen": "Never by upstream. An entry goes when the app stops matching that effect.",
+      "staleSignal": "None, and deliberately so. An expiry check against a definition would be nonsense.",
+      "entryCount": 75
+    },
+    {
+      "file": "potential-ability-definitions.json",
+      "kind": "definition",
+      "appliedBy": "scripts/auto-team-builder-ability-parser.mjs",
+      "why": "The same, for potential abilities.",
+      "removeWhen": "Never by upstream. An entry goes when the app stops matching that effect.",
+      "staleSignal": "None, and deliberately so.",
+      "entryCount": 26
+    },
+    {
+      "file": "special-ability-definitions.json",
+      "kind": "definition",
+      "appliedBy": "scripts/auto-team-builder-ability-parser.mjs",
+      "why": "The same, for the activated special.",
+      "removeWhen": "Never by upstream. An entry goes when the app stops matching that effect.",
+      "staleSignal": "None, and deliberately so.",
+      "entryCount": 86
+    },
+    {
+      "file": "support-ability-definitions.json",
+      "kind": "definition",
+      "appliedBy": "scripts/auto-team-builder-ability-parser.mjs",
+      "why": "The same, for support abilities.",
+      "removeWhen": "Never by upstream. An entry goes when the app stops matching that effect.",
+      "staleSignal": "None, and deliberately so.",
+      "entryCount": 67
+    }
+  ]
+}

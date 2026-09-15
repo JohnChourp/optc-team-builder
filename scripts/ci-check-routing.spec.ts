@@ -49,7 +49,12 @@ describe('ci-check-routing', () => {
      * parser change is exactly when the catalogue's counts and phrasings can move. The enemy and
      * naming lanes deliberately do NOT join: neither reads the parser.
      */
-    expect(plan.scriptSuites).toEqual(['captain-contracts', 'ability-tags', 'source-data']);
+    expect(plan.scriptSuites).toEqual([
+      'captain-contracts',
+      'ability-tags',
+      'source-data',
+      'overlay-register',
+    ]);
   });
 
   it('routes source data inputs to validation instead of dataset performance only', () => {
@@ -57,7 +62,12 @@ describe('ci-check-routing', () => {
 
     expect(plan.fullPlan).toBe(false);
     expect(plan.runDatasetPerf).toBe(false);
-    expect(plan.scriptSuites).toEqual(['source-data']);
+    /*
+     * 869f135t0 added `overlay-register`: an overlay must keep saying why it
+     * exists and what would remove it, and the party-conflict overlay's two copies
+     * must keep agreeing, which is exactly what editing one of them risks.
+     */
+    expect(plan.scriptSuites).toEqual(['source-data', 'overlay-register']);
   });
 
   it('routes saved-team codec fixtures and docs to the focused fuzz suite', () => {
@@ -294,6 +304,7 @@ describe('ci-check-routing', () => {
       'support-ladder',
       'scripts-inventory',
       'dead-code',
+      'overlay-register',
       'i18n-greek-coverage',
       'component-style-budget',
       'unused-members',
