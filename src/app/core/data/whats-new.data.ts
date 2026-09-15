@@ -31,6 +31,44 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.44',
+    date: '2026-09-15',
+    userVisible: true,
+    headline: {
+      en: 'The characters you just looked at, and the ships you actually use',
+      el: 'Οι χαρακτήρες που μόλις είδες, και τα ships που πραγματικά χρησιμοποιείς',
+    },
+    summaryEn:
+      "The app has quietly been remembering the last characters you opened, and showing them to nobody. There is now a Recently viewed strip at the top of the Characters screen, so getting back to the unit you were just reading about is one tap. The ship picker finally lets you narrow to your favourites, the way every other picker already could. Saved Teams now tells you which saved enemy each team was built for, so a team you kept three weeks ago still says what it was for. And if you told the app which version of the game you play, units you cannot obtain are now marked on the character card and on the character screen.",
+    summaryEl:
+      'Η εφαρμογή θυμόταν σιωπηλά τους τελευταίους χαρακτήρες που άνοιξες, και δεν τους έδειχνε σε κανέναν. Πλέον υπάρχει μια λωρίδα Πρόσφατα στην κορυφή της οθόνης Χαρακτήρες, ώστε να επιστρέφεις με ένα tap στη μονάδα που μόλις διάβαζες. Το ship picker επιτρέπει επιτέλους να δεις μόνο τα αγαπημένα σου, όπως ήδη μπορούσε κάθε άλλο picker. Οι Saved Teams σου λένε πλέον για ποιον αποθηκευμένο εχθρό φτιάχτηκε η κάθε ομάδα, οπότε μια ομάδα που κράτησες πριν από τρεις εβδομάδες εξακολουθεί να λέει σε τι χρησίμευε. Και αν έχεις πει στην εφαρμογή ποια έκδοση του παιχνιδιού παίζεις, οι μονάδες που δεν μπορείς να αποκτήσεις σημειώνονται τώρα στην κάρτα χαρακτήρα και στην οθόνη του χαρακτήρα.',
+    added: [
+      {
+        en: "A **Recently viewed** strip at the top of the **Characters** screen, newest first, with its own Clear button. It stays on this device and is never exported.",
+        el: 'Μια λωρίδα **Πρόσφατα** στην κορυφή της οθόνης **Χαρακτήρες**, με τον πιο πρόσφατο πρώτο, με δικό της κουμπί Καθαρισμός. Μένει σε αυτή τη συσκευή και δεν γίνεται ποτέ export.',
+      },
+      {
+        en: "**Favorites only** in the **ship picker** - the pop-up you open to choose a ship. When you have no favourite ships yet it says so instead of looking broken.",
+        el: 'Το **Μόνο αγαπημένα** στο **ship picker** - το αναδυόμενο παράθυρο που ανοίγεις για να διαλέξεις ship. Όταν δεν έχεις ακόμη αγαπημένα ships, το λέει αντί να μοιάζει χαλασμένο.',
+      },
+      {
+        en: "A **Built for:** line on each team in **Saved Teams**, naming the saved enemies that team answers. Tap one to open it.",
+        el: 'Μια γραμμή **Φτιάχτηκε για:** σε κάθε ομάδα στα **Saved Teams**, που ονομάζει τους αποθηκευμένους εχθρούς στους οποίους απαντά η ομάδα. Πάτα έναν για να τον ανοίξεις.',
+      },
+      {
+        en: "A region marker on the **character card** in the **Characters** screen and on the **character screen** itself, for units that have not reached the version you play. It appears only when the data can actually say so.",
+        el: 'Μια σήμανση περιοχής στην **κάρτα χαρακτήρα** στην οθόνη **Χαρακτήρες** και στην ίδια την **οθόνη του χαρακτήρα**, για μονάδες που δεν έχουν φτάσει στην έκδοση που παίζεις. Εμφανίζεται μόνο όταν τα δεδομένα μπορούν όντως να το πουν.',
+      },
+    ],
+    improved: [],
+    fixed: [
+      {
+        en: 'Analytics stopped loading on the **guide pages** and on **shared team links** after the last update. Nothing you use was affected, and it is working again.',
+        el: 'Τα analytics σταμάτησαν να φορτώνουν στις **σελίδες οδηγών** και στα **κοινόχρηστα links ομάδων** μετά την προηγούμενη ενημέρωση. Τίποτα από όσα χρησιμοποιείς δεν επηρεάστηκε, και λειτουργούν ξανά.',
+      },
+    ],
+  },
+  {
     version: '0.4.43',
     date: '2026-09-15',
     userVisible: true,
