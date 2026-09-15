@@ -1,0 +1,348 @@
+{
+  "note": [
+    "Compiled size of every component stylesheet over 1 kB. 869f135rr.",
+    "",
+    "Angular budgets the COMPILED stylesheet, not the source - the distinction that",
+    "made this subtask report 86% for a file that is really at 35.8%. These are",
+    "Angular's own figures, read from a production build with the",
+    "`style-budget-probe` configuration, which is the production build with",
+    "`anyComponentStyle` lowered so every stylesheet reports.",
+    "",
+    "This file is the trend. Growth shows up as a diff here, in git, rather than in a",
+    "parallel history store. Refresh it with `npm run styles:component-budget -- --write`",
+    "in the same commit as the change that moved a number."
+  ],
+  "measuredOn": "2026-09-15",
+  "budget": {
+    "warningBytes": 12000,
+    "errorBytes": 20000
+  },
+  "earlyWarningShare": 0.7,
+  "driftTolerance": 0.15,
+  "stylesheets": [
+    {
+      "file": "src/app/shared/ability-tag-set-picker/ability-tag-set-picker-set-panel.component.scss",
+      "compiledBytes": 5790
+    },
+    {
+      "file": "src/app/app.component.scss",
+      "compiledBytes": 5100
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder-results-comparison-panel.component.scss",
+      "compiledBytes": 4750
+    },
+    {
+      "file": "src/app/pages/captain-coverage/captain-coverage-result-badges-panel.component.scss",
+      "compiledBytes": 4300
+    },
+    {
+      "file": "src/app/pages/settings/settings.page.scss",
+      "compiledBytes": 3750
+    },
+    {
+      "file": "src/app/shared/character-image-picker/character-image-picker.component.scss",
+      "compiledBytes": 3610
+    },
+    {
+      "file": "src/app/pages/saved-enemies/saved-enemies-list-panel.component.scss",
+      "compiledBytes": 3370
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder-picker-panel.component.scss",
+      "compiledBytes": 3270
+    },
+    {
+      "file": "src/app/layout/tabs.page.scss",
+      "compiledBytes": 3250
+    },
+    {
+      "file": "src/app/shared/ability-tag-set-picker/ability-tag-set-picker-catalog-panel.component.scss",
+      "compiledBytes": 3220
+    },
+    {
+      "file": "src/app/shared/special-ability-picker/special-ability-picker.component.scss",
+      "compiledBytes": 2950
+    },
+    {
+      "file": "src/app/pages/saved-teams/saved-teams-ability-filter-panel.component.scss",
+      "compiledBytes": 2900
+    },
+    {
+      "file": "src/app/pages/saved-rumble-teams/saved-rumble-teams.page.scss",
+      "compiledBytes": 2810
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder-loading-panel.component.scss",
+      "compiledBytes": 2680
+    },
+    {
+      "file": "src/app/shared/ability-tag-set-picker/ability-tag-set-picker-shell-panel.component.scss",
+      "compiledBytes": 2630
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder-results-report-panel.component.scss",
+      "compiledBytes": 2620
+    },
+    {
+      "file": "src/app/shared/character-ability-groups/character-ability-groups.component.scss",
+      "compiledBytes": 2460
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder-manual-panel.component.scss",
+      "compiledBytes": 2280
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder-results-card-layout-panel.component.scss",
+      "compiledBytes": 2200
+    },
+    {
+      "file": "src/app/pages/manual-team-builder/manual-team-builder-workbench-slot-detail-panel.component.scss",
+      "compiledBytes": 2050
+    },
+    {
+      "file": "src/app/shared/character-facet-filter/character-facet-filter-shell-panel.component.scss",
+      "compiledBytes": 2030
+    },
+    {
+      "file": "src/app/shared/team-coverage-summary/team-coverage-summary.component.scss",
+      "compiledBytes": 1980
+    },
+    {
+      "file": "src/app/shared/ability-tag-set-picker/ability-tag-set-picker-formula-panel.component.scss",
+      "compiledBytes": 1940
+    },
+    {
+      "file": "src/app/pages/character-detail/character-detail-responsive-panel.component.scss",
+      "compiledBytes": 1900
+    },
+    {
+      "file": "src/app/pages/captain-coverage/captain-coverage-team-slots-panel.component.scss",
+      "compiledBytes": 1880
+    },
+    {
+      "file": "src/app/shared/ability-tag-set-picker/ability-tag-set-picker-motion-panel.component.scss",
+      "compiledBytes": 1830
+    },
+    {
+      "file": "src/app/shared/ability-tag-set-picker/ability-tag-set-picker-responsive-panel.component.scss",
+      "compiledBytes": 1730
+    },
+    {
+      "file": "src/app/pages/characters/characters-import-result-panel.component.scss",
+      "compiledBytes": 1710
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder-actions-panel.component.scss",
+      "compiledBytes": 1700
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder-manual-picker-panel.component.scss",
+      "compiledBytes": 1640
+    },
+    {
+      "file": "src/app/pages/manual-team-builder/manual-team-builder-workbench-slot-base-panel.component.scss",
+      "compiledBytes": 1640
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder-results-header-panel.component.scss",
+      "compiledBytes": 1620
+    },
+    {
+      "file": "src/app/shared/character-filter-row/character-filter-row.component.scss",
+      "compiledBytes": 1600
+    },
+    {
+      "file": "src/app/shared/whats-new/whats-new-modal.component.scss",
+      "compiledBytes": 1460
+    },
+    {
+      "file": "src/app/pages/character-boxes/character-boxes-character-link-panel.component.scss",
+      "compiledBytes": 1450
+    },
+    {
+      "file": "src/app/pages/character-edit/character-edit.page.scss",
+      "compiledBytes": 1440
+    },
+    {
+      "file": "src/app/pages/manual-team-builder/manual-team-builder-workbench-layout-panel.component.scss",
+      "compiledBytes": 1430
+    },
+    {
+      "file": "src/app/pages/characters/characters-catalog-thumb-panel.component.scss",
+      "compiledBytes": 1410
+    },
+    {
+      "file": "src/app/pages/saved-enemies/saved-enemies-responsive-panel.component.scss",
+      "compiledBytes": 1410
+    },
+    {
+      "file": "src/app/shared/ability-filter-rail/ability-filter-rail.component.scss",
+      "compiledBytes": 1390
+    },
+    {
+      "file": "src/app/pages/saved-teams/saved-teams-open-destination-panel.component.scss",
+      "compiledBytes": 1370
+    },
+    {
+      "file": "src/app/shared/ability-requirement-picker/ability-requirement-picker-shell-panel.component.scss",
+      "compiledBytes": 1360
+    },
+    {
+      "file": "src/app/shared/ship-picker/ship-picker-panel-panel.component.scss",
+      "compiledBytes": 1360
+    },
+    {
+      "file": "src/app/pages/character-boxes/character-boxes-editor-panel.component.scss",
+      "compiledBytes": 1350
+    },
+    {
+      "file": "src/app/pages/manual-team-builder/manual-team-builder-picker-responsive-panel.component.scss",
+      "compiledBytes": 1330
+    },
+    {
+      "file": "src/app/pages/saved-enemies/saved-enemies-editor-associated-teams-panel.component.scss",
+      "compiledBytes": 1320
+    },
+    {
+      "file": "src/app/shared/character-facet-filter/character-facet-filter-mode-panel.component.scss",
+      "compiledBytes": 1310
+    },
+    {
+      "file": "src/app/shared/character-tag-filter/character-tag-filter-shell-panel.component.scss",
+      "compiledBytes": 1290
+    },
+    {
+      "file": "src/app/shared/ability-requirement-picker/ability-requirement-picker-catalog-panel.component.scss",
+      "compiledBytes": 1250
+    },
+    {
+      "file": "src/app/pages/manual-team-builder/manual-team-builder-picker-link-panel.component.scss",
+      "compiledBytes": 1240
+    },
+    {
+      "file": "src/app/pages/auto-team-builder-rumble/auto-team-builder-rumble-controls-buff-focus-panel.component.scss",
+      "compiledBytes": 1230
+    },
+    {
+      "file": "src/app/pages/saved-enemies/saved-enemies-parsed-ability-panel.component.scss",
+      "compiledBytes": 1220
+    },
+    {
+      "file": "src/app/pages/manual-team-builder/manual-team-builder-picker-slot-panel.component.scss",
+      "compiledBytes": 1210
+    },
+    {
+      "file": "src/app/pages/manual-team-builder/manual-team-builder-workbench-control-panel.component.scss",
+      "compiledBytes": 1200
+    },
+    {
+      "file": "src/app/pages/auto-team-builder-rumble/auto-team-builder-rumble-roster-picker-modal-panel.component.scss",
+      "compiledBytes": 1180
+    },
+    {
+      "file": "src/app/pages/rumble-characters/rumble-characters-buff-focus-panel.component.scss",
+      "compiledBytes": 1170
+    },
+    {
+      "file": "src/app/pages/saved-teams/saved-teams-list-panel.component.scss",
+      "compiledBytes": 1170
+    },
+    {
+      "file": "src/app/pages/saved-enemies/saved-enemies-paste-autocomplete-panel.component.scss",
+      "compiledBytes": 1160
+    },
+    {
+      "file": "src/app/pages/captain-coverage/captain-coverage-filter-panel.component.scss",
+      "compiledBytes": 1140
+    },
+    {
+      "file": "src/app/pages/rumble-characters/rumble-characters-controls-panel.component.scss",
+      "compiledBytes": 1140
+    },
+    {
+      "file": "src/app/pages/auto-team-builder-rumble/auto-team-builder-rumble-results-summary-panel.component.scss",
+      "compiledBytes": 1130
+    },
+    {
+      "file": "src/app/shared/ability-requirement-picker/ability-requirement-picker-badge-tone-panel.component.scss",
+      "compiledBytes": 1120
+    },
+    {
+      "file": "src/app/pages/account/account-review-rows-panel.component.scss",
+      "compiledBytes": 1110
+    },
+    {
+      "file": "src/app/pages/character-boxes/character-boxes.page.scss",
+      "compiledBytes": 1110
+    },
+    {
+      "file": "src/app/pages/auto-team-builder-rumble/auto-team-builder-rumble-roster-layout-panel.component.scss",
+      "compiledBytes": 1090
+    },
+    {
+      "file": "src/app/pages/crew-forge/crew-forge-image-import-slots-panel.component.scss",
+      "compiledBytes": 1090
+    },
+    {
+      "file": "src/app/pages/rumble-characters/rumble-characters-card-panel.component.scss",
+      "compiledBytes": 1090
+    },
+    {
+      "file": "src/app/pages/account/account-review-shell-panel.component.scss",
+      "compiledBytes": 1080
+    },
+    {
+      "file": "src/app/shared/ship-picker/ship-picker-preview-panel.component.scss",
+      "compiledBytes": 1080
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder-requirements-manual-copy-panel.component.scss",
+      "compiledBytes": 1070
+    },
+    {
+      "file": "src/app/pages/characters/characters-catalog-list-panel.component.scss",
+      "compiledBytes": 1060
+    },
+    {
+      "file": "src/app/pages/manual-team-builder/manual-team-builder-picker-modal-panel.component.scss",
+      "compiledBytes": 1050
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder-candidate-card-list-panel.component.scss",
+      "compiledBytes": 1040
+    },
+    {
+      "file": "src/app/pages/saved-teams/saved-teams-responsive-panel.component.scss",
+      "compiledBytes": 1040
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder-requirements-chip-panel.component.scss",
+      "compiledBytes": 1030
+    },
+    {
+      "file": "src/app/shared/ability-requirement-picker/ability-requirement-picker-badge-panel.component.scss",
+      "compiledBytes": 1030
+    },
+    {
+      "file": "src/app/pages/saved-teams/saved-teams-import-dropzone-panel.component.scss",
+      "compiledBytes": 1020
+    },
+    {
+      "file": "src/app/shared/ship-picker/ship-picker-card-panel.component.scss",
+      "compiledBytes": 1020
+    },
+    {
+      "file": "src/app/pages/character-detail/character-detail-captain-tier-panel.component.scss",
+      "compiledBytes": 1010
+    },
+    {
+      "file": "src/app/pages/characters/characters-catalog-toolbar-panel.component.scss",
+      "compiledBytes": 1010
+    },
+    {
+      "file": "src/app/pages/crew-forge/crew-forge-results-card-panel.component.scss",
+      "compiledBytes": 1010
+    }
+  ]
+}

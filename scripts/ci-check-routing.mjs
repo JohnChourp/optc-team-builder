@@ -414,6 +414,24 @@ export const SCRIPT_SUITES = {
    * finding is missing from it and when an entry no longer describes one, so it
    * can only shrink.
    */
+  /*
+   * 869f135rr. How close each component stylesheet is to `anyComponentStyle`, and
+   * how fast it got there.
+   *
+   * Angular's own budget fires at 100%, on whoever happens to be editing the file,
+   * with no context. This fires at 70%, names the file and its share, and records
+   * every size in a committed baseline so growth arrives as a reviewable diff
+   * rather than as a surprise warning.
+   *
+   * It runs the real production build under the `style-budget-probe`
+   * configuration and reads Angular's own numbers. Re-implementing the compile
+   * would produce a number that is merely similar, which is precisely how the two
+   * wrong budgets in this wave happened.
+   */
+  'component-style-budget': {
+    label: 'Component stylesheet budget proximity',
+    command: 'npm run test:component-style-budget',
+  },
   'unused-members': {
     label: 'Unused public class member tests',
     command: 'npm run test:unused-members',
@@ -829,6 +847,23 @@ function touchesUnusedMemberSources(filePath) {
   );
 }
 
+function isComponentStyleBudgetPath(filePath) {
+  return (
+    filePath === 'scripts/check-component-style-budget.mjs' ||
+    filePath === 'scripts/check-component-style-budget.spec.ts' ||
+    filePath === 'scripts/data/component-style-budget-baseline.json'
+  );
+}
+
+/*
+ * Non-terminating: a component stylesheet is app source and routes to the Angular
+ * lane too. `angular.json` carries the budget this check reads, so a change there
+ * changes what the check enforces.
+ */
+function touchesComponentStyleSources(filePath) {
+  return (filePath.startsWith('src/') && filePath.endsWith('.scss')) || filePath === 'angular.json';
+}
+
 function isUnusedMembersPath(filePath) {
   return (
     filePath === 'scripts/check-unused-public-members.mjs' ||
@@ -1215,6 +1250,10 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
       addScriptSuite(scriptSuites, 'unused-members');
     }
 
+    if (touchesComponentStyleSources(filePath)) {
+      addScriptSuite(scriptSuites, 'component-style-budget');
+    }
+
     if (touchesDatasetConsumerSources(filePath)) {
       addScriptSuite(scriptSuites, 'dataset-consumers');
     }
@@ -1280,6 +1319,11 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
 
     if (isUnusedMembersPath(filePath)) {
       addScriptSuite(scriptSuites, 'unused-members');
+      continue;
+    }
+
+    if (isComponentStyleBudgetPath(filePath)) {
+      addScriptSuite(scriptSuites, 'component-style-budget');
       continue;
     }
 

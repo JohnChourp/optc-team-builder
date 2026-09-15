@@ -86,3 +86,46 @@ Set it from a measurement and say which. `npm run perf:route-load` prints all
 four actuals; `npx ng build --configuration production` prints `Initial total`.
 A budget raised to make a build pass, with no measurement beside it, is how the
 old numbers got there.
+
+## The other budget in that block: `anyComponentStyle`
+
+**Status:** recorded 2026-09-15 · [869f135rr](https://app.clickup.com/t/90121749478/869f135rr)
+
+`anyComponentStyle` measures the **compiled** stylesheet, and the same
+source-versus-output confusion that produced the wrong bundle budget produced a
+wrong reading of this one.
+
+[869f135rr](https://app.clickup.com/t/90121749478/869f135rr) reported
+`captain-coverage-result-badges-panel.component.scss` at **10,344 bytes, 86% of
+the 12 kB warning**, and called it "the one budget in this repo actually doing
+something". That 10,344 is the **source** file, 94 of whose 331 lines are
+comments. Compiled it is **4,300 bytes — 35.8%**, and it is not even the largest:
+
+| Stylesheet | Compiled | Share of warning |
+| --- | ---: | ---: |
+| `ability-tag-set-picker-set-panel` | 5,790 | **48.3%** |
+| `app.component` | 5,100 | 42.5% |
+| `auto-team-builder-results-comparison-panel` | 4,750 | 39.6% |
+| `captain-coverage-result-badges-panel` | 4,300 | 35.8% |
+
+So nothing is close to firing, and there was nothing to reduce. The file is large
+in source because it is well commented, which is not a defect.
+
+### What was built instead
+
+The part of that subtask that does stand is making the approach visible before the
+threshold is hit. `npm run styles:component-budget`
+([`scripts/check-component-style-budget.mjs`](../scripts/check-component-style-budget.mjs))
+runs the real production build under the `style-budget-probe` configuration —
+`production` with `anyComponentStyle` lowered so every stylesheet reports — and
+reads **Angular's own** numbers rather than re-compiling the Sass, because a
+number that is merely similar is how both wrong budgets in this wave happened.
+
+It fails when a stylesheet reaches **70%** of the warning, when one moves more
+than **15%** from its recorded size, or when a recorded stylesheet stops being
+reported. `scripts/data/component-style-budget-baseline.json` holds every size, so
+growth arrives as a reviewable diff in git rather than in a parallel history
+store — that is the trend.
+
+Proven: grown to **9,010 bytes (75.1%)**, Angular's own budget reports **zero
+warnings** and this check names the file and its share.
