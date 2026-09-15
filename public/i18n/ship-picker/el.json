@@ -18,5 +18,9 @@
     "emptyState": "Επιβεβαίωσε για να μείνει κενή η επιλογή ship.",
     "shipReady": "Αυτό το ship θα εφαρμοστεί όταν πατήσεις επιβεβαίωση.",
     "title": "Επιλεγμένο ship"
+  },
+  "card": {
+    "showFullEffect": "Δες όλο το effect",
+    "hideFullEffect": "Δείξε λιγότερα"
   }
 }

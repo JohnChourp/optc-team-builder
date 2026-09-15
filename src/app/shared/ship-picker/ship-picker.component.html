@@ -128,6 +128,31 @@
                             }
                           </div>
                         </button>
+
+                        <!--
+                          869f135rf. Outside the button, because a button inside a
+                          button is invalid and because this is a second, separate
+                          decision: the card stays scannable, and the reader opens
+                          the full effect only for the ships they are weighing up.
+                        -->
+                        @if (card.isTruncated) {
+                          <button
+                            type="button"
+                            class="ship-picker-card__effect-toggle"
+                            [attr.aria-expanded]="isShipExpanded(card.shipId)"
+                            (click)="toggleShipEffect(card.shipId, $event)"
+                          >
+                            {{
+                              isShipExpanded(card.shipId)
+                                ? t('card.hideFullEffect')
+                                : t('card.showFullEffect')
+                            }}
+                          </button>
+
+                          @if (isShipExpanded(card.shipId)) {
+                            <p class="ship-picker-card__effect">{{ card.fullEffect }}</p>
+                          }
+                        }
                       </article>
                     }
                   </div>

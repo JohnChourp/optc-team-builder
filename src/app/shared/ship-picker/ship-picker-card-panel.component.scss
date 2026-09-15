@@ -56,3 +56,37 @@
   box-shadow: none;
   opacity: 0.74;
 }
+
+/*
+ * 869f135rf. The full effect, opened per card while choosing.
+ *
+ * 44 of 66 ships have a description past the 132-character cap, so two thirds of
+ * the choice was being made on a sentence fragment. The toggle sits outside the
+ * card button - a button inside a button is invalid - and the expanded text is
+ * deliberately not a scrollbox: a ship effect is read once, and clipping it again
+ * would be the same defect with extra steps.
+ */
+.ship-picker-card__effect-toggle {
+  margin: 6px 0 0;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: #4cc9f0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ship-picker-card__effect-toggle:focus-visible {
+  outline: 2px solid #4cc9f0;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.ship-picker-card__effect {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: rgba(245, 247, 255, 0.82);
+}
