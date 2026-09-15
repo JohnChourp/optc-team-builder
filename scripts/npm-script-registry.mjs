@@ -53,6 +53,12 @@ export const NPM_SCRIPT_REGISTRY = [
     invokedBy: ['scripts/verify-local.mjs'],
   },
   {
+    script: 'dataset:unresolved-clauses',
+    class: 'manual',
+    reason:
+      'Regenerates the unresolved-clause record. The CHECK half runs in the unresolved-clauses lane as `generate-unresolved-clauses.mjs --check`; this script is the write half, run deliberately by a maintainer when the record should actually move.',
+  },
+  {
     script: 'cap:sync',
     class: 'manual',
     reason: 'Capacitor sync, run by a developer before opening a native project.',

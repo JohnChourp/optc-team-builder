@@ -181,7 +181,7 @@ export const SCRIPT_SUITES = {
   'source-data': {
     label: 'Source data validation tests',
     command:
-      'npx vitest run scripts/lib/dataset-integrity.spec.ts scripts/lib/manual-character-overlay.spec.ts scripts/lib/manual-character-apply.spec.ts scripts/lib/manual-character-prune.spec.ts scripts/lib/party-conflict-keys.spec.ts scripts/lib/rumble-data-normalizer.spec.ts scripts/lib/super-special-criteria.spec.ts scripts/upsert-manual-character.spec.ts scripts/check-dataset-spec-pins.spec.ts scripts/optc-upstream-progression.spec.ts',
+      'npx vitest run scripts/lib/dataset-integrity.spec.ts scripts/lib/manual-character-overlay.spec.ts scripts/lib/manual-character-apply.spec.ts scripts/lib/manual-character-prune.spec.ts scripts/lib/party-conflict-keys.spec.ts scripts/lib/rumble-data-normalizer.spec.ts scripts/lib/super-special-criteria.spec.ts scripts/upsert-manual-character.spec.ts scripts/check-dataset-spec-pins.spec.ts scripts/optc-upstream-progression.spec.ts && npm run dataset:spec-pins',
   },
   'perf-budget': {
     label: 'Performance budget script tests',
@@ -286,6 +286,17 @@ export const SCRIPT_SUITES = {
   'support-ladder': {
     label: 'Platform support ladder tests',
     command: 'npm run test:support-ladder',
+  },
+  /*
+   * 869f17h73. Every npm script, what runs it, and therefore what breaks without
+   * it. The lane's own finding is an `unclassified` script - one that resolves to
+   * no caller and carries no registry entry - which is how `dataset:spec-pins`
+   * surfaced: a healthy checker whose unit tests ran while the checker itself
+   * never looked at the tree.
+   */
+  'scripts-inventory': {
+    label: 'npm script inventory tests',
+    command: 'npm run test:scripts-inventory',
   },
   /*
    * The TypeScript half of `audit:dead-code`, and deliberately only that half.
@@ -472,6 +483,14 @@ function alsoAffectsSupportClaims(filePath) {
  * such a rule can never add anything. An inert routing rule reads as meaningful
  * and is not - it was written here, measured, and removed.
  */
+function isScriptInventoryPath(filePath) {
+  return (
+    filePath === 'scripts/check-npm-script-inventory.mjs' ||
+    filePath === 'scripts/check-npm-script-inventory.spec.ts' ||
+    filePath === 'docs/npm-script-inventory.md'
+  );
+}
+
 function isSupportLadderPath(filePath) {
   return (
     filePath === 'scripts/check-support-ladder.mjs' ||
@@ -1110,6 +1129,12 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
     if (alsoAffectsSupportClaims(filePath)) {
       addScriptSuite(scriptSuites, 'support-claims');
       /* deliberately no `continue`: the owning suite still gets this file */
+    }
+
+    if (isScriptInventoryPath(filePath)) {
+      categories.add('scripts-inventory');
+      addScriptSuite(scriptSuites, 'scripts-inventory');
+      continue;
     }
 
     if (isSupportLadderPath(filePath)) {

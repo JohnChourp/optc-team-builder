@@ -72,6 +72,15 @@ const MECHANISM_FILES = new Set([
   'scripts/npm-script-registry.mjs',
   'scripts/check-npm-script-references.mjs',
   'scripts/check-npm-script-references.spec.ts',
+  /*
+   * 869f17h73. The generated inventory lists EVERY script, so leaving it in would
+   * make the orphan clause vacuous - every script would be "known" by the table
+   * that exists to describe them. Measured: with it included, un-wiring
+   * `dataset:spec-pins` left this check green.
+   */
+  'docs/npm-script-inventory.md',
+  'scripts/check-npm-script-inventory.mjs',
+  'scripts/check-npm-script-inventory.spec.ts',
 ]);
 
 export function collectTrackedFiles(root = projectRoot) {
@@ -100,6 +109,22 @@ export function collectInterpolatedPrefixes(sources) {
   return prefixes;
 }
 
+/**
+ * The file a script's own command points at.
+ *
+ * `dataset:spec-pins` is `node ./scripts/check-dataset-spec-pins.mjs`, and that
+ * file's docblock ends with `Run: npm run dataset:spec-pins`. Counting that as a
+ * reference makes every well-documented checker its own caller - which is how two
+ * genuinely unwired scripts passed this check until the inventory in 869f17h73
+ * classified them from the other direction.
+ *
+ * Same shape as the registry and this guard being in MECHANISM_FILES: a file that
+ * NAMES a script is not a file that RUNS it.
+ */
+export function ownImplementation(command) {
+  return command.match(/(?:^|\s)\.?\/?(scripts\/[\w./-]+\.(?:mjs|js|ts|sh))/u)?.[1] ?? null;
+}
+
 export function analyse({ scripts, sources }) {
   const names = Object.keys(scripts);
   /*
@@ -114,8 +139,9 @@ export function analyse({ scripts, sources }) {
   const status = new Map();
 
   for (const name of names) {
+    const own = ownImplementation(scripts[name]);
     const literalIn = [...callers.entries()]
-      .filter(([, contents]) => contents.includes(name))
+      .filter(([file, contents]) => contents.includes(name) && file !== own)
       .map(([file]) => file);
     const calledBy = names.filter((other) => other !== name && scripts[other].includes(name));
     const viaPrefix = [...prefixes].filter((prefix) => name.startsWith(prefix));

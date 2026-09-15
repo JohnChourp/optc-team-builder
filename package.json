@@ -91,6 +91,8 @@
     "components:inventory": "node ./scripts/check-component-inventory.mjs",
     "test:support-ladder": "vitest run scripts/check-support-ladder.spec.ts && npm run platforms:support-ladder",
     "platforms:support-ladder": "node ./scripts/check-support-ladder.mjs",
+    "test:scripts-inventory": "vitest run scripts/check-npm-script-inventory.spec.ts && npm run scripts:inventory",
+    "scripts:inventory": "node ./scripts/check-npm-script-inventory.mjs",
     "scripts:references": "node ./scripts/check-npm-script-references.mjs",
     "theme:overlay-contrast": "node ./scripts/check-ionic-overlay-contrast.mjs",
     "test:ionic-host-property": "vitest run scripts/check-ionic-host-property.spec.ts && npm run ionic:host-property",
