@@ -59,6 +59,7 @@ import {
   type RumbleCharacterRankedScore,
 } from './rumble-characters-ranking.utils';
 import { RumbleCharactersStylePanelsComponent } from './rumble-characters-style-panels.component';
+import { formattingLanguage } from '../../core/i18n/app-locale-format';
 
 const PAGE_SIZE = 48;
 const RUMBLE_ROLE_FILTERS: NormalizedRumbleRoleTag[] = [
@@ -369,11 +370,11 @@ export class RumbleCharactersPage implements OnInit {
   }
 
   public formatScore(score: number): string {
-    return Math.round(score).toLocaleString();
+    return Math.round(score).toLocaleString(formattingLanguage());
   }
 
   public formatStat(value: number | null | undefined): string {
-    return value === null || value === undefined ? '-' : Math.round(value).toLocaleString();
+    return value === null || value === undefined ? '-' : Math.round(value).toLocaleString(formattingLanguage());
   }
 
   public shortBuffStatLabel(stat: RumbleBuffFocusStat): string {

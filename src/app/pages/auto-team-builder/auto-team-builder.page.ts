@@ -297,6 +297,7 @@ import {
   AutoTeamBuilderRequirementsPanelComponent,
   AutoTeamBuilderResultsPanelComponent,
 } from './auto-team-builder-style-panels.component';
+import { formattingLanguage } from '../../core/i18n/app-locale-format';
 
 type LoadingProgressRowTone = 'primary' | 'secondary' | 'fallback' | 'warning';
 type AutoBuildFinalReportState = 'passed' | 'relaxed' | 'notApplicable';
@@ -2475,15 +2476,15 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     }
 
     const progress = this.buildProgress();
-    const favoriteCount = this.favoriteCharacterIds().length.toLocaleString();
+    const favoriteCount = this.favoriteCharacterIds().length.toLocaleString(formattingLanguage());
     const candidateCount =
       typeof progress?.candidateCount === 'number'
-        ? progress.candidateCount.toLocaleString()
+        ? progress.candidateCount.toLocaleString(formattingLanguage())
         : null;
     const selectedBox = this.selectedCharacterBox();
 
     if (selectedBox) {
-      const boxCount = (this.effectiveAutoBuildCandidateIds() ?? []).length.toLocaleString();
+      const boxCount = (this.effectiveAutoBuildCandidateIds() ?? []).length.toLocaleString(formattingLanguage());
 
       return this.t(
         candidateCount ? 'progress.favoriteScopeWithBox' : 'progress.favoriteScopeWithBoxPending',
@@ -2533,8 +2534,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       typeof progress.totalLeaderPairs === 'number' &&
       progress.totalLeaderPairs > 0
       ? this.t('progress.leaderPairPosition', {
-          current: progress.leaderPairIndex.toLocaleString(),
-          total: progress.totalLeaderPairs.toLocaleString(),
+          current: progress.leaderPairIndex.toLocaleString(formattingLanguage()),
+          total: progress.totalLeaderPairs.toLocaleString(formattingLanguage()),
         })
       : '';
   });
@@ -2545,8 +2546,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       typeof progress.totalWorkUnits === 'number' &&
       progress.totalWorkUnits > 0
       ? this.t('progress.attemptWork', {
-          completed: progress.completedWorkUnits.toLocaleString(),
-          total: progress.totalWorkUnits.toLocaleString(),
+          completed: progress.completedWorkUnits.toLocaleString(formattingLanguage()),
+          total: progress.totalWorkUnits.toLocaleString(formattingLanguage()),
         })
       : '';
   });
@@ -2557,8 +2558,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       typeof progress.totalCandidatesToCheck === 'number' &&
       progress.totalCandidatesToCheck > 0
       ? this.t('progress.candidateChecks', {
-          checked: progress.checkedCandidates.toLocaleString(),
-          total: progress.totalCandidatesToCheck.toLocaleString(),
+          checked: progress.checkedCandidates.toLocaleString(formattingLanguage()),
+          total: progress.totalCandidatesToCheck.toLocaleString(formattingLanguage()),
         })
       : '';
   });
@@ -2566,14 +2567,14 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     const subPoolSize = this.buildProgress()?.subPoolSize;
 
     return typeof subPoolSize === 'number'
-      ? this.t('progress.subPool', { count: subPoolSize.toLocaleString() })
+      ? this.t('progress.subPool', { count: subPoolSize.toLocaleString(formattingLanguage()) })
       : '';
   });
   public readonly buildSearchNodesLabel = computed(() => {
     const searchNodesVisited = this.buildProgress()?.searchNodesVisited;
 
     return typeof searchNodesVisited === 'number'
-      ? this.t('progress.searchNodes', { count: searchNodesVisited.toLocaleString() })
+      ? this.t('progress.searchNodes', { count: searchNodesVisited.toLocaleString(formattingLanguage()) })
       : '';
   });
   public readonly buildCurrentExclusionsLabel = computed(() =>
@@ -2592,7 +2593,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     const activeWorkerCount = this.buildProgress()?.activeWorkerCount;
 
     return typeof activeWorkerCount === 'number'
-      ? this.t('progress.activeWorkers', { count: activeWorkerCount.toLocaleString() })
+      ? this.t('progress.activeWorkers', { count: activeWorkerCount.toLocaleString(formattingLanguage()) })
       : '';
   });
   public readonly buildCandidateProgressLabel = computed(() => {
@@ -2612,8 +2613,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     return this.t(
       progress.attemptCountFinal ? 'progress.searchPasses' : 'progress.searchPassesGrowing',
       {
-        attempts: progress.totalAttempts.toLocaleString(),
-        count: progress.candidateCount.toLocaleString(),
+        attempts: progress.totalAttempts.toLocaleString(formattingLanguage()),
+        count: progress.candidateCount.toLocaleString(formattingLanguage()),
       },
     );
   });
@@ -2629,9 +2630,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     return this.t(
       progress.attemptCountFinal ? 'progress.workEstimate' : 'progress.workEstimateGrowing',
       {
-        attempts: progress.totalAttempts.toLocaleString(),
-        count: progress.candidateCount.toLocaleString(),
-        total: upperBoundChecks.toLocaleString(),
+        attempts: progress.totalAttempts.toLocaleString(formattingLanguage()),
+        count: progress.candidateCount.toLocaleString(formattingLanguage()),
+        total: upperBoundChecks.toLocaleString(formattingLanguage()),
       },
     );
   });
@@ -7064,12 +7065,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     }
 
     return this.t(translationKey, {
-      total: counts.total.toLocaleString(),
-      alreadyUsed: counts.alreadyUsed.toLocaleString(),
-      duplicateBaseCharacter: counts.duplicateBaseCharacter.toLocaleString(),
-      leaderScope: counts.leaderScope.toLocaleString(),
-      costBudget: counts.costBudget.toLocaleString(),
-      missingRequiredGroup: counts.missingRequiredGroup.toLocaleString(),
+      total: counts.total.toLocaleString(formattingLanguage()),
+      alreadyUsed: counts.alreadyUsed.toLocaleString(formattingLanguage()),
+      duplicateBaseCharacter: counts.duplicateBaseCharacter.toLocaleString(formattingLanguage()),
+      leaderScope: counts.leaderScope.toLocaleString(formattingLanguage()),
+      costBudget: counts.costBudget.toLocaleString(formattingLanguage()),
+      missingRequiredGroup: counts.missingRequiredGroup.toLocaleString(formattingLanguage()),
     });
   }
 

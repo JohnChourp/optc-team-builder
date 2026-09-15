@@ -7,6 +7,7 @@ import {
   buildCaptainCoverageTierView,
   type CaptainCoverageTierScopeToken,
 } from '../../core/services/captain-coverage-tier-view.utils';
+import { formattingLanguage } from '../../core/i18n/app-locale-format';
 
 type DisplayLabel = {
   label?: string;
@@ -1082,7 +1083,7 @@ function createOptionalNumberRow(labelKey: string, value: number | null): Detail
 function formatNumber(value: unknown): string {
   const numericValue = Number(value);
 
-  return Number.isFinite(numericValue) ? numericValue.toLocaleString('en-US') : String(value ?? '');
+  return Number.isFinite(numericValue) ? numericValue.toLocaleString(formattingLanguage()) : String(value ?? '');
 }
 
 function formatStars(character: Pick<CharacterDetailRecord, 'stars' | 'starsLabel'>): string {
@@ -1105,7 +1106,7 @@ function formatScalar(value: unknown): string | null {
   }
 
   if (typeof value === 'number') {
-    return Number.isFinite(value) ? value.toLocaleString('en-US') : null;
+    return Number.isFinite(value) ? value.toLocaleString(formattingLanguage()) : null;
   }
 
   if (typeof value === 'boolean') {

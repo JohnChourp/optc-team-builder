@@ -103,6 +103,7 @@ import {
   AutoTeamBuilderRumbleResultsPanelComponent,
   AutoTeamBuilderRumbleRosterPanelComponent,
 } from './auto-team-builder-rumble-style-panels.component';
+import { formattingLanguage } from '../../core/i18n/app-locale-format';
 
 type LoadingProgressRowTone = 'primary' | 'secondary' | 'fallback';
 
@@ -586,8 +587,8 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
       {
         text: progress?.totalAttempts
           ? this.t('progress.searchPasses', {
-              attempts: progress.totalAttempts.toLocaleString(),
-              count: progress.candidateCount.toLocaleString(),
+              attempts: progress.totalAttempts.toLocaleString(formattingLanguage()),
+              count: progress.candidateCount.toLocaleString(formattingLanguage()),
             })
           : '',
         tone: 'secondary',
@@ -598,8 +599,8 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
           typeof progress.totalCandidatesToCheck === 'number' &&
           progress.totalCandidatesToCheck > 0
             ? this.t('progress.candidateChecks', {
-                checked: progress.checkedCandidates.toLocaleString(),
-                total: progress.totalCandidatesToCheck.toLocaleString(),
+                checked: progress.checkedCandidates.toLocaleString(formattingLanguage()),
+                total: progress.totalCandidatesToCheck.toLocaleString(formattingLanguage()),
               })
             : '',
         tone: 'secondary',
@@ -620,7 +621,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
         text:
           typeof progress?.retainedVariants === 'number'
             ? this.t('progress.retainedVariants', {
-                count: progress.retainedVariants.toLocaleString(),
+                count: progress.retainedVariants.toLocaleString(formattingLanguage()),
               })
             : '',
         tone: 'secondary',
@@ -1183,7 +1184,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   }
 
   public formatScore(value: number): string {
-    return Math.round(value).toLocaleString('en-US');
+    return Math.round(value).toLocaleString(formattingLanguage());
   }
 
   public formatTeamRumbleCostUsage(result: RumbleTeamResult): string {
@@ -1779,10 +1780,10 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
 
   private formatSignedNumber(value: number): string {
     if (value > 0) {
-      return `+${value.toLocaleString('en-US')}`;
+      return `+${value.toLocaleString(formattingLanguage())}`;
     }
 
-    return value.toLocaleString('en-US');
+    return value.toLocaleString(formattingLanguage());
   }
 
   private createManualSlot(
@@ -1993,7 +1994,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   }
 
   private formatRumbleCostUsage(slots: RumbleTeamSlot[]): string {
-    return `${this.resolveRumbleCostTotal(slots).toLocaleString('en-US')} / ${RUMBLE_TEAM_COST_LIMIT.toLocaleString('en-US')}`;
+    return `${this.resolveRumbleCostTotal(slots).toLocaleString(formattingLanguage())} / ${RUMBLE_TEAM_COST_LIMIT.toLocaleString(formattingLanguage())}`;
   }
 
   private resolveRumbleCostTotal(slots: RumbleTeamSlot[]): number {
@@ -2235,7 +2236,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   }
 
   private formatBuffTotal(value: number): string {
-    return Number.isInteger(value) ? value.toLocaleString('en-US') : value.toFixed(1);
+    return Number.isInteger(value) ? value.toLocaleString(formattingLanguage()) : value.toFixed(1);
   }
 
   private formatBuffStatLabel(stat: RumbleBuffStat): string {

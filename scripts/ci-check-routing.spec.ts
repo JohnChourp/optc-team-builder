@@ -253,6 +253,7 @@ describe('ci-check-routing', () => {
       'whats-new',
       'scripts-references',
       'style-panels',
+      'locale-formatting',
       'dead-code',
       'worker-bundling',
     ]);

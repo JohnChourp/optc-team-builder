@@ -19,6 +19,7 @@ import { type SavedRumbleTeam } from '../../core/models/saved-rumble-team.models
 import { AppI18nService } from '../../core/services/app-i18n.service';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
+import { formattingLanguage } from '../../core/i18n/app-locale-format';
 
 interface SavedRumbleTeamPreviewCard {
   opponentCount: number;
@@ -216,7 +217,7 @@ export class SavedRumbleTeamsPage implements OnInit, ViewWillEnter {
       return updatedAt;
     }
 
-    return date.toLocaleString();
+    return date.toLocaleString(formattingLanguage());
   }
 
   private confirmDelete(message: string): boolean {
