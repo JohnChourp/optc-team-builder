@@ -251,10 +251,10 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     area: 'Bundle',
     sourcePath: ['bundle', 'initial'],
     metricKey: 'rawBytes',
-    metricLabel: 'initial raw JS',
+    metricLabel: 'entry script raw JS',
     unit: 'bytes',
     minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
-    budgets: { bundle: 1_500_000 },
+    budgets: { bundle: 391_000 },
   },
   {
     scope: 'result',
@@ -263,10 +263,40 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     area: 'Bundle',
     sourcePath: ['bundle', 'initial'],
     metricKey: 'gzipBytes',
-    metricLabel: 'initial gzip JS',
+    metricLabel: 'entry script gzip JS',
     unit: 'bytes',
     minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
-    budgets: { bundle: 383_000 },
+    budgets: { bundle: 100_000 },
+  },
+  /*
+   * 869f135rq. The initial PAYLOAD: the entry scripts plus every chunk they
+   * statically import, which is what a first visit downloads. `area` differs from
+   * the two rows above because the metric id is built from area + metricKey, and
+   * these must not collide with their history.
+   */
+  {
+    scope: 'result',
+    viewport: 'bundle',
+    enforcement: 'hard',
+    area: 'Initial payload',
+    sourcePath: ['bundle', 'initialGraph'],
+    metricKey: 'rawBytes',
+    metricLabel: 'initial payload raw JS',
+    unit: 'bytes',
+    minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
+    budgets: { bundle: 1_536_000 },
+  },
+  {
+    scope: 'result',
+    viewport: 'bundle',
+    enforcement: 'hard',
+    area: 'Initial payload',
+    sourcePath: ['bundle', 'initialGraph'],
+    metricKey: 'gzipBytes',
+    metricLabel: 'initial payload gzip JS',
+    unit: 'bytes',
+    minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
+    budgets: { bundle: 387_000 },
   },
   {
     scope: 'result',
@@ -783,8 +813,10 @@ export async function buildPerformanceBudgetReport(options = {}, env = process.e
           charactersSearchReadyMs: { desktop: 1600, mobile: 2200 },
           savedTeamsReadyMs: { desktop: 2200, mobile: 2200 },
           captainCoverageReadyMs: { desktop: 3000, mobile: 4500 },
-          initialRawBytes: 1_500_000,
-          initialGzipBytes: 370_000,
+          initialRawBytes: 391_000,
+          initialGzipBytes: 100_000,
+          initialGraphRawBytes: 1_536_000,
+          initialGraphGzipBytes: 387_000,
           guideRawBytes: 14_000,
           manualShareRawBytes: 320_000,
           compareRawBytes: 740_000,
