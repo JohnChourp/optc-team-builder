@@ -31,6 +31,27 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.49',
+    date: '2026-09-15',
+    userVisible: true,
+    headline: {
+      en: 'Drive sync no longer leaves three kinds of your data out of the backup',
+      el: 'Το Drive sync δεν αφήνει πια τρία είδη δεδομένων σου έξω από το backup',
+    },
+    summaryEn:
+      "When you reviewed a Drive sync and confirmed it, the backup that went up was missing three things: your Crew Forge screenshot settings, your saved Rumble opponents, and the characters you had marked as boosted. Everything else went up correctly and the file looked perfectly normal, so there was nothing on screen to tell you - you would only have found out by reinstalling and discovering they were gone. All three are now carried through every sync, whichever of the three actions you pick. If you sync after updating, your backup is complete again.",
+    summaryEl:
+      'Όταν έκανες review ένα Drive sync και το επιβεβαίωνες, στο backup που ανέβαινε έλειπαν τρία πράγματα: οι ρυθμίσεις σου για τα screenshots στο Crew Forge, οι αποθηκευμένοι Rumble αντίπαλοί σου, και οι χαρακτήρες που είχες σημειώσει ως boosted. Όλα τα υπόλοιπα ανέβαιναν κανονικά και το αρχείο έμοιαζε απολύτως φυσιολογικό, οπότε τίποτα στην οθόνη δεν σου το έλεγε - θα το ανακάλυπτες μόνο κάνοντας επανεγκατάσταση. Και τα τρία μεταφέρονται πλέον σε κάθε sync, όποια από τις τρεις ενέργειες κι αν διαλέξεις. Αν κάνεις sync μετά την ενημέρωση, το backup σου είναι ξανά πλήρες.',
+    added: [],
+    improved: [],
+    fixed: [
+      {
+        en: "The **Drive sync review** pop-up on the **Account** screen now sends your **Crew Forge** screenshot settings, your **saved Rumble opponents** and your **boosted characters** to the backup. Confirming a review used to drop all three, silently, and the uploaded file still looked complete.",
+        el: 'Το αναδυόμενο παράθυρο **Drive sync review** στην οθόνη **Account** στέλνει πλέον στο backup τις ρυθμίσεις σου για το **Crew Forge**, τους **αποθηκευμένους Rumble αντιπάλους** σου και τους **boosted χαρακτήρες** σου. Η επιβεβαίωση ενός review τα άφηνε και τα τρία έξω, σιωπηλά, και το αρχείο που ανέβαινε έμοιαζε και πάλι πλήρες.',
+      },
+    ],
+  },
+  {
     version: '0.4.48',
     date: '2026-09-15',
     userVisible: true,
