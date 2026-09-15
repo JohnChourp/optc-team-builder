@@ -185,6 +185,10 @@
       "compiledBytes": 1380
     },
     {
+      "file": "src/app/shared/ship-picker/ship-picker-card-panel.component.scss",
+      "compiledBytes": 1380
+    },
+    {
       "file": "src/app/pages/saved-teams/saved-teams-open-destination-panel.component.scss",
       "compiledBytes": 1370
     },
@@ -326,10 +330,6 @@
     },
     {
       "file": "src/app/pages/saved-teams/saved-teams-import-dropzone-panel.component.scss",
-      "compiledBytes": 1020
-    },
-    {
-      "file": "src/app/shared/ship-picker/ship-picker-card-panel.component.scss",
       "compiledBytes": 1020
     },
     {

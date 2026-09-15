@@ -237,6 +237,73 @@ describe('ShipPickerComponent', () => {
     expect(template).toContain("{{ confirmLabel }}");
     expect(template).toContain("t('selected.title')");
   });
+
+  /*
+   * 869f135rf. A ship is the one team slot with no detail page and no comparison,
+   * so the effect text IS the choice - and 44 of 66 ships have a description past
+   * the 132-character cap, median 188 and max 500. Two thirds of that choice was
+   * being made on a sentence fragment.
+   */
+  it('marks a long effect as truncated and keeps the full text available', () => {
+    const component = createComponent();
+    const longEffect = 'x'.repeat(200);
+
+    component.ships = [
+      { id: 1, name: 'Long', thumb: null, thumbUrl: null, description: longEffect },
+    ] as never;
+    component.isOpen = true;
+    component.ngOnChanges({
+      isOpen: new SimpleChange(false, true, true),
+      ships: new SimpleChange([], component.ships, true),
+    });
+
+    const card = component.filteredShipCards().find((entry) => entry.shipId === 1)!;
+
+    expect(card.isTruncated).toBe(true);
+    expect(card.subtitle.length).toBeLessThan(longEffect.length);
+    expect(card.fullEffect).toBe(longEffect);
+  });
+
+  it('does not offer to expand an effect that was never cut', () => {
+    const component = createComponent();
+
+    component.ships = [
+      { id: 2, name: 'Short', thumb: null, thumbUrl: null, description: 'Boosts ATK.' },
+    ] as never;
+    component.isOpen = true;
+    component.ngOnChanges({
+      isOpen: new SimpleChange(false, true, true),
+      ships: new SimpleChange([], component.ships, true),
+    });
+
+    const card = component.filteredShipCards().find((entry) => entry.shipId === 2)!;
+
+    expect(card.isTruncated).toBe(false);
+    expect(card.subtitle).toBe('Boosts ATK.');
+  });
+
+  it('expands and collapses one ship at a time without selecting it', () => {
+    const component = createComponent();
+    const stopPropagation = vi.fn();
+    const event = { stopPropagation } as unknown as Event;
+
+    expect(component.isShipExpanded(1)).toBe(false);
+
+    component.toggleShipEffect(1, event);
+
+    expect(component.isShipExpanded(1)).toBe(true);
+    expect(component.isShipExpanded(2)).toBe(false);
+    /*
+     * The toggle sits inside a card whose own click selects the ship, so the event
+     * must not reach it: opening the effect to read it is not choosing it.
+     */
+    expect(stopPropagation).toHaveBeenCalled();
+
+    component.toggleShipEffect(1, event);
+
+    expect(component.isShipExpanded(1)).toBe(false);
+  });
+
 });
 
 function createComponent() {

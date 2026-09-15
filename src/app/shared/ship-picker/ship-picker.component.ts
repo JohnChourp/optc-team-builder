@@ -29,6 +29,19 @@ interface ShipPickerCardView {
   ship: ShipRecord | null;
   shipId: number | null;
   subtitle: string;
+  /**
+   * 869f135rf. Whether `subtitle` is a cut-off version of the real effect.
+   *
+   * Measured 2026-09-15: 44 of 66 ships - 66% - have a description longer than
+   * the 132-character cap, median 188 and max 500. The hidden half is where the
+   * differentiating detail lives: Gran Tesoro's card stops mid-word at
+   * "[RAINBOW..." and never mentions the HP boost or the conditional ATK. A ship
+   * is the one team slot with no detail page and no comparison, so the effect
+   * text IS the choice - and two thirds of it was being made on a sentence
+   * fragment.
+   */
+  isTruncated: boolean;
+  fullEffect: string;
   supportLabel: string | null;
   thumbUrl: string | null;
   title: string;
@@ -85,6 +98,24 @@ export class ShipPickerComponent implements OnChanges {
   public readonly favoriteShipIdsState = signal<number[]>([]);
   public readonly blockedFavoriteShipIdsState = signal<number[]>([]);
   public readonly shipSupportLabelsState = signal<Record<number, string>>({});
+  /** Ships whose full effect the reader has asked to see, while choosing. */
+  public readonly expandedShipIds = signal<readonly number[]>([]);
+
+  public isShipExpanded(shipId: number | null): boolean {
+    return shipId !== null && this.expandedShipIds().includes(shipId);
+  }
+
+  public toggleShipEffect(shipId: number | null, event: Event): void {
+    event.stopPropagation();
+
+    if (shipId === null) {
+      return;
+    }
+
+    this.expandedShipIds.update((ids) =>
+      ids.includes(shipId) ? ids.filter((id) => id !== shipId) : [...ids, shipId],
+    );
+  }
   public readonly workingShipId = signal<number | null>(null);
   /**
    * 869f1327r. The one genuine gap in the favourites sweep.
@@ -110,6 +141,8 @@ export class ShipPickerComponent implements OnChanges {
         shipId: null,
         ship: null,
         title: this.emptySelectionLabel,
+        fullEffect: '',
+        isTruncated: false,
         subtitle: this.emptySelectionCopy,
         supportLabel: null,
         thumbUrl: null,
@@ -149,6 +182,8 @@ export class ShipPickerComponent implements OnChanges {
         shipId: null,
         ship: null,
         title: this.emptySelectionLabel,
+        fullEffect: '',
+        isTruncated: false,
         subtitle: this.emptySelectionCopy,
         supportLabel: null,
         thumbUrl: null,
@@ -271,6 +306,10 @@ export class ShipPickerComponent implements OnChanges {
       shipId,
       ship,
       title: ship?.name ?? this.emptySelectionLabel,
+      fullEffect: ship?.description ?? '',
+      isTruncated: Boolean(
+        ship && truncateSubtitle && this.buildShipSubtitle(ship.description) !== ship.description,
+      ),
       subtitle: ship
         ? truncateSubtitle
           ? this.buildShipSubtitle(ship.description)

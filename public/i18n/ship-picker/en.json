@@ -18,5 +18,9 @@
     "emptyState": "Confirm to keep the empty ship selection.",
     "shipReady": "This ship will be applied when you confirm.",
     "title": "Selected ship"
+  },
+  "card": {
+    "showFullEffect": "Show full effect",
+    "hideFullEffect": "Show less"
   }
 }
