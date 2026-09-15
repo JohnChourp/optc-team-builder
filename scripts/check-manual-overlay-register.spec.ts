@@ -10,6 +10,7 @@ import {
   countEntries,
   findSupersededShipOverrides,
   findTwinDivergence,
+  findUnmarkedProvenance,
   parseShipThumbs,
 } from './check-manual-overlay-register.mjs';
 
@@ -121,6 +122,52 @@ describe('compareWithRegister', () => {
     const result = compareWithRegister({ overlays: [{ file: 'gone.json' }], notOverlays: [] }, []);
 
     expect(result.missingFromDisk).toEqual(['gone.json']);
+  });
+});
+
+
+describe('findUnmarkedProvenance', () => {
+  /*
+   * 869f135rg. The subtask asked for a three-state provenance marker on the
+   * character card. Measured 2026-09-15: both character-data overlays are `{}`,
+   * and manual-characters.json has not changed since 2026-04-24, when the prune
+   * shipped and emptied it - the prune runs at every import, so the middle state
+   * has had zero instances for five months and is actively kept there.
+   *
+   * Built today it would render "upstream" on 4,618 cards and its one useful
+   * state would never appear. This is the tripwire instead.
+   */
+  it('stays quiet while both overlays are empty, which is the state today', () => {
+    expect(
+      findUnmarkedProvenance(
+        { 'builder-ability-corrections.json': 0, 'manual-characters.json': 0 },
+        'no marker anywhere',
+      ),
+    ).toEqual([]);
+  });
+
+  it('fires the moment a character-data overlay gains an entry', () => {
+    expect(
+      findUnmarkedProvenance({ 'manual-characters.json': 1 }, 'no marker anywhere'),
+    ).toEqual(['manual-characters.json']);
+  });
+
+  it('names the builder-ability overlay too, not only manual characters', () => {
+    expect(
+      findUnmarkedProvenance({ 'builder-ability-corrections.json': 3 }, 'no marker anywhere'),
+    ).toEqual(['builder-ability-corrections.json']);
+  });
+
+  it('stays quiet once the marker exists, so it cannot nag after the work is done', () => {
+    expect(
+      findUnmarkedProvenance({ 'manual-characters.json': 1 }, 'const dataProvenance = ...'),
+    ).toEqual([]);
+  });
+
+  it('ignores an overlay it does not govern - images are not a number that looks wrong', () => {
+    expect(
+      findUnmarkedProvenance({ 'character-image-overrides.json': 44 }, 'no marker anywhere'),
+    ).toEqual([]);
   });
 });
 
