@@ -14,7 +14,7 @@
     "browsers": {
       "title": "Browsers",
       "rows": {
-        "tested": "Every release is tested automatically on all three major browser engines, not just one.",
+        "tested": "The app is tested on all three major browser engines, not just one.",
         "engines": "Chromium covers Chrome, Edge and Opera. Firefox is its own engine. WebKit is what Safari uses — and what every browser on iPhone uses, whichever one you install.",
         "reporting": "If something looks wrong in your browser, it is worth reporting: a rendering problem on one engine is a real bug here, not something you are expected to work around."
       }

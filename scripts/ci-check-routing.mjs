@@ -276,6 +276,18 @@ export const SCRIPT_SUITES = {
     command: 'npm run test:component-inventory',
   },
   /*
+   * 869f17h7w / 869f17h7a. Support levels are defined by CADENCE so they can be
+   * checked: `verified` means something runs with nobody watching. All three
+   * engines have identical coverage in content; only Chromium is exercised
+   * without somebody deciding to. The lane also refuses a cadence promise in the
+   * player-facing copy that the ladder does not support - the defect that shipped
+   * in v0.4.40.
+   */
+  'support-ladder': {
+    label: 'Platform support ladder tests',
+    command: 'npm run test:support-ladder',
+  },
+  /*
    * The TypeScript half of `audit:dead-code`, and deliberately only that half.
    *
    * The two scripts are near-identical in name and are not the same check:
@@ -450,6 +462,23 @@ function isWorkflowBudgetPath(filePath) {
  */
 function alsoAffectsSupportClaims(filePath) {
   return filePath === 'ngsw-config.json' || filePath === 'playwright.config.ts';
+}
+
+
+/*
+ * There is deliberately NO rule adding `support-ladder` for `playwright.config.ts`
+ * or `.github/workflows/`, even though the ladder reads both. Measured: each of
+ * those paths already fails closed to the FULL plan, which runs every suite, so
+ * such a rule can never add anything. An inert routing rule reads as meaningful
+ * and is not - it was written here, measured, and removed.
+ */
+function isSupportLadderPath(filePath) {
+  return (
+    filePath === 'scripts/check-support-ladder.mjs' ||
+    filePath === 'scripts/check-support-ladder.spec.ts' ||
+    filePath === 'scripts/support-ladder.mjs' ||
+    filePath === 'docs/platform-support-ladder.md'
+  );
 }
 
 function isComponentInventoryPath(filePath) {
@@ -1081,6 +1110,12 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
     if (alsoAffectsSupportClaims(filePath)) {
       addScriptSuite(scriptSuites, 'support-claims');
       /* deliberately no `continue`: the owning suite still gets this file */
+    }
+
+    if (isSupportLadderPath(filePath)) {
+      categories.add('support-ladder');
+      addScriptSuite(scriptSuites, 'support-ladder');
+      continue;
     }
 
     if (isComponentInventoryPath(filePath)) {
