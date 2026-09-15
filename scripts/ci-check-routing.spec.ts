@@ -294,6 +294,7 @@ describe('ci-check-routing', () => {
       'support-ladder',
       'scripts-inventory',
       'dead-code',
+      'i18n-greek-coverage',
       'component-style-budget',
       'unused-members',
       'worker-bundling',
@@ -361,8 +362,16 @@ describe('ci-check-routing', () => {
      * namespace folder is exactly when the ownership map changes, and a map
      * that is only checked when its own script changes is a map that goes
      * stale. Both lanes run; neither replaces the other.
+     *
+     * 869f135rx adds a third for the same reason: `i18n-regression` asserts Greek
+     * script only on the routes it names, so editing a namespace it does not name
+     * would otherwise reach no Greek-script check at all.
      */
-    expect(plan.scriptSuites).toEqual(['i18n-ownership', 'i18n-regression']);
+    expect(plan.scriptSuites).toEqual([
+      'i18n-ownership',
+      'i18n-regression',
+      'i18n-greek-coverage',
+    ]);
   });
 
   it('routes branch cleanup report changes to the focused suite and docs gates', () => {
