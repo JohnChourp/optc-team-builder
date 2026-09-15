@@ -31,15 +31,11 @@ const PRODUCER_PATHS = [
  * reports it loudly every run rather than absorbing it into silence. A field with neither a
  * consumer, a spec-only reason, nor an entry here still fails the lane.
  */
-export const DECLARED_OPEN_QUESTIONS = Object.freeze({
-  regionArtwork: {
-    task: '869f13288',
-    question:
-      "`region_json` is now fully derivable from `assets_json` - every one of its three booleans is `Boolean(assets.<same field>)` - and the availability promise that made it look valuable moved to `region_release_json` in 869f13284. Keep it as a cheap denormalisation, or drop the column? Raised with the owner on 2026-09-15; not deleted, because a column removal is a schema change and the owner's call.",
-  },
-});
+export const DECLARED_OPEN_QUESTIONS = Object.freeze({});
 
 export const DECLARED_SPEC_ONLY_FIELDS = Object.freeze({
+  regionArtwork:
+    "OWNER DECISION, 2026-09-15: keep it, do not delete it. The census raised this at the close of 869f13288 - `region_json` is fully derivable from `assets_json` (every one of its three booleans is `Boolean(assets.<same field>)`) and the availability promise that made it look valuable moved to `region_release_json` in 869f13284, leaving it with no product consumer. The owner chose to keep the column rather than pay a schema change to remove a denormalisation that costs almost nothing. It stays declared here so a future sweep reads a decision instead of rediscovering the question.",
   starsLabel:
     "The upstream display string for rarity, kept beside the numeric `stars` because a handful of units render a non-numeric label. Specs pin the pairing; the templates bind `stars`.",
 });

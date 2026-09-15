@@ -52,6 +52,7 @@ import {
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { OptcbxImportService } from '../../core/services/optcbx-import.service';
 import { UserStateService } from '../../core/services/user-state.service';
+import { resolveCharacterRegionStatus } from '../../core/services/character-region.utils';
 import {
   cloneAbilityFilterTagSetSelection,
   createEmptyAbilityFilterTagSetSelection,
@@ -104,6 +105,15 @@ interface CharacterCatalogCardView {
   detailLink: string[];
   isFavorite: boolean;
   favoriteAriaLabel: string;
+  /**
+   * 869f1327j. The out-of-region label, or null when there is nothing honest to say.
+   *
+   * Null covers two different cases on purpose: the reader has not told us which version they play
+   * (so no unit is out of region), and upstream holds no release row for this unit (so we do not
+   * know). Neither may render a badge - a marker that appears when we are guessing is worse than
+   * no marker at all, which is the defect 869f13284 removed.
+   */
+  regionBadgeLabel: string | null;
 }
 
 @Component({
@@ -169,6 +179,8 @@ export class CharactersPage implements OnInit {
   public readonly characterTagCharacterIds = signal<number[] | undefined>(undefined);
   public readonly displayMode = signal<CharacterDisplayMode>('compact');
   public readonly favoriteIds;
+  public readonly gameRegionPreference;
+  public readonly recentCharacterIds;
   public readonly canDownloadFavoritesExport = computed(() => this.favoriteIds().length > 0);
   public readonly canClearAllFavorites = computed(() => this.favoriteIds().length > 0);
   public readonly importModalOpen = signal(false);
@@ -370,9 +382,48 @@ export class CharactersPage implements OnInit {
           { name: character.name },
           'characters',
         ),
+        regionBadgeLabel:
+          resolveCharacterRegionStatus(character.regionRelease, this.gameRegionPreference()) ===
+          'out-of-region'
+            ? this.i18n.translate('region.japanOnly', undefined, 'characters')
+            : null,
       };
     }),
   );
+  /**
+   * 869f1327d. The Recently viewed strip.
+   *
+   * `recentCharacterIds` had been written on every character-detail load since it was added and
+   * read by nothing - zero consumers outside the service that writes it. This is the surface that
+   * spends it.
+   *
+   * Built from the catalogue rather than from the stored ids alone, so a unit that has left the
+   * dataset between the visit and now simply drops out of the strip instead of rendering a hole.
+   * Order is the stored order, which is most-recent-first, and it is preserved rather than sorted -
+   * that ordering IS the signal.
+   */
+  public readonly recentCardViews = computed<CharacterCatalogCardView[]>(() => {
+    const byId = this.characterCatalogCache.catalogById();
+    const preference = this.gameRegionPreference();
+
+    return this.recentCharacterIds()
+      .map((characterId) => byId.get(characterId))
+      .filter((character): character is CharacterListItem => Boolean(character))
+      .map((character) => ({
+        character,
+        detailLink: ['/characters', character.id.toString()],
+        isFavorite: this.isFavorite(character.id),
+        favoriteAriaLabel: this.i18n.translate(
+          this.isFavorite(character.id) ? 'favorites.removeAria' : 'favorites.addAria',
+          { name: character.name },
+          'characters',
+        ),
+        regionBadgeLabel:
+          resolveCharacterRegionStatus(character.regionRelease, preference) === 'out-of-region'
+            ? this.i18n.translate('region.japanOnly', undefined, 'characters')
+            : null,
+      }));
+  });
   public readonly hideFavoritesSupportLabel = computed(() =>
     this.favoriteIds().length
       ? this.i18n.translate(
@@ -411,10 +462,16 @@ export class CharactersPage implements OnInit {
     private readonly route: ActivatedRoute,
   ) {
     this.favoriteIds = this.userState.favoriteCharacterIds;
+    this.gameRegionPreference = this.userState.gameRegionPreference;
+    this.recentCharacterIds = this.userState.recentCharacterIds;
   }
 
   public async ngOnInit(): Promise<void> {
-    await this.userState.readyFavoriteCharacterIds();
+    await Promise.all([
+      this.userState.readyFavoriteCharacterIds(),
+      this.userState.readyGameRegionPreference(),
+      this.userState.readyRecentCharacterIds(),
+    ]);
     const [summary, abilityCatalog] = await Promise.all([
       this.repository.getDatasetManifest(),
       this.repository.getAutoBuilderAbilityCatalog().catch(() => null),
@@ -678,6 +735,10 @@ export class CharactersPage implements OnInit {
     const payload = buildOptcbxFavoritesExportPayload(favoriteIds, favoriteCharacters);
 
     downloadOptcbxFavoritesExport(payload);
+  }
+
+  public async clearRecents(): Promise<void> {
+    await this.userState.clearAllRecentCharacterIds();
   }
 
   public async toggleFavorite(characterId: number, event: Event): Promise<void> {

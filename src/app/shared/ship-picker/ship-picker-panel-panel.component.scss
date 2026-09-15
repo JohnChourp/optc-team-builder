@@ -39,6 +39,29 @@
   padding-inline: 0;
 }
 
+/*
+ * 869f1327r. Deliberately the same shape as `.character-filter-toggle` on the character pickers:
+ * the whole point of this control is that a reader meets the SAME affordance wherever they choose,
+ * so it must not look like a different feature that happens to do the same thing.
+ */
+.ship-picker-favorites-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 43px;
+  margin-top: 12px;
+  padding: 4px 8px 4px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.ship-picker-favorites-toggle--active {
+  border-color: rgba(245, 200, 76, 0.48);
+  background: rgba(245, 200, 76, 0.12);
+}
+
 .ship-picker-empty {
   display: grid;
   justify-items: center;

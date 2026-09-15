@@ -26,6 +26,7 @@ import {
   type ProgressionDisplayCard,
 } from './character-progression.presenter';
 import { UserStateService } from '../../core/services/user-state.service';
+import { resolveCharacterRegionStatus } from '../../core/services/character-region.utils';
 import {
   buildCharacterOverridesTransferPayload,
   downloadCharacterOverridesExport,
@@ -80,6 +81,19 @@ class CharacterOverrideTransferError extends Error {
 })
 export class CharacterDetailPage implements OnInit {
   public readonly character = signal<CharacterDetailRecord | null>(null);
+  /**
+   * 869f1327j. The out-of-region label, or null when there is nothing honest to say - see the
+   * identical rule on the catalogue card. Null when the reader has named no version, and null when
+   * upstream holds no release row for this unit.
+   */
+  public readonly regionBadgeLabel = computed<string | null>(() =>
+    resolveCharacterRegionStatus(
+      this.character()?.regionRelease,
+      this.userState.gameRegionPreference(),
+    ) === 'out-of-region'
+      ? this.i18n.translate('region.japanOnly', undefined, 'character-detail')
+      : null,
+  );
   public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
   public readonly rumbleBasedOnName = signal<string | null>(null);
   /** 869f1935z. Sockets, cooldown, evolution chain and drop sources for the character on screen. */
@@ -133,7 +147,10 @@ export class CharacterDetailPage implements OnInit {
       return;
     }
 
-    await this.userState.readyFavoriteCharacterIds();
+    await Promise.all([
+      this.userState.readyFavoriteCharacterIds(),
+      this.userState.readyGameRegionPreference(),
+    ]);
     const [abilityCatalog] = await Promise.all([
       this.repository.getAutoBuilderAbilityCatalog().catch(() => null),
       this.loadCharacter(characterId, true),

@@ -10,6 +10,7 @@ vi.mock('@ionic/angular', () => ({
   IonIcon: class {},
   IonModal: class {},
   IonSearchbar: class {},
+  IonToggle: class {},
 }));
 vi.mock('@ionic/angular/ion-button', () => ({
   IonButton: class {},
@@ -141,6 +142,59 @@ describe('ShipPickerComponent', () => {
 
     expect(component.selectedCard().isFavoriteToggleBlocked).toBe(true);
     expect(emitSpy).not.toHaveBeenCalled();
+  });
+
+  /**
+   * 869f1327r. The gap the sweep found: every other character or ship picker could already narrow
+   * to favourites, and this one could only ADD to them. A favourites set the reader can build but
+   * not use from where they are choosing is one they stop trusting everywhere.
+   */
+  it('narrows to favourite ships when the filter is on', () => {
+    const component = createComponent();
+    component.favoriteShipIds = [9002];
+    component.isOpen = true;
+    component.ngOnChanges({
+      isOpen: new SimpleChange(false, true, true),
+      ships: new SimpleChange([], component.ships, true),
+      favoriteShipIds: new SimpleChange([], component.favoriteShipIds, true),
+    });
+
+    expect(component.filteredShipCards().map((card) => card.shipId)).toEqual([null, 9001, 9002]);
+
+    component.onFavoritesOnlyChange({ detail: { checked: true } } as never);
+
+    expect(component.filteredShipCards().map((card) => card.shipId)).toEqual([null, 9002]);
+  });
+
+  /**
+   * The "no ship" card is how a reader CLEARS a selection, so it survives the filter. Without it
+   * the empty state would be a dead end rather than something they can back out of.
+   */
+  it('keeps the clear-selection card and explains itself when no ship is a favourite', () => {
+    const component = createComponent();
+    component.favoriteShipIds = [];
+    component.isOpen = true;
+    component.ngOnChanges({
+      isOpen: new SimpleChange(false, true, true),
+      ships: new SimpleChange([], component.ships, true),
+      favoriteShipIds: new SimpleChange([], component.favoriteShipIds, true),
+    });
+    component.onFavoritesOnlyChange({ detail: { checked: true } } as never);
+
+    expect(component.filteredShipCards().map((card) => card.shipId)).toEqual([null]);
+    expect(component.favoritesOnlyIsEmpty()).toBe(true);
+  });
+
+  it('is not an empty state merely because a search found nothing', () => {
+    const component = createComponent();
+    component.isOpen = true;
+    component.ngOnChanges({
+      isOpen: new SimpleChange(false, true, true),
+      ships: new SimpleChange([], component.ships, true),
+    });
+    component.onSearchChange({ detail: { value: 'no such ship' } } as never);
+
+    expect(component.favoritesOnlyIsEmpty()).toBe(false);
   });
 
   it('does not emit blocked ship selections on save', () => {

@@ -61,6 +61,18 @@ import {
 const FAVORITES_KEY = 'favoriteCharacterIds';
 const FAVORITE_SHIPS_KEY = 'favoriteShipIds';
 const RECENTS_KEY = 'recentCharacterIds';
+/**
+ * 869f1327d. How many recently-viewed characters are kept.
+ *
+ * 24 was a bare literal inside `markRecent` with no reason beside it, and the subtask asked for it
+ * to be justified or named. It is named, and the reason is the surface that spends it: the
+ * Recently viewed strip on the characters catalogue is a horizontal row of thumbnails, and 24 is
+ * comfortably more than fills one on a desktop width while staying small enough that the whole
+ * list is one cheap `Preferences` write on every character view. It is not a meaningful cap on
+ * anything the reader can perceive - if the strip ever grows a "see all" surface, this is the
+ * number to revisit.
+ */
+export const RECENT_CHARACTER_LIMIT = 24;
 const CHARACTER_BOXES_KEY = 'characterBoxes';
 const SAVED_TEAMS_KEY = 'savedTeams';
 const SAVED_ENEMIES_KEY = 'savedEnemies';
@@ -873,10 +885,16 @@ export class UserStateService {
     const next = [
       characterId,
       ...this.recentCharacterIds().filter((value) => value !== characterId),
-    ].slice(0, 24);
+    ].slice(0, RECENT_CHARACTER_LIMIT);
 
     this.recentCharacterIds.set(next);
     await this.persistJson(RECENTS_KEY, next);
+  }
+
+  public async clearAllRecentCharacterIds(): Promise<void> {
+    await this.readyRecentCharacterIds();
+    this.recentCharacterIds.set([]);
+    await this.persistJson(RECENTS_KEY, []);
   }
 
   public async saveTeam(

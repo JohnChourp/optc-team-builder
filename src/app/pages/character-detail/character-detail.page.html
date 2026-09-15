@@ -42,6 +42,9 @@
                 @if (current.isIncomplete) {
                   <span class="status-badge">{{ t('status.incomplete') }}</span>
                 }
+                @if (regionBadgeLabel()) {
+                  <span class="status-badge status-badge--region">{{ regionBadgeLabel() }}</span>
+                }
                 <p class="section-copy">
                   {{
                     t('hero.summary', {

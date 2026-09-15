@@ -50,6 +50,13 @@
   text-transform: uppercase;
 }
 
+/* 869f1327j. A fact, not a warning - see the matching rule on the catalogue card. */
+.status-badge--region {
+  border-color: rgba(108, 178, 255, 0.44);
+  background: rgba(18, 58, 122, 0.24);
+  color: #a9d0ff;
+}
+
 .hero-actions {
   display: flex;
   flex-wrap: wrap;

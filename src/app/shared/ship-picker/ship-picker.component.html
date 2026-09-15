@@ -56,7 +56,25 @@
                   (ionInput)="onSearchChange($event)"
                 ></ion-searchbar>
 
-                @if (!filteredShipCards().length) {
+                <label
+                  class="ship-picker-favorites-toggle"
+                  [class.ship-picker-favorites-toggle--active]="favoritesOnly()"
+                >
+                  <span>{{ t('catalog.favoritesOnly') }}</span>
+                  <ion-toggle
+                    color="warning"
+                    [attr.aria-label]="t('catalog.favoritesOnly')"
+                    [checked]="favoritesOnly()"
+                    (ionChange)="onFavoritesOnlyChange($event)"
+                  ></ion-toggle>
+                </label>
+
+                @if (favoritesOnlyIsEmpty()) {
+                  <div class="ship-picker-empty">
+                    <strong>{{ t('catalog.favoritesOnlyEmptyTitle') }}</strong>
+                    <p>{{ t('catalog.favoritesOnlyEmptyCopy') }}</p>
+                  </div>
+                } @else if (!filteredShipCards().length) {
                   <div class="ship-picker-empty">
                     <strong>{{ t('catalog.emptyTitle') }}</strong>
                     <p>{{ t('catalog.emptyCopy') }}</p>

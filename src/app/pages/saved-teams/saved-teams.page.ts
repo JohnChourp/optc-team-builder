@@ -87,6 +87,7 @@ import {
   toStoredAbilityIds,
   toStoredTagSetSelection,
 } from './saved-teams-view-state.utils';
+import { buildSavedTeamEnemyLinkIndex } from './saved-team-enemy-links.utils';
 import { UserStateService } from '../../core/services/user-state.service';
 import { applyIonicModalDialogLabel } from '../../shared/a11y/ionic-modal-dialog-label.utils';
 import { copyTextToClipboard } from '../../shared/clipboard/clipboard-copy.utils';
@@ -293,6 +294,14 @@ export class SavedTeamsPage implements OnInit {
   /** The team just imported, so the card can confirm it rather than looking inert. */
   public readonly publishedImportedId = signal<string | null>(null);
   public readonly savedTeamCards = signal<SavedTeamPreviewCard[]>([]);
+  /**
+   * 869f1327n. Which saved enemies each team answers, read backwards out of the enemies themselves.
+   *
+   * Not stored on the team: one relationship, one writer. See `saved-team-enemy-links.utils.ts`.
+   */
+  public readonly savedTeamEnemyLinks = computed(() =>
+    buildSavedTeamEnemyLinkIndex(this.userState.savedEnemies()),
+  );
   /**
    * Flat mirror of the tag sets, kept so anything still holding the legacy
    * per-origin id lists keeps working and so a stored list can be seeded into

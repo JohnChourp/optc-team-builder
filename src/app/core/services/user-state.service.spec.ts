@@ -4,7 +4,7 @@ import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { BUILT_IN_CREW_FORGE_IMAGE_PROFILES } from '../data/crew-forge-built-in-profiles';
 import { BrowserStoragePersistenceError } from './browser-storage-error.utils';
 import { type PreferencesAdapterService } from './preferences-adapter.service';
-import { UserStateService } from './user-state.service';
+import { RECENT_CHARACTER_LIMIT, UserStateService } from './user-state.service';
 
 let preferences: { get: ReturnType<typeof vi.fn>; set: ReturnType<typeof vi.fn> };
 
@@ -16,6 +16,86 @@ describe('UserStateService saved teams', () => {
       get: vi.fn().mockResolvedValue({ value: null }),
       set: vi.fn().mockResolvedValue(undefined),
     };
+  });
+
+  /**
+   * 869f1327d. `markRecent` had been writing this list on every character-detail load since it was
+   * added, with no consumer and no test over its ordering. The Recently viewed strip renders it in
+   * stored order, so the order IS the behaviour.
+   */
+  describe('recently viewed characters', () => {
+    const createService = () => {
+      const store = new Map<string, string>();
+
+      preferences.get.mockImplementation(async ({ key }: { key: string }) => ({
+        value: store.get(key) ?? null,
+      }));
+      preferences.set.mockImplementation(async ({ key, value }: { key: string; value: string }) => {
+        store.set(key, value);
+      });
+
+      return new UserStateService(
+        { translate: vi.fn((key: string) => key) } as never,
+        preferences as unknown as PreferencesAdapterService,
+      );
+    };
+
+    it('keeps the most recently opened character first', async () => {
+      const service = createService();
+
+      await service.markRecent(101);
+      await service.markRecent(202);
+      await service.markRecent(303);
+
+      expect(service.recentCharacterIds()).toEqual([303, 202, 101]);
+    });
+
+    it('moves a re-opened character to the front instead of repeating it', async () => {
+      const service = createService();
+
+      await service.markRecent(101);
+      await service.markRecent(202);
+      await service.markRecent(101);
+
+      expect(service.recentCharacterIds()).toEqual([101, 202]);
+    });
+
+    it('drops the oldest beyond the limit rather than growing without bound', async () => {
+      const service = createService();
+
+      for (let index = 1; index <= RECENT_CHARACTER_LIMIT + 5; index += 1) {
+        await service.markRecent(index);
+      }
+
+      const recents = service.recentCharacterIds();
+
+      expect(recents).toHaveLength(RECENT_CHARACTER_LIMIT);
+      expect(recents[0]).toBe(RECENT_CHARACTER_LIMIT + 5);
+      expect(recents).not.toContain(1);
+    });
+
+    it('survives a reload, because the list is persisted and not only held in memory', async () => {
+      const service = createService();
+
+      await service.markRecent(101);
+      await service.markRecent(202);
+
+      expect(preferences.set).toHaveBeenCalledWith(
+        expect.objectContaining({ key: 'recentCharacterIds', value: JSON.stringify([202, 101]) }),
+      );
+    });
+
+    it('clears to empty and persists the empty list', async () => {
+      const service = createService();
+
+      await service.markRecent(101);
+      await service.clearAllRecentCharacterIds();
+
+      expect(service.recentCharacterIds()).toEqual([]);
+      expect(preferences.set).toHaveBeenLastCalledWith(
+        expect.objectContaining({ key: 'recentCharacterIds', value: JSON.stringify([]) }),
+      );
+    });
   });
 
   it('hydrates only requested domains until full ready is requested', async () => {

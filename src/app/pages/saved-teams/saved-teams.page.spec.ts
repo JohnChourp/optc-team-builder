@@ -752,7 +752,19 @@ describe('SavedTeamsPage', () => {
     expect(template).toContain("t('abilityFilters.title')");
     expect(template).not.toContain('toggleAbilityFilter(');
     expect(template).not.toContain("t('hero.savedEnemiesCta')");
-    expect(template).not.toContain('[routerLink]="[\'/tabs/saved-enemies\']"');
+    /*
+     * 869f1327n. This pair guarded the removal of the HERO call-to-action to Saved Enemies, added
+     * by 766b2b36's drawer navigation. The second assertion matched the bare route and so also
+     * forbade any future link to that page - which the per-team "Built for:" link now legitimately
+     * is. Narrowed to the thing it was standing in for rather than deleted: a hero CTA is a link
+     * with no query params sitting in the hero block, and the per-team link always carries an
+     * enemyId.
+     */
+    expect(template).not.toMatch(
+      /\[routerLink\]="\['\/tabs\/saved-enemies'\]"(?![\s\S]{0,120}queryParams)/u,
+    );
+    expect(template).toContain('[queryParams]="{ enemyId: link.enemyId }"');
+    expect(template).toContain("t('enemyLinks.label')");
     expect(template).toContain('import-dropzone');
     expect(template).toContain('import-paste-panel');
     expect(template).toContain('importPastedTeams()');

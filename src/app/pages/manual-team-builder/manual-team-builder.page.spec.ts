@@ -27,6 +27,8 @@ vi.mock('@ionic/angular', () => ({
   IonSearchbar: class {},
   IonSelect: class {},
   IonTextarea: class {},
+  // 869f1327r. This page hosts the ship picker, which gained a Favourites-only toggle.
+  IonToggle: class {},
 }));
 vi.mock('@ionic/angular/ion-button', () => ({
   IonButton: class {},

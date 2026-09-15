@@ -377,6 +377,20 @@
                     <div class="saved-team-copy">
                       <strong>{{ teamCard.team.name }}</strong>
                       <p>{{ teamCard.team.notes || ('common.defaults.noNotesYet' | transloco) }}</p>
+                      @if (savedTeamEnemyLinks().get(teamCard.team.id); as enemyLinks) {
+                        <p class="saved-team-enemy-links">
+                          <span>{{ t('enemyLinks.label') }}</span>
+                          @for (link of enemyLinks; track link.enemyId) {
+                            <a
+                              class="saved-team-enemy-links__item"
+                              [routerLink]="['/tabs/saved-enemies']"
+                              [queryParams]="{ enemyId: link.enemyId }"
+                            >
+                              {{ link.enemyName }}
+                            </a>
+                          }
+                        </p>
+                      }
                     </div>
                     <div class="saved-team-actions">
                       <ion-button

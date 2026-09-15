@@ -156,6 +156,39 @@
             </div>
           </section>
 
+          @if (recentCardViews().length) {
+            <section class="glass-card recents-card">
+              <div class="recents-card__head">
+                <h2>{{ t('recents.title') }}</h2>
+                <button type="button" class="recents-card__clear" (click)="clearRecents()">
+                  {{ t('recents.clear') }}
+                </button>
+              </div>
+              <p class="section-copy">{{ t('recents.copy') }}</p>
+              <div class="recents-strip">
+                @for (card of recentCardViews(); track card.character.id) {
+                  <a
+                    class="recents-strip__item"
+                    [routerLink]="card.detailLink"
+                    [attr.aria-label]="card.character.name"
+                    [title]="card.character.name"
+                  >
+                    <img
+                      [src]="card.character.imageUrl"
+                      [alt]="card.character.name"
+                      loading="lazy"
+                    />
+                    @if (card.regionBadgeLabel) {
+                      <span class="character-status-badge character-status-badge--region">
+                        {{ card.regionBadgeLabel }}
+                      </span>
+                    }
+                  </a>
+                }
+              </div>
+            </section>
+          }
+
           @if (loading()) {
             <section class="loading-card glass-card">
               <ion-spinner name="crescent"></ion-spinner>
@@ -221,6 +254,11 @@
                           <h2>{{ card.character.name }}</h2>
                           @if (card.character.isIncomplete) {
                             <span class="character-status-badge">{{ t('status.incomplete') }}</span>
+                          }
+                          @if (card.regionBadgeLabel) {
+                            <span class="character-status-badge character-status-badge--region">
+                              {{ card.regionBadgeLabel }}
+                            </span>
                           }
                         </div>
                         <button
