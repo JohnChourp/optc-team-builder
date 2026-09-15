@@ -5,6 +5,7 @@ import {
   countConsumers,
   findCensusFailures,
   parseCharacterColumns,
+  parseColumnParseRules,
   parseColumnToFieldMap,
 } from './lib/dataset-consumers.mjs';
 import { readCensus } from './generate-dataset-consumers.mjs';
@@ -87,6 +88,14 @@ describe('countConsumers', () => {
 describe('findCensusFailures', () => {
   const census = (fields: unknown[]) => ({ fields }) as never;
 
+  it('fails a column with no recorded parse rule', () => {
+    const failures = findCensusFailures(
+      census([{ column: 'a_json', modelField: 'a', parseRule: null, verdict: 'read-by-product-code' }]),
+    );
+
+    expect(failures.join(' ')).toContain('no parse rule resolves');
+  });
+
   it('fails a column that resolves to no model field', () => {
     const failures = findCensusFailures(census([{ column: 'mystery_json', modelField: null }]));
 
@@ -95,7 +104,7 @@ describe('findCensusFailures', () => {
 
   it('fails a column nothing reads at all', () => {
     const failures = findCensusFailures(
-      census([{ column: 'a_json', modelField: 'a', verdict: 'read-by-nothing' }]),
+      census([{ column: 'a_json', modelField: 'a', parseRule: 'parseJson', verdict: 'read-by-nothing' }]),
     );
 
     expect(failures.join(' ')).toContain('Use it or stop importing it');
@@ -103,7 +112,7 @@ describe('findCensusFailures', () => {
 
   it('fails a spec-only column with no declared reason', () => {
     const failures = findCensusFailures(
-      census([{ column: 'b_json', modelField: 'b', verdict: 'read-only-by-specs' }]),
+      census([{ column: 'b_json', modelField: 'b', parseRule: 'parseJson', verdict: 'read-only-by-specs' }]),
     );
 
     expect(failures.join(' ')).toContain('record why');
@@ -116,6 +125,7 @@ describe('findCensusFailures', () => {
           {
             column: 'b_json',
             modelField: 'b',
+            parseRule: 'parseJson',
             verdict: 'read-only-by-specs',
             declaredReason: 'a deliberate probe',
           },
@@ -131,12 +141,56 @@ describe('findCensusFailures', () => {
           {
             column: 'c_json',
             modelField: 'c',
+            parseRule: 'parseJson',
             verdict: 'read-by-nothing',
             openQuestion: { task: '869f13288', question: 'keep or drop?' },
           },
         ]),
       ),
     ).toEqual([]);
+  });
+});
+
+describe('parseColumnParseRules', () => {
+  it('records the parse call and the default for a JSON column', () => {
+    const rules = parseColumnParseRules(
+      "      const classes = this.parseJson<string[]>(row['classes_json'], []);",
+    );
+
+    expect(rules.get('classes_json')).toEqual({ rule: 'parseJson', fallback: '[]' });
+  });
+
+  /**
+   * 869f1328m. A two-line lookahead silently truncated the three-field `region_json` default to
+   * two fields - a quietly-wrong record of exactly the kind this artifact exists to prevent. The
+   * reader balances braces instead.
+   */
+  it('reads a multi-line object default to balanced braces rather than a line count', () => {
+    const rules = parseColumnParseRules(
+      [
+        "      const artwork = this.parseJson<Artwork>(row['region_json'], {",
+        '        exactLocal: false,',
+        '        thumbnailGlobal: false,',
+        '        thumbnailJapan: false,',
+        '      });',
+      ].join('\n'),
+    );
+
+    expect(rules.get('region_json')?.fallback).toContain('thumbnailJapan: false');
+  });
+
+  it('records no default for a call that takes none, because that says the column is load-bearing', () => {
+    const rules = parseColumnParseRules("        id: Number(row['id']),");
+
+    expect(rules.get('id')).toEqual({ rule: 'Number', fallback: null });
+  });
+
+  it('calls a bare row read direct rather than inventing a parse call', () => {
+    const rules = parseColumnParseRules(
+      "        secondaryClass: row['secondary_class'] ? String(row['secondary_class']) : null,",
+    );
+
+    expect(rules.get('secondary_class')?.rule).toBe('direct');
   });
 });
 
@@ -155,6 +209,26 @@ describe('the shipped census', () => {
     expect(byColumn.get('region_release_json')?.modelField).toBe('regionRelease');
     expect(byColumn.get('region_release_json')?.verdict).toBe('read-by-product-code');
     expect(byColumn.get('region_json')?.modelField).toBe('regionArtwork');
+  });
+
+  /**
+   * 869f1328m. The default that matters most in the whole dataset: a seed written before
+   * `region_release_json` existed has no release data, and `false` there would state an absence as
+   * a fact for every one of its rows.
+   */
+  it('records the release default as null rather than false', () => {
+    const census = readCensus({ generatedAt: 'fixed' });
+    const release = census.fields.find((field) => field.column === 'region_release_json');
+
+    expect(release?.parseRule).toBe('parseJson');
+    expect(release?.parseFallback).toContain('availableOnGlobal: null');
+    expect(release?.parseFallback).not.toContain('false');
+  });
+
+  it('records a parse rule for every shipped column', () => {
+    const census = readCensus({ generatedAt: 'fixed' });
+
+    expect(census.fields.filter((field) => !field.parseRule)).toEqual([]);
   });
 });
 

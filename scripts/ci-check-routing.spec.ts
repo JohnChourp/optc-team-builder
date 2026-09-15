@@ -39,7 +39,12 @@ describe('ci-check-routing', () => {
     expect(plan.fullPlan).toBe(false);
     expect(plan.runAngular).toBe(true);
     expect(plan.runDatasetPerf).toBe(false);
-    expect(plan.scriptSuites).toEqual(['captain-contracts', 'source-data']);
+    /*
+     * 869f1328p. `ability-tags` joins these because the parser is what produces the tags, so a
+     * parser change is exactly when the catalogue's counts and phrasings can move. The enemy and
+     * naming lanes deliberately do NOT join: neither reads the parser.
+     */
+    expect(plan.scriptSuites).toEqual(['captain-contracts', 'ability-tags', 'source-data']);
   });
 
   it('routes source data inputs to validation instead of dataset performance only', () => {
@@ -246,6 +251,9 @@ describe('ci-check-routing', () => {
       'route-sitemap-coverage',
       'page-doc-coverage',
       'public-asset-shadowing',
+      'enemy-vocabulary',
+      'ability-tags',
+      'field-naming',
       'dataset-consumers',
       'security-config',
       'storage-keys',

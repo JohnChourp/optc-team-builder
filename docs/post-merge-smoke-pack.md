@@ -67,3 +67,12 @@ $CODEX_HOME/bin/ionic-android-live-serve-inspect --project ../optc-team-builder
 For ClickUp-backed OPTC work, save screenshots, device notes, and reports only
 under `../optc-team-builder-brain/live-artifacts/<task-id>/`; do not commit raw
 device captures to the app repo.
+
+## When `package.json` gains a lane
+
+Three of the scripts in `package.json` are lane entry points added by 869f1328b -
+`test:enemy-vocabulary`, `test:ability-tags` and `test:field-naming` - and each has a
+write-half counterpart (`dataset:enemy-vocabulary`, `dataset:ability-tags`) that a
+maintainer runs deliberately. None of them belongs in a smoke pass: they read committed
+artifacts and cost about a second each inside `npm run verify:local`, which is where they
+run. The smoke pack stays the fast confidence pass it was.
