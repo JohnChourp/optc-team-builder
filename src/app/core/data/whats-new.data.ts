@@ -31,6 +31,49 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.50',
+    date: '2026-09-15',
+    userVisible: true,
+    headline: {
+      en: 'The app now tells you what is happening when something goes wrong',
+      el: 'Η εφαρμογή σου λέει πλέον τι συμβαίνει όταν κάτι πάει στραβά',
+    },
+    summaryEn:
+      "This release is about the moments the app used to go quiet on you. Every error message now says the same three things: what happened, whether your data is safe, and the one thing to try - and \"your data is safe\" is the part that was never there before, so a full browser storage no longer leaves you wondering whether the teams you already saved survived. The app also knows when you are offline and says which parts keep working, the loading screen tells you what it is loading instead of showing a bare spinner, a Drive sync now says how much will be gone before you confirm it, and on Android a failed download says so instead of quietly offering the update again.",
+    summaryEl:
+      'Αυτή η έκδοση αφορά τις στιγμές που η εφαρμογή σιωπούσε. Κάθε μήνυμα σφάλματος λέει πλέον τα ίδια τρία πράγματα: τι έγινε, αν τα δεδομένα σου είναι ασφαλή, και το ένα πράγμα που μπορείς να δοκιμάσεις - και το «τα δεδομένα σου είναι ασφαλή» είναι το κομμάτι που δεν υπήρχε ποτέ, οπότε ένας γεμάτος αποθηκευτικός χώρος δεν σε αφήνει πια να αναρωτιέσαι αν οι ομάδες που είχες ήδη αποθηκεύσει σώθηκαν. Η εφαρμογή ξέρει επίσης πότε είσαι εκτός σύνδεσης και λέει τι συνεχίζει να δουλεύει, η οθόνη φόρτωσης λέει τι φορτώνει αντί για ένα σκέτο spinner, το Drive sync λέει πόσα θα χαθούν πριν το επιβεβαιώσεις, και στο Android ένα κατέβασμα που απέτυχε το λέει αντί να σου ξαναπροσφέρει σιωπηλά την ενημέρωση.',
+    added: [
+      {
+        en: "A notice that you are **offline**, at the top of any screen, listing what keeps working: your characters, teams, boxes and both builders. Google sign-in, Drive sync and images you have not opened before need a connection.",
+        el: 'Μια ειδοποίηση ότι είσαι **εκτός σύνδεσης**, στην κορυφή κάθε οθόνης, που λέει τι συνεχίζει να δουλεύει: οι χαρακτήρες, οι ομάδες, τα boxes και οι δύο builders. Η σύνδεση με Google, το Drive sync και οι εικόνες που δεν έχεις ξανανοίξει χρειάζονται δίκτυο.',
+      },
+      {
+        en: "**Show full effect** on each ship in the **ship picker**. Two thirds of ships had their effect cut off mid-sentence, and that text is the only thing telling two ships apart.",
+        el: 'Το **Δες όλο το effect** σε κάθε πλοίο στο **ship picker**. Στα δύο τρίτα των πλοίων το effect κοβόταν στη μέση της πρότασης, και αυτό το κείμενο είναι το μόνο που ξεχωρίζει δύο πλοία.',
+      },
+    ],
+    improved: [
+      {
+        en: "The **loading screen** now shows the app's name and what it is loading, instead of a spinner on a black screen. On a phone on mobile data the first thing you see arrives in well under a second, where before the screen stayed blank until the whole app was ready.",
+        el: 'Η **οθόνη φόρτωσης** δείχνει πλέον το όνομα της εφαρμογής και τι φορτώνει, αντί για ένα spinner σε μαύρη οθόνη. Σε κινητό με δεδομένα, το πρώτο πράγμα που βλέπεις εμφανίζεται πολύ κάτω από ένα δευτερόλεπτο, ενώ πριν η οθόνη έμενε κενή μέχρι να ετοιμαστεί όλη η εφαρμογή.',
+      },
+      {
+        en: "Every error message across the app now says what happened, **whether your data is safe**, and the one thing to try - in the same words on every screen.",
+        el: 'Κάθε μήνυμα σφάλματος σε όλη την εφαρμογή λέει πλέον τι έγινε, **αν τα δεδομένα σου είναι ασφαλή**, και το ένα πράγμα που μπορείς να δοκιμάσεις - με τα ίδια λόγια σε κάθε οθόνη.',
+      },
+      {
+        en: "The **Drive sync review** pop-up on the **Account** screen now says how many things will be gone from this device, right above the confirm button, and warns you when an action replaces everything on the device.",
+        el: 'Το αναδυόμενο παράθυρο **Drive sync review** στην οθόνη **Account** λέει πλέον πόσα θα χαθούν από αυτή τη συσκευή, ακριβώς πάνω από το κουμπί επιβεβαίωσης, και σε προειδοποιεί όταν μια ενέργεια αντικαθιστά τα πάντα στη συσκευή.',
+      },
+    ],
+    fixed: [
+      {
+        en: "On **Android**, an app update whose download failed used to go back to offering the update as if nothing had happened, while a browser opened on its own. The **update banner** now says the download stopped, that nothing on your device changed, and lets you choose the release page yourself.",
+        el: 'Στο **Android**, μια ενημέρωση που απέτυχε να κατέβει ξαναπρόσφερε την ενημέρωση σαν να μην είχε συμβεί τίποτα, ενώ άνοιγε μόνος του ένας browser. Η **μπάρα ενημέρωσης** λέει πλέον ότι το κατέβασμα σταμάτησε, ότι τίποτα στη συσκευή σου δεν άλλαξε, και σε αφήνει να διαλέξεις εσύ τη σελίδα της έκδοσης.',
+      },
+    ],
+  },
+  {
     version: '0.4.49',
     date: '2026-09-15',
     userVisible: true,
