@@ -15,7 +15,13 @@ import { SUPPORTED_SECTIONS } from './supported.data';
 const locales = ['en', 'el'] as const;
 
 function load(locale: (typeof locales)[number]): Record<string, unknown> {
-  return JSON.parse(readFileSync(`public/i18n/supported/${locale}.json`, 'utf8')).supported;
+  /*
+   * Flat at the root, like every other scope file: transloco is configured with
+   * `scopes.autoPrefixKeys`, so it adds the `supported.` prefix itself. Wrapping
+   * the file in a `supported` key made every lookup `supported.supported.*` and
+   * the page rendered raw keys while all of these tests passed.
+   */
+  return JSON.parse(readFileSync(`public/i18n/supported/${locale}.json`, 'utf8'));
 }
 
 function read(tree: Record<string, unknown>, dotted: string): unknown {
