@@ -255,6 +255,16 @@ export const SCRIPT_SUITES = {
     command: 'npm run test:locale-formatting',
   },
   /*
+   * 869f17h3g. The "What this app supports" screen promises a player which
+   * browsers are tested, what the Android app asks for, and what survives without
+   * a connection. Each of those is decided by a file somewhere else, so adding one
+   * permission would otherwise make the screen quietly untrue with nothing red.
+   */
+  'support-claims': {
+    label: 'Support claims tests',
+    command: 'npm run test:support-claims',
+  },
+  /*
    * The TypeScript half of `audit:dead-code`, and deliberately only that half.
    *
    * The two scripts are near-identical in name and are not the same check:
@@ -417,6 +427,27 @@ function isWorkflowBudgetPath(filePath) {
   return (
     filePath === 'scripts/check-github-workflow-budgets.mjs' ||
     filePath === 'scripts/check-github-workflow-budgets.spec.ts'
+  );
+}
+
+/**
+ * Files whose contents the supported screen quotes, but which another suite owns.
+ *
+ * Added to the plan without `continue`, because consuming them would take
+ * `ngsw-config.json` away from the PWA shell suite - which is exactly what an
+ * earlier version of this did, and `ci-check-routing.spec.ts` caught it.
+ */
+function alsoAffectsSupportClaims(filePath) {
+  return filePath === 'ngsw-config.json' || filePath === 'playwright.config.ts';
+}
+
+function isSupportClaimsPath(filePath) {
+  return (
+    filePath === 'scripts/check-support-claims.mjs' ||
+    filePath === 'scripts/check-support-claims.spec.ts' ||
+    filePath === 'android/app/src/main/AndroidManifest.xml' ||
+    filePath.startsWith('src/app/pages/supported/') ||
+    filePath.startsWith('public/i18n/supported/')
   );
 }
 
@@ -1025,6 +1056,17 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
     if (isWorkflowBudgetPath(filePath)) {
       categories.add('workflow-budgets');
       addScriptSuite(scriptSuites, 'workflow-budgets');
+      continue;
+    }
+
+    if (alsoAffectsSupportClaims(filePath)) {
+      addScriptSuite(scriptSuites, 'support-claims');
+      /* deliberately no `continue`: the owning suite still gets this file */
+    }
+
+    if (isSupportClaimsPath(filePath)) {
+      categories.add('support-claims');
+      addScriptSuite(scriptSuites, 'support-claims');
       continue;
     }
 

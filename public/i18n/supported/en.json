@@ -1,0 +1,49 @@
+{
+  "supported": {
+    "eyebrow": "Support",
+    "title": "What this app supports",
+    "summary": "An honest answer to what runs where, what keeps working without a connection, and where the character data comes from.",
+    "sections": {
+      "devices": {
+        "title": "Phones and computers",
+        "rows": {
+          "android": "On Android, install the app from its release page. It updates itself when a new version is out. It is not on Google Play, so your phone will ask you to allow the install once.",
+          "iphone": "On iPhone and iPad, open the site in Safari and add it to your home screen. That installed web app is the intended way to use this on iOS — there is no App Store version, and none is planned.",
+          "computer": "On a computer, open the site in any modern browser. Nothing to install."
+        }
+      },
+      "browsers": {
+        "title": "Browsers",
+        "rows": {
+          "tested": "Every release is tested automatically on all three major browser engines, not just one.",
+          "engines": "Chromium covers Chrome, Edge and Opera. Firefox is its own engine. WebKit is what Safari uses — and what every browser on iPhone uses, whichever one you install.",
+          "reporting": "If something looks wrong in your browser, it is worth reporting: a rendering problem on one engine is a real bug here, not something you are expected to work around."
+        }
+      },
+      "offline": {
+        "title": "Without a connection",
+        "rows": {
+          "works": "The character catalogue, both team builders, Captain Coverage, your saved teams and your boxes all keep working with no connection.",
+          "needsConnection": "Signing in, Google Drive sync and downloading a new version need a connection. Nothing else does.",
+          "storage": "Your teams and boxes are stored on this device. Clearing the browser's site data for this app deletes them, so export anything you would not want to lose."
+        }
+      },
+      "permissions": {
+        "title": "What the Android app asks for",
+        "rows": {
+          "internet": "Internet — to load the character data and to sync if you sign in.",
+          "installPackages": "Install packages — only so the app can install its own update when you accept one. It is never used for anything else.",
+          "nothingElse": "Nothing else. No contacts, no location, no camera, no files beyond what you export yourself."
+        }
+      },
+      "data": {
+        "title": "Where the data comes from",
+        "rows": {
+          "source": "Character data comes from the One Piece Treasure Cruise community database that the game's players maintain.",
+          "freshness": "It is rebuilt with every release, and a release goes out automatically when that database gains new characters.",
+          "unofficial": "This is a fan-made tool. It is not made by, endorsed by, or connected to Bandai Namco."
+        }
+      }
+    }
+  }
+}
