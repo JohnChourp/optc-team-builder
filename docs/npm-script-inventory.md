@@ -139,6 +139,7 @@ when a script is unclassified, and when a lane names a script that does not exis
 | `server:drive-sync` | documented · README.md | a documented manual step |
 | `start` | workflow · release-android.yml, test.yml | the release-android.yml, test.yml workflow |
 | `storage:keys` | npm script · test:storage-keys | `test:storage-keys` |
+| `styles:component-budget` | npm script · test:component-style-budget | `test:component-style-budget` |
 | `styles:panel-inventory` | npm script · test:style-panels | `test:style-panels` |
 | `styles:tag-picker-scoping` | npm script · test:tag-picker-scoping | `test:tag-picker-scoping` |
 | `synthetic:public-entry` | workflow · public-entry-synthetics.yml, release-android.yml | the public-entry-synthetics.yml, release-android.yml workflow |
@@ -152,6 +153,7 @@ when a script is unclassified, and when a lane names a script that does not exis
 | `test:ci-routing` | lane · ci-routing | the `ci-routing` lane |
 | `test:ci-triggers` | lane · ci-triggers | the `ci-triggers` lane |
 | `test:component-inventory` | lane · component-inventory | the `component-inventory` lane |
+| `test:component-style-budget` | lane · component-style-budget | the `component-style-budget` lane |
 | `test:content-ladder` | lane · content-ladder | the `content-ladder` lane |
 | `test:dataset-consumers` | lane · dataset-consumers | the `dataset-consumers` lane |
 | `test:dataset-digest` | lane · dataset-digest | the `dataset-digest` lane |

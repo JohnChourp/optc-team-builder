@@ -294,6 +294,7 @@ describe('ci-check-routing', () => {
       'support-ladder',
       'scripts-inventory',
       'dead-code',
+      'component-style-budget',
       'unused-members',
       'worker-bundling',
     ]);

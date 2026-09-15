@@ -40,7 +40,9 @@
                 "output": "assets/vendor/sql.js"
               }
             ],
-            "styles": ["src/styles.scss"]
+            "styles": [
+              "src/styles.scss"
+            ]
           },
           "configurations": {
             "production": {
@@ -63,6 +65,14 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "style-budget-probe": {
+              "budgets": [
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "1kb"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -87,7 +97,9 @@
         "test": {
           "builder": "@angular/build:unit-test",
           "options": {
-            "setupFiles": ["src/test-setup.ts"]
+            "setupFiles": [
+              "src/test-setup.ts"
+            ]
           }
         }
       }
