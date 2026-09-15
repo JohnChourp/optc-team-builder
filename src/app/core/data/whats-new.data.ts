@@ -31,6 +31,32 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.42',
+    date: '2026-09-15',
+    userVisible: true,
+    headline: {
+      en: 'The app now asks your browser to keep your saved teams',
+      el: 'Η εφαρμογή ζητάει πλέον από τον browser να κρατήσει τις αποθηκευμένες ομάδες σου',
+    },
+    summaryEn:
+      "Your saved teams, boxes and presets live on your device, and browsers are allowed to clear that storage on their own - on iPhone especially, if you have not opened the app for a long while. The app now asks the browser not to. It cannot force the answer, so the What this app supports screen says so plainly instead of implying your data is safe: clearing site data deletes it, the browser may clear it by itself, and exporting anything you would hate to lose is still the only guarantee.",
+    summaryEl:
+      'Οι αποθηκευμένες ομάδες, τα boxes και τα presets σου βρίσκονται στη συσκευή σου, και οι browsers επιτρέπεται να καθαρίσουν αυτόν τον χώρο μόνοι τους - ειδικά στο iPhone, αν έχεις καιρό να ανοίξεις την εφαρμογή. Η εφαρμογή ζητάει πλέον από τον browser να μην το κάνει. Δεν μπορεί να επιβάλει την απάντηση, οπότε η οθόνη Τι υποστηρίζει αυτή η εφαρμογή το λέει καθαρά αντί να υπονοεί ότι τα δεδομένα σου είναι ασφαλή: ο καθαρισμός δεδομένων ιστότοπου τα διαγράφει, ο browser μπορεί να τα διαγράψει και μόνος του, και το export ό,τι δεν θέλεις να χάσεις παραμένει η μόνη εγγύηση.',
+    added: [],
+    improved: [
+      {
+        en: "The app asks your browser to keep your saved data instead of treating it as disposable cache. Nothing to turn on, and no prompt - the browser decides.",
+        el: 'Η εφαρμογή ζητάει από τον browser να κρατήσει τα αποθηκευμένα σου δεδομένα αντί να τα θεωρεί αναλώσιμη cache. Δεν χρειάζεται να ενεργοποιήσεις κάτι και δεν εμφανίζεται ερώτηση - αποφασίζει ο browser.',
+      },
+    ],
+    fixed: [
+      {
+        en: "The **Without a connection** section on the **What this app supports** screen now warns that the browser can clear your saved teams on its own, not only when you clear site data yourself.",
+        el: 'Η ενότητα **Χωρίς σύνδεση** στην οθόνη **Τι υποστηρίζει αυτή η εφαρμογή** προειδοποιεί πλέον ότι ο browser μπορεί να διαγράψει μόνος του τις αποθηκευμένες ομάδες σου, όχι μόνο όταν καθαρίζεις εσύ τα δεδομένα ιστότοπου.',
+      },
+    ],
+  },
+  {
     version: '0.4.41',
     date: '2026-09-15',
     userVisible: true,
