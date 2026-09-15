@@ -31,6 +31,22 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.45',
+    date: '2026-09-15',
+    userVisible: false,
+    headline: {
+      en: 'Nothing changed on any screen',
+      el: 'Δεν άλλαξε τίποτα σε καμία οθόνη',
+    },
+    summaryEn:
+      "This one is entirely behind the scenes and there is nothing for you to look at. We wrote down what every stage requirement in Saved Enemies actually means, what every ability filter is really looking for, and which of them the team builder can and cannot do anything about - and added checks so those descriptions cannot quietly go out of date. Two things were already wrong and are now fixed, neither of which you would ever have seen.",
+    summaryEl:
+      'Αυτή η έκδοση είναι εξ ολοκλήρου στα παρασκήνια και δεν υπάρχει κάτι να δεις. Καταγράψαμε τι σημαίνει πραγματικά κάθε απαίτηση σταδίου στα Saved Enemies, τι ψάχνει στην ουσία κάθε φίλτρο ability, και σε ποια από αυτά ο team builder μπορεί και σε ποια δεν μπορεί να κάνει κάτι - και προσθέσαμε ελέγχους ώστε αυτές οι περιγραφές να μη μένουν σιωπηλά πίσω. Δύο πράγματα ήταν ήδη λάθος και διορθώθηκαν, κανένα από τα οποία δεν θα είχες δει ποτέ.',
+    added: [],
+    improved: [],
+    fixed: [],
+  },
+  {
     version: '0.4.44',
     date: '2026-09-15',
     userVisible: true,
