@@ -263,5 +263,9 @@
     "added": "Added",
     "improved": "Improved",
     "fixed": "Fixed"
+  },
+  "offline": {
+    "title": "You are offline",
+    "copy": "Your characters, teams, boxes and both builders keep working. Google sign-in, Drive sync and images you have not opened before need a connection."
   }
 }

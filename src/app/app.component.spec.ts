@@ -59,6 +59,7 @@ let nativeUpdateStub: {
 let alertControllerStub: {
   create: ReturnType<typeof vi.fn>;
 };
+let networkStub: { online: () => boolean };
 let i18nStub: {
   preloadScope: ReturnType<typeof vi.fn>;
   translate: ReturnType<typeof vi.fn>;
@@ -129,6 +130,15 @@ vi.mock('@angular/core', async () => {
           return alertControllerStub;
         case 'AppI18nService':
           return i18nStub;
+        /*
+         * 869f135r8. The shell asks whether the reader has a connection, so it
+         * can say what still works instead of letting them find out one failed
+         * feature at a time. Online is the default here; the offline banner's
+         * own behaviour is covered by network-status.service.spec.ts and by the
+         * local harness capture in live-artifacts/869f135r8/.
+         */
+        case 'NetworkStatusService':
+          return networkStub;
         case 'PreferencesAdapterService':
           return preferencesStub;
         default:
@@ -188,6 +198,7 @@ describe('AppComponent', () => {
         present: vi.fn().mockResolvedValue(undefined),
       }),
     };
+    networkStub = { online: () => true };
     i18nStub = {
       /*
        * 869f135ra. The shell preloads the `failures` scope at start-up, because

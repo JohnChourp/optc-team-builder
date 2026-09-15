@@ -111,6 +111,11 @@ export const FAILURE_FAMILIES: readonly FailureFamily[] = [
     note: 'The search exceeded what this browser session can hold. Its own family because the action is specific and useful - narrow the filters - rather than "try again", which would fail identically.',
   },
   {
+    id: 'offline',
+    dataSafety: 'safe',
+    note: '869f135r8. The reader has no connection. Checked FIRST, before anything else is classified, because every other family would otherwise describe a symptom of this one - a Drive upload that cannot reach Google is not a save that failed, and telling the reader to try again is advice that cannot work until the connection returns.',
+  },
+  {
     id: 'unexpected',
     dataSafety: 'safe',
     note: 'The fallback. Claims `safe` because every write path in this app has a named family above; a failure that reaches here did not get as far as writing. If that ever stops being true, the failure needs a family, not a change to this note.',

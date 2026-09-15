@@ -64,6 +64,7 @@
 }
 
 .analytics-consent-banner,
+.app-offline-banner,
 .app-install-banner {
   display: grid;
   gap: 14px;
@@ -78,6 +79,20 @@
     0 0 0 1px rgba(255, 255, 255, 0.04);
   backdrop-filter: blur(20px);
   pointer-events: auto;
+}
+
+/*
+ * 869f135r8. Neutral rather than alarming. Being offline is a normal state for a
+ * companion app used on trains and bad hotel wifi, and most of this app keeps
+ * working - a red warning would say the opposite of what the copy says.
+ */
+.app-offline-banner {
+  justify-self: start;
+  width: min(92vw, 380px);
+  border-color: rgba(148, 163, 184, 0.34);
+  background:
+    radial-gradient(circle at top left, rgba(148, 163, 184, 0.14), transparent 48%),
+    linear-gradient(145deg, rgba(15, 20, 36, 0.96), rgba(8, 11, 24, 0.94));
 }
 
 .app-install-banner {
