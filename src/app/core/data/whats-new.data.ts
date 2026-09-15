@@ -31,6 +31,27 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.41',
+    date: '2026-09-15',
+    userVisible: true,
+    headline: {
+      en: 'A correction on the What this app supports screen',
+      el: 'Μια διόρθωση στην οθόνη Τι υποστηρίζει αυτή η εφαρμογή',
+    },
+    summaryEn:
+      "One sentence on the What this app supports screen was not true and has been corrected. It said every release is tested automatically on all three browser engines. The app IS tested on all three - Chromium, Firefox and WebKit - but only Chromium is checked automatically on every release; the other two are checked when the full test suite is run. The screen now says what is actually the case. Nothing else on any screen changed.",
+    summaryEl:
+      'Μια πρόταση στην οθόνη Τι υποστηρίζει αυτή η εφαρμογή δεν ήταν αληθής και διορθώθηκε. Έλεγε ότι κάθε έκδοση δοκιμάζεται αυτόματα και στις τρεις μηχανές browser. Η εφαρμογή ΟΝΤΩΣ δοκιμάζεται και στις τρεις - Chromium, Firefox και WebKit - αλλά μόνο το Chromium ελέγχεται αυτόματα σε κάθε έκδοση· τα άλλα δύο ελέγχονται όταν τρέχει η πλήρης σουίτα δοκιμών. Η οθόνη λέει πλέον αυτό που ισχύει. Τίποτα άλλο σε καμία οθόνη δεν άλλαξε.',
+    added: [],
+    improved: [],
+    fixed: [
+      {
+        en: "The **browsers** section on the **What this app supports** screen no longer claims every release is tested automatically on all three engines. It is tested on all three; only one of them is checked automatically every release.",
+        el: 'Η ενότητα **Browsers** στην οθόνη **Τι υποστηρίζει αυτή η εφαρμογή** δεν ισχυρίζεται πια ότι κάθε έκδοση δοκιμάζεται αυτόματα και στις τρεις μηχανές. Δοκιμάζεται και στις τρεις· μόνο η μία ελέγχεται αυτόματα σε κάθε έκδοση.',
+      },
+    ],
+  },
+  {
     version: '0.4.40',
     date: '2026-09-15',
     userVisible: true,
