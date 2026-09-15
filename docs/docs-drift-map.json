@@ -10,7 +10,11 @@
         "src/app/core/services/optc-repository.service.ts",
         "src/app/core/services/character-catalog-cache.service.ts"
       ],
-      "docsPaths": ["README.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md"],
+      "docsPaths": [
+        "README.md",
+        "docs/feature-coverage-map.md",
+        "docs/maintainer-validation-guide.md"
+      ],
       "owner": "App catalog and data runtime",
       "notes": "Catalog, favorites, import feedback, and data-read changes should keep the public app overview and validation routing aligned."
     },
@@ -22,7 +26,11 @@
         "src/app/pages/character-edit/",
         "src/app/core/services/character-overrides.service.ts"
       ],
-      "docsPaths": ["docs/data-schemas.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md"],
+      "docsPaths": [
+        "docs/data-schemas.md",
+        "docs/feature-coverage-map.md",
+        "docs/maintainer-validation-guide.md"
+      ],
       "owner": "Character detail and local override ownership",
       "notes": "Override schema, transfer, or detail/edit behavior changes should update schema and validation docs."
     },
@@ -37,7 +45,12 @@
         "src/app/shared/team-coverage-summary/",
         "src/app/shared/character-ability-groups/"
       ],
-      "docsPaths": ["README.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md", "docs/copy-review-checklist.md"],
+      "docsPaths": [
+        "README.md",
+        "docs/feature-coverage-map.md",
+        "docs/maintainer-validation-guide.md",
+        "docs/copy-review-checklist.md"
+      ],
       "owner": "Manual builder UI and team summary",
       "notes": "Manual-builder workflow, share hydration, coverage-summary, or copy changes should keep the guide, validation map, multilingual regression inventory, and bilingual copy checklist aligned."
     },
@@ -96,23 +109,41 @@
         "scripts/perf-saved-team-codecs.mjs",
         "scripts/public-entry-synthetics.mjs"
       ],
-      "docsPaths": ["docs/saved-team-schema-lifecycle.md", "docs/data-schemas.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md", "docs/copy-review-checklist.md"],
+      "docsPaths": [
+        "docs/saved-team-schema-lifecycle.md",
+        "docs/data-schemas.md",
+        "docs/feature-coverage-map.md",
+        "docs/maintainer-validation-guide.md",
+        "docs/copy-review-checklist.md"
+      ],
       "owner": "Saved team persistence, transfer contracts, and import/share hydration",
       "notes": "Saved-team schema, transfer, import, share, compatibility, synthetic landing checks, or copy changes should update schema, lifecycle, validation, multilingual regression inventory, and bilingual copy docs."
     },
     {
       "id": "saved-enemies",
       "name": "Saved Enemies and associated team links",
-      "featurePaths": ["src/app/pages/saved-enemies/"],
-      "docsPaths": ["docs/data-schemas.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md"],
+      "featurePaths": [
+        "src/app/pages/saved-enemies/"
+      ],
+      "docsPaths": [
+        "docs/data-schemas.md",
+        "docs/feature-coverage-map.md",
+        "docs/maintainer-validation-guide.md"
+      ],
       "owner": "Saved enemy modeling and saved-team association",
       "notes": "Saved-enemy persistence, parsing, association, or import/export changes should keep schema and validation docs current."
     },
     {
       "id": "character-boxes",
       "name": "Character Boxes and box transfer",
-      "featurePaths": ["src/app/pages/character-boxes/"],
-      "docsPaths": ["docs/data-schemas.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md"],
+      "featurePaths": [
+        "src/app/pages/character-boxes/"
+      ],
+      "docsPaths": [
+        "docs/data-schemas.md",
+        "docs/feature-coverage-map.md",
+        "docs/maintainer-validation-guide.md"
+      ],
       "owner": "Box management and transfer format",
       "notes": "Box management, transfer, import, or character-link behavior changes should update schema and validation docs."
     },
@@ -125,7 +156,11 @@
         "src/app/core/services/user-data-transfer.service.ts",
         "src/app/core/services/inventory-capture-import.service.ts"
       ],
-      "docsPaths": ["docs/data-schemas.md", "scripts/fixtures/data/README.md", "docs/feature-coverage-map.md"],
+      "docsPaths": [
+        "docs/data-schemas.md",
+        "scripts/fixtures/data/README.md",
+        "docs/feature-coverage-map.md"
+      ],
       "owner": "Local storage, backup, and import/export contracts",
       "notes": "Local data contract, backup, inventory capture, or transfer changes should update schema and fixture docs."
     },
@@ -140,7 +175,11 @@
         "src/app/core/services/drive-sync-state.service.ts",
         "server/drive-sync-server.mjs"
       ],
-      "docsPaths": ["server/README.md", "docs/feature-coverage-map.md", "../optc-team-builder-brain/DRIVE_SYNC_PROFILE_NAVIGATION_CLARIFICATION.md"],
+      "docsPaths": [
+        "server/README.md",
+        "docs/feature-coverage-map.md",
+        "../optc-team-builder-brain/DRIVE_SYNC_PROFILE_NAVIGATION_CLARIFICATION.md"
+      ],
       "owner": "Account, OAuth config, and Drive backup",
       "notes": "Auth, backup, review, redirect, or server changes should keep Drive runbooks and server docs aligned."
     },
@@ -153,7 +192,10 @@
         "src/app/pages/saved-rumble-teams/",
         "src/app/core/services/auto-team-builder-rumble"
       ],
-      "docsPaths": ["docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md"],
+      "docsPaths": [
+        "docs/feature-coverage-map.md",
+        "docs/maintainer-validation-guide.md"
+      ],
       "owner": "Rumble ranking and team optimization",
       "notes": "Rumble ranking, builder, saved-team, focus, or service changes should update validation and ownership docs."
     },
@@ -165,7 +207,10 @@
         "src/app/core/services/crew-forge-image-import.service.ts",
         "src/app/core/data/crew-forge-built-in-profiles.ts"
       ],
-      "docsPaths": ["docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md"],
+      "docsPaths": [
+        "docs/feature-coverage-map.md",
+        "docs/maintainer-validation-guide.md"
+      ],
       "owner": "Crew Forge OCR/profile matching",
       "notes": "Screenshot import, built-in profile, matching, or export changes should update ownership and validation docs."
     },
@@ -181,7 +226,12 @@
         "scripts/lib/optc-dataset.mjs",
         "scripts/data/"
       ],
-      "docsPaths": ["docs/cross-repo-architecture-map.md", "docs/data-schemas.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md"],
+      "docsPaths": [
+        "docs/cross-repo-architecture-map.md",
+        "docs/data-schemas.md",
+        "docs/feature-coverage-map.md",
+        "docs/maintainer-validation-guide.md"
+      ],
       "owner": "Dataset import and manual override ownership",
       "notes": "Importer, source-data, overlay, manual-character, or generated-data integrity changes should update schema and validation docs."
     },
@@ -217,16 +267,36 @@
     {
       "id": "release-readiness",
       "name": "Release readiness reporting",
-      "featurePaths": ["scripts/release-readiness-report.mjs", "scripts/fixtures/release-readiness/"],
-      "docsPaths": ["docs/maintainer-operations.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md", "docs/copy-review-checklist.md", "../optc-team-builder-brain/audits/869dwc0wc-release-readiness-summary.md"],
+      "featurePaths": [
+        "scripts/release-readiness-report.mjs",
+        "scripts/fixtures/release-readiness/"
+      ],
+      "docsPaths": [
+        "docs/maintainer-operations.md",
+        "docs/feature-coverage-map.md",
+        "docs/maintainer-validation-guide.md",
+        "docs/copy-review-checklist.md",
+        "../optc-team-builder-brain/audits/869dwc0wc-release-readiness-summary.md"
+      ],
       "owner": "Release readiness report contract",
       "notes": "Readiness source schema, rendering, sign-off policy, or maintainer-facing copy changes should update report guidance and evidence docs."
     },
     {
       "id": "post-merge-smoke-pack",
       "name": "Post-merge smoke pack",
-      "featurePaths": ["docs/post-merge-smoke-pack.md", "package.json", "e2e/smoke.spec.ts", "e2e/regression-flows.spec.ts"],
-      "docsPaths": ["README.md", "docs/post-merge-smoke-pack.md", "docs/maintainer-operations.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md"],
+      "featurePaths": [
+        "docs/post-merge-smoke-pack.md",
+        "package.json",
+        "e2e/smoke.spec.ts",
+        "e2e/regression-flows.spec.ts"
+      ],
+      "docsPaths": [
+        "README.md",
+        "docs/post-merge-smoke-pack.md",
+        "docs/maintainer-operations.md",
+        "docs/feature-coverage-map.md",
+        "docs/maintainer-validation-guide.md"
+      ],
       "owner": "Post-merge web and release-adjacent confidence ownership",
       "notes": "Smoke-pack script, guide-route coverage, guided/compare/share smoke tags, or post-merge evidence rules should keep the maintainer routing docs aligned."
     },
@@ -281,7 +351,13 @@
         "scripts/perf-budget-history.mjs",
         ".github/workflows/performance-budgets.yml"
       ],
-      "docsPaths": ["README.md", "e2e/README.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md", "../optc-team-builder-brain/audits/869dwc0hh-performance-budget-tracking.md"],
+      "docsPaths": [
+        "README.md",
+        "e2e/README.md",
+        "docs/feature-coverage-map.md",
+        "docs/maintainer-validation-guide.md",
+        "../optc-team-builder-brain/audits/869dwc0hh-performance-budget-tracking.md"
+      ],
       "owner": "Browser performance, route-load, import/share hydration, and trend ownership",
       "notes": "Performance harness, route-load budget, bundle budget, trend, or workflow changes should update validation guidance and evidence."
     },
@@ -297,47 +373,136 @@
         "docs/docs-drift-map.json",
         ".github/workflows/docs-integrity.yml"
       ],
-      "docsPaths": ["docs/cross-repo-architecture-map.md", "docs/maintainer-operations.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md", "docs/docs-drift-map.json", "../optc-team-builder-brain/audits/869dwc3zd-docs-integrity.md"],
+      "docsPaths": [
+        "docs/cross-repo-architecture-map.md",
+        "docs/maintainer-operations.md",
+        "docs/feature-coverage-map.md",
+        "docs/maintainer-validation-guide.md",
+        "docs/docs-drift-map.json",
+        "../optc-team-builder-brain/audits/869dwc3zd-docs-integrity.md"
+      ],
       "owner": "Docs/reference, drift, and maintainer-command hygiene",
       "notes": "Docs validation tooling, mapping, command examples, or workflow changes should update this map and maintainer guidance."
     },
     {
       "id": "pr-traceability",
       "name": "PR traceability",
-      "featurePaths": [".github/pull_request_template.md", ".github/scripts/check-pr-traceability.mjs", ".github/workflows/pr-traceability.yml"],
-      "docsPaths": ["docs/maintainer-operations.md", "docs/maintainer-validation-guide.md", "docs/review-ownership-policy.md", "../optc-team-builder-brain/audits/869dwc3zc-pr-traceability.md"],
+      "featurePaths": [
+        ".github/pull_request_template.md",
+        ".github/scripts/check-pr-traceability.mjs",
+        ".github/workflows/pr-traceability.yml"
+      ],
+      "docsPaths": [
+        "docs/maintainer-operations.md",
+        "docs/maintainer-validation-guide.md",
+        "docs/review-ownership-policy.md",
+        "../optc-team-builder-brain/audits/869dwc3zc-pr-traceability.md"
+      ],
       "owner": "PR evidence, verification, and ClickUp routing",
       "notes": "PR template, workflow, or traceability rule changes should keep reviewer guidance and evidence docs aligned."
     },
     {
       "id": "branch-lifecycle",
       "name": "Branch lifecycle and post-merge cleanup",
-      "featurePaths": ["scripts/branch-cleanup-report.mjs", "scripts/branch-cleanup-report.spec.ts", "docs/branch-lifecycle-policy.md"],
-      "docsPaths": ["README.md", "docs/branch-lifecycle-policy.md", "docs/maintainer-operations.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md", "../optc-team-builder-brain/audits/869dwcbba-branch-cleanup-policy.md"],
+      "featurePaths": [
+        "scripts/branch-cleanup-report.mjs",
+        "scripts/branch-cleanup-report.spec.ts",
+        "docs/branch-lifecycle-policy.md"
+      ],
+      "docsPaths": [
+        "README.md",
+        "docs/branch-lifecycle-policy.md",
+        "docs/maintainer-operations.md",
+        "docs/feature-coverage-map.md",
+        "docs/maintainer-validation-guide.md",
+        "../optc-team-builder-brain/audits/869dwcbba-branch-cleanup-policy.md"
+      ],
       "owner": "Branch cleanup policy and GH013 blocker triage",
       "notes": "Cleanup report, policy, or GH013 branch-deletion guidance changes should keep maintainer routing and brain evidence aligned."
     },
     {
       "id": "seo-pages",
       "name": "SEO pages and GitHub Pages deploy",
-      "featurePaths": ["src/app/pages/seo-content/", "scripts/generate-seo-pages.mjs", "scripts/audit-seo-pages.mjs", "scripts/verify-guide-discoverability.mjs", "scripts/verify-guide-discoverability.spec.ts", "scripts/i18n-regression-check.mjs", "scripts/public-entry-synthetics.mjs", "scripts/public-entry-synthetics.spec.ts", "scripts/pwa-shell-check.mjs", "e2e/public-entry-visual.spec.ts", "e2e/public-entry-visual.spec.ts-snapshots/", ".github/workflows/deploy-pages.yml", ".github/workflows/guide-discoverability.yml", ".github/workflows/public-entry-synthetics.yml"],
-      "docsPaths": ["README.md", "docs/maintainer-operations.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md", "e2e/README.md", "../optc-team-builder-brain/audits/869dwcbb4-guide-discoverability.md", "../optc-team-builder-brain/audits/869dwcbbd-public-entry-synthetics.md", "../optc-team-builder-brain/audits/869dwcedz-public-entry-visual.md"],
+      "featurePaths": [
+        "src/app/pages/seo-content/",
+        "scripts/generate-seo-pages.mjs",
+        "scripts/audit-seo-pages.mjs",
+        "scripts/verify-guide-discoverability.mjs",
+        "scripts/verify-guide-discoverability.spec.ts",
+        "scripts/i18n-regression-check.mjs",
+        "scripts/public-entry-synthetics.mjs",
+        "scripts/public-entry-synthetics.spec.ts",
+        "scripts/pwa-shell-check.mjs",
+        "e2e/public-entry-visual.spec.ts",
+        "e2e/public-entry-visual.spec.ts-snapshots/",
+        ".github/workflows/deploy-pages.yml",
+        ".github/workflows/guide-discoverability.yml",
+        ".github/workflows/public-entry-synthetics.yml"
+      ],
+      "docsPaths": [
+        "README.md",
+        "docs/maintainer-operations.md",
+        "docs/feature-coverage-map.md",
+        "docs/maintainer-validation-guide.md",
+        "e2e/README.md",
+        "../optc-team-builder-brain/audits/869dwcbb4-guide-discoverability.md",
+        "../optc-team-builder-brain/audits/869dwcbbd-public-entry-synthetics.md",
+        "../optc-team-builder-brain/audits/869dwcedz-public-entry-visual.md"
+      ],
       "owner": "SEO content, guide/help discoverability, Pages deployment, public entry visual baselines, public entry synthetics, and PWA cache freshness",
       "notes": "Public SEO content, route, generation, audit, discoverability verification, multilingual guide-anchor checks, visual baselines, post-deploy synthetic public entry checks, PWA cache freshness checks, or deployment changes should update public-site docs and validation guidance."
     },
     {
       "id": "player-faq",
       "name": "Player-facing FAQ page",
-      "featurePaths": ["src/app/pages/faq/", "public/i18n/faq/"],
-      "docsPaths": ["README.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md", "docs/post-merge-smoke-pack.md", "docs/copy-review-checklist.md"],
+      "featurePaths": [
+        "src/app/pages/faq/",
+        "public/i18n/faq/"
+      ],
+      "docsPaths": [
+        "README.md",
+        "docs/feature-coverage-map.md",
+        "docs/maintainer-validation-guide.md",
+        "docs/post-merge-smoke-pack.md",
+        "docs/copy-review-checklist.md"
+      ],
       "owner": "Player-facing help copy, its bilingual parity, and its quoted app labels",
       "notes": "The FAQ shipped across v0.4.17-v0.4.19 as a public route with zero mentions in every maintainer surface, so this guard could never fire for it. Entry, bullet, link, or quoted-label changes should keep the coverage map, validation routing, smoke pack, and copy review aligned - a quote here names a button owned by another i18n namespace, which is how six wrong Greek labels reached production."
     },
     {
+      "id": "supported-screen",
+      "name": "What this app supports screen",
+      "featurePaths": [
+        "src/app/pages/supported/",
+        "public/i18n/supported/",
+        "scripts/check-support-claims.mjs"
+      ],
+      "docsPaths": [
+        "docs/feature-coverage-map.md",
+        "docs/maintainer-validation-guide.md",
+        "docs/copy-review-checklist.md",
+        "docs/ios-platform-footprint.md"
+      ],
+      "owner": "The player-facing support statement, its bilingual parity, and the configuration its claims are checked against",
+      "notes": "869f17h3g. Every claim on this screen is a promise decided by a file somewhere else - the Android manifest, playwright.config's projects, ngsw-config's asset groups - and check-support-claims.mjs holds it to them in both directions. The docs listed here are the surfaces that describe the same facts to a maintainer; the iOS footprint is included because this screen is where a player is told there is no App Store build."
+    },
+    {
       "id": "public-static-pages",
       "name": "Landing page and the privacy, cookie, and terms pages",
-      "featurePaths": ["src/app/pages/home/", "src/app/pages/privacy-policy/", "src/app/pages/cookie-policy/", "src/app/pages/terms-of-service/", "public/i18n/privacy-policy/", "public/i18n/cookie-policy/", "public/i18n/terms-of-service/"],
-      "docsPaths": ["README.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md"],
+      "featurePaths": [
+        "src/app/pages/home/",
+        "src/app/pages/privacy-policy/",
+        "src/app/pages/cookie-policy/",
+        "src/app/pages/terms-of-service/",
+        "public/i18n/privacy-policy/",
+        "public/i18n/cookie-policy/",
+        "public/i18n/terms-of-service/"
+      ],
+      "docsPaths": [
+        "README.md",
+        "docs/feature-coverage-map.md",
+        "docs/maintainer-validation-guide.md"
+      ],
       "owner": "Public landing and policy copy",
       "notes": "Distinct from seo-pages, which owns the generated SEO shell in src/app/pages/seo-content/. These four are the real pages a visitor from search lands on - the landing screen and the three policy screens, each with its own route and, for the policies, its own i18n namespace. All four were unmapped alongside the FAQ."
     },
@@ -353,7 +518,13 @@
         "android/",
         "ios/"
       ],
-      "docsPaths": ["README.md", "docs/maintainer-operations.md", "docs/feature-coverage-map.md", "docs/maintainer-validation-guide.md", "docs/post-dispatch-production-smoke.md"],
+      "docsPaths": [
+        "README.md",
+        "docs/maintainer-operations.md",
+        "docs/feature-coverage-map.md",
+        "docs/maintainer-validation-guide.md",
+        "docs/post-dispatch-production-smoke.md"
+      ],
       "owner": "Native release, version, and post-dispatch smoke ownership",
       "notes": "Native release, signing, versioning, platform metadata, or post-dispatch production smoke changes should update release guidance and validation docs."
     }

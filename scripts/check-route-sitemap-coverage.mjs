@@ -58,6 +58,11 @@ export const ROUTE_SITEMAP_EXCLUSIONS = [
     reason: 'Local device settings - nothing to index and nothing a search result could usefully open.',
   },
   {
+    route: 'tabs/supported',
+    reason:
+      '869f17h3g. Answers "should I trust this tool" for someone who already has the app open, not for a search result. Its claims are kept true by the support-claims lane, which is a check rather than a crawler.',
+  },
+  {
     route: 'tabs/saved-teams',
     reason: "Shows only this device's saved teams; empty for every visitor arriving from search.",
   },
