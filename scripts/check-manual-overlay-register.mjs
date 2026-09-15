@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -84,6 +84,43 @@ export function findTwinDivergence(left, right) {
   const keys = [...new Set([...Object.keys(left), ...Object.keys(right)])].sort();
 
   return keys.filter((key) => JSON.stringify(left[key]) !== JSON.stringify(right[key]));
+}
+
+/**
+ * 869f135rg. The overlays whose entries a reader would need told apart from
+ * upstream, and where the marker that would tell them lives.
+ *
+ * The subtask asks for a three-state provenance marker on the character card -
+ * upstream, corrected in this app, edited by you - because "it is the first
+ * question in every 'this number looks wrong' report".
+ *
+ * Measured 2026-09-15: both character-data overlays are `{}`, and
+ * `manual-characters.json` has not changed since 2026-04-24, when
+ * `manual-character-prune.mjs` shipped and emptied it. The prune runs at every
+ * import, so the middle state has had ZERO instances for five months and is
+ * actively kept there.
+ *
+ * Built today, that marker would render "upstream" on 4,618 character cards -
+ * noise that answers nothing - and its one useful state would never appear. So
+ * the marker is not built, and this is the tripwire instead: the day an entry
+ * lands in either overlay, the check fails and names what is now required. The
+ * `editedLocally` chip already covers the third state and has since v0.4.15.
+ */
+const PROVENANCE_OVERLAYS = ['manual-characters.json', 'builder-ability-corrections.json'];
+const PROVENANCE_MARKER = 'dataProvenance';
+const PROVENANCE_SOURCES = [
+  'src/app/pages/character-detail/character-detail.page.ts',
+  'src/app/pages/characters/characters.page.ts',
+];
+
+export function findUnmarkedProvenance(overlayCounts, sourceText) {
+  const populated = PROVENANCE_OVERLAYS.filter((file) => (overlayCounts[file] ?? 0) > 0);
+
+  if (populated.length === 0) {
+    return [];
+  }
+
+  return sourceText.includes(PROVENANCE_MARKER) ? [] : populated;
 }
 
 const SHIP_ROW = /INSERT INTO ships \(id, name, thumb, description\)\s*VALUES \(\s*(\d+),\s*(?:'(?:[^']|'')*'|NULL),\s*('(?:[^']|'')*'|NULL)/gu;
@@ -232,6 +269,33 @@ function main() {
             .join('\n'),
       );
     }
+  }
+
+  const overlayCounts = Object.fromEntries(
+    register.overlays
+      .filter((overlay) => present.includes(overlay.file))
+      .map((overlay) => [
+        overlay.file,
+        countEntries(JSON.parse(readFileSync(path.join(DATA_DIR, overlay.file), 'utf8'))),
+      ]),
+  );
+  const provenanceSource = PROVENANCE_SOURCES.map((file) => {
+    const full = path.join(REPO_ROOT, file);
+
+    return existsSync(full) ? readFileSync(full, 'utf8') : '';
+  }).join('\n');
+  const unmarked = findUnmarkedProvenance(overlayCounts, provenanceSource);
+
+  if (unmarked.length > 0) {
+    problems.push(
+      `${unmarked.length} character-data overlay(s) now carry entries, and nothing on the character\n` +
+        `card tells a reader that a value came from this app rather than from upstream.\n` +
+        `That is the first question in every "this number looks wrong" report, and it was left\n` +
+        `unbuilt in 869f135rg ONLY because both overlays had been empty since 2026-04-24.\n` +
+        `They are not empty now. Add a "${PROVENANCE_MARKER}" marker to the character card and\n` +
+        `detail page, next to the existing editedLocally chip.\n` +
+        unmarked.map((file) => `  ${file}: ${overlayCounts[file]} entr(ies)`).join('\n'),
+    );
   }
 
   const twinDivergence = findTwinDivergence(
