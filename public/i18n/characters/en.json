@@ -115,7 +115,15 @@
       "copy": "The export was merged into your existing favorites.",
       "title": "Import summary"
     },
-    "title": "Import favorites"
+    "title": "Import favorites",
+    "removals": {
+      "title": "In your favourites but not in this import",
+      "copy": "{{count}} of your favourites were not mentioned by this import. If you no longer own them, remove them here. Nothing is removed unless you tick it.",
+      "unresolvedNote": "{{count}} more favourites could not be matched to a character in this app, so they are not offered here - that is about our data, not about what you own.",
+      "selectAll": "Select all",
+      "clearSelection": "Clear selection",
+      "remove": "Remove {{count}} selected"
+    }
   },
   "loadMore": "Load more units",
   "loading": "Loading character catalog...",

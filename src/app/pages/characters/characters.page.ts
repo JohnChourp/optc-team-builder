@@ -197,6 +197,24 @@ export class CharactersPage implements OnInit {
   public readonly remainingUnmatchedCount = computed(() =>
     Math.max(0, (this.importResult()?.unmatchedIds.length ?? 0) - this.unmatchedPreview().length),
   );
+  /**
+   * 869f26084. The favourites this import did not mention, as cards the reader can recognise.
+   *
+   * Names, not ids: the reader knows "Kaido", not 3742, and a removal control that shows numbers
+   * is one nobody can check before pressing it.
+   */
+  public readonly removableCards = computed<CharacterListItem[]>(() => {
+    const removableIds = this.importResult()?.removableIds ?? [];
+
+    return removableIds.length ? this.characterCatalogCache.getCharactersByIds(removableIds) : [];
+  });
+  /**
+   * Nothing is selected when the list appears. An import that arrives with removals pre-ticked is
+   * one press away from deleting data the reader never looked at.
+   */
+  public readonly selectedRemovalIds = signal<number[]>([]);
+  public readonly hasSelectedRemovals = computed(() => this.selectedRemovalIds().length > 0);
+  public readonly removingFavorites = signal(false);
   public readonly availableTypes = computed(() =>
     this.normalizeOptions(this.summary()?.availableTypes ?? []),
   );
@@ -735,6 +753,67 @@ export class CharactersPage implements OnInit {
     const payload = buildOptcbxFavoritesExportPayload(favoriteIds, favoriteCharacters);
 
     downloadOptcbxFavoritesExport(payload);
+  }
+
+  public isRemovalSelected(characterId: number): boolean {
+    return this.selectedRemovalIds().includes(characterId);
+  }
+
+  public toggleRemovalSelection(characterId: number): void {
+    const current = this.selectedRemovalIds();
+
+    this.selectedRemovalIds.set(
+      current.includes(characterId)
+        ? current.filter((id) => id !== characterId)
+        : [...current, characterId],
+    );
+  }
+
+  public selectAllRemovals(): void {
+    this.selectedRemovalIds.set(this.removableCards().map((character) => character.id));
+  }
+
+  public clearRemovalSelection(): void {
+    this.selectedRemovalIds.set([]);
+  }
+
+  /**
+   * 869f26084. Applies only what the reader ticked, and only from what the import offered.
+   *
+   * The offered list is passed through rather than recomputed, so the list they saw is exactly the
+   * list that is applied - recomputing between showing and applying is how a control deletes
+   * something that was never on screen.
+   */
+  public async removeSelectedFavorites(): Promise<void> {
+    const result = this.importResult();
+    const selectedIds = this.selectedRemovalIds();
+
+    if (!result || selectedIds.length === 0 || this.removingFavorites()) {
+      return;
+    }
+
+    this.removingFavorites.set(true);
+
+    try {
+      const nextFavoriteIds = this.optcbxImport.removeFavoriteIds(
+        selectedIds,
+        this.userState.favoriteCharacterIds(),
+        result.removableIds,
+      );
+
+      await this.userState.setFavoriteCharacterIds(nextFavoriteIds);
+      this.importResult.set({
+        ...result,
+        removableIds: result.removableIds.filter((id) => !selectedIds.includes(id)),
+      });
+      this.selectedRemovalIds.set([]);
+
+      if (this.favoritesOnly() || this.hideFavorites()) {
+        await this.loadCharacters(true);
+      }
+    } finally {
+      this.removingFavorites.set(false);
+    }
   }
 
   public async clearRecents(): Promise<void> {
