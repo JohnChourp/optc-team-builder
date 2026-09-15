@@ -53,6 +53,18 @@ export const NPM_SCRIPT_REGISTRY = [
     invokedBy: ['scripts/verify-local.mjs'],
   },
   {
+    script: 'dataset:enemy-vocabulary',
+    class: 'manual',
+    reason:
+      '869f1328q. Regenerates the Saved Enemies vocabulary. The CHECK half runs in the enemy-vocabulary lane as `generate-enemy-vocabulary.mjs --check`; this is the write half, run deliberately when a mechanic is added to the catalogue or a meaning is revised. Same split as dataset:provenance and dataset:consumers.',
+  },
+  {
+    script: 'dataset:ability-tags',
+    class: 'manual',
+    reason:
+      '869f1328p. Regenerates the ability tag catalogue. The CHECK half runs in the ability-tags lane and fails only on drift beyond the threshold, so this write half is run deliberately after a dataset release or a parser change has moved the counts on purpose.',
+  },
+  {
     script: 'dataset:consumers',
     class: 'manual',
     reason:

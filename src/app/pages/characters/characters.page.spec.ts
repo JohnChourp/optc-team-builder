@@ -61,6 +61,26 @@ describe('CharactersPage favorites tools', () => {
     vi.unstubAllGlobals();
   });
 
+  /**
+   * 869f1328r. Absence must render distinguishably from zero: a stat the dataset does not have
+   * shows `?`, and a stat that genuinely IS zero shows `0`. The two are not the same thing to a
+   * player - one is a fact and the other is an absence - and `?? '?'` is what keeps them apart,
+   * because it catches null and undefined and leaves 0 alone.
+   */
+  it('renders a missing stat differently from a stat of zero', () => {
+    const template = readFileSync(
+      resolve(import.meta.dirname, './characters.page.html'),
+      'utf8',
+    );
+
+    for (const stat of ['hp', 'atk', 'rcv']) {
+      expect(template).toContain(`card.character.stats.max.${stat} ?? '?'`);
+    }
+
+    // The failure this pins: `|| '?'` would render a real 0 as unknown.
+    expect(template).not.toContain("stats.max.hp || '?'");
+  });
+
   it('defaults to compact display mode', () => {
     const { page } = createPage();
 

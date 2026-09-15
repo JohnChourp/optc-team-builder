@@ -202,6 +202,19 @@ Rollback should prefer the smallest stable action:
    lower risk than reverting.
 4. Record the final disposition in the linked brain audit or ClickUp task.
 
+## Adding a lane is a `package.json` and workflow change
+
+`.github/workflows/test.yml` carries the full suite list and the full job matrix as two generated
+strings, and `scripts/ci-check-routing.spec.ts` asserts the matrix matches `SCRIPT_SUITES` exactly.
+So a new lane is never only a new script: it is a `SCRIPT_SUITES` entry, a routing predicate, both
+workflow strings, and a `docs/npm-script-inventory.md` regeneration. Regenerate the two workflow
+strings from the registry rather than editing them by hand - they are one line each and a hand edit
+is how the matrix and the registry drift apart.
+
+869f1328b added three lanes this way (`enemy-vocabulary`, `ability-tags`, `field-naming`) and each
+routes only to the sources it actually reads. A lane that runs for reasons it cannot be affected by
+is noise, and noise is what teaches people to stop reading lane names.
+
 ## Completion Rules
 
 Do not close a ClickUp dependency-maintenance task until:

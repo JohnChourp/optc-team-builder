@@ -80,8 +80,10 @@ when a script is unclassified, and when a lane names a script that does not exis
 | `data:import:all` | script file · check-dataset-spec-pins.mjs, generate-whats-new-entry.mjs | whatever check-dataset-spec-pins.mjs, generate-whats-new-entry.mjs drives |
 | `data:monitor-upstream` | workflow · check-optc-db-release.yml | the check-optc-db-release.yml workflow |
 | `data:upsert-manual-character` | manual · — | Applies a hand-written character overlay. Run deliberately by a maintainer; automating it would let the dataset drift from upstream without a decision. |
+| `dataset:ability-tags` | documented · maintainer-validation-guide.md, post-merge-smoke-pack.md | a documented manual step |
 | `dataset:consumers` | script file · generate-dataset-consumers.mjs | whatever generate-dataset-consumers.mjs drives |
 | `dataset:digest` | workflow · dataset-change-digest.yml | the dataset-change-digest.yml workflow |
+| `dataset:enemy-vocabulary` | script file · generate-enemy-vocabulary.mjs | whatever generate-enemy-vocabulary.mjs drives |
 | `dataset:measure` | npm script · test:dataset-measurements | `test:dataset-measurements` |
 | `dataset:measurements` | npm script · test:dataset-measurements | `test:dataset-measurements` |
 | `dataset:provenance` | script file · generate-dataset-provenance.mjs, dataset-provenance.mjs | whatever generate-dataset-provenance.mjs, dataset-provenance.mjs drives |
@@ -104,6 +106,7 @@ when a script is unclassified, and when a lane names a script that does not exis
 | `ionic:host-property` | npm script · test:ionic-host-property | `test:ionic-host-property` |
 | `ios:open` | documented · ios-platform-footprint.md | a documented manual step |
 | `ios:sync` | documented · ios-platform-footprint.md | a documented manual step |
+| `model:field-naming` | npm script · test:field-naming | `test:field-naming` |
 | `ng` | lane · ci-routing | the `ci-routing` lane |
 | `pages:doc-coverage` | npm script · test:page-doc-coverage | `test:page-doc-coverage` |
 | `perf:ability-filters` | workflow · performance-budgets.yml | the performance-budgets.yml workflow |
@@ -140,6 +143,7 @@ when a script is unclassified, and when a lane names a script that does not exis
 | `synthetic:public-entry` | workflow · public-entry-synthetics.yml, release-android.yml | the public-entry-synthetics.yml, release-android.yml workflow |
 | `teams:published` | npm script · test:published-teams | `test:published-teams` |
 | `test` | lane · ci-routing | the `ci-routing` lane |
+| `test:ability-tags` | lane · ability-tags | the `ability-tags` lane |
 | `test:actions-pins` | lane · actions-pins | the `actions-pins` lane |
 | `test:branch-cleanup` | lane · branch-cleanup | the `branch-cleanup` lane |
 | `test:captain-contracts` | lane · captain-contracts | the `captain-contracts` lane |
@@ -164,7 +168,9 @@ when a script is unclassified, and when a lane names a script that does not exis
 | `test:e2e:firefox` | interpolated · — | Built by verify-local.mjs E2E_LANES and run by every `verify:local:full`. test.yml covers the same Playwright project through its browser matrix, but by calling run-playwright-e2e.mjs directly rather than this npm script, so it is not listed as an invoker. |
 | `test:e2e:install` | script file · maintainer-environment-doctor.mjs, maintainer-environment-doctor.spec.ts | whatever maintainer-environment-doctor.mjs, maintainer-environment-doctor.spec.ts drives |
 | `test:e2e:webkit` | script file · ci-check-routing.mjs | whatever ci-check-routing.mjs drives |
+| `test:enemy-vocabulary` | lane · enemy-vocabulary | the `enemy-vocabulary` lane |
 | `test:engine-divergences` | lane · engine-divergences | the `engine-divergences` lane |
+| `test:field-naming` | lane · field-naming | the `field-naming` lane |
 | `test:i18n-ownership` | lane · i18n-ownership | the `i18n-ownership` lane |
 | `test:i18n-regression` | lane · i18n-regression | the `i18n-regression` lane |
 | `test:ionic-host-property` | lane · ionic-host-property | the `ionic-host-property` lane |

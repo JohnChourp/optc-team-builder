@@ -14,14 +14,14 @@ import { getEnemyMechanicCatalogItems } from './enemy-mechanic-draft.utils';
  * was just built.
  *
  * **Why this is not the Final team report saying the same thing twice.** The report speaks in the
- * rules the SEARCH used. Fourteen of the catalogue's 38 mechanics carry `derivedAbilityKey: null`,
+ * rules the SEARCH used. Fifteen of the catalogue's 38 mechanics carry `derivedAbilityKey: null`,
  * so ticking one produces no ability requirement, therefore no rule, therefore no report row - the
  * report is structurally incapable of mentioning them. The engine already documents this in
  * `auto-team-builder.utils.ts`, where ticking an unmapped mechanic once returned no team at all.
  * That bug is fixed; what replaced it is silence. This is the only surface that can break it.
  *
  * **Three states, not two.** `869f127g5`'s gate is that *"a checklist that reports false coverage
- * is worse than none"*, and a two-state checklist has to lie about the fourteen: `notCovered` reads
+ * is worse than none"*, and a two-state checklist has to lie about the fifteen: `notCovered` reads
  * as "go and find a unit for it" when in fact no shipped ability answers it, and `covered` would be
  * an outright falsehood. So `unanswerable` is its own state and says so in as many words.
  *

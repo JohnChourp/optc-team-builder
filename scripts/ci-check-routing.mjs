@@ -134,6 +134,37 @@ export const SCRIPT_SUITES = {
    * three. Silent deletion is deliberately not one of the outcomes: this repository has already
    * mistaken four test probes for dead code.
    */
+  /*
+   * 869f1328q. Saved Enemies is the only place free player input reaches the search engine, and 15
+   * of the 38 mechanics answer to no shipped ability - ticking one constrains nothing. The
+   * behaviour was already correct; what was missing was the DECLARATION, and a check that a
+   * mechanic added tomorrow cannot arrive without a meaning. The lane also guards the checklist's
+   * own written-out count against the catalogue, which was already wrong when it landed.
+   */
+  'enemy-vocabulary': {
+    label: 'Saved Enemies vocabulary tests and check',
+    command: 'npm run test:enemy-vocabulary',
+  },
+  /*
+   * 869f1328p. A player who filters on an ability tag and sees a unit missing cannot tell whether
+   * the unit lacks the ability or words it differently. The catalogue records the phrasings, the
+   * count and the derivation per tag, and fails when a count moves further than a data release
+   * could explain.
+   */
+  'ability-tags': {
+    label: 'Ability tag catalogue tests and drift check',
+    command: 'npm run test:ability-tags',
+  },
+  /*
+   * 869f1328c / 869f1328r. `RegionAvailability` measured whether an image existed and was named
+   * for availability. This fails a model name that claims a fact about the game it does not
+   * measure, fails the return of that retired name, and covers the absence conventions that make
+   * "we do not know" distinguishable from zero.
+   */
+  'field-naming': {
+    label: 'Model field naming and absence convention tests',
+    command: 'npm run test:field-naming',
+  },
   'dataset-consumers': {
     label: 'Dataset consumer census tests and check',
     command: 'npm run test:dataset-consumers',
@@ -658,6 +689,50 @@ function touchesI18nNamespaces(filePath) {
   return filePath.startsWith('public/i18n/');
 }
 
+/* 869f1328p / 869f1328q / 869f1328c. Terminating: these files are the artifacts themselves. */
+function isDataCaptureArtifactPath(filePath) {
+  return (
+    filePath === 'scripts/generate-enemy-vocabulary.mjs' ||
+    filePath === 'scripts/generate-enemy-vocabulary.spec.ts' ||
+    filePath === 'scripts/lib/enemy-mechanic-vocabulary.mjs' ||
+    filePath === 'docs/enemy-mechanic-vocabulary.json' ||
+    filePath === 'scripts/generate-ability-tag-catalogue.mjs' ||
+    filePath === 'scripts/generate-ability-tag-catalogue.spec.ts' ||
+    filePath === 'scripts/lib/ability-tag-catalogue.mjs' ||
+    filePath === 'docs/ability-tag-catalogue.json' ||
+    filePath === 'scripts/check-field-naming.mjs' ||
+    filePath === 'scripts/check-field-naming.spec.ts' ||
+    filePath === 'scripts/lib/field-naming.mjs'
+  );
+}
+
+/*
+ * Non-terminating, and deliberately THREE predicates rather than one.
+ *
+ * Each artifact reads a different source, and lumping them together ran the naming and enemy lanes
+ * on an ability-parser change that neither of them reads. A lane that runs for reasons it cannot
+ * be affected by is noise, and noise is what teaches people to stop reading lane names.
+ */
+function touchesEnemyVocabularySources(filePath) {
+  return (
+    filePath === 'src/app/core/services/enemy-mechanic-draft.utils.ts' ||
+    filePath === 'src/app/core/services/auto-team-builder-mechanic-checklist.utils.ts'
+  );
+}
+
+function touchesAbilityTagSources(filePath) {
+  return filePath === 'scripts/auto-team-builder-ability-parser.mjs';
+}
+
+function touchesFieldNamingSources(filePath) {
+  return (
+    filePath === 'src/app/core/services/field-absence.utils.ts' ||
+    filePath === 'src/app/core/services/field-absence.utils.spec.ts' ||
+    filePath === 'src/app/core/models/optc.models.ts' ||
+    filePath === 'src/app/core/models/auto-team-builder-ability.models.ts'
+  );
+}
+
 /* 869f13288. Terminating: these files are the census itself. */
 function isDatasetConsumerCensusPath(filePath) {
   return (
@@ -1092,6 +1167,18 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
       addScriptSuite(scriptSuites, 'dataset-consumers');
     }
 
+    if (touchesEnemyVocabularySources(filePath)) {
+      addScriptSuite(scriptSuites, 'enemy-vocabulary');
+    }
+
+    if (touchesAbilityTagSources(filePath)) {
+      addScriptSuite(scriptSuites, 'ability-tags');
+    }
+
+    if (touchesFieldNamingSources(filePath)) {
+      addScriptSuite(scriptSuites, 'field-naming');
+    }
+
     if (touchesSecurityConfigSources(filePath)) {
       addScriptSuite(scriptSuites, 'security-config');
     }
@@ -1141,6 +1228,13 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
 
     if (isDatasetConsumerCensusPath(filePath)) {
       addScriptSuite(scriptSuites, 'dataset-consumers');
+      continue;
+    }
+
+    if (isDataCaptureArtifactPath(filePath)) {
+      addScriptSuite(scriptSuites, 'enemy-vocabulary');
+      addScriptSuite(scriptSuites, 'ability-tags');
+      addScriptSuite(scriptSuites, 'field-naming');
       continue;
     }
 

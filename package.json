@@ -162,7 +162,13 @@
     "security:app-config": "node ./scripts/check-app-config.mjs",
     "dataset:consumers": "node ./scripts/generate-dataset-consumers.mjs",
     "test:security-config": "vitest run scripts/check-app-config.spec.ts scripts/check-csp-policy.spec.ts && npm run security:app-config",
-    "test:dataset-consumers": "vitest run scripts/generate-dataset-consumers.spec.ts && node ./scripts/generate-dataset-consumers.mjs --check"
+    "test:dataset-consumers": "vitest run scripts/generate-dataset-consumers.spec.ts && node ./scripts/generate-dataset-consumers.mjs --check",
+    "dataset:enemy-vocabulary": "node ./scripts/generate-enemy-vocabulary.mjs",
+    "dataset:ability-tags": "node ./scripts/generate-ability-tag-catalogue.mjs",
+    "model:field-naming": "node ./scripts/check-field-naming.mjs",
+    "test:enemy-vocabulary": "vitest run scripts/generate-enemy-vocabulary.spec.ts && node ./scripts/generate-enemy-vocabulary.mjs --check",
+    "test:ability-tags": "vitest run scripts/generate-ability-tag-catalogue.spec.ts && node ./scripts/generate-ability-tag-catalogue.mjs --check",
+    "test:field-naming": "vitest run scripts/check-field-naming.spec.ts src/app/core/services/field-absence.utils.spec.ts && npm run model:field-naming"
   },
   "private": true,
   "packageManager": "npm@11.8.0",
