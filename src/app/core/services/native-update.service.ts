@@ -17,7 +17,22 @@ export interface NativeAppUpdate {
 }
 
 /** Lifecycle of an in-app APK download, mirroring the web update phases. */
-export type NativeUpdatePhase = 'idle' | 'downloading' | 'ready';
+/**
+ * 869f135r6. `failed` exists because it did not, and the web path's did.
+ *
+ * `AppUpdatePhase` has carried `'failed'` all along, with copy and a retry
+ * schedule. The native path had `idle | downloading | ready`, so a download that
+ * died set the phase back to `idle` - the banner reverted to "a new version is
+ * available", the progress bar reset, and a browser window opened at the release
+ * page with no explanation. From the reader's side the update simply undid
+ * itself, which is the one failure they can neither diagnose nor escape.
+ *
+ * `downloadError` was already captured at that point and rendered nowhere. The
+ * `unused-members` lane added in 869f135rm flagged it as having no non-spec
+ * reader, which is exactly what it was: the answer existed and never reached the
+ * screen.
+ */
+export type NativeUpdatePhase = 'idle' | 'downloading' | 'ready' | 'failed';
 
 /**
  * Injectable APK-updater bridge. Injecting it (rather than importing the plugin
@@ -158,6 +173,11 @@ export class NativeUpdateService {
    * no APK asset on the release, the plugin missing (iOS, web, an older shell), or
    * the download failing — so the user always has a way forward.
    */
+  /** Offered by the failed banner, so leaving the app is the reader's decision. */
+  public async openReleasePageManually(): Promise<void> {
+    this.openReleasePage();
+  }
+
   public async downloadAndInstall(): Promise<void> {
     const update = this.availableSignal();
 
@@ -205,10 +225,20 @@ export class NativeUpdateService {
       await this.apkUpdater.install({ path: result.path });
     } catch (error) {
       this.downloadErrorSignal.set(error instanceof Error ? error.message : String(error));
-      this.phaseSignal.set('idle');
+      /*
+       * `failed`, not `idle`. Reverting to idle re-offered the update as though
+       * nothing had happened, and the reader had no way to tell a failure from a
+       * banner they had simply not pressed yet.
+       */
+      this.phaseSignal.set('failed');
       this.downloadProgressSignal.set(0);
       this.lastEmittedProgress = 0;
-      this.openReleasePage();
+      /*
+       * The release page is now something the reader CHOOSES from the failed
+       * banner, not something that happens to them. Opening a browser
+       * unannounced, straight after a download died, reads as the app doing
+       * something else entirely.
+       */
     } finally {
       await this.stopListeningForProgress();
     }

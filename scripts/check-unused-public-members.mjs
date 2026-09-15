@@ -129,6 +129,21 @@ function collectFiles(dir, predicate, out = []) {
   return out;
 }
 
+/**
+ * Text with comments removed.
+ *
+ * 869f135r6. A comment is not a reader, and the first version of this counted one.
+ * Writing `\`downloadError\` was captured here and rendered nowhere` in the same
+ * file as the declaration made the member look alive - the guard read its own
+ * explanation of why it was dead as evidence that it was not. Strings are left
+ * alone: a member named in a string is usually a real lookup.
+ */
+export function stripComments(text) {
+  return String(text)
+    .replaceAll(/\/\*[\s\S]*?\*\//gu, ' ')
+    .replaceAll(/(^|[^:])\/\/[^\n]*/gu, '$1 ');
+}
+
 function isSpecFile(file) {
   return file.endsWith('.spec.ts');
 }
@@ -329,7 +344,9 @@ export function run({ json = false } = {}) {
   const members = collectPublicMembers(program, sourceFiles);
 
   const toTextMap = (files) =>
-    new Map(files.map((file) => [path.relative(REPO_ROOT, file), readFileSync(file, 'utf8')]));
+    new Map(
+      files.map((file) => [path.relative(REPO_ROOT, file), stripComments(readFileSync(file, 'utf8'))]),
+    );
 
   const findings = findUnusedMembers(members, {
     productionText: toTextMap(productionFiles),

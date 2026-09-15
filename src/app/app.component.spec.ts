@@ -54,6 +54,7 @@ let nativeUpdateStub: {
   check: ReturnType<typeof vi.fn>;
   snooze: ReturnType<typeof vi.fn>;
   openReleasePage: ReturnType<typeof vi.fn>;
+  openReleasePageManually: ReturnType<typeof vi.fn>;
   downloadAndInstall: ReturnType<typeof vi.fn>;
 };
 let alertControllerStub: {
@@ -191,6 +192,7 @@ describe('AppComponent', () => {
       check: vi.fn().mockResolvedValue(undefined),
       snooze: vi.fn(),
       openReleasePage: vi.fn(),
+      openReleasePageManually: vi.fn().mockResolvedValue(undefined),
       downloadAndInstall: vi.fn().mockResolvedValue(undefined),
     };
     alertControllerStub = {
@@ -811,6 +813,51 @@ describe('AppComponent', () => {
       routerStub.events.complete();
     }
   });
+
+  /*
+   * 869f135r6. The native path had no failed phase at all - a dead APK download
+   * set it back to `idle`, so the banner re-offered the update as though nothing
+   * had happened while a browser opened at the release page unannounced. The
+   * reader could not tell a failure from a banner they had simply not pressed.
+   */
+  it('tells the reader a native download failed instead of re-offering the update', async () => {
+    const { AppComponent } = await import('./app.component');
+    const component = new AppComponent();
+
+    nativeUpdateStub.availableUpdate.set({ version: '9.9.9', apkUrl: 'https://example.test/app.apk' });
+    nativeUpdateStub.updatePhase.set('downloading');
+
+    expect(component.updateCopyKey()).toBe('appUpdate.downloading');
+    expect(component.showNativeUpdateFallback()).toBe(false);
+
+    nativeUpdateStub.updatePhase.set('failed');
+
+    expect(component.updateCopyKey()).toBe('appUpdate.downloadFailedNative');
+    expect(component.showNativeUpdateFallback()).toBe(true);
+  });
+
+  it('offers the release page rather than navigating there on its own', async () => {
+    const { AppComponent } = await import('./app.component');
+    const component = new AppComponent();
+
+    nativeUpdateStub.availableUpdate.set({ version: '9.9.9', apkUrl: 'https://example.test/app.apk' });
+    nativeUpdateStub.updatePhase.set('failed');
+    await component.openNativeReleasePage();
+
+    expect(nativeUpdateStub.openReleasePageManually).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows no fallback action while the native update is merely available', async () => {
+    const { AppComponent } = await import('./app.component');
+    const component = new AppComponent();
+
+    nativeUpdateStub.availableUpdate.set({ version: '9.9.9', apkUrl: 'https://example.test/app.apk' });
+    nativeUpdateStub.updatePhase.set('idle');
+
+    expect(component.updateCopyKey()).toBe('appUpdate.copyNative');
+    expect(component.showNativeUpdateFallback()).toBe(false);
+  });
+
 });
 
 function createAnalyticsConsentStub(initialConsent: AnalyticsConsentState) {
