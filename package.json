@@ -85,6 +85,8 @@
     "styles:panel-inventory": "node ./scripts/check-style-panel-inventory.mjs",
     "test:locale-formatting": "vitest run scripts/check-locale-formatting.spec.ts src/app/core/i18n/app-locale-format.spec.ts && npm run i18n:locale-formatting",
     "i18n:locale-formatting": "node ./scripts/check-locale-formatting.mjs",
+    "test:support-claims": "vitest run scripts/check-support-claims.spec.ts src/app/pages/supported/supported.data.spec.ts && npm run i18n:support-claims",
+    "i18n:support-claims": "node ./scripts/check-support-claims.mjs",
     "scripts:references": "node ./scripts/check-npm-script-references.mjs",
     "theme:overlay-contrast": "node ./scripts/check-ionic-overlay-contrast.mjs",
     "test:ionic-host-property": "vitest run scripts/check-ionic-host-property.spec.ts && npm run ionic:host-property",

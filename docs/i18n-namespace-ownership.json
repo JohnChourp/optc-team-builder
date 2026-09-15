@@ -308,6 +308,15 @@
       ]
     },
     {
+      "namespace": "supported",
+      "kind": "page",
+      "owner": "src/app/pages/supported/",
+      "hosts": [],
+      "consumers": [
+        "src/app/pages/supported/supported.page.html"
+      ]
+    },
+    {
       "namespace": "team-coverage-summary",
       "kind": "shared",
       "owner": null,

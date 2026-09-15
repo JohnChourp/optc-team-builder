@@ -164,6 +164,21 @@ export const routes: Routes = [
             loadComponent: () => import('./pages/faq/faq.page').then((module) => module.FaqPage),
           },
           {
+            /*
+             * 869f17h3g. Deliberately private - no `data.seo`, so it stays out of
+             * the sitemap and carries `noindex,follow` like Settings does.
+             *
+             * It answers "should I trust this tool" for someone who already has
+             * it open, not for a search result. Publishing it would add a page to
+             * the generated set whose claims are checked against this repo's own
+             * configuration, and the check that keeps it honest is a lane, not a
+             * crawler.
+             */
+            path: 'supported',
+            loadComponent: () =>
+              import('./pages/supported/supported.page').then((module) => module.SupportedPage),
+          },
+          {
             path: 'privacy',
             data: {
               seo: publicRouteSeo('tabs/privacy'),

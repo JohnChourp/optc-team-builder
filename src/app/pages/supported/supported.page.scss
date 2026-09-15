@@ -1,0 +1,64 @@
+.supported-shell {
+  display: grid;
+  gap: 18px;
+}
+
+.supported-hero,
+.supported-card {
+  padding: 18px;
+}
+
+.supported-card {
+  display: grid;
+  gap: 12px;
+}
+
+.supported-card h2 {
+  margin: 0;
+  color: #ffffff;
+}
+
+.supported-accordion-group {
+  display: grid;
+  gap: 10px;
+}
+
+.supported-accordion {
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.supported-question {
+  --background: transparent;
+  --color: #ffffff;
+  --padding-start: 14px;
+  --inner-padding-end: 14px;
+  font-weight: 600;
+}
+
+.supported-answer {
+  display: grid;
+  gap: 10px;
+  padding: 0 14px 14px;
+}
+
+.supported-answer p,
+.supported-list li {
+  margin: 0;
+  color: rgba(248, 251, 255, 0.72);
+  line-height: 1.55;
+}
+
+.supported-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 18px;
+}
+
+.supported-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

@@ -160,7 +160,21 @@ describe('ci-check-routing', () => {
     expect(plan.runAngular).toBe(true);
     expect(plan.runE2e).toBe(true);
     expect(plan.runQuarantine).toBe(false);
-    expect(plan.scriptSuites).toEqual(['pwa-shell']);
+    /*
+     * 869f17h3g. `support-claims` joins without displacing `pwa-shell`:
+     * ngsw-config.json decides what the supported screen promises works offline,
+     * so a change to it has to re-check that promise as well as the shell. An
+     * earlier version consumed the file and STOLE it from pwa-shell, which this
+     * assertion caught - hence both, and in this order.
+     */
+    expect(plan.scriptSuites).toEqual(['pwa-shell', 'support-claims']);
+  });
+
+  it('routes a Playwright config change to both e2e triage and the support claims', () => {
+    const plan = buildCheckPlan(['playwright.config.ts']);
+
+    expect(plan.scriptSuites).toContain('support-claims');
+    expect(plan.scriptSuites.length).toBeGreaterThan(1);
   });
 
   it('routes release and performance tooling to focused script suites', () => {
@@ -254,6 +268,7 @@ describe('ci-check-routing', () => {
       'scripts-references',
       'style-panels',
       'locale-formatting',
+      'support-claims',
       'dead-code',
       'worker-bundling',
     ]);

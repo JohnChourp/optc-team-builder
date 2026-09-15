@@ -1,0 +1,32 @@
+<ng-container *transloco="let t; scope: 'supported'; read: 'supported'">
+  <ion-header class="ion-no-border">
+    <ion-toolbar>
+      <ion-buttons slot="start">
+        <ion-menu-button menu="tabs-navigation-menu" autoHide="false"></ion-menu-button>
+      </ion-buttons>
+      <ion-title>{{ t('title') }}</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <ion-content [fullscreen]="true">
+    <div class="page-shell supported-shell">
+      <section class="glass-card supported-hero">
+        <div class="section-label">{{ t('eyebrow') }}</div>
+        <h1 class="section-title">{{ t('title') }}</h1>
+        <p class="section-copy">{{ t('summary') }}</p>
+      </section>
+
+      @for (section of sections; track section.id) {
+        <section class="glass-card supported-card">
+          <h2>{{ t('sections.' + section.id + '.title') }}</h2>
+
+          <ul class="supported-list" [attr.data-test]="'supported-' + section.id">
+            @for (row of section.rows; track row) {
+              <li>{{ t('sections.' + section.id + '.rows.' + row) }}</li>
+            }
+          </ul>
+        </section>
+      }
+    </div>
+  </ion-content>
+</ng-container>

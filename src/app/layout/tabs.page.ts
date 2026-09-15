@@ -193,6 +193,16 @@ export class TabsPage {
     labelKey: 'tabs.faq',
     route: '/tabs/faq',
   };
+  /**
+   * 869f17h3g. Directly above the FAQ, because it answers the question a reader
+   * has BEFORE they have a question about a screen: is this thing going to work
+   * on my phone, and what is it going to ask for.
+   */
+  public readonly supportedNavItem: NavigationItem = {
+    icon: shieldCheckmarkOutline,
+    labelKey: 'tabs.supported',
+    route: '/tabs/supported',
+  };
   /** Sits between the FAQ and Settings in the menu footer. */
   public readonly whatsNewNavItem: NavigationItem = {
     icon: sparklesOutline,
