@@ -80,6 +80,7 @@ when a script is unclassified, and when a lane names a script that does not exis
 | `data:import:all` | script file · check-dataset-spec-pins.mjs, generate-whats-new-entry.mjs | whatever check-dataset-spec-pins.mjs, generate-whats-new-entry.mjs drives |
 | `data:monitor-upstream` | workflow · check-optc-db-release.yml | the check-optc-db-release.yml workflow |
 | `data:upsert-manual-character` | manual · — | Applies a hand-written character overlay. Run deliberately by a maintainer; automating it would let the dataset drift from upstream without a decision. |
+| `dataset:consumers` | manual · — | 869f13288. Regenerates the consumer census. The CHECK half runs in the dataset-consumers lane as `generate-dataset-consumers.mjs --check`; this is the write half, run deliberately when a column legitimately gains or loses a consumer. Same split as dataset:provenance and dataset:unresolved-clauses. |
 | `dataset:digest` | workflow · dataset-change-digest.yml | the dataset-change-digest.yml workflow |
 | `dataset:measure` | npm script · test:dataset-measurements | `test:dataset-measurements` |
 | `dataset:measurements` | npm script · test:dataset-measurements | `test:dataset-measurements` |
@@ -125,6 +126,8 @@ when a script is unclassified, and when a lane names a script that does not exis
 | `routes:sitemap-coverage` | npm script · test:route-sitemap-coverage | `test:route-sitemap-coverage` |
 | `scripts:inventory` | npm script · test:scripts-inventory | `test:scripts-inventory` |
 | `scripts:references` | npm script · test:scripts-references | `test:scripts-references` |
+| `security:app-config` | npm script · test:security-config | `test:security-config` |
+| `security:csp` | script file · ci-check-routing.mjs | whatever ci-check-routing.mjs drives |
 | `seo:audit` | npm script · build:pages | `build:pages` |
 | `seo:indexnow` | workflow · deploy-pages.yml | the deploy-pages.yml workflow |
 | `seo:pages` | npm script · build:pages | `build:pages` |
@@ -145,6 +148,7 @@ when a script is unclassified, and when a lane names a script that does not exis
 | `test:ci-triggers` | lane · ci-triggers | the `ci-triggers` lane |
 | `test:component-inventory` | lane · component-inventory | the `component-inventory` lane |
 | `test:content-ladder` | lane · content-ladder | the `content-ladder` lane |
+| `test:dataset-consumers` | lane · dataset-consumers | the `dataset-consumers` lane |
 | `test:dataset-digest` | lane · dataset-digest | the `dataset-digest` lane |
 | `test:dataset-measurements` | lane · dataset-measurements | the `dataset-measurements` lane |
 | `test:dataset-provenance` | lane · dataset-provenance | the `dataset-provenance` lane |
@@ -182,6 +186,7 @@ when a script is unclassified, and when a lane names a script that does not exis
 | `test:saved-team-codecs` | lane · saved-team-codecs | the `saved-team-codecs` lane |
 | `test:scripts-inventory` | lane · scripts-inventory | the `scripts-inventory` lane |
 | `test:scripts-references` | lane · scripts-references | the `scripts-references` lane |
+| `test:security-config` | lane · security-config | the `security-config` lane |
 | `test:storage-keys` | lane · storage-keys | the `storage-keys` lane |
 | `test:style-panels` | lane · style-panels | the `style-panels` lane |
 | `test:support-claims` | lane · support-claims | the `support-claims` lane |

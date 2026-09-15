@@ -3,7 +3,8 @@ import { readFile } from 'node:fs/promises';
 import {
   createCharacterSearchText,
   createEmptyAssets,
-  createEmptyRegionAvailability,
+  createEmptyRegionArtwork,
+  createEmptyRegionRelease,
   resolveCharacterCaptainBoosts,
   validTypes,
 } from './optc-dataset.mjs';
@@ -225,10 +226,15 @@ export function buildAppliedManualCharacter(record) {
       ? { thumbnailLocal: `assets/exact-character-images/${record.image.thumbnailFile}` }
       : {}),
   };
-  const regionAvailability = {
-    ...createEmptyRegionAvailability(),
+  const regionArtwork = {
+    ...createEmptyRegionArtwork(),
     exactLocal: true,
   };
+  /*
+   * 869f13284. A manually added character has no upstream flag row, so its release availability is
+   * genuinely unknown rather than absent. `null`, never `false`.
+   */
+  const regionRelease = createEmptyRegionRelease();
   const detail = {
     ...createEmptyManualDetail(record.id),
     ...record.detail,
@@ -262,7 +268,8 @@ export function buildAppliedManualCharacter(record) {
       canonicalId: canonicalCharacterId !== record.id ? canonicalCharacterId : null,
       aliases: record.searchAliases ?? [],
     }),
-    regionAvailability,
+    regionArtwork,
+    regionRelease,
     assets,
     detail,
   };

@@ -1863,11 +1863,12 @@ function createCharacter(
       max: { hp: null, atk: null, rcv: null },
       growth: null,
     },
-    regionAvailability: {
+    regionArtwork: {
       exactLocal: false,
       thumbnailGlobal: false,
       thumbnailJapan: false,
     },
+    regionRelease: { availableOnGlobal: null },
     assets: {
       exactLocal: null,
       thumbnailGlobal: null,

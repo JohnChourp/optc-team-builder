@@ -408,11 +408,12 @@ function createUnit(overrides: {
         max: { hp: 5000, atk: 1800, rcv: 400 },
         growth: null,
       },
-      regionAvailability: {
+      regionArtwork: {
         exactLocal: true,
         thumbnailGlobal: true,
         thumbnailJapan: false,
       },
+      regionRelease: { availableOnGlobal: null },
       assets: {
         exactLocal: null,
         thumbnailGlobal: null,

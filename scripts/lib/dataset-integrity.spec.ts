@@ -5,6 +5,7 @@ import {
   buildDatasetIntegrityReport,
   validateDatasetIntegrity,
 } from './dataset-integrity.mjs';
+import { DATASET_SCHEMA_VERSION } from './optc-dataset.mjs';
 
 describe('dataset integrity checks', () => {
   it('accepts a consistent generated dataset payload', () => {
@@ -167,7 +168,7 @@ function createShip(overrides = {}) {
 
 function createManifest({ characters = [createCharacter()], ships = [createShip()] } = {}) {
   return {
-    schemaVersion: 1,
+    schemaVersion: DATASET_SCHEMA_VERSION,
     generatedAt: '2026-05-16T00:00:00.000Z',
     sourceVersion: 'test',
     characterCount: characters.length,

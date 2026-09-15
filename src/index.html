@@ -18,6 +18,42 @@
   })(window,document,'script','dataLayer','GTM-TBW6L4T');</script>
   <!-- End Google Tag Manager -->
   <meta charset="utf-8">
+  <!--
+    869f13285. The site served zero security headers and carried no policy at all until 2026-09-15.
+
+    GitHub Pages cannot set response headers, so a <meta http-equiv> policy is the only mechanism
+    available. Three protections are therefore genuinely unavailable on this host and are NOT
+    silently missing - they cannot be expressed here at all:
+
+      - frame-ancestors  (meta ignores it) -> no clickjacking protection
+      - X-Frame-Options  (header only)
+      - X-Content-Type-Options / Permissions-Policy (header only)
+
+    'unsafe-inline' in script-src is load-bearing and not laziness: index.html carries five inline
+    bootstrap scripts and Google Tag Manager injects more at runtime, so a hash or nonce list
+    cannot hold. What the policy still buys is the part that matters most for a client-side app
+    with no backend - an injected script cannot reach an origin that is not listed in connect-src,
+    cannot set a <base>, and cannot post a form off-site.
+
+    'wasm-unsafe-eval' is required by sql.js, which compiles the dataset engine from WASM.
+
+    The clarity.ms and c.bing.com origins are Microsoft Clarity, injected at runtime by the Google
+    Tag Manager container GTM-TBW6L4T. Clarity appears NOWHERE in this repository - it is
+    configured in the GTM console - and the first version of this policy blocked it on all four
+    routes. That is the standing hazard here: a tag added to the GTM container is a script origin
+    this file has never heard of, and it will be blocked silently in production. Re-run
+    `npm run security:csp` after ANY change to the GTM container, not only after a change to this
+    file.
+
+    Every directive below is proven against a real served build by `npm run security:csp`, which
+    drives the app and fails on any violation. Do not edit this policy without rerunning it, and
+    do not verify it by deploying.
+  -->
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://www.googletagmanager.com https://www.clarity.ms https://scripts.clarity.ms; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://www.googletagmanager.com https://www.google-analytics.com https://*.clarity.ms https://c.bing.com; connect-src 'self' data: blob: https://www.googleapis.com https://accounts.google.com https://www.googletagmanager.com https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com https://*.clarity.ms https://c.bing.com; worker-src 'self' blob:; frame-src 'self' https://www.googletagmanager.com https://accounts.google.com; manifest-src 'self'; media-src 'self' data: blob:; object-src 'none'; base-uri 'self'; form-action 'self'"
+  >
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>OPTC Team Builder | One Piece Treasure Cruise Tools</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">

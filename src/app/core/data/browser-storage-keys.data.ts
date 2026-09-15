@@ -219,6 +219,22 @@ export const BROWSER_STORAGE_KEYS: readonly BrowserStorageKeyRecord[] = [
     note: 'The install banner the reader closed. Per install, by definition.',
   },
   {
+    key: 'gameRegionPreference',
+    constantName: 'GAME_REGION_PREFERENCE_KEY',
+    owner: 'src/app/core/services/user-state.service.ts',
+    backend: 'preferences',
+    classification: 'device-preference',
+    note: "Which version of the game the reader plays - 'all' (default), 'global' or 'japan'. Drives the out-of-region badge and the opt-in availability filter. Deliberately NOT durable-user-data: it is a setting rather than the reader's work, re-set in one tap, and nothing else in the export payload depends on it. 869f13282 defaults it to 'all' so the update that introduced it changed nothing for an existing reader.",
+  },
+  {
+    key: 'gameRegionHideUnavailable',
+    constantName: 'GAME_REGION_HIDE_UNAVAILABLE_KEY',
+    owner: 'src/app/core/services/user-state.service.ts',
+    backend: 'preferences',
+    classification: 'device-preference',
+    note: "Whether an out-of-region unit is removed from results rather than merely marked. False by default, and deliberately SEPARATE from gameRegionPreference: the owner's 2026-09-15 decision was mark-never-hide, so naming a game version labels units and removes none. This is the explicit second step for a reader who wants the shorter list.",
+  },
+  {
     key: 'recentCharacterIds',
     constantName: 'RECENTS_KEY',
     owner: 'src/app/core/services/user-state.service.ts',

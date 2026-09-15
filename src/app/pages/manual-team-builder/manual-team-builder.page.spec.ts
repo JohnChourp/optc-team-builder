@@ -2352,11 +2352,12 @@ function createCharacterRecord(id: number, name = `Character ${id}`): CharacterD
       max: { hp: 4200, atk: 1800, rcv: 320 },
       growth: 2.4,
     },
-    regionAvailability: {
+    regionArtwork: {
       exactLocal: true,
       thumbnailGlobal: true,
       thumbnailJapan: false,
     },
+    regionRelease: { availableOnGlobal: null },
     assets: {
       exactLocal: `assets/characters/${id}.png`,
       thumbnailGlobal: `assets/characters/${id}-thumb.png`,

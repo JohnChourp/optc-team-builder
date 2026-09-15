@@ -1412,6 +1412,13 @@ function createRepositoryService(
   );
 
   Object.assign(service, {
+    /*
+     * 869f13282. The repository reads the reader's active region filter for any query that does
+     * not name one. `all` here keeps every existing case measuring what it always measured; the
+     * region behaviour has its own tests in character-region.utils.spec.ts and
+     * character-catalog-cache.service.spec.ts.
+     */
+    userState: { activeRegionFilter: vi.fn(() => 'all' as const) },
     characterOverrides: {
       ready: vi.fn().mockResolvedValue(undefined),
       revision: vi.fn(() =>

@@ -53,6 +53,12 @@ export const NPM_SCRIPT_REGISTRY = [
     invokedBy: ['scripts/verify-local.mjs'],
   },
   {
+    script: 'dataset:consumers',
+    class: 'manual',
+    reason:
+      '869f13288. Regenerates the consumer census. The CHECK half runs in the dataset-consumers lane as `generate-dataset-consumers.mjs --check`; this is the write half, run deliberately when a column legitimately gains or loses a consumer. Same split as dataset:provenance and dataset:unresolved-clauses.',
+  },
+  {
     script: 'dataset:unresolved-clauses',
     class: 'manual',
     reason:

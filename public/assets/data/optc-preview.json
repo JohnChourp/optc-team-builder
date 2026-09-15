@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-15T06:22:20.013Z",
+  "generatedAt": "2026-09-15T06:51:05.308Z",
   "characters": [
     {
       "id": 1,
@@ -71,10 +71,13 @@
         }
       ],
       "searchText": "monkey d. luffy str fighter",
-      "regionAvailability": {
+      "regionArtwork": {
         "exactLocal": false,
         "thumbnailGlobal": true,
         "thumbnailJapan": true
+      },
+      "regionRelease": {
+        "availableOnGlobal": true
       },
       "assets": {
         "exactLocal": null,
@@ -255,10 +258,13 @@
         }
       ],
       "searchText": "monkey d. luffy - gum-gum pistol str fighter",
-      "regionAvailability": {
+      "regionArtwork": {
         "exactLocal": false,
         "thumbnailGlobal": true,
         "thumbnailJapan": true
+      },
+      "regionRelease": {
+        "availableOnGlobal": true
       },
       "assets": {
         "exactLocal": null,
@@ -452,10 +458,13 @@
         }
       ],
       "searchText": "monkey d. luffy - gum-gum bazooka str fighter",
-      "regionAvailability": {
+      "regionArtwork": {
         "exactLocal": false,
         "thumbnailGlobal": true,
         "thumbnailJapan": true
+      },
+      "regionRelease": {
+        "availableOnGlobal": true
       },
       "assets": {
         "exactLocal": null,
@@ -635,10 +644,13 @@
         }
       ],
       "searchText": "monkey d. luffy - gear 2 str fighter free spirit",
-      "regionAvailability": {
+      "regionArtwork": {
         "exactLocal": false,
         "thumbnailGlobal": true,
         "thumbnailJapan": true
+      },
+      "regionRelease": {
+        "availableOnGlobal": true
       },
       "assets": {
         "exactLocal": null,
@@ -913,10 +925,13 @@
         }
       ],
       "searchText": "roronoa zoro dex slasher",
-      "regionAvailability": {
+      "regionArtwork": {
         "exactLocal": false,
         "thumbnailGlobal": true,
         "thumbnailJapan": true
+      },
+      "regionRelease": {
+        "availableOnGlobal": true
       },
       "assets": {
         "exactLocal": null,
@@ -1085,10 +1100,13 @@
         }
       ],
       "searchText": "roronoa zoro - three thousand worlds dex slasher driven",
-      "regionAvailability": {
+      "regionArtwork": {
         "exactLocal": false,
         "thumbnailGlobal": true,
         "thumbnailJapan": true
+      },
+      "regionRelease": {
+        "availableOnGlobal": true
       },
       "assets": {
         "exactLocal": null,
@@ -1245,10 +1263,13 @@
       ],
       "dropSources": [],
       "searchText": "roronoa zoro - pound phoenix dex slasher driven",
-      "regionAvailability": {
+      "regionArtwork": {
         "exactLocal": false,
         "thumbnailGlobal": true,
         "thumbnailJapan": true
+      },
+      "regionRelease": {
+        "availableOnGlobal": true
       },
       "assets": {
         "exactLocal": null,
@@ -1410,10 +1431,13 @@
         }
       ],
       "searchText": "roronoa zoro - ashura ichibugin dex slasher driven",
-      "regionAvailability": {
+      "regionArtwork": {
         "exactLocal": false,
         "thumbnailGlobal": true,
         "thumbnailJapan": true
+      },
+      "regionRelease": {
+        "availableOnGlobal": true
       },
       "assets": {
         "exactLocal": null,
@@ -1677,10 +1701,13 @@
         }
       ],
       "searchText": "nami int striker",
-      "regionAvailability": {
+      "regionArtwork": {
         "exactLocal": false,
         "thumbnailGlobal": true,
         "thumbnailJapan": true
+      },
+      "regionRelease": {
+        "availableOnGlobal": true
       },
       "assets": {
         "exactLocal": null,
@@ -1850,10 +1877,13 @@
         }
       ],
       "searchText": "nami - tornado tempo int striker cerebral",
-      "regionAvailability": {
+      "regionArtwork": {
         "exactLocal": false,
         "thumbnailGlobal": true,
         "thumbnailJapan": true
+      },
+      "regionRelease": {
+        "availableOnGlobal": true
       },
       "assets": {
         "exactLocal": null,
@@ -2009,10 +2039,13 @@
       ],
       "dropSources": [],
       "searchText": "nami - mirage tempo int striker cerebral",
-      "regionAvailability": {
+      "regionArtwork": {
         "exactLocal": false,
         "thumbnailGlobal": true,
         "thumbnailJapan": true
+      },
+      "regionRelease": {
+        "availableOnGlobal": true
       },
       "assets": {
         "exactLocal": null,
@@ -2189,10 +2222,13 @@
         }
       ],
       "searchText": "nami - thunderbolt tempo int striker cerebral",
-      "regionAvailability": {
+      "regionArtwork": {
         "exactLocal": false,
         "thumbnailGlobal": true,
         "thumbnailJapan": true
+      },
+      "regionRelease": {
+        "availableOnGlobal": true
       },
       "assets": {
         "exactLocal": null,
@@ -2482,10 +2518,13 @@
         }
       ],
       "searchText": "usopp psy shooter",
-      "regionAvailability": {
+      "regionArtwork": {
         "exactLocal": false,
         "thumbnailGlobal": true,
         "thumbnailJapan": true
+      },
+      "regionRelease": {
+        "availableOnGlobal": true
       },
       "assets": {
         "exactLocal": null,
@@ -2729,10 +2768,13 @@
         }
       ],
       "searchText": "usopp - tabasco star psy shooter",
-      "regionAvailability": {
+      "regionArtwork": {
         "exactLocal": false,
         "thumbnailGlobal": true,
         "thumbnailJapan": true
+      },
+      "regionRelease": {
+        "availableOnGlobal": true
       },
       "assets": {
         "exactLocal": null,
@@ -2978,10 +3020,13 @@
         }
       ],
       "searchText": "usopp - usopp golden pound psy shooter",
-      "regionAvailability": {
+      "regionArtwork": {
         "exactLocal": false,
         "thumbnailGlobal": true,
         "thumbnailJapan": true
+      },
+      "regionRelease": {
+        "availableOnGlobal": true
       },
       "assets": {
         "exactLocal": null,
@@ -3209,10 +3254,13 @@
         }
       ],
       "searchText": "sogeking psy shooter",
-      "regionAvailability": {
+      "regionArtwork": {
         "exactLocal": false,
         "thumbnailGlobal": true,
         "thumbnailJapan": true
+      },
+      "regionRelease": {
+        "availableOnGlobal": true
       },
       "assets": {
         "exactLocal": null,
@@ -3623,10 +3671,13 @@
         }
       ],
       "searchText": "sanji qck fighter",
-      "regionAvailability": {
+      "regionArtwork": {
         "exactLocal": false,
         "thumbnailGlobal": true,
         "thumbnailJapan": true
+      },
+      "regionRelease": {
+        "availableOnGlobal": true
       },
       "assets": {
         "exactLocal": null,
@@ -3786,10 +3837,13 @@
       ],
       "dropSources": [],
       "searchText": "sanji - plastic surgery shot qck fighter powerhouse",
-      "regionAvailability": {
+      "regionArtwork": {
         "exactLocal": false,
         "thumbnailGlobal": true,
         "thumbnailJapan": true
+      },
+      "regionRelease": {
+        "availableOnGlobal": true
       },
       "assets": {
         "exactLocal": null,
@@ -3945,10 +3999,13 @@
       ],
       "dropSources": [],
       "searchText": "chef sanji - hot rock stew qck fighter powerhouse",
-      "regionAvailability": {
+      "regionArtwork": {
         "exactLocal": false,
         "thumbnailGlobal": true,
         "thumbnailJapan": true
+      },
+      "regionRelease": {
+        "availableOnGlobal": true
       },
       "assets": {
         "exactLocal": null,
@@ -4102,10 +4159,13 @@
       ],
       "dropSources": [],
       "searchText": "sanji - diable jambe qck fighter powerhouse",
-      "regionAvailability": {
+      "regionArtwork": {
         "exactLocal": false,
         "thumbnailGlobal": true,
         "thumbnailJapan": true
+      },
+      "regionRelease": {
+        "availableOnGlobal": true
       },
       "assets": {
         "exactLocal": null,
@@ -4459,10 +4519,13 @@
         }
       ],
       "searchText": "tony tony chopper psy fighter",
-      "regionAvailability": {
+      "regionArtwork": {
         "exactLocal": false,
         "thumbnailGlobal": true,
         "thumbnailJapan": true
+      },
+      "regionRelease": {
+        "availableOnGlobal": true
       },
       "assets": {
         "exactLocal": null,
@@ -4607,10 +4670,13 @@
         }
       ],
       "searchText": "tony tony chopper - heavy point psy fighter free spirit",
-      "regionAvailability": {
+      "regionArtwork": {
         "exactLocal": false,
         "thumbnailGlobal": true,
         "thumbnailJapan": true
+      },
+      "regionRelease": {
+        "availableOnGlobal": true
       },
       "assets": {
         "exactLocal": null,
@@ -4820,10 +4886,13 @@
       ],
       "dropSources": [],
       "searchText": "tony tony chopper - brain point int fighter cerebral",
-      "regionAvailability": {
+      "regionArtwork": {
         "exactLocal": false,
         "thumbnailGlobal": true,
         "thumbnailJapan": true
+      },
+      "regionRelease": {
+        "availableOnGlobal": true
       },
       "assets": {
         "exactLocal": null,
@@ -4947,10 +5016,13 @@
         }
       ],
       "searchText": "tony tony chopper - arm point str fighter powerhouse",
-      "regionAvailability": {
+      "regionArtwork": {
         "exactLocal": false,
         "thumbnailGlobal": true,
         "thumbnailJapan": true
+      },
+      "regionRelease": {
+        "availableOnGlobal": true
       },
       "assets": {
         "exactLocal": null,

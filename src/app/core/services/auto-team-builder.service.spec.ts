@@ -40554,7 +40554,7 @@ function loadGeneratedSeedCharactersById(): Map<number, CharacterDetailRecord> {
           },
           growth: toNullableNumber(values[17]),
         },
-        regionAvailability: parseSqlJsonValue(values[21], {
+        regionArtwork: parseSqlJsonValue(values[21], {
           exactLocal: false,
           thumbnailGlobal: false,
           thumbnailJapan: false,
@@ -42749,11 +42749,12 @@ function createCharacterRecord(
       max: { hp: 3900, atk: 1900, rcv: 340 },
       growth: 3,
     },
-    regionAvailability: overrides.regionAvailability ?? {
+    regionArtwork: overrides.regionArtwork ?? {
       exactLocal: true,
       thumbnailGlobal: true,
       thumbnailJapan: false,
     },
+    regionRelease: overrides.regionRelease ?? { availableOnGlobal: null },
     assets: overrides.assets ?? {
       exactLocal: null,
       thumbnailGlobal: null,

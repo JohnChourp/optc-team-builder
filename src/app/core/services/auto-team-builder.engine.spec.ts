@@ -4643,11 +4643,12 @@ function createCharacterRecord(
       max: { hp: 4200, atk: 1800, rcv: 320 },
       growth: 2.4,
     },
-    regionAvailability: overrides.regionAvailability ?? {
+    regionArtwork: overrides.regionArtwork ?? {
       exactLocal: true,
       thumbnailGlobal: true,
       thumbnailJapan: false,
     },
+    regionRelease: overrides.regionRelease ?? { availableOnGlobal: null },
     assets: overrides.assets ?? {
       exactLocal: `assets/characters/${id}.png`,
       thumbnailGlobal: `assets/characters/${id}-thumb.png`,

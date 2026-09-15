@@ -1621,11 +1621,12 @@ function createCharacter(
       },
       growth: 3,
     },
-    regionAvailability: {
+    regionArtwork: {
       exactLocal: true,
       thumbnailGlobal: false,
       thumbnailJapan: false,
     },
+    regionRelease: { availableOnGlobal: null },
     assets: {
       exactLocal: null,
       thumbnailLocal: null,

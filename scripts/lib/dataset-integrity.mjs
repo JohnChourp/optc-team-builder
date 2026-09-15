@@ -1,3 +1,5 @@
+import { DATASET_SCHEMA_VERSION } from './optc-dataset.mjs';
+
 export class DatasetIntegrityError extends Error {
   constructor(report) {
     const preview = report.errors.slice(0, 8).join('\n- ');
@@ -156,8 +158,15 @@ function validateManifest(manifest, characters, ships, errors) {
     return;
   }
 
-  if (manifest.schemaVersion !== 1) {
-    errors.push(`manifest.schemaVersion must be 1, received ${String(manifest.schemaVersion)}.`);
+  /*
+   * 869f13284. Read from the constant the generator writes, not a literal. This check pinned `1` by
+   * hand and so it failed the first time the schema legitimately changed - the guard reporting a
+   * version bump as corruption.
+   */
+  if (manifest.schemaVersion !== DATASET_SCHEMA_VERSION) {
+    errors.push(
+      `manifest.schemaVersion must be ${DATASET_SCHEMA_VERSION}, received ${String(manifest.schemaVersion)}.`,
+    );
   }
 
   if (!normalizeString(manifest.generatedAt).length) {

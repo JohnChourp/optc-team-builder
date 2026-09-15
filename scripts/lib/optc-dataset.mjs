@@ -2,7 +2,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { normalizeHtmlToText } from './html-text.mjs';
 
-export const DATASET_SCHEMA_VERSION = 1;
+export const DATASET_SCHEMA_VERSION = 2;
 export const validTypes = new Set(['STR', 'DEX', 'QCK', 'PSY', 'INT']);
 const invalidClassPattern = /^Class\d+$/i;
 const captainBranchPattern =
@@ -53,11 +53,29 @@ export function createEmptyAssets() {
   };
 }
 
-export function createEmptyRegionAvailability() {
+/**
+ * 869f13284. Which regions the app found ARTWORK for. Every field here is derived from whether an
+ * image asset exists, which is why none of them is named for availability: `region_release_json`
+ * and `createEmptyRegionRelease` carry that, from upstream's own flag file.
+ */
+export function createEmptyRegionArtwork() {
   return {
     exactLocal: false,
     thumbnailGlobal: false,
     thumbnailJapan: false,
+  };
+}
+
+/**
+ * 869f13284. Unknown until upstream's flag file says otherwise - never `false` by default.
+ *
+ * `createSqlSeed` falls back to this for any character that carries no release record, which is
+ * the correct answer for a manually added character: it has no upstream flag row, so its
+ * availability is genuinely unknown rather than absent.
+ */
+export function createEmptyRegionRelease() {
+  return {
+    availableOnGlobal: null,
   };
 }
 
@@ -452,6 +470,7 @@ export function createSqlSeed(characters, ships, manifest) {
         special_cooldown_max INTEGER,
         special_cooldown_min INTEGER,
         region_json TEXT NOT NULL,
+        region_release_json TEXT NOT NULL,
         assets_json TEXT NOT NULL,
         search_text TEXT NOT NULL
       );
@@ -518,7 +537,7 @@ export function createSqlSeed(characters, ships, manifest) {
         id, name, is_incomplete, type, primary_class, secondary_class, classes_json, stars, stars_label, cost, combo,
         min_hp, min_atk, min_rcv, max_hp, max_atk, max_rcv, growth,
         captain_hp_boost, captain_atk_boost, captain_average_boost,
-        max_sockets, special_cooldown_max, special_cooldown_min, region_json,
+        max_sockets, special_cooldown_max, special_cooldown_min, region_json, region_release_json,
         assets_json, search_text
       ) VALUES (
         ${sqlValue(character.id)},
@@ -545,7 +564,8 @@ export function createSqlSeed(characters, ships, manifest) {
         ${sqlValue(character.maxSockets ?? null)},
         ${sqlValue(character.specialCooldownMax ?? null)},
         ${sqlValue(character.specialCooldownMin ?? null)},
-        ${sqlValue(JSON.stringify(character.regionAvailability))},
+        ${sqlValue(JSON.stringify(character.regionArtwork ?? createEmptyRegionArtwork()))},
+        ${sqlValue(JSON.stringify(character.regionRelease ?? createEmptyRegionRelease()))},
         ${sqlValue(JSON.stringify(character.assets))},
         ${sqlValue(character.searchText)}
       );
@@ -641,7 +661,8 @@ export function createUnresolvedCatalog(characters, packStatuses, sourceVersion,
       classes: character.classes,
       primaryClass: character.primaryClass,
       secondaryClass: character.secondaryClass,
-      regionAvailability: character.regionAvailability,
+      regionArtwork: character.regionArtwork,
+      regionRelease: character.regionRelease,
       assets: character.assets,
     }),
   );

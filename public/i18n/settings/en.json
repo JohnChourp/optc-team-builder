@@ -176,6 +176,25 @@
       "title": "Control exactly what Drive sync changes."
     }
   },
+  "gameVersion": {
+    "title": "Game version",
+    "copy": "The Japanese version of the game runs about a year ahead of Global, and each side has units the other does not. Tell the app which one you play and it will mark the units you cannot obtain.",
+    "label": "I play",
+    "options": {
+      "all": "Both / not sure",
+      "global": "Global",
+      "japan": "Japan"
+    },
+    "hideUnavailable": {
+      "label": "Hide units I can't get",
+      "copy": "Off by default. Turn it on and the character list, the pickers and both team builders stop showing units that have not reached your version. Turn it off and they come back, marked."
+    },
+    "note": {
+      "all": "Nothing is marked and nothing is filtered out. This is the default.",
+      "global": "Units that have not reached Global are marked on the character card and on the character page. They stay in the catalogue and stay searchable - nothing is hidden from you.",
+      "japan": "Nothing is marked: the character data comes from the Japanese version, so everything in the catalogue exists in your game."
+    }
+  },
   "performance": {
     "title": "Auto Team Builder performance",
     "copy": "Control how many web workers the auto team builder uses while scanning fallback attempts.",

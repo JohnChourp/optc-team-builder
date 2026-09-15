@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, type OnInit, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { IonSelect } from '@ionic/angular';
+import { IonSelect, IonToggle } from '@ionic/angular';
 import { IonButton } from '@ionic/angular/ion-button';
 import { IonButtons } from '@ionic/angular/ion-buttons';
 import { IonContent } from '@ionic/angular/ion-content';
@@ -85,6 +85,7 @@ import {
   parseAllDataImportCandidate,
   type AllDataTransferPayload,
 } from './all-data-transfer.utils';
+import { normalizeCharacterRegionPreference } from '../../core/services/character-region.utils';
 import {
   buildFavoriteShipsTransferPayload,
   downloadFavoriteShipsExport,
@@ -126,6 +127,7 @@ interface CombinedImportSectionError {
     IonSelectOption,
     IonSpinner,
     IonTitle,
+    IonToggle,
     IonToolbar,
     RouterLink,
     TranslocoDirective,
@@ -159,6 +161,8 @@ export class SettingsPage implements OnInit {
   public readonly characterOverrides;
   public readonly savedTeams;
   public readonly savedEnemies;
+  public readonly gameRegionPreference;
+  public readonly gameRegionHideUnavailable;
   public readonly autoTeamBuilderWorkerPreference;
   public readonly autoTeamBuilderWorkerRuntime;
   public readonly autoTeamBuilderAvailableWorkerCounts;
@@ -263,6 +267,8 @@ export class SettingsPage implements OnInit {
     this.characterOverrides = this.characterOverrideState.overrides;
     this.savedTeams = this.userState.savedTeams;
     this.savedEnemies = this.userState.savedEnemies;
+    this.gameRegionPreference = this.userState.gameRegionPreference;
+    this.gameRegionHideUnavailable = this.userState.gameRegionHideUnavailable;
     this.autoTeamBuilderWorkerPreference = this.userState.autoTeamBuilderWorkerPreference;
     this.autoTeamBuilderWorkerRuntime = computed(() =>
       this.userState.resolveAutoTeamBuilderWorkerPreference(),
@@ -466,6 +472,20 @@ export class SettingsPage implements OnInit {
 
   public ionViewDidEnter(): void {
     void this.driveBackup.handleSettingsEntered();
+  }
+
+  public async onGameRegionHideUnavailableChange(
+    event: CustomEvent<{ checked?: boolean }>,
+  ): Promise<void> {
+    await this.userState.setGameRegionHideUnavailable(Boolean(event.detail.checked));
+  }
+
+  public async onGameRegionPreferenceChange(
+    event: CustomEvent<{ value?: unknown }>,
+  ): Promise<void> {
+    await this.userState.setGameRegionPreference(
+      normalizeCharacterRegionPreference(event.detail.value),
+    );
   }
 
   public async onAutoTeamBuilderWorkerModeChange(
