@@ -37331,6 +37331,7 @@ describe('Auto team builder', () => {
         snapshot: {
           stage: 'exactAttempt',
           candidateCount: 6,
+          friendCaptainAlternatives: [],
           completedAttempts: 0,
           totalAttempts: 1,
           attemptCountFinal: false,
@@ -41243,6 +41244,7 @@ function buildWorkerResult(
     input,
     requestedInput: overrides.requestedInput ?? input,
     candidateCount: 6,
+    friendCaptainAlternatives: [],
     slots: [],
     coverage: {
       leaderCriteria: {

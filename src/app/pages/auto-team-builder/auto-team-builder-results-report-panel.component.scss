@@ -52,6 +52,41 @@
   line-height: 1.45;
 }
 
+/*
+ * 869f2608f. The borrowed leaders the search also considered.
+ *
+ * Deliberately NOT styled as a relaxation or a warning: nothing went wrong, and these are an
+ * opportunity rather than a concession. It sits at the foot of the report because it answers the
+ * question the report leaves open - what else would have satisfied these rules.
+ */
+.report-friend-alternatives {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.report-friend-alternatives__label {
+  color: #f8fbff;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.report-friend-alternatives__copy {
+  margin: 0;
+  color: rgba(248, 251, 255, 0.62);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.report-friend-alternatives__chip {
+  border-color: rgba(108, 178, 255, 0.4);
+  background: rgba(18, 58, 122, 0.22);
+  color: #a9d0ff;
+  text-decoration: none;
+}
+
 /* 869f1k107. The special charge timeline, a sibling card of the final team report. */
 .charge-turns {
   display: flex;

@@ -10801,6 +10801,7 @@ function createAutoBuildResult(
     },
     shipSelection: null,
     candidateCount: 32,
+    friendCaptainAlternatives: [],
     coverage: {
       leaderCriteria: {
         source: 'captainAbility',

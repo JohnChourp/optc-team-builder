@@ -720,7 +720,11 @@
       "passed": "Passed",
       "relaxed": "Relaxed"
     },
-    "title": "Final team report"
+    "title": "Final team report",
+    "friendCaptainAlternatives": {
+      "label": "Other Friend Captains this search considered",
+      "copy": "These also met every leader rule your search applied, in the order the search ranks them. They were not tried - the search stopped at the first pair that worked - so this is a list to ask your friends for, not a promise that each one builds a legal team."
+    }
   },
   "summary": {
     "burstCoverage": "Burst coverage",

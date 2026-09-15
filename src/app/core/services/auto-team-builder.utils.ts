@@ -14,6 +14,7 @@ import {
   type AutoBuildConsistencyRole,
   type AutoBuildCoreResult,
   type AutoBuildCoverageSummary,
+  type AutoBuildFriendCaptainAlternative,
   type AutoBuildEffectTags,
   type AutoBuildInput,
   type AutoBuildLeaderCriteriaSummary,
@@ -1983,12 +1984,56 @@ export function buildAutoTeamResultFromPreparedContext(
           candidateCount: candidates.length,
           slots,
           coverage,
+          friendCaptainAlternatives: buildFriendCaptainAlternatives(
+            friendCaptainOptions,
+            leaderPair.friendCaptain.character.id,
+          ),
         };
       }
     }
   }
 
   return null;
+}
+
+/**
+ * 869f2608f. The other borrowed leaders this search considered, in the search's own order.
+ *
+ * `friendCaptainOptions` is already sorted by `compareAutoFillLeaderCandidates` and already
+ * filtered to the characters that met every leader rule the search applied. It was computed and
+ * then discarded once a pair succeeded. This keeps it.
+ *
+ * Two things it deliberately does NOT do:
+ *
+ * - **It does not filter by what the reader owns.** A Friend Captain is borrowed from another
+ *   player's crew, so it is never constrained by their box. Filtering this list by the box would
+ *   defeat the entire point of the seat.
+ * - **It does not claim any of these would work.** They were ranked, not tried - the leader loop
+ *   returns on the first success. See `AutoBuildFriendCaptainAlternative` for the wording that
+ *   follows from that.
+ *
+ * The chosen leader is excluded by id. It may legally also be the Captain - the same character in
+ * both leader seats is allowed - and excluding by id handles that without a special case.
+ */
+function buildFriendCaptainAlternatives(
+  friendCaptainOptions: AutoBuildCandidate[],
+  chosenFriendCaptainId: number,
+): AutoBuildFriendCaptainAlternative[] {
+  const alternatives: AutoBuildFriendCaptainAlternative[] = [];
+
+  for (const candidate of friendCaptainOptions) {
+    if (candidate.character.id === chosenFriendCaptainId) {
+      continue;
+    }
+
+    alternatives.push({
+      characterId: candidate.character.id,
+      name: candidate.character.name,
+      rank: alternatives.length + 1,
+    });
+  }
+
+  return alternatives;
 }
 
 function resolveBattleRequirementAssignmentModes(

@@ -1207,6 +1207,7 @@ describe('runAutoTeamBuildSearch', () => {
       input: requestedInput,
       requestedInput,
       candidateCount: 0,
+      friendCaptainAlternatives: [],
       slots: [],
       shipSelection: null,
       relaxation: {
@@ -3134,6 +3135,70 @@ describe('Lane D matrix - Tier 3 pairs, axis 16', () => {
     expect(new Set(subs.map((slot) => resolveBaseNameKeyForTest(slot.character.name))).size).toBe(
       4,
     );
+  });
+
+  /**
+   * 869f2608f. The borrowed leaders the search considered but did not choose.
+   *
+   * The whole feature is free: `resolveLeaderCandidateOptions` already sorts and filters this list
+   * and the engine already discarded it once a pair succeeded. No second search runs.
+   */
+  describe('friend captain alternatives', () => {
+    it('reports the other leaders the widened search considered, ranked, without the chosen one', () => {
+      const result = runAxis16({}, true);
+
+      expect(result).not.toBeNull();
+
+      const chosenId = result?.slots[1]?.character?.id;
+      const alternatives = result?.friendCaptainAlternatives ?? [];
+
+      expect(alternatives.length).toBeGreaterThan(0);
+      expect(alternatives.map((alternative: { characterId: number; rank: number }) => alternative.characterId)).not.toContain(chosenId);
+      expect(alternatives.map((alternative: { characterId: number; rank: number }) => alternative.rank)).toEqual(
+        alternatives.map((_, index) => index + 1),
+      );
+    });
+
+    /**
+     * The claim boundary. These characters were RANKED, not TRIED - the leader loop returns on the
+     * first pair that succeeds. So the list may only contain leaders that passed the leader rules,
+     * and 9199 fails the ATK floor: if it ever appears here, the list has started claiming
+     * something the search never established.
+     */
+    it('contains only leaders that met the search own leader rules', () => {
+      const result = runAxis16({}, true);
+
+      expect(result?.friendCaptainAlternatives.map((alternative: { characterId: number; rank: number }) => alternative.characterId)).not.toContain(
+        9199,
+      );
+    });
+
+    /**
+     * Measured while writing this: with the widening OFF the list is NOT empty, because the search
+     * still considers other leaders from the reader's own pool for the friend seat. So the feature
+     * is useful in both modes, and what the widening changes is that BORROWED leaders join the
+     * list. That is the distinction worth pinning, rather than the emptiness I first assumed.
+     */
+    it('gains borrowed leaders only when the widening is on', () => {
+      const withWidening = runAxis16({}, true);
+      const withoutWidening = runAxis16({}, false);
+
+      expect(withWidening).not.toBeNull();
+      expect(withoutWidening).not.toBeNull();
+
+      const idsWith = new Set(
+        (withWidening?.friendCaptainAlternatives ?? []).map(
+          (alternative: { characterId: number }) => alternative.characterId,
+        ),
+      );
+      const idsWithout = new Set(
+        (withoutWidening?.friendCaptainAlternatives ?? []).map(
+          (alternative: { characterId: number }) => alternative.characterId,
+        ),
+      );
+
+      expect([...idsWith].some((id) => !idsWithout.has(id))).toBe(true);
+    });
   });
 });
 

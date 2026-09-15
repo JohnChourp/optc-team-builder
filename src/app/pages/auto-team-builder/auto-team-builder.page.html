@@ -3413,6 +3413,30 @@
                     {{ localOverrideNotice() }}
                   </p>
                 }
+
+                @if (friendCaptainAlternatives().length) {
+                  <div
+                    class="report-friend-alternatives"
+                    data-testid="auto-build-friend-captain-alternatives"
+                  >
+                    <span class="report-friend-alternatives__label">
+                      {{ t('report.friendCaptainAlternatives.label') }}
+                    </span>
+                    <p class="report-friend-alternatives__copy">
+                      {{ t('report.friendCaptainAlternatives.copy') }}
+                    </p>
+                    <div class="chip-row">
+                      @for (alternative of friendCaptainAlternatives(); track alternative.characterId) {
+                        <a
+                          class="coverage-chip report-friend-alternatives__chip"
+                          [routerLink]="['/characters', alternative.characterId.toString()]"
+                        >
+                          {{ alternative.name }}
+                        </a>
+                      }
+                    </div>
+                  </div>
+                }
               </section>
 
               <!--
