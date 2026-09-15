@@ -265,6 +265,17 @@ export const SCRIPT_SUITES = {
     command: 'npm run test:support-claims',
   },
   /*
+   * 869f17h7q. The components that actually render something - 39, not the
+   * often-quoted 53, which counts the 15 composing style-panel hosts as real.
+   * The lane's own finding is a component reachable by neither a route nor a
+   * template; 22 of the 39 appear in no template at all because they are routed
+   * pages, and calling those dead is the mistake this project has made four times.
+   */
+  'component-inventory': {
+    label: 'Rendering component inventory tests',
+    command: 'npm run test:component-inventory',
+  },
+  /*
    * The TypeScript half of `audit:dead-code`, and deliberately only that half.
    *
    * The two scripts are near-identical in name and are not the same check:
@@ -439,6 +450,14 @@ function isWorkflowBudgetPath(filePath) {
  */
 function alsoAffectsSupportClaims(filePath) {
   return filePath === 'ngsw-config.json' || filePath === 'playwright.config.ts';
+}
+
+function isComponentInventoryPath(filePath) {
+  return (
+    filePath === 'scripts/check-component-inventory.mjs' ||
+    filePath === 'scripts/check-component-inventory.spec.ts' ||
+    filePath === 'docs/component-inventory.md'
+  );
 }
 
 function isSupportClaimsPath(filePath) {
@@ -1062,6 +1081,12 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
     if (alsoAffectsSupportClaims(filePath)) {
       addScriptSuite(scriptSuites, 'support-claims');
       /* deliberately no `continue`: the owning suite still gets this file */
+    }
+
+    if (isComponentInventoryPath(filePath)) {
+      categories.add('component-inventory');
+      addScriptSuite(scriptSuites, 'component-inventory');
+      continue;
     }
 
     if (isSupportClaimsPath(filePath)) {
