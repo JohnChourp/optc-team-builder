@@ -478,6 +478,37 @@
                 </div>
               }
 
+              <!--
+                869f135r4. The summary sits HERE, immediately above the confirm
+                action, not only at the top of the modal. The row list is the
+                right tool for deciding; this is the last thing the reader reads
+                before an overwrite they cannot undo.
+              -->
+              @if (reviewOutcome(); as outcome) {
+                <section class="drive-review-outcome" aria-live="polite">
+                  <p class="drive-review-outcome__line">
+                    {{
+                      t('driveSync.review.outcome.summary', {
+                        kept: outcome.keptFromDevice,
+                        taken: outcome.takenFromDrive
+                      })
+                    }}
+                  </p>
+
+                  @if (outcome.lost > 0) {
+                    <p class="drive-review-outcome__lost">
+                      {{ t('driveSync.review.outcome.lost', { count: outcome.lost }) }}
+                    </p>
+                  }
+
+                  @if (reviewDraft()?.action === 'replace-local') {
+                    <p class="drive-review-outcome__lost">
+                      {{ t('driveSync.review.outcome.replaceLocal') }}
+                    </p>
+                  }
+                </section>
+              }
+
               <div class="drive-review-actions">
                 <ion-button
                   fill="outline"

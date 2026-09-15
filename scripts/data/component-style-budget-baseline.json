@@ -26,7 +26,7 @@
     },
     {
       "file": "src/app/app.component.scss",
-      "compiledBytes": 5100
+      "compiledBytes": 5330
     },
     {
       "file": "src/app/pages/auto-team-builder/auto-team-builder-results-comparison-panel.component.scss",
@@ -181,6 +181,10 @@
       "compiledBytes": 1390
     },
     {
+      "file": "src/app/pages/account/account-review-shell-panel.component.scss",
+      "compiledBytes": 1380
+    },
+    {
       "file": "src/app/pages/saved-teams/saved-teams-open-destination-panel.component.scss",
       "compiledBytes": 1370
     },
@@ -287,10 +291,6 @@
     {
       "file": "src/app/pages/rumble-characters/rumble-characters-card-panel.component.scss",
       "compiledBytes": 1090
-    },
-    {
-      "file": "src/app/pages/account/account-review-shell-panel.component.scss",
-      "compiledBytes": 1080
     },
     {
       "file": "src/app/shared/ship-picker/ship-picker-preview-panel.component.scss",
