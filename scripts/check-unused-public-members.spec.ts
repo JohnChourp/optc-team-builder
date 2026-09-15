@@ -8,6 +8,7 @@ import {
   compareWithRegister,
   findUnusedMembers,
   loadRegister,
+  stripComments,
 } from './check-unused-public-members.mjs';
 
 /**
@@ -103,6 +104,36 @@ describe('findUnusedMembers', () => {
     });
 
     expect(findings).toHaveLength(1);
+  });
+});
+
+
+describe('stripComments', () => {
+  /*
+   * 869f135r6. A comment is not a reader, and this counted one. Writing
+   * "`downloadError` was captured here and rendered nowhere" in the same file as
+   * the declaration made the member look alive - the guard read its own
+   * explanation of why it was dead as evidence that it was not. Stripping
+   * comments immediately revealed a real finding it had been masking.
+   */
+  it('removes a block comment, so a member named only there is not a reader', () => {
+    expect(stripComments('/* mentions lonely */ const x = 1;')).not.toContain('lonely');
+  });
+
+  it('removes a line comment', () => {
+    expect(stripComments('const x = 1; // mentions lonely')).not.toContain('lonely');
+  });
+
+  it('keeps code on the same line as a line comment', () => {
+    expect(stripComments('const keepMe = 1; // gone')).toContain('keepMe');
+  });
+
+  it('leaves a URL alone, because `://` is not a comment', () => {
+    expect(stripComments("const u = 'https://example.com/lonely';")).toContain('lonely');
+  });
+
+  it('leaves strings alone - a member named in a string is usually a real lookup', () => {
+    expect(stripComments("obj['lonely']")).toContain('lonely');
   });
 });
 

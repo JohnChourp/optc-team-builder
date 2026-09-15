@@ -128,6 +128,22 @@ const defaultSeo: RouteSeoData = {
                 <ion-button fill="clear" color="light" size="small" (click)="snoozeUpdate()">
                   {{ 'appUpdate.later' | transloco }}
                 </ion-button>
+                <!--
+                  869f135r6. Leaving the app is the reader's decision. This used to
+                  happen to them: a failed APK download opened a browser at the
+                  release page with no explanation, which reads as the app doing
+                  something else entirely rather than as a recovery.
+                -->
+                @if (showNativeUpdateFallback()) {
+                  <ion-button
+                    fill="clear"
+                    color="light"
+                    size="small"
+                    (click)="openNativeReleasePage()"
+                  >
+                    {{ 'appUpdate.openReleasePage' | transloco }}
+                  </ion-button>
+                }
                 <ion-button
                   fill="solid"
                   color="warning"
@@ -277,6 +293,17 @@ export class AppComponent {
         return 'appUpdate.downloadedNative';
       }
 
+      /*
+       * 869f135r6. The native path had no failed phase at all: a dead download
+       * set it back to `idle`, so the banner re-offered the update as though
+       * nothing had happened while a browser opened at the release page
+       * unannounced. The reader could not tell a failure from a banner they had
+       * simply not pressed yet.
+       */
+      if (this.nativeUpdateService.updatePhase() === 'failed') {
+        return 'appUpdate.downloadFailedNative';
+      }
+
       return 'appUpdate.copyNative';
     }
 
@@ -296,6 +323,17 @@ export class AppComponent {
 
     return 'appUpdate.copy';
   });
+  /** The failed native banner offers the release page instead of navigating on its own. */
+  public readonly showNativeUpdateFallback = computed(
+    () =>
+      this.nativeUpdateService.availableUpdate() !== null &&
+      this.nativeUpdateService.updatePhase() === 'failed',
+  );
+
+  public async openNativeReleasePage(): Promise<void> {
+    await this.nativeUpdateService.openReleasePageManually();
+  }
+
   public readonly updateDownloading = computed(() =>
     this.nativeUpdateService.availableUpdate()
       ? this.nativeUpdateService.updatePhase() === 'downloading'

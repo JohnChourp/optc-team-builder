@@ -224,7 +224,18 @@ describe('NativeUpdateService', () => {
     expect(service.downloadProgress()).toBe(1);
   });
 
-  it('falls back to the release page when the in-app download fails', async () => {
+  /*
+   * 869f135r6. This test pinned the old behaviour, and the old behaviour was the
+   * defect: a failed download set the phase back to `idle`, so the banner
+   * re-offered the update as though nothing had happened, while a browser opened
+   * at the release page unannounced. The reader could not tell a failure from a
+   * banner they had simply not pressed - and `downloadError` was captured for
+   * nobody, which is why the unused-members lane had it registered.
+   *
+   * The phase is now `failed`, the banner says so, and the release page is
+   * something the reader CHOOSES from it.
+   */
+  it('reports a failed download instead of silently re-offering the update', async () => {
     const { service, open, apkUpdater } = createService({
       latest: APK_RELEASE,
       downloadRejects: new Error('network died'),
@@ -233,10 +244,23 @@ describe('NativeUpdateService', () => {
     await service.check();
     await service.downloadAndInstall();
 
-    expect(service.updatePhase()).toBe('idle');
+    expect(service.updatePhase()).toBe('failed');
     expect(service.downloadProgress()).toBe(0);
     expect(service.downloadError()).toBe('network died');
     expect(apkUpdater.install).not.toHaveBeenCalled();
+    expect(open, 'leaving the app must be the reader’s decision').not.toHaveBeenCalled();
+  });
+
+  it('opens the release page only when the reader asks for it', async () => {
+    const { service, open } = createService({
+      latest: APK_RELEASE,
+      downloadRejects: new Error('network died'),
+    });
+
+    await service.check();
+    await service.downloadAndInstall();
+    await service.openReleasePageManually();
+
     expect(open).toHaveBeenCalledWith(
       'https://github.com/JohnChourp/optc-team-builder/releases/tag/v1.1.0',
       '_blank',
