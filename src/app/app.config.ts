@@ -15,6 +15,7 @@ import { AppI18nService } from './core/services/app-i18n.service';
 import { AppUpdateService } from './core/services/app-update.service';
 import { GoogleAccountService } from './core/services/google-account.service';
 import { NativeUpdateService } from './core/services/native-update.service';
+import { StoragePersistenceService } from './core/services/storage-persistence.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -52,5 +53,14 @@ export const appConfig: ApplicationConfig = {
     provideAppInitializer(() => inject(GoogleAccountService).ready()),
     provideAppInitializer(() => inject(AppUpdateService).init()),
     provideAppInitializer(() => inject(NativeUpdateService).init()),
+    /*
+     * 869f17haa. Last, and deliberately not awaited for its result: a storage
+     * hint must never be able to delay or fail startup. Measured before adding
+     * it - `persisted()` was false and nothing had ever asked, while 15 records
+     * classified `durable-user-data` sit in evictable origin storage.
+     */
+    provideAppInitializer(() => {
+      void inject(StoragePersistenceService).requestPersistence();
+    }),
   ],
 };

@@ -24,7 +24,7 @@
       "rows": {
         "works": "The character catalogue, both team builders, Captain Coverage, your saved teams and your boxes all keep working with no connection.",
         "needsConnection": "Signing in, Google Drive sync and downloading a new version need a connection. Nothing else does.",
-        "storage": "Your teams and boxes are stored on this device. Clearing the browser's site data for this app deletes them, so export anything you would not want to lose."
+        "storage": "Your teams and boxes are stored on this device, not on a server. Clearing the browser's site data deletes them - and on iPhone the browser can also clear them on its own if you have not opened the app for a long while. The app asks the browser to keep them, but cannot guarantee it, so export anything you would not want to lose."
       }
     },
     "permissions": {
