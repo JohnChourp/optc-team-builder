@@ -106,6 +106,7 @@ when a script is unclassified, and when a lane names a script that does not exis
 | `ionic:host-property` | npm script · test:ionic-host-property | `test:ionic-host-property` |
 | `ios:open` | documented · ios-platform-footprint.md | a documented manual step |
 | `ios:sync` | documented · ios-platform-footprint.md | a documented manual step |
+| `members:unused` | npm script · test:unused-members | `test:unused-members` |
 | `model:field-naming` | npm script · test:field-naming | `test:field-naming` |
 | `ng` | lane · ci-routing | the `ci-routing` lane |
 | `pages:doc-coverage` | npm script · test:page-doc-coverage | `test:page-doc-coverage` |
@@ -199,6 +200,7 @@ when a script is unclassified, and when a lane names a script that does not exis
 | `test:support-ladder` | lane · support-ladder | the `support-ladder` lane |
 | `test:tag-picker-scoping` | lane · tag-picker-scoping | the `tag-picker-scoping` lane |
 | `test:unresolved-clauses` | lane · unresolved-clauses | the `unresolved-clauses` lane |
+| `test:unused-members` | lane · unused-members | the `unused-members` lane |
 | `test:whats-new` | lane · whats-new | the `whats-new` lane |
 | `test:worker-bundling` | lane · worker-bundling | the `worker-bundling` lane |
 | `test:workflow-budgets` | lane · workflow-budgets | the `workflow-budgets` lane |

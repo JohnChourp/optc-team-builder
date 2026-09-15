@@ -1,0 +1,471 @@
+{
+  "note": [
+    "Known public class members that nothing reads. 869f135rm.",
+    "",
+    "This is a DEBT REGISTER, not a permission list. Every entry is an open question that",
+    "`npm run test:unused-members` has already asked and nobody has answered yet. The check",
+    "fails on a finding that is not here (something new went dead) AND on an entry that is no",
+    "longer a finding (it was fixed, so the entry must go). The register can therefore only",
+    "shrink.",
+    "",
+    "Unrendered is not dead. This repository has already mistaken four deliberate test probes",
+    "for dead code, so nothing here is an instruction to delete anything. A member earns",
+    "`kind: \"intentional\"` only when somebody has established WHY it has no reader and writes",
+    "that reason in place of the generated one; an intentional entry is exempt from the kind",
+    "check and is never expected to shrink.",
+    "",
+    "Baseline measured 2026-09-15 against v0.4.48: 64 findings, 32 spec-only and 32 orphan."
+  ],
+  "measuredOn": "2026-09-15",
+  "baselineCount": 64,
+  "entries": [
+    {
+      "file": "src/app/app.component.ts",
+      "member": "AppComponent.updateDownloading",
+      "kind": "spec-only",
+      "reason": "Only src/app/app.component.spec.ts reads it. This is the regionAvailability shape: the member is asserted by its own spec and reaches no template, no service and no other file, so the spec proves the member works and nothing proves the member is wanted.",
+      "removeWhen": "Delete this entry when the member gains a reader outside a .spec.ts, or when the member and its assertions are removed together."
+    },
+    {
+      "file": "src/app/core/services/analytics-consent.service.ts",
+      "member": "AnalyticsConsentService.hasAnsweredConsent",
+      "kind": "spec-only",
+      "reason": "Only src/app/core/services/analytics-consent.service.spec.ts reads it. This is the regionAvailability shape: the member is asserted by its own spec and reaches no template, no service and no other file, so the spec proves the member works and nothing proves the member is wanted.",
+      "removeWhen": "Delete this entry when the member gains a reader outside a .spec.ts, or when the member and its assertions are removed together."
+    },
+    {
+      "file": "src/app/core/services/analytics-consent.service.ts",
+      "member": "AnalyticsConsentService.canTrack",
+      "kind": "spec-only",
+      "reason": "Only src/app/core/services/analytics-consent.service.spec.ts reads it. This is the regionAvailability shape: the member is asserted by its own spec and reaches no template, no service and no other file, so the spec proves the member works and nothing proves the member is wanted.",
+      "removeWhen": "Delete this entry when the member gains a reader outside a .spec.ts, or when the member and its assertions are removed together."
+    },
+    {
+      "file": "src/app/core/services/auto-team-builder-rumble.engine.ts",
+      "member": "RumbleTeamBuilderEngine.buildTeamFromScoredCandidates",
+      "kind": "orphan",
+      "reason": "No reader anywhere - no template binding, no other source file, and no spec. Nothing in the repository observes this member at all.",
+      "removeWhen": "Delete this entry when the member gains any reader, or when the member is removed from the tree."
+    },
+    {
+      "file": "src/app/core/services/auto-team-builder-rumble.service.ts",
+      "member": "AutoTeamBuilderRumbleService.buildBestTeam",
+      "kind": "spec-only",
+      "reason": "Only src/app/core/services/auto-team-builder-rumble.service.spec.ts reads it. This is the regionAvailability shape: the member is asserted by its own spec and reaches no template, no service and no other file, so the spec proves the member works and nothing proves the member is wanted.",
+      "removeWhen": "Delete this entry when the member gains a reader outside a .spec.ts, or when the member and its assertions are removed together."
+    },
+    {
+      "file": "src/app/core/services/crew-forge-image-import.service.ts",
+      "member": "CrewForgeImageImportService.createEmptyProfileInput",
+      "kind": "spec-only",
+      "reason": "Only src/app/core/services/crew-forge-image-import.service.spec.ts reads it. This is the regionAvailability shape: the member is asserted by its own spec and reaches no template, no service and no other file, so the spec proves the member works and nothing proves the member is wanted.",
+      "removeWhen": "Delete this entry when the member gains a reader outside a .spec.ts, or when the member and its assertions are removed together."
+    },
+    {
+      "file": "src/app/core/services/crew-forge-image-import.service.ts",
+      "member": "CrewForgeImageImportService.buildExemplarFromSlot",
+      "kind": "orphan",
+      "reason": "No reader anywhere - no template binding, no other source file, and no spec. Nothing in the repository observes this member at all.",
+      "removeWhen": "Delete this entry when the member gains any reader, or when the member is removed from the tree."
+    },
+    {
+      "file": "src/app/core/services/drive-backup.service.ts",
+      "member": "DriveBackupService.flushPendingUploads",
+      "kind": "spec-only",
+      "reason": "Only src/app/pages/settings/settings.page.spec.ts reads it. This is the regionAvailability shape: the member is asserted by its own spec and reaches no template, no service and no other file, so the spec proves the member works and nothing proves the member is wanted.",
+      "removeWhen": "Delete this entry when the member gains a reader outside a .spec.ts, or when the member and its assertions are removed together."
+    },
+    {
+      "file": "src/app/core/services/drive-backup.service.ts",
+      "member": "DriveBackupService.noteLocalChange",
+      "kind": "orphan",
+      "reason": "No reader anywhere - no template binding, no other source file, and no spec. Nothing in the repository observes this member at all.",
+      "removeWhen": "Delete this entry when the member gains any reader, or when the member is removed from the tree."
+    },
+    {
+      "file": "src/app/core/services/drive-sync-state.service.ts",
+      "member": "DriveSyncStateService.markRemoteSeen",
+      "kind": "spec-only",
+      "reason": "Only src/app/core/services/drive-backup.service.spec.ts reads it. This is the regionAvailability shape: the member is asserted by its own spec and reaches no template, no service and no other file, so the spec proves the member works and nothing proves the member is wanted.",
+      "removeWhen": "Delete this entry when the member gains a reader outside a .spec.ts, or when the member and its assertions are removed together."
+    },
+    {
+      "file": "src/app/core/services/google-account.service.ts",
+      "member": "GoogleAccountService.needsReconnect",
+      "kind": "spec-only",
+      "reason": "Only src/app/core/services/google-account.service.spec.ts reads it. This is the regionAvailability shape: the member is asserted by its own spec and reaches no template, no service and no other file, so the spec proves the member works and nothing proves the member is wanted.",
+      "removeWhen": "Delete this entry when the member gains a reader outside a .spec.ts, or when the member and its assertions are removed together."
+    },
+    {
+      "file": "src/app/core/services/native-update.service.ts",
+      "member": "NativeUpdateService.downloadError",
+      "kind": "spec-only",
+      "reason": "Only src/app/core/services/native-update.service.spec.ts reads it. This is the regionAvailability shape: the member is asserted by its own spec and reaches no template, no service and no other file, so the spec proves the member works and nothing proves the member is wanted.",
+      "removeWhen": "Delete this entry when the member gains a reader outside a .spec.ts, or when the member and its assertions are removed together."
+    },
+    {
+      "file": "src/app/core/services/user-state.service.ts",
+      "member": "UserStateService.findCrewForgeImageProfileByDimensions",
+      "kind": "spec-only",
+      "reason": "Only src/app/core/services/user-state.service.spec.ts reads it. This is the regionAvailability shape: the member is asserted by its own spec and reaches no template, no service and no other file, so the spec proves the member works and nothing proves the member is wanted.",
+      "removeWhen": "Delete this entry when the member gains a reader outside a .spec.ts, or when the member and its assertions are removed together."
+    },
+    {
+      "file": "src/app/core/services/user-state.service.ts",
+      "member": "UserStateService.deleteCrewForgeImageProfile",
+      "kind": "orphan",
+      "reason": "No reader anywhere - no template binding, no other source file, and no spec. Nothing in the repository observes this member at all.",
+      "removeWhen": "Delete this entry when the member gains any reader, or when the member is removed from the tree."
+    },
+    {
+      "file": "src/app/core/services/user-state.service.ts",
+      "member": "UserStateService.saveCrewForgeImageExample",
+      "kind": "spec-only",
+      "reason": "Only src/app/core/services/user-state.service.spec.ts reads it. This is the regionAvailability shape: the member is asserted by its own spec and reaches no template, no service and no other file, so the spec proves the member works and nothing proves the member is wanted.",
+      "removeWhen": "Delete this entry when the member gains a reader outside a .spec.ts, or when the member and its assertions are removed together."
+    },
+    {
+      "file": "src/app/core/services/user-state.service.ts",
+      "member": "UserStateService.saveCrewForgeImageExemplar",
+      "kind": "spec-only",
+      "reason": "Only src/app/core/services/user-state.service.spec.ts reads it. This is the regionAvailability shape: the member is asserted by its own spec and reaches no template, no service and no other file, so the spec proves the member works and nothing proves the member is wanted.",
+      "removeWhen": "Delete this entry when the member gains a reader outside a .spec.ts, or when the member and its assertions are removed together."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder-rumble/auto-team-builder-rumble.page.ts",
+      "member": "AutoTeamBuilderRumblePage.hasResult",
+      "kind": "orphan",
+      "reason": "No reader anywhere - no template binding, no other source file, and no spec. Nothing in the repository observes this member at all.",
+      "removeWhen": "Delete this entry when the member gains any reader, or when the member is removed from the tree."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.manualShipCandidatesLoadingMore",
+      "kind": "orphan",
+      "reason": "No reader anywhere - no template binding, no other source file, and no spec. Nothing in the repository observes this member at all.",
+      "removeWhen": "Delete this entry when the member gains any reader, or when the member is removed from the tree."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.manualShipCandidatesHasMore",
+      "kind": "orphan",
+      "reason": "No reader anywhere - no template binding, no other source file, and no spec. Nothing in the repository observes this member at all.",
+      "removeWhen": "Delete this entry when the member gains any reader, or when the member is removed from the tree."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.excludedShipCandidatesLoadingMore",
+      "kind": "orphan",
+      "reason": "No reader anywhere - no template binding, no other source file, and no spec. Nothing in the repository observes this member at all.",
+      "removeWhen": "Delete this entry when the member gains any reader, or when the member is removed from the tree."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.excludedShipCandidatesHasMore",
+      "kind": "orphan",
+      "reason": "No reader anywhere - no template binding, no other source file, and no spec. Nothing in the repository observes this member at all.",
+      "removeWhen": "Delete this entry when the member gains any reader, or when the member is removed from the tree."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.hasSelectedCharacterNames",
+      "kind": "orphan",
+      "reason": "No reader anywhere - no template binding, no other source file, and no spec. Nothing in the repository observes this member at all.",
+      "removeWhen": "Delete this entry when the member gains any reader, or when the member is removed from the tree."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.hasRequiredAbilities",
+      "kind": "orphan",
+      "reason": "No reader anywhere - no template binding, no other source file, and no spec. Nothing in the repository observes this member at all.",
+      "removeWhen": "Delete this entry when the member gains any reader, or when the member is removed from the tree."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.leaderBoostSupportLabel",
+      "kind": "orphan",
+      "reason": "No reader anywhere - no template binding, no other source file, and no spec. Nothing in the repository observes this member at all.",
+      "removeWhen": "Delete this entry when the member gains any reader, or when the member is removed from the tree."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.hasActiveCostRanges",
+      "kind": "orphan",
+      "reason": "No reader anywhere - no template binding, no other source file, and no spec. Nothing in the repository observes this member at all.",
+      "removeWhen": "Delete this entry when the member gains any reader, or when the member is removed from the tree."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.hasInvalidCostRanges",
+      "kind": "orphan",
+      "reason": "No reader anywhere - no template binding, no other source file, and no spec. Nothing in the repository observes this member at all.",
+      "removeWhen": "Delete this entry when the member gains any reader, or when the member is removed from the tree."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.manualTeamCostBudgetSupportLabel",
+      "kind": "orphan",
+      "reason": "No reader anywhere - no template binding, no other source file, and no spec. Nothing in the repository observes this member at all.",
+      "removeWhen": "Delete this entry when the member gains any reader, or when the member is removed from the tree."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.manualTeamCostBudgetErrorLabel",
+      "kind": "orphan",
+      "reason": "No reader anywhere - no template binding, no other source file, and no spec. Nothing in the repository observes this member at all.",
+      "removeWhen": "Delete this entry when the member gains any reader, or when the member is removed from the tree."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.leaderCostRangeSupportLabel",
+      "kind": "orphan",
+      "reason": "No reader anywhere - no template binding, no other source file, and no spec. Nothing in the repository observes this member at all.",
+      "removeWhen": "Delete this entry when the member gains any reader, or when the member is removed from the tree."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.subCostRangeSupportLabel",
+      "kind": "orphan",
+      "reason": "No reader anywhere - no template binding, no other source file, and no spec. Nothing in the repository observes this member at all.",
+      "removeWhen": "Delete this entry when the member gains any reader, or when the member is removed from the tree."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.leaderCostRangeErrorLabel",
+      "kind": "spec-only",
+      "reason": "Only src/app/pages/auto-team-builder/auto-team-builder.page.spec.ts reads it. This is the regionAvailability shape: the member is asserted by its own spec and reaches no template, no service and no other file, so the spec proves the member works and nothing proves the member is wanted.",
+      "removeWhen": "Delete this entry when the member gains a reader outside a .spec.ts, or when the member and its assertions are removed together."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.subCostRangeErrorLabel",
+      "kind": "orphan",
+      "reason": "No reader anywhere - no template binding, no other source file, and no spec. Nothing in the repository observes this member at all.",
+      "removeWhen": "Delete this entry when the member gains any reader, or when the member is removed from the tree."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.characterTagSupportLabel",
+      "kind": "orphan",
+      "reason": "No reader anywhere - no template binding, no other source file, and no spec. Nothing in the repository observes this member at all.",
+      "removeWhen": "Delete this entry when the member gains any reader, or when the member is removed from the tree."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.characterNameSupportLabel",
+      "kind": "orphan",
+      "reason": "No reader anywhere - no template binding, no other source file, and no spec. Nothing in the repository observes this member at all.",
+      "removeWhen": "Delete this entry when the member gains any reader, or when the member is removed from the tree."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.leaderSuperEffectScopeSupportLabel",
+      "kind": "orphan",
+      "reason": "No reader anywhere - no template binding, no other source file, and no spec. Nothing in the repository observes this member at all.",
+      "removeWhen": "Delete this entry when the member gains any reader, or when the member is removed from the tree."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.manualFilterSummaryLabel",
+      "kind": "orphan",
+      "reason": "No reader anywhere - no template binding, no other source file, and no spec. Nothing in the repository observes this member at all.",
+      "removeWhen": "Delete this entry when the member gains any reader, or when the member is removed from the tree."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.manualShipBlockedIds",
+      "kind": "spec-only",
+      "reason": "Only src/app/pages/auto-team-builder/auto-team-builder.page.spec.ts reads it. This is the regionAvailability shape: the member is asserted by its own spec and reaches no template, no service and no other file, so the spec proves the member works and nothing proves the member is wanted.",
+      "removeWhen": "Delete this entry when the member gains a reader outside a .spec.ts, or when the member and its assertions are removed together."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.manualShipSupportLabels",
+      "kind": "spec-only",
+      "reason": "Only src/app/pages/auto-team-builder/auto-team-builder.page.spec.ts reads it. This is the regionAvailability shape: the member is asserted by its own spec and reaches no template, no service and no other file, so the spec proves the member works and nothing proves the member is wanted.",
+      "removeWhen": "Delete this entry when the member gains a reader outside a .spec.ts, or when the member and its assertions are removed together."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.typeStrictToggleLabel",
+      "kind": "spec-only",
+      "reason": "Only src/app/pages/auto-team-builder/auto-team-builder.page.spec.ts reads it. This is the regionAvailability shape: the member is asserted by its own spec and reaches no template, no service and no other file, so the spec proves the member works and nothing proves the member is wanted.",
+      "removeWhen": "Delete this entry when the member gains a reader outside a .spec.ts, or when the member and its assertions are removed together."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.classStrictToggleLabel",
+      "kind": "spec-only",
+      "reason": "Only src/app/pages/auto-team-builder/auto-team-builder.page.spec.ts reads it. This is the regionAvailability shape: the member is asserted by its own spec and reaches no template, no service and no other file, so the spec proves the member works and nothing proves the member is wanted.",
+      "removeWhen": "Delete this entry when the member gains a reader outside a .spec.ts, or when the member and its assertions are removed together."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.characterTagStrictToggleLabel",
+      "kind": "spec-only",
+      "reason": "Only src/app/pages/auto-team-builder/auto-team-builder.page.spec.ts reads it. This is the regionAvailability shape: the member is asserted by its own spec and reaches no template, no service and no other file, so the spec proves the member works and nothing proves the member is wanted.",
+      "removeWhen": "Delete this entry when the member gains a reader outside a .spec.ts, or when the member and its assertions are removed together."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.characterNameStrictToggleLabel",
+      "kind": "spec-only",
+      "reason": "Only src/app/pages/auto-team-builder/auto-team-builder.page.spec.ts reads it. This is the regionAvailability shape: the member is asserted by its own spec and reaches no template, no service and no other file, so the spec proves the member works and nothing proves the member is wanted.",
+      "removeWhen": "Delete this entry when the member gains a reader outside a .spec.ts, or when the member and its assertions are removed together."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.leaderSuperEffectScopeToggleLabel",
+      "kind": "spec-only",
+      "reason": "Only src/app/pages/auto-team-builder/auto-team-builder.page.spec.ts reads it. This is the regionAvailability shape: the member is asserted by its own spec and reaches no template, no service and no other file, so the spec proves the member works and nothing proves the member is wanted.",
+      "removeWhen": "Delete this entry when the member gains a reader outside a .spec.ts, or when the member and its assertions are removed together."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.selectedCharacterNamesLabel",
+      "kind": "orphan",
+      "reason": "No reader anywhere - no template binding, no other source file, and no spec. Nothing in the repository observes this member at all.",
+      "removeWhen": "Delete this entry when the member gains any reader, or when the member is removed from the tree."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.leaderCriteriaCostLabel",
+      "kind": "spec-only",
+      "reason": "Only src/app/pages/auto-team-builder/auto-team-builder.page.spec.ts reads it. This is the regionAvailability shape: the member is asserted by its own spec and reaches no template, no service and no other file, so the spec proves the member works and nothing proves the member is wanted.",
+      "removeWhen": "Delete this entry when the member gains a reader outside a .spec.ts, or when the member and its assertions are removed together."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.downloadTeamJsonLabel",
+      "kind": "orphan",
+      "reason": "No reader anywhere - no template binding, no other source file, and no spec. Nothing in the repository observes this member at all.",
+      "removeWhen": "Delete this entry when the member gains any reader, or when the member is removed from the tree."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.downloadSavedTeamImportJsonLabel",
+      "kind": "orphan",
+      "reason": "No reader anywhere - no template binding, no other source file, and no spec. Nothing in the repository observes this member at all.",
+      "removeWhen": "Delete this entry when the member gains any reader, or when the member is removed from the tree."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.onLeaderCostRangeChange",
+      "kind": "spec-only",
+      "reason": "Only src/app/pages/auto-team-builder/auto-team-builder.page.spec.ts reads it. This is the regionAvailability shape: the member is asserted by its own spec and reaches no template, no service and no other file, so the spec proves the member works and nothing proves the member is wanted.",
+      "removeWhen": "Delete this entry when the member gains a reader outside a .spec.ts, or when the member and its assertions are removed together."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.onSubCostRangeChange",
+      "kind": "spec-only",
+      "reason": "Only src/app/pages/auto-team-builder/auto-team-builder.page.spec.ts reads it. This is the regionAvailability shape: the member is asserted by its own spec and reaches no template, no service and no other file, so the spec proves the member works and nothing proves the member is wanted.",
+      "removeWhen": "Delete this entry when the member gains a reader outside a .spec.ts, or when the member and its assertions are removed together."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.isSelectedManualShip",
+      "kind": "orphan",
+      "reason": "No reader anywhere - no template binding, no other source file, and no spec. Nothing in the repository observes this member at all.",
+      "removeWhen": "Delete this entry when the member gains any reader, or when the member is removed from the tree."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.compareSideSnapshot",
+      "kind": "spec-only",
+      "reason": "Only src/app/pages/auto-team-builder/auto-team-builder.page.spec.ts reads it. This is the regionAvailability shape: the member is asserted by its own spec and reaches no template, no service and no other file, so the spec proves the member works and nothing proves the member is wanted.",
+      "removeWhen": "Delete this entry when the member gains a reader outside a .spec.ts, or when the member and its assertions are removed together."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.onRequireAllSelectedTypesToggle",
+      "kind": "spec-only",
+      "reason": "Only src/app/pages/auto-team-builder/auto-team-builder.page.spec.ts reads it. This is the regionAvailability shape: the member is asserted by its own spec and reaches no template, no service and no other file, so the spec proves the member works and nothing proves the member is wanted.",
+      "removeWhen": "Delete this entry when the member gains a reader outside a .spec.ts, or when the member and its assertions are removed together."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.onRequireAllSelectedClassesToggle",
+      "kind": "spec-only",
+      "reason": "Only src/app/pages/auto-team-builder/auto-team-builder.page.spec.ts reads it. This is the regionAvailability shape: the member is asserted by its own spec and reaches no template, no service and no other file, so the spec proves the member works and nothing proves the member is wanted.",
+      "removeWhen": "Delete this entry when the member gains a reader outside a .spec.ts, or when the member and its assertions are removed together."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.onRequireAllSelectedCharacterTagsToggle",
+      "kind": "spec-only",
+      "reason": "Only src/app/pages/auto-team-builder/auto-team-builder.page.spec.ts reads it. This is the regionAvailability shape: the member is asserted by its own spec and reaches no template, no service and no other file, so the spec proves the member works and nothing proves the member is wanted.",
+      "removeWhen": "Delete this entry when the member gains a reader outside a .spec.ts, or when the member and its assertions are removed together."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.onRequireAllSelectedCharacterNamesToggle",
+      "kind": "spec-only",
+      "reason": "Only src/app/pages/auto-team-builder/auto-team-builder.page.spec.ts reads it. This is the regionAvailability shape: the member is asserted by its own spec and reaches no template, no service and no other file, so the spec proves the member works and nothing proves the member is wanted.",
+      "removeWhen": "Delete this entry when the member gains a reader outside a .spec.ts, or when the member and its assertions are removed together."
+    },
+    {
+      "file": "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
+      "member": "AutoTeamBuilderPage.onRequireAllSlotsInLeaderSuperEffectScopeToggle",
+      "kind": "spec-only",
+      "reason": "Only src/app/pages/auto-team-builder/auto-team-builder.page.spec.ts reads it. This is the regionAvailability shape: the member is asserted by its own spec and reaches no template, no service and no other file, so the spec proves the member works and nothing proves the member is wanted.",
+      "removeWhen": "Delete this entry when the member gains a reader outside a .spec.ts, or when the member and its assertions are removed together."
+    },
+    {
+      "file": "src/app/pages/characters/characters.page.ts",
+      "member": "CharactersPage.downloadFavoritesExport",
+      "kind": "orphan",
+      "reason": "No reader anywhere - no template binding, no other source file, and no spec. Nothing in the repository observes this member at all.",
+      "removeWhen": "Delete this entry when the member gains any reader, or when the member is removed from the tree."
+    },
+    {
+      "file": "src/app/pages/characters/characters.page.ts",
+      "member": "CharactersPage.clearAllFavorites",
+      "kind": "spec-only",
+      "reason": "Only src/app/pages/characters/characters.page.spec.ts reads it. This is the regionAvailability shape: the member is asserted by its own spec and reaches no template, no service and no other file, so the spec proves the member works and nothing proves the member is wanted.",
+      "removeWhen": "Delete this entry when the member gains a reader outside a .spec.ts, or when the member and its assertions are removed together."
+    },
+    {
+      "file": "src/app/pages/manual-team-builder/manual-team-builder.page.ts",
+      "member": "ManualTeamBuilderPage.openSlotDetail",
+      "kind": "spec-only",
+      "reason": "Only src/app/pages/manual-team-builder/manual-team-builder.page.spec.ts reads it. This is the regionAvailability shape: the member is asserted by its own spec and reaches no template, no service and no other file, so the spec proves the member works and nothing proves the member is wanted.",
+      "removeWhen": "Delete this entry when the member gains a reader outside a .spec.ts, or when the member and its assertions are removed together."
+    },
+    {
+      "file": "src/app/pages/saved-enemies/saved-enemies.page.ts",
+      "member": "SavedEnemiesPage.hasAllParsedAbilityCandidatesSelected",
+      "kind": "orphan",
+      "reason": "No reader anywhere - no template binding, no other source file, and no spec. Nothing in the repository observes this member at all.",
+      "removeWhen": "Delete this entry when the member gains any reader, or when the member is removed from the tree."
+    },
+    {
+      "file": "src/app/pages/saved-enemies/saved-enemies.page.ts",
+      "member": "SavedEnemiesPage.isTeamAssociated",
+      "kind": "orphan",
+      "reason": "No reader anywhere - no template binding, no other source file, and no spec. Nothing in the repository observes this member at all.",
+      "removeWhen": "Delete this entry when the member gains any reader, or when the member is removed from the tree."
+    },
+    {
+      "file": "src/app/pages/settings/settings.page.ts",
+      "member": "SettingsPage.storedDataRowLabel",
+      "kind": "orphan",
+      "reason": "No reader anywhere - no template binding, no other source file, and no spec. Nothing in the repository observes this member at all.",
+      "removeWhen": "Delete this entry when the member gains any reader, or when the member is removed from the tree."
+    },
+    {
+      "file": "src/app/shared/ability-tag-set-picker/ability-tag-set-picker.component.ts",
+      "member": "AbilityTagSetPickerComponent.totalRequirementCount",
+      "kind": "spec-only",
+      "reason": "Only src/app/shared/ability-tag-set-picker/ability-tag-set-picker.component.spec.ts reads it. This is the regionAvailability shape: the member is asserted by its own spec and reaches no template, no service and no other file, so the spec proves the member works and nothing proves the member is wanted.",
+      "removeWhen": "Delete this entry when the member gains a reader outside a .spec.ts, or when the member and its assertions are removed together."
+    },
+    {
+      "file": "src/app/shared/character-tag-set-picker/character-tag-set-picker.component.ts",
+      "member": "CharacterTagSetPickerComponent.totalTagCount",
+      "kind": "orphan",
+      "reason": "No reader anywhere - no template binding, no other source file, and no spec. Nothing in the repository observes this member at all.",
+      "removeWhen": "Delete this entry when the member gains any reader, or when the member is removed from the tree."
+    }
+  ]
+}

@@ -377,11 +377,20 @@ export const SCRIPT_SUITES = {
    * reader to re-litigate it, so re-measure and re-date rather than trusting
    * these. `npx knip --include exports,types` prints both totals in its headers.
    *
-   * knip is a real dependency (^6.35.1), not a suggestion: it is the only tool
-   * here that finds an unused PUBLIC class member, which `--noUnusedLocals`
-   * cannot see and no standard lint rule covers either - see
-   * docs/linting-position.md. Run `npm run audit:dead-code` by hand when hunting
-   * one; do not wire it into the gate without first making its output precise.
+   * knip is a real dependency (^6.35.1), not a suggestion, and it is worth
+   * running by hand when hunting an unused export. What it is NOT is the answer
+   * to unused public class members. This comment and docs/linting-position.md
+   * both said it was - 869f135rm measured otherwise on 2026-09-15: knip's
+   * `classMembers` issue type existed in knip 5 and was REMOVED in 6. It is
+   * absent from the installed binary, absent from `schema.json`, and
+   * `--include classMembers` exits with `Invalid issue type`. Proven against a
+   * used class carrying two dead public members: `npx knip --include
+   * files,exports,types` named the unused export that wired the probe in and
+   * named neither member.
+   *
+   * So that defect class had no tool at all, which is why it now has its own
+   * lane - see `unused-members` below. Do not restore the claim that knip covers
+   * it.
    *
    * `--noUnusedLocals --noUnusedParameters` has no such ambiguity: it found ten
    * genuinely unreachable declarations, all ten were removed, and it is clean.
@@ -389,6 +398,25 @@ export const SCRIPT_SUITES = {
   'dead-code': {
     label: 'Unused locals and parameters',
     command: 'npm run test:dead-code',
+  },
+  /*
+   * 869f135rm. What `dead-code` above cannot see: a public field or method that
+   * no template, no service and no other file reads.
+   *
+   * Both dead things found on 2026-09-12 were that shape - `regionAvailability`
+   * with zero non-spec consumers, `recentCharacterIds` written everywhere and
+   * read nowhere - and the lane named `dead-code` ran green through both.
+   *
+   * The finding is an OPEN QUESTION, never an automatic delete: this repository
+   * has already mistaken four deliberate test probes for dead code.
+   * `scripts/data/unused-public-members-register.json` is therefore a debt
+   * register rather than a permission list, and the check fails both when a
+   * finding is missing from it and when an entry no longer describes one, so it
+   * can only shrink.
+   */
+  'unused-members': {
+    label: 'Unused public class member tests',
+    command: 'npm run test:unused-members',
   },
   /*
    * Proves the three Web Workers are still EMITTED, which nothing else does.
@@ -789,6 +817,26 @@ function touchesStorageKeySources(filePath) {
   );
 }
 
+/*
+ * Non-terminating: app source routes to the Angular lane too, and a member goes
+ * dead exactly when somebody edits the file that used it - which is usually NOT
+ * the file that declares it. Deleting the last `page.html` binding is the whole
+ * failure mode, so templates count as much as TypeScript.
+ */
+function touchesUnusedMemberSources(filePath) {
+  return (
+    filePath.startsWith('src/app/') && (filePath.endsWith('.ts') || filePath.endsWith('.html'))
+  );
+}
+
+function isUnusedMembersPath(filePath) {
+  return (
+    filePath === 'scripts/check-unused-public-members.mjs' ||
+    filePath === 'scripts/check-unused-public-members.spec.ts' ||
+    filePath === 'scripts/data/unused-public-members-register.json'
+  );
+}
+
 function isPublicAssetShadowingPath(filePath) {
   return (
     filePath === 'scripts/check-public-asset-shadowing.mjs' ||
@@ -1163,6 +1211,10 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
       addScriptSuite(scriptSuites, 'storage-keys');
     }
 
+    if (touchesUnusedMemberSources(filePath)) {
+      addScriptSuite(scriptSuites, 'unused-members');
+    }
+
     if (touchesDatasetConsumerSources(filePath)) {
       addScriptSuite(scriptSuites, 'dataset-consumers');
     }
@@ -1223,6 +1275,11 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
 
     if (isStorageKeyRegistryPath(filePath)) {
       addScriptSuite(scriptSuites, 'storage-keys');
+      continue;
+    }
+
+    if (isUnusedMembersPath(filePath)) {
+      addScriptSuite(scriptSuites, 'unused-members');
       continue;
     }
 
