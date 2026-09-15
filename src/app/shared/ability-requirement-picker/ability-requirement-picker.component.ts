@@ -43,11 +43,21 @@ import {
   type AutoBuildLeaderBoostRange,
   type AutoBuildLeaderBoostRanges,
 } from '../../core/models/auto-team-builder.models';
+import { resolveAbilityTagDefinition } from '../../core/data/ability-tag-glossary.data';
 import { applyIonicModalDialogLabel } from '../a11y/ionic-modal-dialog-label.utils';
 import { AbilityRequirementPickerStylePanelsComponent } from './ability-requirement-picker-style-panels.component';
 
 interface AbilityRequirementCatalogTileView {
   item: AutoBuildAbilityCatalogItem;
+  /**
+   * 869f2608x. What the term means, in the player's words, or null when it has none.
+   *
+   * Shown here rather than in a glossary screen: this is the moment the reader is deciding whether
+   * a term is the one they want, and a definition they have to go and look up is one they will not.
+   * Null for the long tail - the terms a player rarely meets - and the `ability-tags` lane fails
+   * when one of the most-met terms loses its entry.
+   */
+  definition: string | null;
   visual: ReturnType<typeof resolveAbilityRequirementVisual>;
   isSelected: boolean;
   selectedCount: number;
@@ -119,6 +129,15 @@ export class AbilityRequirementPickerComponent implements OnChanges {
   @Input({ required: true }) public isOpen = false;
   @Input({ required: true }) public title = '';
   @Input({ required: true }) public copy = '';
+  /**
+   * 869f2608x. The language the term definitions are shown in.
+   *
+   * An `@Input()` rather than an injected service on purpose: this component is constructed
+   * directly by its spec, with no injector, so `inject()` throws NG0203 here. It is also the shape
+   * every other piece of its state already takes - `title`, `copy` and `drafts` are all inputs -
+   * and the hosts already hold the active language.
+   */
+  @Input() public language: 'en' | 'el' = 'en';
   @Input({ required: true }) public drafts: AbilityRequirementDraft[] = [];
   @Input({ required: true }) public catalogItems: AutoBuildAbilityCatalogItem[] = [];
   @Input() public showCharacterCount = true;
@@ -178,6 +197,7 @@ export class AbilityRequirementPickerComponent implements OnChanges {
   public readonly filteredCatalogTiles = computed<AbilityRequirementCatalogTileView[]>(() => {
     const searchTerm = this.searchTerm().trim().toLowerCase();
     const selectedCounts = this.selectedDraftCounts();
+    const language = this.language;
 
     return this.catalogItemsState()
       .filter((item) => {
@@ -192,6 +212,7 @@ export class AbilityRequirementPickerComponent implements OnChanges {
 
         return {
           item,
+          definition: resolveAbilityTagDefinition(item.key, language),
           visual: resolveAbilityRequirementVisual(item.key),
           isSelected: selectedCounts.has(item.key),
           selectedCount: selectedCounts.get(item.key) ?? 0,

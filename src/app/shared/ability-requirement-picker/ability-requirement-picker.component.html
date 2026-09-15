@@ -102,6 +102,11 @@
 
                         <span class="ability-picker-tile__copy">
                           <strong>{{ tile.item.label }}</strong>
+                          @if (tile.definition) {
+                            <small class="ability-picker-tile__definition">
+                              {{ tile.definition }}
+                            </small>
+                          }
                           <span class="ability-picker-tile__meta">
                             <small
                               [class.ability-picker-tile__match-count--scarce]="tile.isScarce"

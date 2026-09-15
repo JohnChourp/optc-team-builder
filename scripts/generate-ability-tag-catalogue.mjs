@@ -10,10 +10,16 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 
-import { buildAbilityTagCatalogue, findAbilityTagDrift } from './lib/ability-tag-catalogue.mjs';
+import {
+  buildAbilityTagCatalogue,
+  findAbilityTagDrift,
+  findGlossaryGaps,
+  parseGlossaryKeys,
+} from './lib/ability-tag-catalogue.mjs';
 
 export const ABILITY_CATALOG_PATH = 'public/assets/data/optc-auto-builder-abilities.json';
 export const PARSER_PATH = 'scripts/auto-team-builder-ability-parser.mjs';
+export const GLOSSARY_PATH = 'src/app/core/data/ability-tag-glossary.data.ts';
 export const CATALOGUE_JSON_PATH = 'docs/ability-tag-catalogue.json';
 
 export function readAbilityTagCatalogue({
@@ -23,6 +29,7 @@ export function readAbilityTagCatalogue({
   return buildAbilityTagCatalogue({
     abilityCatalogue: JSON.parse(readFileSync(path.join(appRoot, ABILITY_CATALOG_PATH), 'utf8')),
     parserSource: readFileSync(path.join(appRoot, PARSER_PATH), 'utf8'),
+    glossaryKeys: parseGlossaryKeys(readFileSync(path.join(appRoot, GLOSSARY_PATH), 'utf8')),
     generatedAt,
   });
 }
@@ -43,13 +50,26 @@ async function main() {
     return;
   }
 
+  const glossaryGaps = findGlossaryGaps(measured, new Set(
+    measured.tags.filter((tag) => tag.hasPlayerDefinition).map((tag) => tag.key),
+  ));
+
+  if (glossaryGaps.length) {
+    console.error(`[ability-tags] ${glossaryGaps.length} of the most-met term(s) have no definition:`);
+    for (const gap of glossaryGaps) {
+      console.error(`  - ${gap}`);
+    }
+    process.exitCode = 1;
+    return;
+  }
+
   if (!process.argv.includes('--check')) {
     writeFileSync(targetPath, `${JSON.stringify(measured, null, 2)}\n`, 'utf8');
     console.log(`[ability-tags] wrote ${CATALOGUE_JSON_PATH} (${measured.tagCount} tags).`);
   }
 
   console.log(
-    `[ability-tags] OK - ${measured.tagCount} tags, ${measured.proseMatchedTagCount} produced by an ability-prose matcher, no count moved further than the threshold allows.`,
+    `[ability-tags] OK - ${measured.tagCount} tags, ${measured.proseMatchedTagCount} produced by an ability-prose matcher, ${measured.definedTagCount} explained to the player, no count moved further than the threshold allows.`,
   );
 }
 
