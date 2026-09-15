@@ -26,7 +26,12 @@ describe('ci-check-routing', () => {
     expect(plan.runAngular).toBe(true);
     expect(plan.runE2e).toBe(true);
     expect(plan.runQuarantine).toBe(false);
-    expect(plan.scriptSuites).toEqual([]);
+    /*
+     * 869f135rm. App source routes to `unused-members` as well: a public member
+     * goes dead when somebody edits the file that USED it, which is usually not
+     * the file that declares it.
+     */
+    expect(plan.scriptSuites).toEqual(['unused-members']);
   });
 
   it('runs Angular tests for captain parser and generated metadata changes', () => {
@@ -67,7 +72,13 @@ describe('ci-check-routing', () => {
     expect(plan.runAngular).toBe(false);
     expect(plan.runE2e).toBe(false);
     expect(plan.runQuarantine).toBe(false);
-    expect(plan.scriptSuites).toEqual(['saved-team-codecs', 'docs-integrity', 'docs-commands', 'docs-drift']);
+    expect(plan.scriptSuites).toEqual([
+      'saved-team-codecs',
+      'docs-integrity',
+      'docs-commands',
+      'docs-drift',
+      'unused-members',
+    ]);
   });
 
   it('keeps browser coverage for saved-team transfer runtime changes', () => {
@@ -77,7 +88,7 @@ describe('ci-check-routing', () => {
     expect(plan.runAngular).toBe(true);
     expect(plan.runE2e).toBe(true);
     expect(plan.runQuarantine).toBe(false);
-    expect(plan.scriptSuites).toEqual(['saved-team-codecs']);
+    expect(plan.scriptSuites).toEqual(['saved-team-codecs', 'unused-members']);
   });
 
   it('routes Markdown fixtures before generic docs rules', () => {
@@ -283,6 +294,7 @@ describe('ci-check-routing', () => {
       'support-ladder',
       'scripts-inventory',
       'dead-code',
+      'unused-members',
       'worker-bundling',
     ]);
   });

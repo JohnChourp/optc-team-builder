@@ -1,13 +1,14 @@
 # The project's position on linting
 
 **Status:** recorded 2026-09-14 · [869f17h4j](https://app.clickup.com/t/90121749478/869f17h4j)
+· §2 corrected 2026-09-15 · [869f135rm](https://app.clickup.com/t/90121749478/869f135rm)
 
 ## The position
 
 **A check is adopted when a defect demonstrates the need for it, and it is
 written to catch that defect specifically.** No general rule set is installed.
 
-That is not "no linting". It is the same discipline the 40 lanes in
+That is not "no linting". It is the same discipline the 53 lanes in
 `scripts/ci-check-routing.mjs` already follow — each was written after something
 broke — stated so that the next reader does not have to guess whether the absence
 of ESLint is a position or an oversight.
@@ -16,7 +17,7 @@ Both readings have been wrong here before, which is why this file exists.
 
 ## What the repository has instead
 
-40 check lanes, each with its own spec, wired into `npm run verify:local`. A
+53 check lanes, each with its own spec, wired into `npm run verify:local`. A
 representative few, with what motivated them:
 
 | Lane | Written after |
@@ -27,6 +28,7 @@ representative few, with what motivated them:
 | `tag-picker-scoping` | one picker's panel rules naming a single modal class and silently skipping the other picker's eight hosts |
 | `storage-keys` | `crewForgeImageProfiles` missing from a full export |
 | `scripts-references` | `test:e2e:webkit` reported as orphaned while it ran on every `verify:local:full` |
+| `unused-members` | two dead public fields surviving a lane named `dead-code`, and the tool named as the remedy turning out not to have the feature |
 
 Not one of those is expressible as a rule in a standard set. They are facts about
 this codebase, and a generic linter has no opinion about any of them.
@@ -58,16 +60,27 @@ only. There is no standard rule for unused *public* members, because a public
 member is an API surface a rule cannot assume is unused.
 
 The two real cases — `regionAvailability` and `recentCharacterIds` — were public.
-The tool that does find them is **knip**, which this repository already has at
-`^6.35.1`, wired as the second half of `audit:dead-code`, and deliberately
-excluded from the gate with the reason recorded in
-`scripts/ci-check-routing.mjs`: 236 unused exports and 13 unused types, the
-sampled ones false positives, because knip counts a symbol used only inside its
-own file as an unused export.
 
-So this defect class is covered by a tool that is installed, and the open question
-is how to make its output precise enough to gate on — not whether to add a
-linter.
+**This section said knip finds them. It does not, and the correction is the point
+of the entry.** Measured 2026-09-15 under [869f135rm](https://app.clickup.com/t/90121749478/869f135rm):
+knip's `classMembers` issue type existed in knip 5 and was **removed in 6**. The
+installed `^6.35.1` has no trace of it — absent from the binary, absent from
+`schema.json`, and `--include classMembers` exits with `Invalid issue type`.
+Proven rather than read: a used class carrying two dead public members left
+`dead-code:check` green (expected) while `npx knip --include files,exports,types`
+named the unused *export* that wired the probe in and named **neither member**.
+
+So the claim was not "noisy tool we have not tuned" but "no tool at all", and the
+difference matters: the first is a configuration question, the second is a missing
+check. The check is now `npm run test:unused-members`
+([`scripts/check-unused-public-members.mjs`](../scripts/check-unused-public-members.mjs)),
+a targeted TypeScript-program pass in its own `unused-members` lane, and the
+defect class is covered.
+
+knip stays installed and stays out of the gate, for the unchanged reason recorded
+in `scripts/ci-check-routing.mjs`: its unused-export output is dominated by
+symbols used only inside their own file. That was always a separate argument from
+this one.
 
 ## The shortlist
 
