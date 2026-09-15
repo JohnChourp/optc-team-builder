@@ -117,6 +117,7 @@ import {
   ManualTeamBuilderPickerPanelComponent,
   ManualTeamBuilderWorkbenchPanelComponent,
 } from './manual-team-builder-style-panels.component';
+import { formattingLanguage } from '../../core/i18n/app-locale-format';
 
 const MANUAL_TEAM_SLOT_COUNT = 6;
 const MANUAL_TEAM_FRIEND_CAPTAIN_SLOT_INDEX = 1;
@@ -1887,7 +1888,7 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
   }
 
   private formatNumber(value: number): string {
-    return Number.isFinite(value) ? value.toLocaleString() : '0';
+    return Number.isFinite(value) ? value.toLocaleString(formattingLanguage()) : '0';
   }
 
   private setDefaultCaptainBranchMode(index: number, character: CharacterDetailRecord): void {

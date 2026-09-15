@@ -3,6 +3,7 @@ import { Inject, Injectable, signal } from "@angular/core";
 import { TranslocoService } from "@jsverse/transloco";
 import { firstValueFrom } from "rxjs";
 
+import { setFormattingLanguage } from "../i18n/app-locale-format";
 import {
   APP_I18N_AVAILABLE_LANGUAGES,
   APP_LANGUAGE_PREFERENCE_KEY,
@@ -53,6 +54,13 @@ export class AppI18nService {
     this.transloco.setActiveLang(nextLanguage);
     this.activeLanguageState.set(nextLanguage);
     this.document.documentElement.lang = nextLanguage;
+    /*
+     * 869f17h2x. Numbers follow the chosen language, not the browser's locale.
+     * Set here rather than anywhere else because `hydrate` also comes through
+     * `setLanguage`, so this is the one place the language is ever written and
+     * the formatting locale cannot drift away from `documentElement.lang`.
+     */
+    setFormattingLanguage(nextLanguage);
     await this.preferences.set({ key: APP_LANGUAGE_PREFERENCE_KEY, value: nextLanguage });
   }
 

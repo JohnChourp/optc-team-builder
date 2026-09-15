@@ -246,6 +246,15 @@ export const SCRIPT_SUITES = {
     command: 'npm run test:style-panels',
   },
   /*
+   * 869f17h2x. Numbers in translated copy follow the chosen language. `1234567.89`
+   * is `1,234,567.89` in en and `1.234.567,89` in el, so a bare `toLocaleString()`
+   * showed a Greek reader a thousands separator where they expect a decimal point.
+   */
+  'locale-formatting': {
+    label: 'Locale formatting tests',
+    command: 'npm run test:locale-formatting',
+  },
+  /*
    * The TypeScript half of `audit:dead-code`, and deliberately only that half.
    *
    * The two scripts are near-identical in name and are not the same check:
@@ -408,6 +417,15 @@ function isWorkflowBudgetPath(filePath) {
   return (
     filePath === 'scripts/check-github-workflow-budgets.mjs' ||
     filePath === 'scripts/check-github-workflow-budgets.spec.ts'
+  );
+}
+
+function isLocaleFormattingPath(filePath) {
+  return (
+    filePath === 'scripts/check-locale-formatting.mjs' ||
+    filePath === 'scripts/check-locale-formatting.spec.ts' ||
+    filePath === 'docs/locale-behaviour.md' ||
+    filePath.startsWith('src/app/core/i18n/')
   );
 }
 
@@ -1007,6 +1025,12 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
     if (isWorkflowBudgetPath(filePath)) {
       categories.add('workflow-budgets');
       addScriptSuite(scriptSuites, 'workflow-budgets');
+      continue;
+    }
+
+    if (isLocaleFormattingPath(filePath)) {
+      categories.add('locale-formatting');
+      addScriptSuite(scriptSuites, 'locale-formatting');
       continue;
     }
 

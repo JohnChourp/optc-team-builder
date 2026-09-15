@@ -83,6 +83,8 @@
     "test:scripts-references": "vitest run scripts/check-npm-script-references.spec.ts && npm run scripts:references",
     "test:style-panels": "vitest run scripts/check-style-panel-inventory.spec.ts && npm run styles:panel-inventory",
     "styles:panel-inventory": "node ./scripts/check-style-panel-inventory.mjs",
+    "test:locale-formatting": "vitest run scripts/check-locale-formatting.spec.ts src/app/core/i18n/app-locale-format.spec.ts && npm run i18n:locale-formatting",
+    "i18n:locale-formatting": "node ./scripts/check-locale-formatting.mjs",
     "scripts:references": "node ./scripts/check-npm-script-references.mjs",
     "theme:overlay-contrast": "node ./scripts/check-ionic-overlay-contrast.mjs",
     "test:ionic-host-property": "vitest run scripts/check-ionic-host-property.spec.ts && npm run ionic:host-property",
