@@ -31,6 +31,27 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.47',
+    date: '2026-09-15',
+    userVisible: true,
+    headline: {
+      en: 'The builder now names the other Friend Captains it looked at',
+      el: 'Ο builder ονομάζει πλέον τους άλλους Friend Captains που κοίταξε',
+    },
+    summaryEn:
+      "When the auto builder fills the Friend Captain seat it looks at several characters and picks one, and until now you only ever saw the winner. The Final team report now lists the others it looked at, in the order it ranked them, so you know who else to ask your friends for. They all met the same leader rules your search applied - but the builder stopped at the first team that worked, so it never tried them, and the report says so rather than promising they would work. The list is never limited to characters you own, because a Friend Captain is borrowed from someone else's crew.",
+    summaryEl:
+      'Όταν ο auto builder γεμίζει τη θέση του Friend Captain κοιτάζει αρκετούς χαρακτήρες και διαλέγει έναν, και μέχρι τώρα έβλεπες μόνο τον νικητή. Το Τελικό report ομάδας δείχνει πλέον και τους υπόλοιπους που κοίταξε, με τη σειρά που τους κατέταξε, ώστε να ξέρεις ποιον άλλον να ζητήσεις από τους φίλους σου. Όλοι τους πληρούσαν τους ίδιους κανόνες leader που εφάρμοσε η αναζήτησή σου - αλλά ο builder σταμάτησε στην πρώτη ομάδα που δούλεψε, οπότε δεν τους δοκίμασε ποτέ, και το report το λέει αντί να υπόσχεται ότι θα δουλέψουν. Η λίστα δεν περιορίζεται ποτέ σε χαρακτήρες που έχεις, γιατί ο Friend Captain δανείζεται από το πλήρωμα κάποιου άλλου.',
+    added: [
+      {
+        en: "**Other Friend Captains this search considered** - a new list at the bottom of the **Final team report** on **Auto Team Builder**. Tap a name to open that character.",
+        el: 'Το **Άλλοι Friend Captains που εξέτασε αυτή η αναζήτηση** - μια νέα λίστα στο κάτω μέρος του **Τελικού report ομάδας** στο **Auto Team Builder**. Πάτα ένα όνομα για να ανοίξεις τον χαρακτήρα.',
+      },
+    ],
+    improved: [],
+    fixed: [],
+  },
+  {
     version: '0.4.46',
     date: '2026-09-15',
     userVisible: true,
