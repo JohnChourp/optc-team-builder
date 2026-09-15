@@ -5,6 +5,7 @@ import {
   findFailureFamily,
 } from '../data/failure-vocabulary.data';
 import { classifyBrowserStorageFailure } from './browser-storage-error.utils';
+import { isBrowserOffline } from './network-status.service';
 
 /**
  * Composes the three sentences a failure owes the player.
@@ -49,6 +50,19 @@ export interface FailureMessage {
  * knows it is an import rather than a save.
  */
 export function classifyFailure(error: unknown): string {
+  /*
+   * 869f135r8. Offline is checked FIRST, and deliberately before the error is
+   * examined at all.
+   *
+   * Every other family would otherwise describe a symptom of this one: a Drive
+   * upload that cannot reach Google is not "a save that failed", and "try again"
+   * is advice that cannot work until the connection comes back. The reader is
+   * owed the cause, not the nearest thing to it.
+   */
+  if (isBrowserOffline()) {
+    return 'offline';
+  }
+
   const storage = classifyBrowserStorageFailure(error);
 
   if (storage === 'BROWSER_STORAGE_QUOTA_EXCEEDED') {

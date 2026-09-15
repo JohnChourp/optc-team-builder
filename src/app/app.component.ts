@@ -21,6 +21,7 @@ import packageJson from '../../package.json';
 import { PreferencesAdapterService } from './core/services/preferences-adapter.service';
 import { AnalyticsConsentService } from './core/services/analytics-consent.service';
 import { AppI18nService } from './core/services/app-i18n.service';
+import { NetworkStatusService } from './core/services/network-status.service';
 import { FAILURE_I18N_SCOPE } from './core/services/failure-message.utils';
 import { AppUpdateService } from './core/services/app-update.service';
 import { CharacterCatalogCacheService } from './core/services/character-catalog-cache.service';
@@ -74,8 +75,26 @@ const defaultSeo: RouteSeoData = {
         <ion-router-outlet></ion-router-outlet>
       </div>
 
-      @if (showUpdateBanner() || showInstallBanner() || showAnalyticsConsentBanner()) {
+      @if (showOfflineBanner() || showUpdateBanner() || showInstallBanner() || showAnalyticsConsentBanner()) {
         <div class="app-floating-banners">
+          <!--
+            869f135r8. The app knows it is offline, once, instead of letting the
+            reader discover it one failed feature at a time.
+
+            It leads with what still WORKS, because that is the surprising and
+            useful half: the service worker prefetches the shell, the i18n bundles
+            and the whole dataset, so the catalogue, both builders, saved teams and
+            boxes need no connection at all. A bare "you are offline" would imply
+            the opposite.
+          -->
+          @if (showOfflineBanner()) {
+            <section class="app-offline-banner" role="status" aria-live="polite">
+              <div class="app-offline-banner__copy">
+                <strong>{{ 'offline.title' | transloco }}</strong>
+                <p>{{ 'offline.copy' | transloco }}</p>
+              </div>
+            </section>
+          }
           @if (showUpdateBanner()) {
             <section
               class="app-update-banner"
@@ -229,6 +248,7 @@ export class AppComponent {
   private readonly nativeUpdateService = inject(NativeUpdateService);
   private readonly alertController = inject(AlertController);
   private readonly i18n = inject(AppI18nService);
+  private readonly network = inject(NetworkStatusService);
   private readonly preferences = inject(PreferencesAdapterService);
   private lastTrackedUrl: string | null = null;
 
@@ -336,6 +356,13 @@ export class AppComponent {
       !this.appInstalled() &&
       !this.standaloneMode(),
   );
+
+  /*
+   * 869f135r8. Shown only when the browser is CERTAIN there is no connection.
+   * `navigator.onLine` being true does not mean the internet is reachable, so
+   * nothing here claims a feature will work - only that some will not.
+   */
+  public readonly showOfflineBanner = computed(() => !this.network.online());
 
   public constructor() {
     /*
