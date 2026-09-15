@@ -51,7 +51,7 @@
     "placeholder": "Search by team, Captain or Friend Captain",
     "label": "Search saved teams",
     "clear": "Clear search",
-    "noResults": "No saved team matches \u201c{{query}}\u201d."
+    "noResults": "No saved team matches “{{query}}”."
   },
   "sort": {
     "label": "Sort by",
@@ -239,5 +239,8 @@
     "note": "This list is read-only and ships inside the app. There is nowhere to send a team, so nothing here was submitted by another player."
   },
   "total": "{{count}} total",
-  "totalFiltered": "{{count}} matching of {{total}} total"
+  "totalFiltered": "{{count}} matching of {{total}} total",
+  "enemyLinks": {
+    "label": "Built for:"
+  }
 }

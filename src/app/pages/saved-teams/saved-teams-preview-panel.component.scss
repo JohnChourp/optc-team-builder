@@ -45,3 +45,23 @@
 .saved-team-copy p {
   overflow-wrap: anywhere;
 }
+
+/* 869f1327n. Which stages this team was kept for, read backwards out of the saved enemies. */
+.saved-team-enemy-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0;
+  font-size: 0.78rem;
+  color: rgba(248, 251, 255, 0.6);
+}
+
+.saved-team-enemy-links__item {
+  padding: 2px 8px;
+  border: 1px solid rgba(108, 178, 255, 0.36);
+  border-radius: 999px;
+  background: rgba(18, 58, 122, 0.22);
+  color: #a9d0ff;
+  text-decoration: none;
+}

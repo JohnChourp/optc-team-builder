@@ -9,7 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
-import { IonIcon, IonModal, IonSearchbar } from '@ionic/angular';
+import { IonIcon, IonModal, IonSearchbar, IonToggle } from '@ionic/angular';
 import { IonButton } from '@ionic/angular/ion-button';
 import { IonButtons } from '@ionic/angular/ion-buttons';
 import { IonContent } from '@ionic/angular/ion-content';
@@ -46,6 +46,7 @@ interface ShipPickerCardView {
     IonIcon,
     IonModal,
     IonSearchbar,
+    IonToggle,
     IonToolbar,
     ShipPickerStylePanelsComponent,
     TranslocoDirective,
@@ -71,6 +72,9 @@ export class ShipPickerComponent implements OnChanges {
   @Output() public readonly saveSelection = new EventEmitter<number | null>();
   @Output() public readonly toggleFavoriteShip = new EventEmitter<number>();
 
+  @Input() public favoritesOnlyLabel = 'Favorites only';
+  @Input() public favoritesOnlyEmptyLabel = '';
+
   public readonly closeIcon = closeOutline;
   public readonly shipIcon = boatOutline;
   public readonly favoriteIcon = heart;
@@ -82,8 +86,22 @@ export class ShipPickerComponent implements OnChanges {
   public readonly blockedFavoriteShipIdsState = signal<number[]>([]);
   public readonly shipSupportLabelsState = signal<Record<number, string>>({});
   public readonly workingShipId = signal<number | null>(null);
+  /**
+   * 869f1327r. The one genuine gap in the favourites sweep.
+   *
+   * `favoriteShipIds` was already wired here - every card carries a heart and can be toggled - but
+   * this was the only character-or-ship picker with no way to narrow TO favourites. Character Boxes
+   * and the character pickers have had it for a long time, and a favourites set the reader can
+   * build but not use from the place they are choosing is one they stop trusting everywhere.
+   *
+   * The empty state matches what Character Boxes already gets right: the toggle stays on and the
+   * list explains itself rather than looking broken.
+   */
+  public readonly favoritesOnly = signal(false);
   public readonly filteredShipCards = computed<ShipPickerCardView[]>(() => {
     const searchTerm = this.searchTerm().trim().toLowerCase();
+    const favoritesOnly = this.favoritesOnly();
+    const favoriteShipIds = new Set(this.favoriteShipIdsState());
     const baseCards: ShipPickerCardView[] = [
       {
         isBlocked: false,
@@ -97,9 +115,13 @@ export class ShipPickerComponent implements OnChanges {
         thumbUrl: null,
         isSelected: this.workingShipId() === null,
       },
-      ...this.shipsState().map((ship) =>
-        this.buildShipCard(ship, ship.id === this.workingShipId(), ship.id, true),
-      ),
+      ...this.shipsState()
+        /*
+         * The "no ship" card above is never filtered out: it is the way to CLEAR a selection, and
+         * removing it would make the empty state a dead end rather than an explanation.
+         */
+        .filter((ship) => !favoritesOnly || favoriteShipIds.has(ship.id))
+        .map((ship) => this.buildShipCard(ship, ship.id === this.workingShipId(), ship.id, true)),
     ];
 
     if (!searchTerm.length) {
@@ -112,6 +134,10 @@ export class ShipPickerComponent implements OnChanges {
       ),
     );
   });
+  /** True when the filter is on and has emptied the list - the case Character Boxes explains. */
+  public readonly favoritesOnlyIsEmpty = computed(
+    () => this.favoritesOnly() && this.filteredShipCards().every((card) => card.shipId === null),
+  );
   public readonly selectedCard = computed<ShipPickerCardView>(() => {
     const selectedShipId = this.workingShipId();
 
@@ -180,6 +206,10 @@ export class ShipPickerComponent implements OnChanges {
     }
 
     this.workingShipId.set(shipId);
+  }
+
+  public onFavoritesOnlyChange(event: CustomEvent<{ checked?: boolean }>): void {
+    this.favoritesOnly.set(Boolean(event.detail.checked));
   }
 
   public onToggleFavoriteShip(event: Event, shipId: number | null): void {

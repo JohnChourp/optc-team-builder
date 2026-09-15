@@ -1052,6 +1052,13 @@ function createPage(overrides: { favoriteIds?: number[]; importParam?: string | 
   const userState = {
     ready: vi.fn().mockResolvedValue(undefined),
     readyFavoriteCharacterIds: vi.fn().mockResolvedValue(undefined),
+    readyGameRegionPreference: vi.fn().mockResolvedValue(undefined),
+    readyRecentCharacterIds: vi.fn().mockResolvedValue(undefined),
+    clearAllRecentCharacterIds: vi.fn().mockResolvedValue(undefined),
+    // 869f1327j / 869f1327d. `all` marks nothing and the strip is empty, so every existing case
+    // measures exactly what it measured before; both surfaces have their own tests.
+    gameRegionPreference: signal('all' as const),
+    recentCharacterIds: signal<number[]>([]),
     favoriteCharacterIds: favoriteIds,
     toggleFavorite: vi.fn().mockImplementation(async (characterId: number) => {
       const currentFavoriteIds = favoriteIds();

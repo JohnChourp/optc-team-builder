@@ -4,7 +4,10 @@
     "emptyCopy": "Δεν βρέθηκαν ships που να ταιριάζουν στο current search.",
     "emptyTitle": "Δεν βρέθηκαν ships",
     "searchPlaceholder": "Αναζήτηση ship με όνομα ή effect",
-    "title": "Κατάλογος ships"
+    "title": "Κατάλογος ships",
+    "favoritesOnly": "Μόνο αγαπημένα",
+    "favoritesOnlyEmptyTitle": "Δεν έχεις ακόμη αγαπημένα ships",
+    "favoritesOnlyEmptyCopy": "Πάτα την καρδιά σε ένα ship για να μπει εδώ, ή απενεργοποίησε το Μόνο αγαπημένα για να δεις ξανά όλα τα ships."
   },
   "eyebrow": "Επιλογή ship",
   "favorites": {

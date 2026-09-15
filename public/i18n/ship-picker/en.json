@@ -4,7 +4,10 @@
     "emptyCopy": "No ships matched the current search.",
     "emptyTitle": "No matching ships",
     "searchPlaceholder": "Search ship by name or effect",
-    "title": "Ship catalog"
+    "title": "Ship catalog",
+    "favoritesOnly": "Favorites only",
+    "favoritesOnlyEmptyTitle": "No favorite ships yet",
+    "favoritesOnlyEmptyCopy": "Tap the heart on a ship to add it here, or turn Favorites only off to see every ship again."
   },
   "eyebrow": "Ship picker",
   "favorites": {
