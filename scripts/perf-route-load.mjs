@@ -789,6 +789,26 @@ async function measureRoute(context, route, viewportLabel) {
     await route.wait(page);
 
     const readyMs = Math.round(performance.now() - startedAt);
+    /*
+     * 869f135rc. When the reader first sees ANYTHING, recorded but not budgeted.
+     *
+     * `readyMs` is when the route is usable; this is when the screen stops being
+     * blank, which is a different question and the one that subtask asks. It is
+     * recorded rather than gated because a budget in this repository is set from
+     * history, and this metric has none yet - one run is a number, not a budget.
+     *
+     * Note what it does NOT prove: the shell has always painted a spinner, so FCP
+     * was already early. What changed in 869f135rc is what that paint CONTAINS.
+     * A timing cannot see that, which is why the screenshot beside it is the
+     * evidence and this is only the guard against a regression.
+     */
+    const firstContentfulPaintMs = await page
+      .evaluate(() => {
+        const entry = performance.getEntriesByName('first-contentful-paint')[0];
+
+        return entry ? Math.round(entry.startTime) : null;
+      })
+      .catch(() => null);
     const screenshot = `screenshots/${runLabel}-${viewportLabel}-${route.id}.png`;
     await page.screenshot({
       path: path.join(artifactDir, screenshot),
@@ -798,6 +818,7 @@ async function measureRoute(context, route, viewportLabel) {
 
     return {
       id: route.id,
+      firstContentfulPaintMs,
       path: route.redactedPath ?? route.path,
       readyMs,
       screenshot,
@@ -808,6 +829,7 @@ async function measureRoute(context, route, viewportLabel) {
 
     return {
       id: route.id,
+      firstContentfulPaintMs: null,
       path: route.redactedPath ?? route.path,
       readyMs: null,
       error: message,

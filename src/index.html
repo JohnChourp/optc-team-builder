@@ -199,13 +199,33 @@
       min-height: 100vh;
     }
 
+    /* 869f135rc. First paint says WHAT is loading. Text only - no font, asset or
+       script joins the critical path. Rationale: docs/first-paint.md */
     .app-bootstrap-loader {
       position: fixed;
       inset: 0;
       z-index: 2147483647;
       display: grid;
       place-items: center;
+      align-content: center;
+      gap: 28px;
       pointer-events: none;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .app-bootstrap-loader__title {
+      margin: 0;
+      font-size: clamp(1.25rem, 5vw, 1.75rem);
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      color: #f5f7ff;
+    }
+
+    .app-bootstrap-loader__note {
+      margin: 0;
+      font-size: 0.95rem;
+      color: rgba(245, 247, 255, 0.62);
     }
 
     .app-bootstrap-loader__spinner {
@@ -255,8 +275,10 @@
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TBW6L4T"
   height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <!-- End Google Tag Manager (noscript) -->
-  <div class="app-bootstrap-loader" aria-hidden="true">
-    <div class="app-bootstrap-loader__spinner"></div>
+  <div class="app-bootstrap-loader" role="status" aria-live="polite">
+    <p class="app-bootstrap-loader__title">OPTC Team Builder</p>
+    <div class="app-bootstrap-loader__spinner" aria-hidden="true"></div>
+    <p class="app-bootstrap-loader__note">Loading your characters and teams…</p>
   </div>
   <app-root></app-root>
 </body>
