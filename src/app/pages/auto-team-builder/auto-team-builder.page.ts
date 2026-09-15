@@ -863,6 +863,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   private unappliedGuidedResult: AutoBuildResult | null = null;
   /** Where the last build ran, as the service reported it (869exmmh5). */
   private lastExecutionPath: AutoTeamBuildExecutionPath | null = null;
+  /** 869f2608x. Passed to the ability picker so term definitions render in the reader's language. */
+  public readonly activeLanguage = () => this.i18n.activeLanguage();
   public readonly summary = signal<DatasetManifest | null>(null);
   public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
   public readonly ships = signal<ShipRecord[]>([]);

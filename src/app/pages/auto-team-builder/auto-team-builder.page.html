@@ -715,6 +715,7 @@
                                   </section>
 
                                   <app-ability-requirement-picker
+[language]="activeLanguage()"
                                     [isOpen]="captainAbilityPickerOpen()"
                                     [title]="t('captainAbilityFilters.title')"
                                     [copy]="t('captainAbilityFilters.pickerCopy')"
@@ -938,6 +939,7 @@
                                   </section>
 
                                   <app-ability-requirement-picker
+[language]="activeLanguage()"
                                     [isOpen]="requiredCharacterAbilityPickerOpen()"
                                     [title]="activeRequiredCharacterPickerTitle()"
                                     [copy]="t('requiredCharacters.pickerCopy')"

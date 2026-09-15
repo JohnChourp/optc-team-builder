@@ -31,6 +31,24 @@
   line-height: 1.4;
 }
 
+/*
+ * 869f2608x. The player-facing definition, directly under the term and above its match count.
+ *
+ * Deliberately quieter than the label and NOT a badge: it is prose the reader skims while deciding
+ * whether this is the term they meant, not a value they are comparing. It sits above the count
+ * because the count is only interesting once they know what the term is.
+ */
+.ability-picker-tile__definition {
+  display: block;
+  margin: 2px 0 4px;
+  color: rgba(248, 251, 255, 0.6);
+  font-size: 0.74rem;
+  font-weight: 400;
+  line-height: 1.4;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
 .ability-picker-tile__meta {
   display: flex;
   flex-wrap: wrap;

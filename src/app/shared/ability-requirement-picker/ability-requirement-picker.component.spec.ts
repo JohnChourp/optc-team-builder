@@ -747,3 +747,49 @@ describe('AbilityRequirementPickerComponent', () => {
     );
   });
 });
+
+/**
+ * 869f2608x. The definitions a player sees beside the term they are choosing.
+ */
+describe('AbilityRequirementPickerComponent term definitions', () => {
+  it('shows the definition for a term the glossary explains', () => {
+    const component = new AbilityRequirementPickerComponent();
+
+    component.language = 'en';
+    component.catalogItems = [
+      { key: 'special_damage', label: 'Damage', category: 'special' } as never,
+    ];
+    component.ngOnChanges({ catalogItems: {} } as never);
+
+    expect(component.filteredCatalogTiles()[0]?.definition).toContain('deals damage');
+  });
+
+  it('shows it in Greek when the reader reads Greek', () => {
+    const component = new AbilityRequirementPickerComponent();
+
+    component.language = 'el';
+    component.catalogItems = [
+      { key: 'special_damage', label: 'Damage', category: 'special' } as never,
+    ];
+    component.ngOnChanges({ catalogItems: {} } as never);
+
+    expect(component.filteredCatalogTiles()[0]?.definition).toContain('damage στους εχθρούς');
+  });
+
+  /**
+   * Null rather than a placeholder for the long tail. 263 tags ship and only the terms a player
+   * actually meets are worth explaining; an empty definition line is a promise the glossary does
+   * not keep.
+   */
+  it('has no definition for a term the glossary does not explain, rather than an empty one', () => {
+    const component = new AbilityRequirementPickerComponent();
+
+    component.language = 'en';
+    component.catalogItems = [
+      { key: 'some_obscure_tag_nobody_meets', label: 'Obscure', category: 'special' } as never,
+    ];
+    component.ngOnChanges({ catalogItems: {} } as never);
+
+    expect(component.filteredCatalogTiles()[0]?.definition).toBeNull();
+  });
+});

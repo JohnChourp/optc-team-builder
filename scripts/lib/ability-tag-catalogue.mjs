@@ -53,6 +53,41 @@ function readPatternLiterals(body) {
  *   2. `{ key: 'key', patterns: [/re/] }` - object, used by the crewmate matchers
  *   3. `['key', NAMED_PATTERNS]`          - tuple referencing a module constant
  */
+/**
+ * 869f2608x. How many of the most-met terms must carry a player-facing definition.
+ *
+ * Ranked by how many of the 4,618 shipped characters carry each tag, which makes "the terms a
+ * player meets most" a measurement rather than a taste. The floor is what the lane enforces; the
+ * glossary may always define more.
+ *
+ * The tags no shipped character carries are deliberately out of scope - 22 of the 263 have a match
+ * count of zero, and copy for a term nobody can encounter is work that can only go stale.
+ */
+export const GLOSSARY_REQUIRED_TOP_TAG_COUNT = 20;
+
+/** `ability-tag-glossary.data.ts` keys, read out of the source the app itself imports. */
+export function parseGlossaryKeys(glossarySource) {
+  const body = glossarySource.slice(glossarySource.indexOf('ABILITY_TAG_GLOSSARY'));
+
+  return new Set([...body.matchAll(/^ {2}([a-z_]+): \{$/gmu)].map((match) => match[1]));
+}
+
+/**
+ * The lane rule: of the terms a player meets most often, every one must be explainable. A tag that
+ * climbs into that band later - because the dataset grew, or because a matcher widened - arrives
+ * without copy, and this is what makes that visible rather than silent.
+ */
+export function findGlossaryGaps(catalogue, glossaryKeys) {
+  return [...catalogue.tags]
+    .sort((left, right) => right.matchCount - left.matchCount)
+    .slice(0, GLOSSARY_REQUIRED_TOP_TAG_COUNT)
+    .filter((tag) => !glossaryKeys.has(tag.key))
+    .map(
+      (tag) =>
+        `${tag.key} ("${tag.label}") is carried by ${tag.matchCount} characters and has no entry in ability-tag-glossary.data.ts. A term the filter bar asks a player to recognise has to be explainable.`,
+    );
+}
+
 export function parseAbilityMatcherPatterns(parserSource) {
   const byKey = new Map();
   const namedPatternConstants = new Map();
@@ -119,7 +154,12 @@ export function parseStructuredTurnAliases(parserSource) {
   return aliases;
 }
 
-export function buildAbilityTagCatalogue({ abilityCatalogue, parserSource, generatedAt }) {
+export function buildAbilityTagCatalogue({
+  abilityCatalogue,
+  parserSource,
+  glossaryKeys = new Set(),
+  generatedAt,
+}) {
   const patternsByKey = parseAbilityMatcherPatterns(parserSource);
   const aliasesByKey = parseStructuredTurnAliases(parserSource);
   const tags = (abilityCatalogue.abilities ?? []).map((ability) => {
@@ -138,6 +178,8 @@ export function buildAbilityTagCatalogue({ abilityCatalogue, parserSource, gener
        */
       sourcePhrasings: patterns,
       ...(aliases ? { structuredTurnSources: aliases } : {}),
+      // 869f2608x. Whether this term is explained to the player at the point of use.
+      hasPlayerDefinition: glossaryKeys.has(ability.key),
       derivation: patterns
         ? 'ability-prose-matcher'
         : aliases
@@ -157,6 +199,7 @@ export function buildAbilityTagCatalogue({ abilityCatalogue, parserSource, gener
     structuredTurnAliasTagCount: tags.filter(
       (tag) => tag.derivation === 'structured-turns-from-another-tag',
     ).length,
+    definedTagCount: tags.filter((tag) => tag.hasPlayerDefinition).length,
     tags,
   };
 }

@@ -234,6 +234,8 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     'legacy',
   ];
 
+  /** 869f2608x. Passed to the ability picker so term definitions render in the reader's language. */
+  public readonly activeLanguage = () => this.i18n.activeLanguage();
   public readonly loading = signal(true);
   public readonly summary = signal<DatasetManifest | null>(null);
   public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
