@@ -1259,9 +1259,12 @@ describe('SavedTeamsPage', () => {
       tone: 'error',
       title: 'Import failed',
       details: [
+        'what.invalidFile',
         'The selected file is not valid JSON.',
         'Diagnostic code: SAVED_TEAMS_INVALID_JSON.',
         'Recovery for import.recovery.invalidJson',
+        'safety.safe',
+        'action.invalidFile',
       ],
     });
     expect(page.importFeedback()?.details.join(' ')).not.toContain('schemaVersion');
@@ -1304,9 +1307,12 @@ describe('SavedTeamsPage', () => {
       tone: 'error',
       title: 'Import failed',
       details: [
+        'what.storageQuota',
         'Browser storage is full.',
         'Diagnostic code: BROWSER_STORAGE_QUOTA_EXCEEDED.',
         'Recovery for storageFailures.recovery.quota',
+        'safety.lost',
+        'action.storageQuota',
       ],
     });
   });

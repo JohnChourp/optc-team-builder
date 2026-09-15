@@ -10159,7 +10159,18 @@ describe('AutoTeamBuilderPage preset import state', () => {
     expect(page.presetImportFeedback()).toEqual({
       tone: 'error',
       title: 'Preset import failed.',
-      details: ['The selected preset does not match the current export schema.'],
+      /*
+       * 869f135ra. The three sentences every failure now owes the reader - what
+       * happened, whether their data is safe, and the one thing to try - with the
+       * screen's own diagnostic between the first and the second, so the message
+       * still ends on the thing to do.
+       */
+      details: [
+        'what.invalidFile',
+        'The selected preset does not match the current export schema.',
+        'safety.safe',
+        'action.invalidFile',
+      ],
     });
   });
 });

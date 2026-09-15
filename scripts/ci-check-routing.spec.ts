@@ -31,7 +31,7 @@ describe('ci-check-routing', () => {
      * goes dead when somebody edits the file that USED it, which is usually not
      * the file that declares it.
      */
-    expect(plan.scriptSuites).toEqual(['unused-members']);
+    expect(plan.scriptSuites).toEqual(['failure-vocabulary', 'unused-members']);
   });
 
   it('runs Angular tests for captain parser and generated metadata changes', () => {
@@ -304,6 +304,7 @@ describe('ci-check-routing', () => {
       'support-ladder',
       'scripts-inventory',
       'dead-code',
+      'failure-vocabulary',
       'overlay-register',
       'i18n-greek-coverage',
       'component-style-budget',

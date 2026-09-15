@@ -241,8 +241,23 @@ describe('i18n scopes are reachable', () => {
       const scoped = source.includes(`scope: '${scope}'`) || source.includes(`scope: "${scope}"`);
       const translated =
         source.includes(`, '${scope}')`) || source.includes(`, "${scope}")`);
+      /*
+       * 869f135ra. A scope passed as a CONSTANT is still a use.
+       *
+       * Only the literal forms were read, so `failures` - whose name lives in
+       * `FAILURE_I18N_SCOPE` because it is read from inside catch blocks, with no
+       * template to name a scope - looked like a bundle nobody reads. It is read
+       * on every failure. The constant's declaration is resolved and then counted
+       * the same way the literal is.
+       */
+      const viaConstant = [
+        ...source.matchAll(/const\s+([A-Z][A-Z0-9_]*)\s*=\s*'([a-z][a-z0-9-]*)'/gu),
+      ].some(
+        ([, constant, declared]) =>
+          declared === scope && new RegExp(`,\\s*${constant}\\s*\\)`, 'u').test(source),
+      );
 
-      return !read && !scoped && !translated;
+      return !read && !scoped && !translated && !viaConstant;
     });
 
     expect(

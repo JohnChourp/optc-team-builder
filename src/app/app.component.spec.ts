@@ -60,6 +60,7 @@ let alertControllerStub: {
   create: ReturnType<typeof vi.fn>;
 };
 let i18nStub: {
+  preloadScope: ReturnType<typeof vi.fn>;
   translate: ReturnType<typeof vi.fn>;
 };
 let preferencesStub: {
@@ -188,6 +189,12 @@ describe('AppComponent', () => {
       }),
     };
     i18nStub = {
+      /*
+       * 869f135ra. The shell preloads the `failures` scope at start-up, because
+       * `translate` resolves synchronously while a scope is still loading and the
+       * first failure a reader ever met would otherwise render raw i18n keys.
+       */
+      preloadScope: vi.fn(() => Promise.resolve()),
       translate: vi.fn((key: string) => key),
     };
     storedPreferences = new Map<string, string>();

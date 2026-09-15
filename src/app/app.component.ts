@@ -21,6 +21,7 @@ import packageJson from '../../package.json';
 import { PreferencesAdapterService } from './core/services/preferences-adapter.service';
 import { AnalyticsConsentService } from './core/services/analytics-consent.service';
 import { AppI18nService } from './core/services/app-i18n.service';
+import { FAILURE_I18N_SCOPE } from './core/services/failure-message.utils';
 import { AppUpdateService } from './core/services/app-update.service';
 import { CharacterCatalogCacheService } from './core/services/character-catalog-cache.service';
 import { GoogleAnalyticsService } from './core/services/google-analytics.service';
@@ -337,6 +338,18 @@ export class AppComponent {
   );
 
   public constructor() {
+    /*
+     * 869f135ra. The failure vocabulary is loaded at start-up, not on first use.
+     *
+     * `AppI18nService.translate` kicks off `ensureLoaded` and then translates
+     * SYNCHRONOUSLY, so the first call for a scope nobody has loaded returns the
+     * raw key. Every other scope is loaded by its page's template long before
+     * anything reads it; this one is read only from inside a `catch`, from
+     * TypeScript, with no template to trigger it. The first failure a reader ever
+     * met would have rendered `failures.what.invalidFile` at them - an error
+     * message that is itself broken, on the screen where they are already stuck.
+     */
+    void this.i18n.preloadScope(FAILURE_I18N_SCOPE);
     void this.restoreInstallBannerDismissal();
     this.initializeInstallPrompt();
     void this.loadAppVersion();

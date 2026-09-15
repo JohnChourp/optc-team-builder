@@ -196,6 +196,15 @@
       ]
     },
     {
+      "namespace": "failures",
+      "kind": "component",
+      "owner": "src/app/core/services/",
+      "hosts": [],
+      "consumers": [
+        "src/app/core/services/failure-message.utils.ts"
+      ]
+    },
+    {
       "namespace": "faq",
       "kind": "page",
       "owner": "src/app/pages/faq/",

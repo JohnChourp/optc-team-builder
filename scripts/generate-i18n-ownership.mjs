@@ -60,6 +60,29 @@ export function collectNamespaceReferences(files, readFile) {
     for (const match of source.matchAll(/translate\([^)]*?,\s*'([a-z][a-z0-9-]*)'\s*\)/gsu)) {
       add(match[1], file);
     }
+
+    /*
+     * 869f135ra. A scope passed as a CONSTANT is still a reference.
+     *
+     * Only the literal form was read, so a namespace whose scope name lives in an
+     * exported constant looked like it was never used - by this map and by the
+     * regression check's "no bundle that only a preloadScope keeps alive" rule,
+     * which reads the same shapes. The `failures` namespace is the first to do it,
+     * deliberately: it is read from inside catch blocks with no template to name a
+     * scope, so a literal at every call site would be the thing that drifts.
+     *
+     * This resolves `const NAME = 'scope'` in the same file and then counts
+     * `, NAME)`, which is the narrow, checkable version of the same idea.
+     */
+    for (const declaration of source.matchAll(
+      /const\s+([A-Z][A-Z0-9_]*)\s*=\s*'([a-z][a-z0-9-]*)'/gu,
+    )) {
+      const [, constant, namespace] = declaration;
+
+      if (new RegExp(`,\\s*${constant}\\s*\\)`, 'u').test(source)) {
+        add(namespace, file);
+      }
+    }
   }
 
   return references;

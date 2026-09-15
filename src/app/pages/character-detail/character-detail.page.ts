@@ -1,4 +1,8 @@
 import { CommonModule } from '@angular/common';
+import {
+  buildFailureLines,
+  resolveFailureFamily,
+} from '../../core/services/failure-message.utils';
 import { Component, type OnInit, computed, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
@@ -226,10 +230,13 @@ export class CharacterDetailPage implements OnInit {
        */
       this.transferFeedback.set({
         tone: 'error',
-        message: this.text(
-          error instanceof CharacterOverrideTransferError
-            ? error.key
-            : 'transfer.errors.importFailed',
+        message: this.failureMessageText(
+          'invalidFile',
+          this.text(
+            error instanceof CharacterOverrideTransferError
+              ? error.key
+              : 'transfer.errors.importFailed',
+          ),
         ),
       });
     }
@@ -306,4 +313,23 @@ export class CharacterDetailPage implements OnInit {
     const basedOnCharacter = await this.repository.getCharacterById(basedOnId);
     this.rumbleBasedOnName.set(basedOnCharacter?.name ?? null);
   }
+
+  /*
+   * 869f135ra. This screen's feedback surface takes ONE string rather than a
+   * list, so the three sentences arrive as one paragraph. The order is the same
+   * and so are the words - what happened, whether the reader's data is safe, and
+   * the one thing to try.
+   *
+   * The comment above this call site already refused to show `error.message`,
+   * for the same reason the vocabulary exists. This keeps that and adds the two
+   * sentences the reader still was not getting.
+   */
+  private failureMessageText(familyId: string, extra?: string | null, error?: unknown): string {
+    return buildFailureLines(
+      resolveFailureFamily(error, familyId),
+      (key, params, scope) => this.i18n.translate(key, params, scope),
+      extra ?? null,
+    ).join(' ');
+  }
+
 }
