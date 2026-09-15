@@ -442,6 +442,22 @@ export const SCRIPT_SUITES = {
    * English on purpose. So the register splits the 636 identical values into terms
    * that are meant to be and debt that is not, and the debt list may only shrink.
    */
+  /*
+   * 869f135t0. Why each hand-maintained overlay exists, and what would remove it.
+   *
+   * A correction exists because upstream was wrong when it was written; when
+   * upstream fixes itself the correction keeps winning, in the direction of the
+   * older data. Nothing recorded why any entry was there, so a still-needed
+   * correction and a stale one looked identical.
+   *
+   * It also holds the two copies of `party-conflict-overrides.json` together. The
+   * importer reads one and the app reads the other, nothing generates either, and
+   * a half-applied edit leaves them disagreeing about which characters conflict.
+   */
+  'overlay-register': {
+    label: 'Manual overlay register tests',
+    command: 'npm run test:overlay-register',
+  },
   'i18n-greek-coverage': {
     label: 'Greek translation coverage tests',
     command: 'npm run test:i18n-greek-coverage',
@@ -862,6 +878,22 @@ function touchesStorageKeySources(filePath) {
 function touchesUnusedMemberSources(filePath) {
   return (
     filePath.startsWith('src/app/') && (filePath.endsWith('.ts') || filePath.endsWith('.html'))
+  );
+}
+
+function isOverlayRegisterPath(filePath) {
+  return (
+    filePath === 'scripts/check-manual-overlay-register.mjs' ||
+    filePath === 'scripts/check-manual-overlay-register.spec.ts' ||
+    filePath === 'scripts/data/manual-overlay-register.json'
+  );
+}
+
+/* Non-terminating: an overlay is dataset input and routes to the dataset plans too. */
+function touchesOverlaySources(filePath) {
+  return (
+    (filePath.startsWith('scripts/data/') && filePath.endsWith('.json')) ||
+    filePath === 'src/app/core/data/auto-team-builder-party-conflict-overrides.json'
   );
 }
 
@@ -1289,6 +1321,10 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
       addScriptSuite(scriptSuites, 'i18n-greek-coverage');
     }
 
+    if (touchesOverlaySources(filePath)) {
+      addScriptSuite(scriptSuites, 'overlay-register');
+    }
+
     if (touchesDatasetConsumerSources(filePath)) {
       addScriptSuite(scriptSuites, 'dataset-consumers');
     }
@@ -1364,6 +1400,11 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
 
     if (isI18nGreekCoveragePath(filePath)) {
       addScriptSuite(scriptSuites, 'i18n-greek-coverage');
+      continue;
+    }
+
+    if (isOverlayRegisterPath(filePath)) {
+      addScriptSuite(scriptSuites, 'overlay-register');
       continue;
     }
 

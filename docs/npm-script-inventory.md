@@ -79,6 +79,7 @@ when a script is unclassified, and when a lane names a script that does not exis
 | `data:check-release` | workflow · check-optc-db-release.yml | the check-optc-db-release.yml workflow |
 | `data:import:all` | script file · check-dataset-spec-pins.mjs, generate-whats-new-entry.mjs | whatever check-dataset-spec-pins.mjs, generate-whats-new-entry.mjs drives |
 | `data:monitor-upstream` | workflow · check-optc-db-release.yml | the check-optc-db-release.yml workflow |
+| `data:overlay-register` | npm script · test:overlay-register | `test:overlay-register` |
 | `data:upsert-manual-character` | manual · — | Applies a hand-written character overlay. Run deliberately by a maintainer; automating it would let the dataset drift from upstream without a decision. |
 | `dataset:ability-tags` | documented · maintainer-validation-guide.md, post-merge-smoke-pack.md | a documented manual step |
 | `dataset:consumers` | script file · generate-dataset-consumers.mjs | whatever generate-dataset-consumers.mjs drives |
@@ -182,6 +183,7 @@ when a script is unclassified, and when a lane names a script that does not exis
 | `test:locale-formatting` | lane · locale-formatting | the `locale-formatting` lane |
 | `test:maintainer-doctor` | lane · maintainer-doctor | the `maintainer-doctor` lane |
 | `test:overlay-contrast` | lane · overlay-contrast | the `overlay-contrast` lane |
+| `test:overlay-register` | lane · overlay-register | the `overlay-register` lane |
 | `test:page-doc-coverage` | lane · page-doc-coverage | the `page-doc-coverage` lane |
 | `test:perf-budget` | lane · perf-budget | the `perf-budget` lane |
 | `test:post-merge-smoke` | documented · feature-coverage-map.md, maintainer-validation-guide.md, post-merge-smoke-pack.md | a documented manual step |
