@@ -1099,6 +1099,20 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly buildPaused = signal(false);
   public readonly buildProgress = signal<AutoBuildProgressSnapshot | null>(null);
   public readonly result = signal<AutoBuildResult | null>(null);
+  /**
+   * 869f2608f. The borrowed leaders this search also considered for the Friend Captain seat.
+   *
+   * Capped for the card rather than for the data: the engine already limits the leader pool, and a
+   * chip row longer than a line stops being a shopping list and becomes a wall. The full list stays
+   * on the result for anything that wants it.
+   *
+   * Deliberately NOT filtered by what the reader owns. A Friend Captain is borrowed from someone
+   * else's crew, so their box constrains it in no way - that is the entire point of the seat, and
+   * filtering here would quietly undo it.
+   */
+  public readonly friendCaptainAlternatives = computed(() =>
+    (this.result()?.friendCaptainAlternatives ?? []).slice(0, 5),
+  );
 
   /**
    * 869f1k107. How many stages the reader expects to fight, and the two cooldown columns for the

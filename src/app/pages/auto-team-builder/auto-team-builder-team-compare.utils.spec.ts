@@ -483,6 +483,7 @@ function createAutoBuildResult(): AutoBuildResult {
       reasonChips: ['Manual ship'],
     },
     candidateCount: 12,
+    friendCaptainAlternatives: [],
     coverage: {
       leaderCriteria: {
         source: 'captainAbility',

@@ -642,11 +642,41 @@ export interface AutoBuildAttemptProgressSnapshot {
   currentExclusionCounts?: AutoBuildProgressExclusionCounts;
 }
 
+/**
+ * 869f2608f. One borrowed leader the search also considered for the Friend Captain seat.
+ *
+ * **What this claims, precisely.** The character met every leader rule the search applied -
+ * `resolveLeaderCandidateOptions` filters on captain-coverage tier, leader boost ranges, the
+ * super-effect scope and the per-character class requirement - and it is ranked the way the search
+ * itself ranks leaders, by `compareAutoFillLeaderCandidates`.
+ *
+ * **What it does NOT claim.** That it would have produced a legal team. The leader loop returns on
+ * the first pair that succeeds, so every alternative here was RANKED and not TRIED. Saying "this
+ * would also have worked" would require running it, and running it is the second search this whole
+ * feature exists to avoid. The copy says "also met your leader rules", never "would also work".
+ */
+export interface AutoBuildFriendCaptainAlternative {
+  characterId: number;
+  name: string;
+  /** 1-based, in the search's own leader order. The chosen leader is not in this list. */
+  rank: number;
+}
+
 export interface AutoBuildCoreResult {
   input: AutoBuildInput;
   candidateCount: number;
   slots: AutoBuildSlot[];
   coverage: AutoBuildCoverageSummary;
+  /**
+   * 869f2608f. The other borrowed leaders this search considered, ranked, chosen one excluded.
+   *
+   * Free: the list is `resolveLeaderCandidateOptions`' own sorted output, which was computed and
+   * then discarded. No second search runs to produce it.
+   *
+   * Empty when the reader pinned the Friend Captain by hand - there were no alternatives to
+   * consider - and empty when the search found only the one it used.
+   */
+  friendCaptainAlternatives: AutoBuildFriendCaptainAlternative[];
 }
 
 export interface AutoBuildAbilityCoverageBreakdownItem {
