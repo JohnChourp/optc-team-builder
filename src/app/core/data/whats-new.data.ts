@@ -31,6 +31,32 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.46',
+    date: '2026-09-15',
+    userVisible: true,
+    headline: {
+      en: 'Importing your box can now tell you what you no longer have',
+      el: 'Το import του box σου μπορεί πλέον να σου πει τι δεν έχεις πια',
+    },
+    summaryEn:
+      "Until now importing your box could only ever add. It told you what was new and what you already had, but never what was missing - so your favourites only ever grew, and units you sold or fed away stayed in there forever, getting recommended long after you lost them. The import now also lists the characters in your favourites that it did not find in the file, by name, and lets you remove the ones you no longer own. Nothing is removed unless you tick it. Characters the app cannot recognise are never offered, because that says something about our data rather than about what you own.",
+    summaryEl:
+      'Μέχρι τώρα το import του box σου μπορούσε μόνο να προσθέτει. Σου έλεγε τι ήταν καινούργιο και τι είχες ήδη, αλλά ποτέ τι έλειπε - οπότε τα αγαπημένα σου μόνο μεγάλωναν, και μονάδες που πούλησες ή τάισες έμεναν εκεί για πάντα, να σου προτείνονται πολύ αφότου τις έχασες. Το import δείχνει πλέον και τους χαρακτήρες των αγαπημένων σου που δεν βρήκε στο αρχείο, με το όνομά τους, και σου επιτρέπει να αφαιρέσεις όσους δεν έχεις πια. Δεν αφαιρείται τίποτα αν δεν το τσεκάρεις εσύ. Χαρακτήρες που η εφαρμογή δεν αναγνωρίζει δεν προσφέρονται ποτέ, γιατί αυτό αφορά τα δικά μας δεδομένα και όχι το τι έχεις εσύ.',
+    added: [
+      {
+        en: "**In your favourites but not in this import** - a new section in the **import pop-up** on the **Characters** screen, listing by name the characters the file did not mention, with a tick box each and a Remove button.",
+        el: 'Το **Στα αγαπημένα σου αλλά όχι σε αυτό το import** - μια νέα ενότητα στο **αναδυόμενο παράθυρο import** στην οθόνη **Χαρακτήρες**, που δείχνει με το όνομά τους τους χαρακτήρες που δεν ανέφερε το αρχείο, με ένα κουτάκι επιλογής στον καθένα και ένα κουμπί Αφαίρεση.',
+      },
+    ],
+    improved: [
+      {
+        en: "Nothing in that section is ticked when it appears, and the app never removes anything on its own. Characters it could not match are counted separately and left alone.",
+        el: 'Τίποτα σε αυτή την ενότητα δεν είναι τσεκαρισμένο όταν εμφανίζεται, και η εφαρμογή δεν αφαιρεί ποτέ τίποτα μόνη της. Οι χαρακτήρες που δεν μπόρεσε να αντιστοιχήσει μετριούνται ξεχωριστά και δεν πειράζονται.',
+      },
+    ],
+    fixed: [],
+  },
+  {
     version: '0.4.45',
     date: '2026-09-15',
     userVisible: false,
