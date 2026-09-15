@@ -31,6 +31,27 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.48',
+    date: '2026-09-15',
+    userVisible: true,
+    headline: {
+      en: 'The ability filters now explain what each term means',
+      el: 'Τα φίλτρα ability εξηγούν πλέον τι σημαίνει κάθε όρος',
+    },
+    summaryEn:
+      "Picking an ability filter meant knowing what Boost Slot Effects, Slot Bind Resistance or Pinch Healing actually do, and if you were not sure you probably just skipped the filter. The twenty terms you meet most often now carry a short explanation right under their name in the ability picker, above the number of characters that have them - so you can tell whether a term is the one you meant without leaving the screen. Rarely used terms do not have one yet.",
+    summaryEl:
+      'Το να διαλέξεις ένα φίλτρο ability σήμαινε να ξέρεις τι κάνουν πραγματικά το Boost Slot Effects, το Slot Bind Resistance ή το Pinch Healing, και αν δεν ήσουν σίγουρος μάλλον απλώς προσπερνούσες το φίλτρο. Οι είκοσι όροι που συναντάς πιο συχνά έχουν πλέον μια σύντομη εξήγηση ακριβώς κάτω από το όνομά τους στο ability picker, πάνω από τον αριθμό των χαρακτήρων που τους έχουν - ώστε να καταλαβαίνεις αν ο όρος είναι αυτός που εννοούσες χωρίς να φύγεις από την οθόνη. Οι όροι που χρησιμοποιούνται σπάνια δεν έχουν ακόμη εξήγηση.',
+    added: [
+      {
+        en: "A one-line explanation under each of the twenty most common terms in the **ability picker** - the pop-up you open from the **filter bar** on **Auto Team Builder** and **Saved Enemies**. In English and Greek.",
+        el: 'Μια εξήγηση μιας γραμμής κάτω από καθέναν από τους είκοσι πιο συχνούς όρους στο **ability picker** - το αναδυόμενο παράθυρο που ανοίγεις από **τη μπάρα φίλτρων** στο **Auto Team Builder** και στα **Saved Enemies**. Στα αγγλικά και στα ελληνικά.',
+      },
+    ],
+    improved: [],
+    fixed: [],
+  },
+  {
     version: '0.4.47',
     date: '2026-09-15',
     userVisible: true,
