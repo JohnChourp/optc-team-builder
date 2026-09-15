@@ -333,7 +333,145 @@ describe('drive sync backend', () => {
       server.close();
     }
   });
+
+  /*
+   * 869f135rt. The three assertions the suite was missing.
+   *
+   * The subtask asked what proves this code before it is deployed. Enumerating
+   * that turned up a gap rather than an answer: the suite covered OAuth, token
+   * encryption, rate limiting and the unauthenticated case, and asserted nothing
+   * about the HMAC that makes a session cookie trustworthy, nothing about the
+   * cookie attributes the production runbook's one hard rule depends on, and
+   * nothing about the body cap. For a component holding somebody's Google
+   * refresh token, "recorded as untested" is not a good enough outcome.
+   */
+  it('rejects a session cookie whose signature was tampered with', async () => {
+    const fetchImpl = googleConnectFetch();
+    const { baseUrl, server } = await startTestServer({ fetchImpl });
+
+    try {
+      const sessionCookie = await connectGoogleSession(baseUrl);
+      const [name, value] = splitCookie(sessionCookie);
+      const [payload, signature] = value.split('.');
+
+      expect(signature, 'the session cookie is expected to be <payload>.<signature>').toBeTruthy();
+
+      const forged = `${name}=${payload}.${flipLastCharacter(signature)}`;
+      const response = await fetch(`${baseUrl}/auth/google/status`, { headers: { cookie: forged } });
+      const body = await response.json();
+
+      /*
+       * A forged cookie must read as signed-out, never as the user it names. The
+       * payload is untouched, so anything that trusted it without verifying would
+       * answer `authenticated: true` here.
+       */
+      expect(body.authenticated).toBe(false);
+    } finally {
+      server.close();
+    }
+  });
+
+  it('sets the session cookie HttpOnly and SameSite=Lax, which is what the same-site rule rests on', async () => {
+    const fetchImpl = googleConnectFetch();
+    const { baseUrl, server } = await startTestServer({ fetchImpl });
+
+    try {
+      const startResponse = await fetch(`${baseUrl}/auth/google/start`, { redirect: 'manual' });
+      const state = new URL(startResponse.headers.get('location')).searchParams.get('state');
+      const stateCookie = getCookieHeader(startResponse, 'optc_drive_oauth_state');
+      const callbackResponse = await fetch(
+        `${baseUrl}/auth/google/callback?code=auth-code&state=${state}`,
+        { headers: { cookie: stateCookie }, redirect: 'manual' },
+      );
+      const setCookie = callbackResponse.headers.get('set-cookie') ?? '';
+
+      /*
+       * server/README.md's one hard rule is that the backend must sit on a
+       * same-site subdomain, and the reason is this attribute. If it ever became
+       * `SameSite=None` the rule would silently stop mattering, and a deployment
+       * following the runbook would be following it for nothing.
+       */
+      expect(setCookie).toContain('SameSite=Lax');
+      expect(setCookie).toContain('HttpOnly');
+    } finally {
+      server.close();
+    }
+  });
+
+  it('refuses a JSON body over the configured cap instead of buffering it', async () => {
+    /*
+     * This test was wrong first, and the mutation test is what caught it. It
+     * posted an UNAUTHENTICATED oversized body and asserted a 4xx - which passes
+     * whether the cap exists or not, because `requireSession` rejects with 401
+     * long before `readJsonBody` is reached. Removing the cap entirely left it
+     * green: a check that runs green and cannot catch the thing it is named for,
+     * inside the parent about exactly that.
+     *
+     * So it authenticates first, and pins the cap by contrast: the same request
+     * shape under the cap is handled, and over the cap is refused.
+     */
+    const { baseUrl, server } = await startTestServer({
+      fetchImpl: googleConnectFetch(),
+      maxJsonBytes: 4096,
+    });
+
+    try {
+      const sessionCookie = await connectGoogleSession(baseUrl);
+      const post = (bytes) =>
+        fetch(`${baseUrl}/drive/sync/run`, {
+          body: JSON.stringify({ filler: 'x'.repeat(bytes) }),
+          headers: { cookie: sessionCookie, 'content-type': 'application/json' },
+          method: 'POST',
+        });
+
+      const underCap = await (await post(512)).json();
+      const overCap = await (await post(16_384)).json();
+
+      /*
+       * Asserted on the MESSAGE, not the status: both fail here, because the
+       * fetch mock is not primed for a whole Drive round trip, and a status-only
+       * assertion would pass with the cap removed. The message is the only thing
+       * that distinguishes "refused for its size" from "failed further along".
+       */
+      expect(overCap.message).toBe('Request body is too large.');
+      expect(underCap.message).not.toBe('Request body is too large.');
+    } finally {
+      server.close();
+    }
+  });
 });
+
+function splitCookie(cookie) {
+  const index = cookie.indexOf('=');
+
+  return [cookie.slice(0, index), cookie.slice(index + 1)];
+}
+
+function flipLastCharacter(value) {
+  const last = value.slice(-1);
+
+  return `${value.slice(0, -1)}${last === 'A' ? 'B' : 'A'}`;
+}
+
+function googleConnectFetch() {
+  return vi
+    .fn()
+    .mockResolvedValueOnce(
+      jsonResponse({
+        access_token: 'callback-access-token',
+        expires_in: 3600,
+        refresh_token: 'refresh-token-secret',
+      }),
+    )
+    .mockResolvedValueOnce(
+      jsonResponse({
+        email: 'captain@example.com',
+        id: 'google-user-1',
+        name: 'Monkey D. Luffy',
+        picture: 'https://example.com/luffy.png',
+      }),
+    );
+}
 
 async function connectGoogleSession(baseUrl) {
   const startResponse = await fetch(`${baseUrl}/auth/google/start`, { redirect: 'manual' });
@@ -364,7 +502,7 @@ async function startTestServer(options = {}) {
       googleClientId: '123456.apps.googleusercontent.com',
       googleClientSecret: 'client-secret',
       googleRedirectUri: 'http://127.0.0.1:8787/auth/google/callback',
-      maxJsonBytes: 1024 * 1024,
+      maxJsonBytes: options.maxJsonBytes ?? 1024 * 1024,
       publicBaseUrl: 'http://127.0.0.1:8787',
       rateLimitGlobalPerMinute: options.rateLimitGlobalPerMinute ?? 0,
       rateLimitWritePerMinute: options.rateLimitWritePerMinute ?? 0,

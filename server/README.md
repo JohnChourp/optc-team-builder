@@ -5,6 +5,96 @@ It uses Google OAuth authorization code flow with `access_type=offline`, stores
 refresh tokens encrypted at rest, and exposes only an HttpOnly app session cookie
 to the browser.
 
+## What proves this code before it is deployed
+
+**Recorded 2026-09-15 · [869f135rt](https://app.clickup.com/t/90121749478/869f135rt).**
+This component holds somebody's Google refresh token, so "somebody ran the tests"
+is not a good enough answer. This is the whole of it.
+
+### 1. `npm run test:drive-sync-server` — a lane, not a suggestion
+
+`drive-sync-server` is a lane in `scripts/ci-check-routing.mjs`, so it runs on
+**every** `npm run verify:local`, not only when somebody remembers this directory.
+That was worth confirming rather than assuming, and it holds.
+
+**10 tests.** What they assert:
+
+| # | Asserted |
+| --- | --- |
+| 1 | `/auth/google/start` uses `access_type=offline` and sets an **HttpOnly** state cookie |
+| 2 | only an **encrypted** refresh token is stored, and no token appears in the status response or on disk |
+| 3 | an upload refreshes the access token and clears the pending payload |
+| 4 | a sync request **without** a session is rejected |
+| 5 | the global rate limit returns **429 with `Retry-After`** |
+| 6 | the write limit applies **independently** of the global window |
+| 7 | an invalid payload becomes a remote check rather than an enqueued upload |
+| 8 | a session cookie with a **tampered signature** reads as signed-out |
+| 9 | the session cookie carries **`HttpOnly`** and **`SameSite=Lax`** |
+| 10 | a JSON body **over the cap** is refused by the cap |
+
+Tests 8-10 were added by 869f135rt. Enumerating what proved this code turned up a
+gap rather than an answer: nothing asserted the HMAC that makes a session cookie
+trustworthy, nothing asserted the cookie attribute that **section 0's one hard
+rule depends on**, and nothing asserted the body cap.
+
+All three are mutation-tested. Making the signature comparison `return true`,
+setting `SameSite=None`, and removing the cap each turn exactly one of them red.
+
+Test 10 is worth a warning to whoever edits it next: **it was wrong first.** It
+posted an unauthenticated oversized body and asserted a 4xx, which passes whether
+the cap exists or not, because `requireSession` rejects long before
+`readJsonBody` is reached. Removing the cap left it green. It now authenticates
+and asserts the error **message**, because both requests fail in this harness and
+the message is the only thing separating "refused for its size" from "failed
+further along".
+
+### 2. CodeQL scans `server/`, weekly
+
+`javascript-typescript`, on the `31 3 * * 2` schedule in
+`.github/workflows/codeql.yml`. There is **no** `paths` filter and **no** CodeQL
+config file, so the default applies and this directory is not excluded.
+
+Confirmed from the run log rather than from the absence of a filter — the
+2026-09-15 08:56 run prints:
+
+```text
+Extracting .../server/drive-sync-server.mjs
+Extracting .../server/drive-sync-server.spec.mjs
+CodeQL scanned 407 out of 407 TypeScript files, 125 out of 125 JavaScript files ...
+```
+
+Re-check with:
+
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
+```bash
+gh run list --repo JohnChourp/optc-team-builder --workflow codeql.yml --limit 1 --json databaseId --jq '.[0].databaseId'
+```
+
+then `gh run view <id> --log | grep drive-sync-server`.
+
+### 3. No supply chain
+
+`drive-sync-server.mjs` imports **only Node built-ins** — `node:crypto`,
+`node:fs/promises`, `node:http`, `node:path`, `node:url`. Zero third-party
+packages, so no dependency advisory can reach the component holding the refresh
+token, and `npm audit` has nothing to say about it either way.
+
+Keep it that way. A single dependency here changes this row from a guarantee to a
+maintenance obligation.
+
+### What is NOT proven
+
+- **No CI runs any of this automatically.** `test.yml` is `workflow_dispatch`-only
+  by policy (`docs/ci-trigger-policy.md`), and nothing runs on a pull request. The
+  lane proves this code when a human runs `npm run verify:local`. That is the
+  repository-wide trade-off, and it is stated here rather than left implicit,
+  because the blast radius in this directory is different from a broken screen.
+- **The background refresh worker** has no test. `workerIntervalMs: 0` in the
+  suite disables it.
+- **Nothing proves the deployment**, only the code. The `curl` checks in section 5
+  are the deployment's own evidence and are run by hand.
+
 ## Local Setup
 
 1. Create a Google OAuth Web application client.
