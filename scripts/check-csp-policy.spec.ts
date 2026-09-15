@@ -3,7 +3,12 @@ import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { extractMetaCsp, parseDirectives, validatePolicyShape } from './check-csp-policy.mjs';
+import {
+  extractMetaCsp,
+  parseDirectives,
+  REQUIRED_INJECTED_ORIGINS,
+  validatePolicyShape,
+} from './check-csp-policy.mjs';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const indexHtml = readFileSync(resolve(ROOT, 'src/index.html'), 'utf8');
@@ -55,6 +60,23 @@ describe('validatePolicyShape', () => {
     expect(errors.join(' ')).toContain("must not allow 'unsafe-eval'");
   });
 
+  it.each(REQUIRED_INJECTED_ORIGINS)(
+    'rejects a policy missing $origin, injected by $injectedBy',
+    ({ directive, origin }) => {
+      const shipped = extractMetaCsp(indexHtml) as string;
+      const withoutOrigin = shipped
+        .split(';')
+        .map((part) =>
+          part.trim().startsWith(directive)
+            ? part.replace(` ${origin}`, '')
+            : part,
+        )
+        .join(';');
+
+      expect(validatePolicyShape(withoutOrigin).join(' ')).toContain(origin);
+    },
+  );
+
   it("rejects a policy missing 'wasm-unsafe-eval', which would break the dataset engine", () => {
     const errors = validatePolicyShape(
       "default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self'; connect-src 'self'; worker-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'",
@@ -74,6 +96,14 @@ describe('the shipped policy', () => {
     expect(directives.get('script-src')).toContain('https://www.googletagmanager.com');
     // Microsoft Clarity is injected by the GTM container and appears nowhere else in this repo.
     expect(directives.get('script-src')).toContain('https://www.clarity.ms');
+    /*
+     * Cloudflare Web Analytics, injected by Cloudflare at the edge. `npm run security:csp` cannot
+     * catch this one - it serves the build locally, with no CDN in front - so v0.4.43 shipped a
+     * policy that blocked it and the public-entry synthetics caught it in production. Pinned here
+     * so the same edit cannot pass a local run twice.
+     */
+    expect(directives.get('script-src')).toContain('https://static.cloudflareinsights.com');
+    expect(directives.get('connect-src')).toContain('https://cloudflareinsights.com');
     expect(directives.get('style-src')).toContain('https://fonts.googleapis.com');
     expect(directives.get('font-src')).toContain('https://fonts.gstatic.com');
     // The three builder workers are constructed from bundled blob URLs.

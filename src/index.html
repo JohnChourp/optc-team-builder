@@ -37,13 +37,23 @@
 
     'wasm-unsafe-eval' is required by sql.js, which compiles the dataset engine from WASM.
 
-    The clarity.ms and c.bing.com origins are Microsoft Clarity, injected at runtime by the Google
-    Tag Manager container GTM-TBW6L4T. Clarity appears NOWHERE in this repository - it is
-    configured in the GTM console - and the first version of this policy blocked it on all four
-    routes. That is the standing hazard here: a tag added to the GTM container is a script origin
-    this file has never heard of, and it will be blocked silently in production. Re-run
-    `npm run security:csp` after ANY change to the GTM container, not only after a change to this
-    file.
+    TWO script sources are injected at runtime and appear nowhere in this repository. Both were
+    blocked by earlier versions of this policy, and each cost a round trip to find:
+
+      - Microsoft Clarity (clarity.ms, c.bing.com), injected by the Google Tag Manager container
+        GTM-TBW6L4T. Found by `npm run security:csp`, which blocked it on all four routes.
+      - Cloudflare Web Analytics (static.cloudflareinsights.com, cloudflareinsights.com), injected
+        by CLOUDFLARE ITSELF at the edge. `npm run security:csp` CANNOT find this one: it serves
+        the build from a local HTTP server, and there is no CDN in front of that to inject
+        anything. It was caught in production by the public-entry synthetics after the v0.4.43
+        release, which is exactly what those synthetics are for.
+
+    So the local check is necessary and not sufficient, and that is a property of the harness
+    rather than a defect in it. `scripts/check-csp-policy.mjs` therefore asserts both families of
+    origin from a list, so an edit that drops one fails without needing a browser to prove it.
+
+    Re-run `npm run security:csp` after ANY change to the GTM container, and read the public-entry
+    synthetics after any release that touches this policy.
 
     Every directive below is proven against a real served build by `npm run security:csp`, which
     drives the app and fails on any violation. Do not edit this policy without rerunning it, and
@@ -51,7 +61,7 @@
   -->
   <meta
     http-equiv="Content-Security-Policy"
-    content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://www.googletagmanager.com https://www.clarity.ms https://scripts.clarity.ms; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://www.googletagmanager.com https://www.google-analytics.com https://*.clarity.ms https://c.bing.com; connect-src 'self' data: blob: https://www.googleapis.com https://accounts.google.com https://www.googletagmanager.com https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com https://*.clarity.ms https://c.bing.com; worker-src 'self' blob:; frame-src 'self' https://www.googletagmanager.com https://accounts.google.com; manifest-src 'self'; media-src 'self' data: blob:; object-src 'none'; base-uri 'self'; form-action 'self'"
+    content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://www.googletagmanager.com https://www.clarity.ms https://scripts.clarity.ms https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://www.googletagmanager.com https://www.google-analytics.com https://*.clarity.ms https://c.bing.com; connect-src 'self' data: blob: https://www.googleapis.com https://accounts.google.com https://www.googletagmanager.com https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com https://*.clarity.ms https://c.bing.com https://cloudflareinsights.com https://static.cloudflareinsights.com; worker-src 'self' blob:; frame-src 'self' https://www.googletagmanager.com https://accounts.google.com; manifest-src 'self'; media-src 'self' data: blob:; object-src 'none'; base-uri 'self'; form-action 'self'"
   >
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>OPTC Team Builder | One Piece Treasure Cruise Tools</title>

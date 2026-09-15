@@ -50,6 +50,27 @@ const REQUIRED_DIRECTIVES = [
  */
 const META_UNSUPPORTED_DIRECTIVES = ['frame-ancestors', 'report-uri', 'sandbox'];
 
+/**
+ * 869f13285. Origins that inject scripts into the LIVE site and appear nowhere in this repository.
+ *
+ * This list exists because the browser half of this check structurally cannot find them all. It
+ * serves the build from a local HTTP server, so:
+ *
+ *   - Google Tag Manager tags DO load locally, which is how Microsoft Clarity was caught here;
+ *   - Cloudflare Web Analytics does NOT, because it is injected by Cloudflare at the edge and
+ *     there is no CDN in front of a local server. It was blocked in production by v0.4.43 and
+ *     caught by the public-entry synthetics, not by this script.
+ *
+ * Asserting them from a list is what turns "we happened to remember" into a check. Removing an
+ * entry here must be a deliberate act with the tag actually removed at its source.
+ */
+const REQUIRED_INJECTED_ORIGINS = [
+  { directive: 'script-src', origin: 'https://www.googletagmanager.com', injectedBy: 'the site itself, in index.html' },
+  { directive: 'script-src', origin: 'https://www.clarity.ms', injectedBy: 'the GTM container GTM-TBW6L4T' },
+  { directive: 'script-src', origin: 'https://static.cloudflareinsights.com', injectedBy: 'Cloudflare at the edge - invisible to a local serve' },
+  { directive: 'connect-src', origin: 'https://cloudflareinsights.com', injectedBy: 'Cloudflare Web Analytics beacon' },
+];
+
 const ROUTES = ['/', '/tabs/characters', '/tabs/auto-team-builder', '/tabs/settings'];
 
 export function extractMetaCsp(html) {
@@ -84,6 +105,8 @@ export function parseDirectives(policy) {
   return directives;
 }
 
+export { REQUIRED_INJECTED_ORIGINS };
+
 export function validatePolicyShape(policy) {
   const errors = [];
   const directives = parseDirectives(policy);
@@ -112,6 +135,14 @@ export function validatePolicyShape(policy) {
 
   if (!(directives.get('script-src') ?? []).includes("'wasm-unsafe-eval'")) {
     errors.push("script-src must allow 'wasm-unsafe-eval' or sql.js cannot compile the dataset engine");
+  }
+
+  for (const { directive, origin, injectedBy } of REQUIRED_INJECTED_ORIGINS) {
+    if (!(directives.get(directive) ?? []).includes(origin)) {
+      errors.push(
+        `${directive} must allow ${origin} - injected by ${injectedBy}, and blocking it breaks the live site silently`,
+      );
+    }
   }
 
   return errors;
