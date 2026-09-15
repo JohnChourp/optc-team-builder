@@ -82,11 +82,12 @@ function createCharacter(
       max: { hp: 3900, atk: 1900, rcv: 340 },
       growth: 3,
     },
-    regionAvailability: {
+    regionArtwork: {
       exactLocal: true,
       thumbnailGlobal: true,
       thumbnailJapan: false,
     },
+    regionRelease: { availableOnGlobal: null },
     assets: {
       exactLocal: null,
       thumbnailGlobal: null,

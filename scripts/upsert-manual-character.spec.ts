@@ -338,7 +338,7 @@ async function createFixtureWorkspace() {
       maxRcv: 250,
       growth: 0,
       searchText: 'upstream luffy str fighter',
-      regionAvailability: {
+      regionArtwork: {
         exactLocal: false,
         thumbnailGlobal: false,
         thumbnailJapan: false,
@@ -386,7 +386,7 @@ async function createFixtureWorkspace() {
       maxRcv: 400,
       growth: 0,
       searchText: 'clashing blades roronoa zoro dex free spirit slasher 4529',
-      regionAvailability: {
+      regionArtwork: {
         exactLocal: false,
         thumbnailGlobal: false,
         thumbnailJapan: false,

@@ -246,6 +246,8 @@ describe('ci-check-routing', () => {
       'route-sitemap-coverage',
       'page-doc-coverage',
       'public-asset-shadowing',
+      'dataset-consumers',
+      'security-config',
       'storage-keys',
       'i18n-ownership',
       'engine-divergences',

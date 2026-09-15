@@ -12,7 +12,8 @@ import {
   buildManifest,
   buildPreviewPayload,
   createEmptyAssets,
-  createEmptyRegionAvailability,
+  createEmptyRegionArtwork,
+  createEmptyRegionRelease,
   createSqlSeed,
   createUnresolvedCatalog,
   createCharacterSearchText,
@@ -228,6 +229,7 @@ async function loadCurrentDataset(seedPath, manifestPath) {
         ${hasEvolutionsTable ? 'e.evolves_to_json, e.evolves_from_json' : "NULL AS evolves_to_json, NULL AS evolves_from_json"},
         ${hasDropsTable ? 'p.sources_json' : 'NULL AS sources_json'},
         c.region_json,
+        c.region_release_json,
         c.assets_json,
         c.search_text,
         d.detail_json
@@ -315,7 +317,8 @@ function hydrateCharacterRow(row) {
       typeof row.search_text === 'string' && row.search_text.length
         ? row.search_text
         : createCharacterSearchText(String(row.name ?? ''), String(row.type ?? ''), classes),
-    regionAvailability: parseJson(row.region_json, createEmptyRegionAvailability()),
+    regionArtwork: parseJson(row.region_json, createEmptyRegionArtwork()),
+    regionRelease: parseJson(row.region_release_json, createEmptyRegionRelease()),
     assets: parseJson(row.assets_json, createEmptyAssets()),
     detail: parseJson(row.detail_json, createEmptyManualDetail(characterId)),
   };

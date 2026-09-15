@@ -283,11 +283,12 @@ function createCharacter(id: number): CharacterListItem {
       max: { hp: 1, atk: 1, rcv: 1 },
       growth: null,
     },
-    regionAvailability: {
+    regionArtwork: {
       exactLocal: true,
       thumbnailGlobal: true,
       thumbnailJapan: false,
     },
+    regionRelease: { availableOnGlobal: null },
     assets: {
       exactLocal: null,
       thumbnailGlobal: null,

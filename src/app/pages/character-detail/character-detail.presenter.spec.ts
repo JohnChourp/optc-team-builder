@@ -474,11 +474,12 @@ describe('character-detail presenter', () => {
           max: { hp: 3500, atk: 1800, rcv: 420 },
           growth: 5,
         },
-        regionAvailability: {
+        regionArtwork: {
           exactLocal: true,
           thumbnailGlobal: true,
           thumbnailJapan: true,
         },
+        regionRelease: { availableOnGlobal: null },
         assets: {
           exactLocal: null,
           thumbnailGlobal: null,
@@ -665,11 +666,12 @@ describe('character-detail presenter', () => {
         max: { hp: 4000, atk: 1600, rcv: 250 },
         growth: 2,
       },
-      regionAvailability: {
+      regionArtwork: {
         exactLocal: true,
         thumbnailGlobal: true,
         thumbnailJapan: false,
       },
+      regionRelease: { availableOnGlobal: null },
       assets: {
         exactLocal: null,
         thumbnailGlobal: null,
@@ -874,11 +876,12 @@ describe('character-detail presenter', () => {
         max: { hp: 5122, atk: 2190, rcv: 417 },
         growth: null,
       },
-      regionAvailability: {
+      regionArtwork: {
         exactLocal: true,
         thumbnailGlobal: false,
         thumbnailJapan: false,
       },
+      regionRelease: { availableOnGlobal: null },
       assets: {
         exactLocal: 'assets/exact-character-images/900000.png',
         thumbnailGlobal: null,
@@ -984,11 +987,12 @@ function createCharacterDetailRecord(
       max: { hp: 3994, atk: 1768, rcv: 395 },
       growth: 0,
     },
-    regionAvailability: {
+    regionArtwork: {
       exactLocal: false,
       thumbnailGlobal: true,
       thumbnailJapan: true,
     },
+    regionRelease: { availableOnGlobal: null },
     assets: {
       exactLocal: null,
       thumbnailGlobal: '4/200/4276.png',

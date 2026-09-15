@@ -1,3 +1,5 @@
+import { type CharacterRegionPreference } from '../services/character-region.utils';
+
 import {
   type AbilityTagSetOperator,
   type AutoBuildAbilityRequirement,
@@ -19,10 +21,34 @@ interface CharacterStats {
   growth: number | null;
 }
 
-export interface RegionAvailability {
+/**
+ * 869f13284. Which regions the app found ARTWORK for - nothing else.
+ *
+ * Every field is derived by the importer from whether an image asset exists, so this type cannot
+ * answer "can I obtain this unit?". It was named `RegionAvailability` and asked exactly that
+ * question for months: measured on 2026-09-15, `thumbnailGlobal` agreed with upstream's own
+ * release flag for **78.92%** of units, claiming Global for **927** units that are Japan-only, and
+ * was `true` for 99.5% of the dataset - very nearly a constant.
+ *
+ * Availability lives in {@link CharacterRegionRelease}. Do not reintroduce a name here that
+ * promises it.
+ */
+export interface CharacterRegionArtwork {
   exactLocal: boolean;
   thumbnailGlobal: boolean;
   thumbnailJapan: boolean;
+}
+
+/**
+ * 869f13284. Whether the unit has actually released per region, from upstream `common/data/flags.js`
+ * - the same file the reference community database uses for its Global units / Japan exclusives
+ * filters.
+ *
+ * `null` means upstream has no flag row for the unit, which is NOT the same fact as "not
+ * available". Render nothing for `null`; never fold it into `false`.
+ */
+export interface CharacterRegionRelease {
+  availableOnGlobal: boolean | null;
 }
 
 export interface CharacterSupportEntry {
@@ -203,7 +229,8 @@ export interface CharacterRecord {
   captainAtkBoost: number;
   captainAverageBoost: number;
   stats: CharacterStats;
-  regionAvailability: RegionAvailability;
+  regionArtwork: CharacterRegionArtwork;
+  regionRelease: CharacterRegionRelease;
   assets: CharacterAssets;
 }
 
@@ -566,6 +593,11 @@ export type CharacterIdOrder = 'newest' | 'oldest';
 
 export interface CharacterSearchQuery {
   searchTerm: string;
+  /**
+   * 869f13282. Omit (or pass `'all'`) to apply no region filter. `'global'` drops the units
+   * upstream marks Japan-only and keeps the ones it says nothing about.
+   */
+  regionPreference?: CharacterRegionPreference;
   /** Omit (or pass an empty selection) to apply no type filter at all. */
   typeFacet?: CharacterFacetSelection;
   /** Omit (or pass an empty selection) to apply no class filter at all. */
@@ -581,6 +613,8 @@ export interface CharacterSearchQuery {
 
 export interface DetailedCharacterSearchQuery {
   searchTerm: string;
+  /** 869f13282. See {@link CharacterSearchQuery.regionPreference}. */
+  regionPreference?: CharacterRegionPreference;
   selectedTypes: string[];
   selectedTypesMatchMode?: CharacterFacetMatchMode;
   selectedClasses: string[];

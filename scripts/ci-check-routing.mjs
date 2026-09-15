@@ -126,6 +126,29 @@ export const SCRIPT_SUITES = {
    * all, and nothing in the code could tell the difference - which is how a
    * whole category of a reader's data stayed out of the full-data export.
    */
+  /*
+   * 869f13288. `regionAvailability` was imported on every character read, parsed out of SQL, and
+   * consumed by zero product code for months - found by accident while researching something
+   * else. The census resolves every shipped column to a named consumer, a recorded spec-only
+   * reason, or a declared open question for the owner, and fails on a column with none of the
+   * three. Silent deletion is deliberately not one of the outcomes: this repository has already
+   * mistaken four test probes for dead code.
+   */
+  'dataset-consumers': {
+    label: 'Dataset consumer census tests and check',
+    command: 'npm run test:dataset-consumers',
+  },
+  /*
+   * 869f13285 / 869f13287. The live site served no security headers and no policy at all, and the
+   * gitignored, publicly served `app-config.js` had no guard on its contents. GitHub Pages cannot
+   * set headers, so the policy is a meta tag - which means nothing but a local run can prove it
+   * before readers meet it. The browser half (`npm run security:csp`) needs a build and so stays
+   * out of this lane; it is documented in the maintainer validation guide.
+   */
+  'security-config': {
+    label: 'App config allowlist and CSP shape tests',
+    command: 'npm run test:security-config',
+  },
   'storage-keys': {
     label: 'Browser storage key registry tests',
     command: 'npm run test:storage-keys',
@@ -635,6 +658,45 @@ function touchesI18nNamespaces(filePath) {
   return filePath.startsWith('public/i18n/');
 }
 
+/* 869f13288. Terminating: these files are the census itself. */
+function isDatasetConsumerCensusPath(filePath) {
+  return (
+    filePath === 'scripts/generate-dataset-consumers.mjs' ||
+    filePath === 'scripts/generate-dataset-consumers.spec.ts' ||
+    filePath === 'scripts/lib/dataset-consumers.mjs' ||
+    filePath === 'docs/dataset-consumers.json'
+  );
+}
+
+/*
+ * Non-terminating: the census reads the schema and the repository row mapping, and both are also
+ * app or importer source that routes to their own lanes. A column added in either place with no
+ * consumer is exactly what the lane exists to catch, so it must run when they change.
+ */
+function touchesDatasetConsumerSources(filePath) {
+  return (
+    filePath === 'scripts/lib/optc-dataset.mjs' ||
+    filePath === 'src/app/core/services/optc-repository.service.ts'
+  );
+}
+
+/* 869f13285 / 869f13287. Terminating: these files are the guards themselves. */
+function isSecurityConfigPath(filePath) {
+  return (
+    filePath === 'scripts/check-app-config.mjs' ||
+    filePath === 'scripts/check-app-config.spec.ts' ||
+    filePath === 'scripts/check-csp-policy.mjs' ||
+    filePath === 'scripts/check-csp-policy.spec.ts' ||
+    filePath === 'public/app-config.example.js' ||
+    filePath.startsWith('scripts/fixtures/app-config/')
+  );
+}
+
+/* Non-terminating: index.html carries the policy and is also the app shell. */
+function touchesSecurityConfigSources(filePath) {
+  return filePath === 'src/index.html' || filePath === 'scripts/write-app-config.mjs';
+}
+
 function isStorageKeyRegistryPath(filePath) {
   return (
     filePath === 'scripts/check-browser-storage-keys.mjs' ||
@@ -1026,6 +1088,14 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
       addScriptSuite(scriptSuites, 'storage-keys');
     }
 
+    if (touchesDatasetConsumerSources(filePath)) {
+      addScriptSuite(scriptSuites, 'dataset-consumers');
+    }
+
+    if (touchesSecurityConfigSources(filePath)) {
+      addScriptSuite(scriptSuites, 'security-config');
+    }
+
     if (touchesI18nNamespaces(filePath)) {
       addScriptSuite(scriptSuites, 'i18n-ownership');
     }
@@ -1066,6 +1136,16 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
 
     if (isStorageKeyRegistryPath(filePath)) {
       addScriptSuite(scriptSuites, 'storage-keys');
+      continue;
+    }
+
+    if (isDatasetConsumerCensusPath(filePath)) {
+      addScriptSuite(scriptSuites, 'dataset-consumers');
+      continue;
+    }
+
+    if (isSecurityConfigPath(filePath)) {
+      addScriptSuite(scriptSuites, 'security-config');
       continue;
     }
 

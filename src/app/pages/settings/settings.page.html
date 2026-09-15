@@ -16,6 +16,49 @@
         <p class="section-copy">{{ t('intro.copy') }}</p>
       </section>
 
+      <section class="glass-card game-version-card">
+        <div class="section-head">
+          <div>
+            <h2>{{ t('gameVersion.title') }}</h2>
+            <p>{{ t('gameVersion.copy') }}</p>
+          </div>
+        </div>
+
+        <div class="performance-controls">
+          <div class="performance-field">
+            <ion-label>{{ t('gameVersion.label') }}</ion-label>
+            <ion-select
+              interface="popover"
+              fill="outline"
+              [value]="gameRegionPreference()"
+              (ionChange)="onGameRegionPreferenceChange($event)"
+            >
+              <ion-select-option value="all">
+                {{ t('gameVersion.options.all') }}
+              </ion-select-option>
+              <ion-select-option value="global">
+                {{ t('gameVersion.options.global') }}
+              </ion-select-option>
+              <ion-select-option value="japan">
+                {{ t('gameVersion.options.japan') }}
+              </ion-select-option>
+            </ion-select>
+          </div>
+        </div>
+
+        @if (gameRegionPreference() !== 'all') {
+          <ion-toggle
+            [checked]="gameRegionHideUnavailable()"
+            (ionChange)="onGameRegionHideUnavailableChange($event)"
+          >
+            {{ t('gameVersion.hideUnavailable.label') }}
+          </ion-toggle>
+          <p class="section-copy">{{ t('gameVersion.hideUnavailable.copy') }}</p>
+        }
+
+        <p class="section-copy">{{ t('gameVersion.note.' + gameRegionPreference()) }}</p>
+      </section>
+
       <section class="glass-card performance-card">
         <div class="section-head">
           <div>

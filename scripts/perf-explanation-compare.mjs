@@ -1209,7 +1209,7 @@ function createCharacterRecord(id, name) {
       max: { hp: 4200, atk: 1800, rcv: 320 },
       growth: 2.4,
     },
-    regionAvailability: {
+    regionArtwork: {
       exactLocal: true,
       thumbnailGlobal: true,
       thumbnailJapan: false,

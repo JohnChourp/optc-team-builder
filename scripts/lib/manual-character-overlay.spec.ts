@@ -210,7 +210,7 @@ describe('manual character overlay helpers', () => {
       id: MANUAL_CHARACTER_ID_MIN,
       primaryClass: 'Fighter',
       secondaryClass: null,
-      regionAvailability: {
+      regionArtwork: {
         exactLocal: true,
         thumbnailGlobal: false,
       },

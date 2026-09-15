@@ -76,6 +76,22 @@ export const DERIVED_COLUMNS = Object.freeze({
   search_text: 'Built from name, type, classes and aliases by createCharacterSearchText.',
 });
 
+/**
+ * 869f13284. Columns that DO have an upstream field, read from a file other than `units.js` and
+ * written outside `attachProgressionData` - so neither the positional/named `units.js` extraction
+ * nor `PROGRESSION_UPSTREAM_SOURCES` can see them.
+ *
+ * Kept separate from `DERIVED_COLUMNS` on purpose. Declaring upstream data as "derived" would be a
+ * lie of exactly the kind this map exists to prevent, and it is the lie `region_json` told for
+ * months under the name `regionAvailability`.
+ */
+export const UPSTREAM_DECLARED_COLUMNS = Object.freeze({
+  region_release_json: {
+    source: 'flags.js .global',
+    note: 'Whether the unit has released on Global. The authoritative release flag, replacing the thumbnail-presence proxy that disagreed with it for 927 of 4,397 units.',
+  },
+});
+
 /** normalizedField -> seed column. The importer names fields in camelCase and the seed in snake. */
 export function toColumnName(field) {
   return field.replace(/([a-z0-9])([A-Z])/gu, '$1_$2').toLowerCase();
@@ -188,6 +204,15 @@ export function buildProvenance({ importerSource, datasetSource, generatedAt }) 
 
     if (upstream) {
       return { column, origin: 'upstream', source: upstream.upstream, importerField: upstream.field };
+    }
+
+    if (column in UPSTREAM_DECLARED_COLUMNS) {
+      return {
+        column,
+        origin: 'upstream',
+        source: UPSTREAM_DECLARED_COLUMNS[column].source,
+        note: UPSTREAM_DECLARED_COLUMNS[column].note,
+      };
     }
 
     if (column in DERIVED_COLUMNS) {

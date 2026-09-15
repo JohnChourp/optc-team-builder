@@ -250,7 +250,8 @@ function createCharacter({
     maxAtk: 1200,
     maxRcv: 300,
     growth: 1,
-    regionAvailability: {},
+    regionArtwork: {},
+    regionRelease: {},
     assets: {},
     searchText: `${name} STR Fighter ${id}`.toLowerCase(),
     detail: {

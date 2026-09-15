@@ -610,7 +610,7 @@ function createBaseCharacter(
     maxRcv: 250,
     growth: 0,
     searchText: 'upstream luffy str fighter',
-    regionAvailability: {
+    regionArtwork: {
       exactLocal: false,
       thumbnailGlobal: false,
       thumbnailJapan: false,

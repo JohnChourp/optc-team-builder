@@ -26,7 +26,8 @@ import {
   type NormalizedSuperTandemLevel,
   type CharacterIdOrder,
   type OfflinePackSummary,
-  type RegionAvailability,
+  type CharacterRegionArtwork,
+  type CharacterRegionRelease,
   type ShipRecord,
   type SuperCriteriaBranch,
 } from '../models/optc.models';
@@ -44,6 +45,12 @@ import {
   buildCharacterTagMatchIndex,
   type CharacterTagMatchIndex,
 } from './character-tag-set.utils';
+import {
+  buildCharacterRegionSqlClause,
+  isCharacterAvailableInRegion,
+  normalizeCharacterRegionPreference,
+} from './character-region.utils';
+import { UserStateService } from './user-state.service';
 
 interface SqlRow {
   [key: string]: string | number | null;
@@ -809,7 +816,10 @@ export class OptcRepositoryService {
   private characterTagMatchIndexPromise?: Promise<CharacterTagMatchIndex>;
   private characterTagMatchIndexOverrideRevision = -1;
 
-  public constructor(private readonly characterOverrides: CharacterOverridesService) {
+  public constructor(
+    private readonly characterOverrides: CharacterOverridesService,
+    private readonly userState: UserStateService,
+  ) {
     this.sqlPromise = import('sql.js').then((module) =>
       module.default({
         locateFile: () => SQL_WASM_PATH,
@@ -858,6 +868,7 @@ export class OptcRepositoryService {
           captain_atk_boost,
           captain_average_boost,
           region_json,
+          region_release_json,
           assets_json,
           search_text
         FROM characters
@@ -980,6 +991,12 @@ export class OptcRepositoryService {
       values: query.selectedClasses,
       matchMode: query.selectedClassesMatchMode ?? 'all',
     });
+    // 869f13282. Normalized above the branch for the same reason the facets are: the SQL path and
+    // the in-memory override path must be driven by one value, or a reader with a single character
+    // override gets a different roster from one without.
+    const regionPreference = normalizeCharacterRegionPreference(
+      query.regionPreference ?? this.userState.activeRegionFilter(),
+    );
 
     if (overridesByCharacterId.size === 0) {
       const normalizedSearchTerm = query.searchTerm.trim().toLowerCase();
@@ -1014,6 +1031,12 @@ export class OptcRepositoryService {
           whereClauses.push(facetClause.clause);
           queryParams.push(...facetClause.params);
         }
+      }
+
+      const regionClause = buildCharacterRegionSqlClause(regionPreference, 'c.region_release_json');
+
+      if (regionClause) {
+        whereClauses.push(regionClause);
       }
 
       if (allowedCharacterIds.length > 0) {
@@ -1070,6 +1093,7 @@ export class OptcRepositoryService {
             c.captain_atk_boost,
             c.captain_average_boost,
             c.region_json,
+            c.region_release_json,
             c.assets_json,
             c.search_text,
             d.detail_json
@@ -1126,6 +1150,10 @@ export class OptcRepositoryService {
           return false;
         }
 
+        if (!isCharacterAvailableInRegion(record.regionRelease, regionPreference)) {
+          return false;
+        }
+
         return true;
       }),
       query.sortMode ?? 'catalog',
@@ -1161,6 +1189,7 @@ export class OptcRepositoryService {
           c.captain_atk_boost,
           c.captain_average_boost,
           c.region_json,
+          c.region_release_json,
           c.assets_json,
           c.search_text,
           d.detail_json
@@ -1387,6 +1416,7 @@ export class OptcRepositoryService {
             c.captain_atk_boost,
             c.captain_average_boost,
             c.region_json,
+            c.region_release_json,
             c.assets_json,
             c.search_text,
             d.detail_json
@@ -1500,6 +1530,7 @@ export class OptcRepositoryService {
           captain_atk_boost,
           captain_average_boost,
           region_json,
+          region_release_json,
           assets_json,
           search_text
         FROM characters
@@ -1545,6 +1576,7 @@ export class OptcRepositoryService {
           c.captain_atk_boost,
           c.captain_average_boost,
           c.region_json,
+          c.region_release_json,
           c.assets_json,
           c.search_text,
           d.detail_json
@@ -1671,10 +1703,19 @@ export class OptcRepositoryService {
         thumbnailJapan: null,
       });
 
-      const regionAvailability = this.parseJson<RegionAvailability>(row['region_json'], {
+      const regionArtwork = this.parseJson<CharacterRegionArtwork>(row['region_json'], {
         exactLocal: false,
         thumbnailGlobal: false,
         thumbnailJapan: false,
+      });
+
+      /*
+       * 869f13284 / 869f1328r. The default is `null`, not `false`. A seed written before this
+       * column existed has no release data at all, and "we have no row" must not render as
+       * "not available on Global".
+       */
+      const regionRelease = this.parseJson<CharacterRegionRelease>(row['region_release_json'], {
+        availableOnGlobal: null,
       });
 
       const record: CharacterListItem = {
@@ -1706,7 +1747,8 @@ export class OptcRepositoryService {
           },
           growth: parseNullableNumber(row['growth']),
         },
-        regionAvailability,
+        regionArtwork,
+        regionRelease,
         assets,
         imageUrl: this.resolveImageUrl(assets, { preferExactLocal: false, installedPacks }),
       };
@@ -1782,6 +1824,7 @@ export class OptcRepositoryService {
           c.captain_atk_boost,
           c.captain_average_boost,
           c.region_json,
+          c.region_release_json,
           c.assets_json,
           c.search_text,
           d.detail_json

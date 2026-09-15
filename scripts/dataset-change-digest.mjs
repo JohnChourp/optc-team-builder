@@ -202,6 +202,7 @@ async function loadSeedSnapshot(sqlSeed, SQL) {
           c.captain_atk_boost,
           c.captain_average_boost,
           c.region_json,
+          c.region_release_json,
           c.assets_json,
           c.search_text,
           d.detail_json
@@ -240,7 +241,11 @@ async function loadSeedSnapshot(sqlSeed, SQL) {
               captainHpBoost: Number(row.captain_hp_boost ?? 0),
               captainAtkBoost: Number(row.captain_atk_boost ?? 0),
               captainAverageBoost: Number(row.captain_average_boost ?? 0),
-              regionAvailability: parseJson(row.region_json ?? '{}', `character ${id} region_json`),
+              regionArtwork: parseJson(row.region_json ?? '{}', `character ${id} region_json`),
+              regionRelease: parseJson(
+                row.region_release_json ?? '{}',
+                `character ${id} region_release_json`,
+              ),
               assets: parseJson(row.assets_json ?? '{}', `character ${id} assets_json`),
               searchText: String(row.search_text ?? ''),
             },

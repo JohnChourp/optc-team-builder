@@ -157,7 +157,12 @@
     "ios:open": "npx cap open ios",
     "android:sync": "npx cap sync android",
     "ios:sync": "npx cap sync ios",
-    "e2e:record-flakes": "node ./scripts/record-playwright-flakes.mjs"
+    "e2e:record-flakes": "node ./scripts/record-playwright-flakes.mjs",
+    "security:csp": "node ./scripts/check-csp-policy.mjs",
+    "security:app-config": "node ./scripts/check-app-config.mjs",
+    "dataset:consumers": "node ./scripts/generate-dataset-consumers.mjs",
+    "test:security-config": "vitest run scripts/check-app-config.spec.ts scripts/check-csp-policy.spec.ts && npm run security:app-config",
+    "test:dataset-consumers": "vitest run scripts/generate-dataset-consumers.spec.ts && node ./scripts/generate-dataset-consumers.mjs --check"
   },
   "private": true,
   "packageManager": "npm@11.8.0",

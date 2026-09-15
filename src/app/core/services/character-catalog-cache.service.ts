@@ -13,6 +13,11 @@ import {
 } from './character-facet-filter.utils';
 import { CharacterOverridesService } from './character-overrides.service';
 import { OptcRepositoryService } from './optc-repository.service';
+import {
+  isCharacterAvailableInRegion,
+  normalizeCharacterRegionPreference,
+} from './character-region.utils';
+import { UserStateService } from './user-state.service';
 
 @Injectable({ providedIn: 'root' })
 export class CharacterCatalogCacheService {
@@ -29,6 +34,7 @@ export class CharacterCatalogCacheService {
   public constructor(
     private readonly repository: OptcRepositoryService,
     private readonly characterOverrides: CharacterOverridesService,
+    private readonly userState: UserStateService,
   ) {}
 
   public kickoffPreload(): void {
@@ -104,8 +110,21 @@ export class CharacterCatalogCacheService {
       query.maxCost === null || query.maxCost === undefined || !Number.isInteger(query.maxCost)
         ? null
         : Math.max(0, query.maxCost);
+    /*
+     * 869f13282. The reader's active filter unless the caller names one explicitly. Applied here
+     * rather than at each host so that "a restricted search cannot return an out-of-region unit"
+     * holds for every screen by construction - thirty call sites each remembering to pass it is
+     * not a guarantee, and the one that forgets is the one that recommends a unit nobody can get.
+     */
+    const regionPreference = normalizeCharacterRegionPreference(
+      query.regionPreference ?? this.userState.activeRegionFilter(),
+    );
     const filtered = this.catalog().filter((character) => {
       if (allowedCharacterIdSet && !allowedCharacterIdSet.has(character.id)) {
+        return false;
+      }
+
+      if (!isCharacterAvailableInRegion(character.regionRelease, regionPreference)) {
         return false;
       }
 

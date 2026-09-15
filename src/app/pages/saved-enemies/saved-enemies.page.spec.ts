@@ -1490,11 +1490,12 @@ function buildCharacter(id: number, name = `Character ${id}`): CharacterListItem
       max: { hp: 3500, atk: 1600, rcv: 320 },
       growth: 1.5,
     },
-    regionAvailability: {
+    regionArtwork: {
       exactLocal: false,
       thumbnailGlobal: true,
       thumbnailJapan: false,
     },
+    regionRelease: { availableOnGlobal: null },
     assets: {
       exactLocal: null,
       thumbnailGlobal: `characters/${id}.png`,

@@ -31,10 +31,13 @@
       },
       "growth": 4
     },
-    "regionAvailability": {
+    "regionArtwork": {
       "exactLocal": false,
       "thumbnailGlobal": false,
       "thumbnailJapan": false
+    },
+    "regionRelease": {
+      "availableOnGlobal": null
     },
     "assets": {
       "exactLocal": null,
@@ -134,10 +137,13 @@
       },
       "growth": 3
     },
-    "regionAvailability": {
+    "regionArtwork": {
       "exactLocal": false,
       "thumbnailGlobal": false,
       "thumbnailJapan": false
+    },
+    "regionRelease": {
+      "availableOnGlobal": null
     },
     "assets": {
       "exactLocal": null,

@@ -1389,7 +1389,38 @@ export function normalizeCharacterDetail(
   };
 }
 
-export function normalizeCharacters(units, details, rumbleUnits, assetsById, tagsById = {}) {
+/**
+ * 869f13284 / 869f1328r. The unit's real release availability, from upstream `common/data/flags.js`.
+ *
+ * Three states, and the third is the point:
+ *
+ * - `true`  - upstream carries a flag row for the unit and it has `global: 1`. It is on Global.
+ * - `false` - upstream carries a flag row and it has no `global` key. Japan-only. 933 units in the
+ *             dataset measured on 2026-09-15 are this, and every one of them was previously
+ *             reported as available on Global by the thumbnail proxy.
+ * - `null`  - upstream carries NO flag row for the unit. We do not know, which is not the same
+ *             fact as "not available", and the UI must render nothing rather than guess. 221 units
+ *             measured on 2026-09-15 are this.
+ *
+ * Collapsing `null` into `false` would state an absence as a fact - the exact failure the field it
+ * replaces committed for 927 units.
+ */
+export function resolveRegionRelease(flagEntry) {
+  if (!flagEntry || typeof flagEntry !== 'object') {
+    return { availableOnGlobal: null };
+  }
+
+  return { availableOnGlobal: Boolean(flagEntry.global) };
+}
+
+export function normalizeCharacters(
+  units,
+  details,
+  rumbleUnits,
+  assetsById,
+  tagsById = {},
+  flagsById = {},
+) {
   const rumbleById = new Map(normalizeRumbleUnits(rumbleUnits).map((entry) => [entry.id, entry]));
   const normalizedUnitEntries = buildNormalizedUnitEntries(units);
 
@@ -1448,11 +1479,12 @@ export function normalizeCharacters(units, details, rumbleUnits, assetsById, tag
           classes,
           aliases: normalizedDetail.characterTags,
         }),
-        regionAvailability: {
+        regionArtwork: {
           exactLocal: Boolean(assets.exactLocal),
           thumbnailGlobal: Boolean(assets.thumbnailGlobal),
           thumbnailJapan: Boolean(assets.thumbnailJapan),
         },
+        regionRelease: resolveRegionRelease(flagsById[characterId]),
         assets,
         detail: normalizedDetail,
       };
@@ -1473,7 +1505,7 @@ function applyExactLocalAssets(characters, exactLocalPaths) {
     }
 
     character.assets.exactLocal = exactLocalPath;
-    character.regionAvailability.exactLocal = true;
+    character.regionArtwork.exactLocal = true;
   }
 
   return characters;
@@ -1573,6 +1605,7 @@ async function main() {
     cooldownsWindow,
     evolutionsWindow,
     dropsWindow,
+    flagsWindow,
     rumble,
     sourceVersion,
     imageOverrides,
@@ -1592,6 +1625,14 @@ async function main() {
     evaluateLegacyFile('common/data/cooldowns.js', selectedSource),
     evaluateLegacyFile('common/data/evolutions.js', selectedSource),
     evaluateLegacyFile('common/data/drops.js', selectedSource),
+    /*
+     * 869f13284. The real per-region release flag, read for the first time. Until now the app
+     * derived "is this unit on Global?" from whether a thumbnail asset existed, which agrees with
+     * this file for only 78.92% of units: it claims Global for 927 units upstream marks Japan-only,
+     * and `thumbnailGlobal` is true for 99.5% of the dataset, so it is very nearly a constant.
+     * Plain data like the three above, not an executable function like `captains.js`.
+     */
+    evaluateLegacyFile('common/data/flags.js', selectedSource),
     fetchJson(buildSourceFileUrl(selectedSource, 'common/data/rumble.json'), selectedSource),
     fetchVersion(selectedSource),
     loadCharacterImageOverrides(),
@@ -1650,6 +1691,7 @@ async function main() {
           rumble.units ?? [],
           assetsById,
           tagsWindow.tags ?? {},
+          flagsWindow.flags ?? {},
         ),
         manualExactLocalPaths,
       ),

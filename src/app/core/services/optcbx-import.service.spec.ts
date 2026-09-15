@@ -124,11 +124,12 @@ function createCharacter(id: number): CharacterListItem {
       max: { hp: 3000, atk: 1500, rcv: 300 },
       growth: 1,
     },
-    regionAvailability: {
+    regionArtwork: {
       exactLocal: true,
       thumbnailGlobal: true,
       thumbnailJapan: false,
     },
+    regionRelease: { availableOnGlobal: null },
     assets: {
       exactLocal: null,
       thumbnailGlobal: null,

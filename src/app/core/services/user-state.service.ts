@@ -52,6 +52,11 @@ import {
   deriveAbilityRequirementsFromEnemyMechanics,
   normalizeEnemyMechanicRequirements,
 } from './enemy-mechanic-draft.utils';
+import {
+  DEFAULT_CHARACTER_REGION_PREFERENCE,
+  normalizeCharacterRegionPreference,
+  type CharacterRegionPreference,
+} from './character-region.utils';
 
 const FAVORITES_KEY = 'favoriteCharacterIds';
 const FAVORITE_SHIPS_KEY = 'favoriteShipIds';
@@ -75,6 +80,8 @@ const AUTO_TEAM_BUILDER_WORKER_PREFERENCE_KEY = 'autoTeamBuilderWorkerPreference
 // Device-local on purpose: not in the Drive sync scope or the all-data transfer, so a hint the
 // player dismissed on one device still greets them once on a new one.
 const BUILDER_INTRO_DISMISSED_KEY = 'builderIntroDismissed';
+const GAME_REGION_PREFERENCE_KEY = 'gameRegionPreference';
+const GAME_REGION_HIDE_UNAVAILABLE_KEY = 'gameRegionHideUnavailable';
 const AUTO_TEAM_BUILDER_MANUAL_WORKER_MAX_RATIO = 0.65;
 const LEGACY_ABILITY_KEY_ALIASES: Record<string, string> = {
   remove_defense_up: 'remove_enemy_increased_defense',
@@ -120,7 +127,8 @@ type UserStateHydrationDomain =
   | 'savedRumbleOpponents'
   | 'boostedCharacterIds'
   | 'autoTeamBuilderWorkerPreference'
-  | 'builderIntroDismissed';
+  | 'builderIntroDismissed'
+  | 'gameRegionPreference';
 
 /**
  * 869f1q90b. Deduplicated, positive integers only, insertion order kept.
@@ -170,6 +178,35 @@ export class UserStateService {
     autoTeamBuilder: false,
     manualTeamBuilder: false,
   });
+  /**
+   * 869f13282. Which version of the game the reader plays. `all` until they say otherwise, so the
+   * update that introduced this changed nothing for anybody already using the app.
+   */
+  public readonly gameRegionPreference = signal<CharacterRegionPreference>(
+    DEFAULT_CHARACTER_REGION_PREFERENCE,
+  );
+  /**
+   * 869f13282. Whether an out-of-region unit is REMOVED from results, as opposed to merely marked.
+   *
+   * Off by default and separate from the preference above on purpose. The owner's decision on
+   * 2026-09-15 was `mark, never hide`: the catalogue stays a complete reference for a reader
+   * looking a unit up on a friend's behalf. Choosing a game version therefore labels units and
+   * removes none, and this is the explicit second step for a reader who wants the shorter list.
+   */
+  public readonly gameRegionHideUnavailable = signal(false);
+  /**
+   * The value every character query should filter by - which is `all` unless the reader has BOTH
+   * named their version and asked for the shorter list.
+   *
+   * Exposed as one computed rather than left to each caller, because `a restricted search cannot
+   * return an out-of-region unit` has to hold for every host, and thirty call sites each combining
+   * two signals correctly is not a guarantee.
+   */
+  public readonly activeRegionFilter = computed<CharacterRegionPreference>(() =>
+    this.gameRegionHideUnavailable()
+      ? this.gameRegionPreference()
+      : DEFAULT_CHARACTER_REGION_PREFERENCE,
+  );
 
   private readonly hydratedDomains = new Set<UserStateHydrationDomain>();
   private readonly hydrationPromises = new Map<UserStateHydrationDomain, Promise<void>>();
@@ -194,6 +231,7 @@ export class UserStateService {
       this.readyCrewForgeImageProfiles(),
       this.readyAutoTeamBuilderWorkerPreference(),
       this.readyBuilderIntroDismissed(),
+      this.readyGameRegionPreference(),
     ]);
   }
 
@@ -382,6 +420,34 @@ export class UserStateService {
 
     this.builderIntroDismissed.set(next);
     await this.persistJson(BUILDER_INTRO_DISMISSED_KEY, next);
+  }
+
+  public async readyGameRegionPreference(): Promise<void> {
+    await this.ensureHydrated('gameRegionPreference', async () => {
+      const [stored, hideUnavailable] = await Promise.all([
+        this.readJson<unknown>(GAME_REGION_PREFERENCE_KEY, null),
+        this.readJson<unknown>(GAME_REGION_HIDE_UNAVAILABLE_KEY, false),
+      ]);
+
+      this.gameRegionPreference.set(normalizeCharacterRegionPreference(stored));
+      this.gameRegionHideUnavailable.set(hideUnavailable === true);
+    });
+  }
+
+  public async setGameRegionHideUnavailable(hideUnavailable: boolean): Promise<void> {
+    await this.readyGameRegionPreference();
+    const next = hideUnavailable === true;
+
+    this.gameRegionHideUnavailable.set(next);
+    await this.persistJson(GAME_REGION_HIDE_UNAVAILABLE_KEY, next);
+  }
+
+  public async setGameRegionPreference(preference: CharacterRegionPreference): Promise<void> {
+    await this.readyGameRegionPreference();
+    const next = normalizeCharacterRegionPreference(preference);
+
+    this.gameRegionPreference.set(next);
+    await this.persistJson(GAME_REGION_PREFERENCE_KEY, next);
   }
 
   public async toggleFavorite(characterId: number): Promise<void> {

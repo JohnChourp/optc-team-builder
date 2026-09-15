@@ -20,6 +20,7 @@ describe('CharacterCatalogCacheService', () => {
       {
         revision: () => overrideRevision,
       } as never,
+      { activeRegionFilter: () => 'all' } as never,
     );
 
     const firstLoad = service.ensureLoaded();
@@ -36,6 +37,82 @@ describe('CharacterCatalogCacheService', () => {
     expect(service.catalog().map((character) => character.id)).toEqual([101, 202]);
   });
 
+  /**
+   * 869f13282's Definition of Done, stated as its own test: a restricted search cannot return a
+   * unit the reader cannot obtain. The filter is applied inside the cache rather than at each
+   * host, so this holds for the character list, the pickers and both builders at once.
+   */
+  it('cannot return an out-of-region unit once the reader has restricted the pool', async () => {
+    const repository = {
+      getAllCharacters: vi.fn().mockResolvedValue([
+        createCharacter(101, { regionRelease: { availableOnGlobal: true } }),
+        createCharacter(202, { regionRelease: { availableOnGlobal: false } }),
+        createCharacter(303, { regionRelease: { availableOnGlobal: null } }),
+      ]),
+    };
+    const service = new CharacterCatalogCacheService(
+      repository as never,
+      { revision: () => 0 } as never,
+      { activeRegionFilter: () => 'global' } as never,
+    );
+
+    await service.ensureLoaded();
+
+    const ids = service
+      .queryCharacters({ searchTerm: '', limit: 50, offset: 0 })
+      .map((character) => character.id);
+
+    expect(ids).not.toContain(202);
+    expect(ids).toContain(101);
+    // 303 has no upstream flag row. Dropping it would answer a different question than the reader
+    // asked, and would do it invisibly - see character-region.utils.ts.
+    expect(ids).toContain(303);
+  });
+
+  it('returns every unit while the reader has restricted nothing', async () => {
+    const repository = {
+      getAllCharacters: vi.fn().mockResolvedValue([
+        createCharacter(101, { regionRelease: { availableOnGlobal: true } }),
+        createCharacter(202, { regionRelease: { availableOnGlobal: false } }),
+      ]),
+    };
+    const service = new CharacterCatalogCacheService(
+      repository as never,
+      { revision: () => 0 } as never,
+      { activeRegionFilter: () => 'all' } as never,
+    );
+
+    await service.ensureLoaded();
+
+    expect(
+      service
+        .queryCharacters({ searchTerm: '', limit: 50, offset: 0 })
+        .map((c) => c.id)
+        .sort((left, right) => left - right),
+    ).toEqual([101, 202]);
+  });
+
+  it('lets an explicit query override win over the reader preference', async () => {
+    const repository = {
+      getAllCharacters: vi.fn().mockResolvedValue([
+        createCharacter(202, { regionRelease: { availableOnGlobal: false } }),
+      ]),
+    };
+    const service = new CharacterCatalogCacheService(
+      repository as never,
+      { revision: () => 0 } as never,
+      { activeRegionFilter: () => 'global' } as never,
+    );
+
+    await service.ensureLoaded();
+
+    expect(
+      service
+        .queryCharacters({ searchTerm: '', limit: 50, offset: 0, regionPreference: 'all' })
+        .map((c) => c.id),
+    ).toEqual([202]);
+  });
+
   it('keeps the catalog warm across repeated queries without resetting it', async () => {
     let overrideRevision = 0;
     const repository = {
@@ -46,6 +123,7 @@ describe('CharacterCatalogCacheService', () => {
       {
         revision: () => overrideRevision,
       } as never,
+      { activeRegionFilter: () => 'all' } as never,
     );
 
     await service.ensureLoaded();
@@ -100,6 +178,7 @@ describe('CharacterCatalogCacheService', () => {
       {
         revision: () => overrideRevision,
       } as never,
+      { activeRegionFilter: () => 'all' } as never,
     );
 
     await service.ensureLoaded();
@@ -183,6 +262,7 @@ describe('CharacterCatalogCacheService', () => {
       {
         revision: () => overrideRevision,
       } as never,
+      { activeRegionFilter: () => 'all' } as never,
     );
 
     await service.ensureLoaded();
@@ -262,6 +342,7 @@ describe('CharacterCatalogCacheService', () => {
     const service = new CharacterCatalogCacheService(
       repository as never,
       { revision: () => 0 } as never,
+      { activeRegionFilter: () => 'all' } as never,
     );
 
     await service.ensureLoaded();
@@ -302,6 +383,7 @@ describe('CharacterCatalogCacheService', () => {
       {
         revision: () => overrideRevision,
       } as never,
+      { activeRegionFilter: () => 'all' } as never,
     );
 
     await service.ensureLoaded();
@@ -335,6 +417,7 @@ describe('CharacterCatalogCacheService', () => {
       {
         revision: () => overrideRevision,
       } as never,
+      { activeRegionFilter: () => 'all' } as never,
     );
 
     await service.ensureLoaded();
@@ -494,6 +577,7 @@ describe('CharacterCatalogCacheService', () => {
       {
         revision: () => overrideRevision,
       } as never,
+      { activeRegionFilter: () => 'all' } as never,
     );
 
     await service.ensureLoaded();
@@ -537,9 +621,11 @@ async function createFacetService(): Promise<CharacterCatalogCacheService> {
       }),
     ]),
   };
-  const service = new CharacterCatalogCacheService(repository as never, {
-    revision: () => 0,
-  } as never);
+  const service = new CharacterCatalogCacheService(
+    repository as never,
+    { revision: () => 0 } as never,
+    { activeRegionFilter: () => 'all' } as never,
+  );
 
   await service.ensureLoaded();
 
@@ -570,11 +656,12 @@ function createCharacter(
       max: { hp: 3000, atk: 1500, rcv: 300 },
       growth: 1,
     },
-    regionAvailability: overrides.regionAvailability ?? {
+    regionArtwork: overrides.regionArtwork ?? {
       exactLocal: true,
       thumbnailGlobal: true,
       thumbnailJapan: false,
     },
+    regionRelease: overrides.regionRelease ?? { availableOnGlobal: null },
     assets: overrides.assets ?? {
       exactLocal: null,
       thumbnailLocal: null,

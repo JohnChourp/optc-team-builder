@@ -17,6 +17,7 @@ import { SettingsPage } from './settings.page';
 
 vi.mock('@ionic/angular', () => ({
   IonSelect: class {},
+  IonToggle: class {},
 }));
 vi.mock('@ionic/angular/ion-button', () => ({
   IonButton: class {},
