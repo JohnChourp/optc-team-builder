@@ -98,6 +98,7 @@ when a script is unclassified, and when a lane names a script that does not exis
 | `doctor:maintainer` | npm script · test:post-merge-smoke | `test:post-merge-smoke` |
 | `e2e:record-flakes` | manual · — | Appends to the flake ledger from a local run. CI deliberately does not call it: test.yml uploads the ledger as an artifact rather than committing it, because a run that amended a tracked file would be a push this repo does not allow. |
 | `engines:divergences` | npm script · test:engine-divergences | `test:engine-divergences` |
+| `i18n:greek-coverage` | npm script · test:i18n-greek-coverage | `test:i18n-greek-coverage` |
 | `i18n:locale-formatting` | npm script · test:locale-formatting | `test:locale-formatting` |
 | `i18n:ownership` | npm script · test:i18n-ownership | `test:i18n-ownership` |
 | `i18n:regression` | npm script · test:i18n-regression | `test:i18n-regression` |
@@ -174,6 +175,7 @@ when a script is unclassified, and when a lane names a script that does not exis
 | `test:enemy-vocabulary` | lane · enemy-vocabulary | the `enemy-vocabulary` lane |
 | `test:engine-divergences` | lane · engine-divergences | the `engine-divergences` lane |
 | `test:field-naming` | lane · field-naming | the `field-naming` lane |
+| `test:i18n-greek-coverage` | lane · i18n-greek-coverage | the `i18n-greek-coverage` lane |
 | `test:i18n-ownership` | lane · i18n-ownership | the `i18n-ownership` lane |
 | `test:i18n-regression` | lane · i18n-regression | the `i18n-regression` lane |
 | `test:ionic-host-property` | lane · ionic-host-property | the `ionic-host-property` lane |

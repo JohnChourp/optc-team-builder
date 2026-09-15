@@ -428,6 +428,24 @@ export const SCRIPT_SUITES = {
    * would produce a number that is merely similar, which is precisely how the two
    * wrong budgets in this wave happened.
    */
+  /*
+   * 869f135rx. Key parity is not the same claim as "the Greek is Greek".
+   *
+   * EN and EL are at exact parity - 3,169 keys, 29 namespaces, zero mismatches -
+   * and an English string copied into el.json passes that perfectly.
+   * `i18n-regression-check.mjs` does assert Greek script, but only on the public
+   * routes it names, so 29 namespaces were covered by a check that looked at a
+   * few. Six Greek quotes naming the wrong button have already reached production
+   * this way.
+   *
+   * Identical is not automatically a defect here: the game's own vocabulary stays
+   * English on purpose. So the register splits the 636 identical values into terms
+   * that are meant to be and debt that is not, and the debt list may only shrink.
+   */
+  'i18n-greek-coverage': {
+    label: 'Greek translation coverage tests',
+    command: 'npm run test:i18n-greek-coverage',
+  },
   'component-style-budget': {
     label: 'Component stylesheet budget proximity',
     command: 'npm run test:component-style-budget',
@@ -847,6 +865,19 @@ function touchesUnusedMemberSources(filePath) {
   );
 }
 
+function isI18nGreekCoveragePath(filePath) {
+  return (
+    filePath === 'scripts/check-i18n-greek-coverage.mjs' ||
+    filePath === 'scripts/check-i18n-greek-coverage.spec.ts' ||
+    filePath === 'scripts/data/i18n-untranslated-register.json'
+  );
+}
+
+/* Non-terminating: translation files also route to the broader i18n and runtime plans. */
+function touchesI18nGreekCoverageSources(filePath) {
+  return filePath.startsWith('public/i18n/') && filePath.endsWith('.json');
+}
+
 function isComponentStyleBudgetPath(filePath) {
   return (
     filePath === 'scripts/check-component-style-budget.mjs' ||
@@ -1254,6 +1285,10 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
       addScriptSuite(scriptSuites, 'component-style-budget');
     }
 
+    if (touchesI18nGreekCoverageSources(filePath)) {
+      addScriptSuite(scriptSuites, 'i18n-greek-coverage');
+    }
+
     if (touchesDatasetConsumerSources(filePath)) {
       addScriptSuite(scriptSuites, 'dataset-consumers');
     }
@@ -1324,6 +1359,11 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
 
     if (isComponentStyleBudgetPath(filePath)) {
       addScriptSuite(scriptSuites, 'component-style-budget');
+      continue;
+    }
+
+    if (isI18nGreekCoveragePath(filePath)) {
+      addScriptSuite(scriptSuites, 'i18n-greek-coverage');
       continue;
     }
 
