@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildDriveSyncReviewDraft,
   buildReviewedAllDataPayload,
+  summariseReviewedDraft,
   updateDriveSyncReviewRowChoice,
 } from './drive-sync-review.utils';
 import {
@@ -132,6 +133,73 @@ describe('drive sync review utils', () => {
    * new durable scope joins the backup on the day it is declared or fails here.
    * A list would have been kept in step exactly as well as the one this found.
    */
+  /*
+   * 869f135r4. The summary is pinned to the PAYLOAD, not to itself.
+   *
+   * A count computed beside the thing it describes drifts the moment either
+   * changes. These assert the number the reader is shown against what
+   * `buildReviewedAllDataPayload` actually produces, which is the only version of
+   * the claim worth making before an irreversible overwrite.
+   */
+  describe('the outcome summary', () => {
+    function favouriteIdsIn(payload: ReturnType<typeof buildReviewedAllDataPayload>): number[] {
+      return (payload.favorites?.characters ?? []).map((character) => character.number);
+    }
+
+    it('counts every row exactly once across kept, taken and lost', () => {
+      for (const action of ['merge-and-upload', 'replace-cloud', 'replace-local'] as const) {
+        const draft = buildDriveSyncReviewDraft(createLocalPayload(), createDrivePayload(), action);
+        const outcome = summariseReviewedDraft(draft);
+
+        expect(
+          outcome.keptFromDevice + outcome.takenFromDrive + outcome.lost,
+          `${action} loses or double-counts rows`,
+        ).toBeLessThanOrEqual(outcome.total);
+        expect(outcome.total).toBe(draft.sections.flatMap((section) => section.rows).length);
+      }
+    });
+
+    it('reports a removal as lost, and the payload really drops it', () => {
+      const draft = buildDriveSyncReviewDraft(
+        createLocalPayload(),
+        createDrivePayload(),
+        'merge-and-upload',
+      );
+      const before = summariseReviewedDraft(draft);
+      const removed = updateDriveSyncReviewRowChoice(draft, 'favorites', '1001', 'remove');
+      const after = summariseReviewedDraft(removed);
+
+      expect(after.lost).toBe(before.lost + 1);
+      expect(favouriteIdsIn(buildReviewedAllDataPayload(removed))).not.toContain(1001);
+    });
+
+    it('never calls a row lost when the payload still carries it', () => {
+      const draft = buildDriveSyncReviewDraft(
+        createLocalPayload(),
+        createDrivePayload(),
+        'merge-and-upload',
+      );
+      const kept = updateDriveSyncReviewRowChoice(draft, 'favorites', '1001', 'device');
+
+      expect(summariseReviewedDraft(kept).lost).toBe(0);
+      expect(favouriteIdsIn(buildReviewedAllDataPayload(kept))).toContain(1001);
+    });
+
+    it('counts a device-only row as lost when the Drive copy replaces local', () => {
+      const local = createLocalPayload();
+      const drive = createDrivePayload();
+      const outcome = summariseReviewedDraft(
+        buildDriveSyncReviewDraft(local, drive, 'replace-local'),
+      );
+
+      /*
+       * replace-local is the destructive action the summary exists for: anything
+       * this device has and Drive does not is gone afterwards.
+       */
+      expect(outcome.lost).toBeGreaterThan(0);
+    });
+  });
+
   describe('every transfer scope survives the review', () => {
     const actions = ['merge-and-upload', 'replace-cloud', 'replace-local'] as const;
 

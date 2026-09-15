@@ -34,6 +34,7 @@ import { UserDataTransferService } from '../../core/services/user-data-transfer.
 import {
   buildDriveSyncReviewDraft,
   buildReviewedAllDataPayload,
+  summariseReviewedDraft,
   type DriveSyncReviewChoice,
   type DriveSyncReviewDraft,
   type DriveSyncReviewRow,
@@ -106,6 +107,20 @@ export class AccountPage {
       ...counts,
       total: rows.length,
     };
+  });
+
+  /*
+   * 869f135r4. The one line the reader gets immediately before an irreversible
+   * overwrite, in their words rather than in diff vocabulary.
+   *
+   * Derived from `summariseReviewedDraft`, which resolves rows exactly as
+   * `buildReviewedAllDataPayload` does - so the number shown and the number that
+   * happens cannot drift apart, and a test can pin one to the other.
+   */
+  public readonly reviewOutcome = computed(() => {
+    const draft = this.reviewDraft();
+
+    return draft ? summariseReviewedDraft(draft) : null;
   });
 
   public readonly filteredReviewSections = computed(() => {

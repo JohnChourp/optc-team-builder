@@ -173,7 +173,12 @@
       },
       "summaryCopy": "{{count}} reviewed rows can be changed before anything is written.",
       "summaryTitle": "Review the exact result",
-      "title": "Control exactly what Drive sync changes."
+      "title": "Control exactly what Drive sync changes.",
+      "outcome": {
+        "summary": "{{kept}} kept from this device, {{taken}} taken from Drive.",
+        "lost": "{{count}} will be gone from this device. This cannot be undone.",
+        "replaceLocal": "Everything on this device is replaced by the Drive copy."
+      }
     }
   },
   "gameVersion": {

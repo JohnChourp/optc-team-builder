@@ -75,3 +75,32 @@
   justify-content: space-between;
   gap: 8px 14px;
 }
+
+/*
+ * 869f135r4. The last thing read before an irreversible overwrite.
+ *
+ * The destructive line is the only part coloured as a warning: the counts above
+ * it are ordinary outcomes, and colouring all of it would make the one number
+ * that costs the reader something indistinguishable from the three that do not.
+ */
+.drive-review-outcome {
+  display: grid;
+  gap: 6px;
+  margin-top: 16px;
+  padding: 14px 16px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 16px;
+  background: rgba(15, 20, 36, 0.6);
+}
+
+.drive-review-outcome__line {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.drive-review-outcome__lost {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #f8b4b4;
+}

@@ -230,6 +230,49 @@ function assignScope(
   (target as Record<string, unknown>)[scope] = value;
 }
 
+/**
+ * 869f135r4. What this sync will actually do, counted from the SAME resolution
+ * that builds the payload.
+ *
+ * The modal already showed counts, at the top, describing the DIFF: how many rows
+ * were added, changed, kept or removed. That is the right tool for deciding
+ * row by row. It is the wrong tool for the last step before an irreversible
+ * overwrite, where the only question is what will be gone afterwards - and
+ * `removed` sat as one of four equal-weight buttons, indistinguishable from the
+ * three that cost the reader nothing.
+ *
+ * `lost` is the number that matters, and it is derived rather than declared: a
+ * row is lost when this device has it now and the resolved payload will not.
+ * That is exactly the condition `buildReviewedAllDataPayload` applies, which is
+ * what lets a test pin the summary to the payload instead of to itself.
+ */
+export interface DriveSyncReviewOutcome {
+  /** Rows whose device copy survives. */
+  keptFromDevice: number;
+  /** Rows where the Drive copy wins. */
+  takenFromDrive: number;
+  /** Rows this device has now and will not have afterwards. */
+  lost: number;
+  total: number;
+}
+
+export function summariseReviewedDraft(draft: DriveSyncReviewDraft): DriveSyncReviewOutcome {
+  const rows = draft.sections.flatMap((section) => section.rows);
+  const resolved = rows.map((row) => ({
+    row,
+    item: row.choice === 'device' ? row.deviceItem : row.choice === 'drive' ? row.driveItem : null,
+  }));
+
+  return {
+    keptFromDevice: resolved.filter((entry) => entry.row.choice === 'device' && entry.item !== null)
+      .length,
+    lost: resolved.filter((entry) => entry.row.deviceItem !== null && entry.item === null).length,
+    takenFromDrive: resolved.filter((entry) => entry.row.choice === 'drive' && entry.item !== null)
+      .length,
+    total: rows.length,
+  };
+}
+
 export function buildReviewedAllDataPayload(
   draft: DriveSyncReviewDraft,
   exportedAt = new Date().toISOString(),
