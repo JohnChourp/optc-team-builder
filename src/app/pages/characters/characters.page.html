@@ -447,6 +447,64 @@
                     </span>
                   </p>
                 </div>
+
+                @if (removableCards().length) {
+                  <div class="import-removals">
+                    <div class="import-removals__head">
+                      <strong>{{ t('import.removals.title') }}</strong>
+                      <p>{{ t('import.removals.copy', { count: removableCards().length }) }}</p>
+                    </div>
+
+                    @if ((importResult()?.unresolvedFavoriteCount ?? 0) > 0) {
+                      <p class="import-result-note">
+                        {{
+                          t('import.removals.unresolvedNote', {
+                            count: importResult()?.unresolvedFavoriteCount ?? 0,
+                          })
+                        }}
+                      </p>
+                    }
+
+                    <div class="import-removals__actions">
+                      <button type="button" (click)="selectAllRemovals()">
+                        {{ t('import.removals.selectAll') }}
+                      </button>
+                      <button
+                        type="button"
+                        (click)="clearRemovalSelection()"
+                        [disabled]="!hasSelectedRemovals()"
+                      >
+                        {{ t('import.removals.clearSelection') }}
+                      </button>
+                    </div>
+
+                    <ul class="import-removals__list">
+                      @for (card of removableCards(); track card.id) {
+                        <li>
+                          <label>
+                            <input
+                              type="checkbox"
+                              [checked]="isRemovalSelected(card.id)"
+                              (change)="toggleRemovalSelection(card.id)"
+                            />
+                            <span>{{ card.name }}</span>
+                          </label>
+                        </li>
+                      }
+                    </ul>
+
+                    <ion-button
+                      color="danger"
+                      fill="outline"
+                      [disabled]="!hasSelectedRemovals() || removingFavorites()"
+                      (click)="removeSelectedFavorites()"
+                    >
+                      {{
+                        t('import.removals.remove', { count: selectedRemovalIds().length })
+                      }}
+                    </ion-button>
+                  </div>
+                }
               </section>
 
               <div class="import-modal-actions">

@@ -94,11 +94,114 @@ describe('OptcbxImportService', () => {
     expect(result.alreadyFavoritedCount).toBe(1);
     expect(mergedIds).toEqual([5001, 5002, 5003, 9999]);
   });
+  /**
+   * 869f26084. The other direction of the comparison the import has always performed.
+   *
+   * Until this landed the import only ever reported what it ADDED, and no path removed anything,
+   * so a favourites list only grew and the staleness that accumulated was units the reader no
+   * longer owns.
+   */
+  it('reports the favourites this import did not mention', async () => {
+    const service = createService([
+      createCharacter(5001),
+      createCharacter(5002),
+      createCharacter(5003),
+    ]);
+
+    const result = await service.buildMergeImportResult(
+      { importedNumbers: [5001, 5002], duplicatesRemoved: 0 },
+      [5001, 5003],
+    );
+
+    expect(result.removableIds).toEqual([5003]);
+    expect(result.addedCount).toBe(1);
+  });
+
+  /**
+   * The trap the task names: *"this import did not mention it"* and *"we could not recognise it"*
+   * look identical in a count and mean opposite things. A favourite we cannot resolve is evidence
+   * about OUR dataset, not about what the reader owns, so removing it would be us deleting their
+   * data to cover our own gap.
+   */
+  it('never offers a favourite it cannot resolve, and counts it separately', async () => {
+    const service = createService([createCharacter(5001)]);
+
+    const result = await service.buildMergeImportResult(
+      { importedNumbers: [5001], duplicatesRemoved: 0 },
+      [5001, 424242],
+    );
+
+    expect(result.removableIds).toEqual([]);
+    expect(result.unresolvedFavoriteCount).toBe(1);
+  });
+
+  it('offers nothing when the import covers every favourite', async () => {
+    const service = createService([createCharacter(5001), createCharacter(5002)]);
+
+    const result = await service.buildMergeImportResult(
+      { importedNumbers: [5001, 5002], duplicatesRemoved: 0 },
+      [5001, 5002],
+    );
+
+    expect(result.removableIds).toEqual([]);
+    expect(result.unresolvedFavoriteCount).toBe(0);
+  });
+
+  it('keeps the reader order of the favourites it offers', async () => {
+    const service = createService([
+      createCharacter(5001),
+      createCharacter(5002),
+      createCharacter(5003),
+    ]);
+
+    const result = await service.buildMergeImportResult(
+      { importedNumbers: [], duplicatesRemoved: 0 },
+      [5003, 5001, 5002],
+    );
+
+    expect(result.removableIds).toEqual([5003, 5001, 5002]);
+  });
+
+  it('removes exactly what the reader chose, leaving the rest alone', async () => {
+    const service = createService([]);
+
+    expect(service.removeFavoriteIds([5003], [5001, 5002, 5003], [5003])).toEqual([5001, 5002]);
+  });
+
+  /**
+   * A caller cannot widen a removal past what the result was willing to offer. Without this, a bug
+   * between showing and applying could delete a favourite that was never on screen.
+   */
+  it('ignores an id that was never offered, rather than trusting the caller', async () => {
+    const service = createService([]);
+
+    expect(service.removeFavoriteIds([5001, 5003], [5001, 5002, 5003], [5003])).toEqual([
+      5001,
+      5002,
+    ]);
+  });
+
+  it('removes nothing when the reader chose nothing, which is the default', async () => {
+    const service = createService([]);
+
+    expect(service.removeFavoriteIds([], [5001, 5002], [5001, 5002])).toEqual([5001, 5002]);
+  });
 });
 
-function createService(returnCharacters: CharacterListItem[] = []): OptcbxImportService {
+/**
+ * 869f26084. The stub resolves per ARGUMENT rather than returning one fixed list.
+ *
+ * `buildMergeImportResult` now calls the repository twice - once for the imported numbers and once
+ * for the reader's existing favourites - and a stub that answers both calls identically cannot
+ * express the case the whole feature turns on: a favourite that no longer resolves to a character.
+ * `universe` is what the shipped dataset contains; anything outside it is unresolvable.
+ */
+function createService(universe: CharacterListItem[] = []): OptcbxImportService {
+  const byId = new Map(universe.map((character) => [character.id, character]));
   const repository = {
-    getCharactersByIds: vi.fn().mockResolvedValue(returnCharacters),
+    getCharactersByIds: vi.fn(async (ids: number[]) =>
+      ids.map((id) => byId.get(id)).filter((character): character is CharacterListItem => Boolean(character)),
+    ),
   };
 
   return new OptcbxImportService(repository as never);

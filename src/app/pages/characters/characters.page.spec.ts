@@ -67,6 +67,75 @@ describe('CharactersPage favorites tools', () => {
    * player - one is a fact and the other is an absence - and `?? '?'` is what keeps them apart,
    * because it catches null and undefined and leaves 0 alone.
    */
+  /**
+   * 869f26084. The removal control must arrive with nothing ticked. An import that appears with
+   * removals pre-selected is one press away from deleting favourites the reader never looked at,
+   * and they cannot tell a deletion from a matching failure afterwards.
+   */
+  it('offers removals with nothing selected', () => {
+    const { page } = createPage();
+
+    page.importResult.set({
+      importedNumbers: [1],
+      matchedIds: [1],
+      unmatchedIds: [],
+      duplicatesRemoved: 0,
+      addedCount: 0,
+      alreadyFavoritedCount: 1,
+      removableIds: [202, 303],
+      unresolvedFavoriteCount: 0,
+    });
+
+    expect(page.selectedRemovalIds()).toEqual([]);
+    expect(page.hasSelectedRemovals()).toBe(false);
+  });
+
+  it('ticks and unticks one removal at a time, and select-all covers the offered list', () => {
+    const { page } = createPage();
+
+    page.importResult.set({
+      importedNumbers: [],
+      matchedIds: [],
+      unmatchedIds: [],
+      duplicatesRemoved: 0,
+      addedCount: 0,
+      alreadyFavoritedCount: 0,
+      removableIds: [202, 303],
+      unresolvedFavoriteCount: 0,
+    });
+
+    page.toggleRemovalSelection(202);
+    expect(page.isRemovalSelected(202)).toBe(true);
+    expect(page.isRemovalSelected(303)).toBe(false);
+
+    page.toggleRemovalSelection(202);
+    expect(page.selectedRemovalIds()).toEqual([]);
+
+    page.clearRemovalSelection();
+    expect(page.selectedRemovalIds()).toEqual([]);
+  });
+
+  /**
+   * The panel is absent entirely when the import mentioned everything, rather than rendering an
+   * empty control that invites a press.
+   */
+  it('renders no removal panel when the import covered every favourite', () => {
+    const { page } = createPage();
+
+    page.importResult.set({
+      importedNumbers: [1],
+      matchedIds: [1],
+      unmatchedIds: [],
+      duplicatesRemoved: 0,
+      addedCount: 0,
+      alreadyFavoritedCount: 1,
+      removableIds: [],
+      unresolvedFavoriteCount: 0,
+    });
+
+    expect(page.removableCards()).toEqual([]);
+  });
+
   it('renders a missing stat differently from a stat of zero', () => {
     const template = readFileSync(
       resolve(import.meta.dirname, './characters.page.html'),
