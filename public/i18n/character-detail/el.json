@@ -104,5 +104,8 @@
     "evolvesFrom": "Προέρχεται από",
     "evolvesInto": "Εξελίσσεται σε, και τι κοστίζει",
     "dropsFrom": "Πέφτει από"
+  },
+  "region": {
+    "japanOnly": "Μόνο Japan"
   }
 }

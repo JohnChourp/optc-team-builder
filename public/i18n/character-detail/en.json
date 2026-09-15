@@ -104,5 +104,8 @@
     "evolvesFrom": "Evolves from",
     "evolvesInto": "Evolves into, and what it costs",
     "dropsFrom": "Drops from"
+  },
+  "region": {
+    "japanOnly": "Japan only"
   }
 }

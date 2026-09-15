@@ -158,5 +158,13 @@
     "export": "Export favorites",
     "import": "Import favorites",
     "title": "Favorites tools"
+  },
+  "region": {
+    "japanOnly": "Japan only"
+  },
+  "recents": {
+    "title": "Recently viewed",
+    "copy": "The last characters you opened, newest first. Only on this device.",
+    "clear": "Clear"
   }
 }

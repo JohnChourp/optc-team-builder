@@ -38,6 +38,17 @@
   text-transform: uppercase;
 }
 
+/*
+ * 869f1327j. The region marker is a FACT, not a warning, so it does not borrow the red the
+ * incomplete badge uses. A player who plays Global and looks a Japan-only unit up for a friend has
+ * done nothing wrong, and colouring that red would say otherwise.
+ */
+.character-status-badge--region {
+  border-color: rgba(108, 178, 255, 0.44);
+  background: rgba(18, 58, 122, 0.24);
+  color: #a9d0ff;
+}
+
 .character-thumb-card .character-status-badge {
   position: absolute;
   top: 8px;
