@@ -89,6 +89,8 @@
     "i18n:support-claims": "node ./scripts/check-support-claims.mjs",
     "test:component-inventory": "vitest run scripts/check-component-inventory.spec.ts && npm run components:inventory",
     "components:inventory": "node ./scripts/check-component-inventory.mjs",
+    "test:support-ladder": "vitest run scripts/check-support-ladder.spec.ts && npm run platforms:support-ladder",
+    "platforms:support-ladder": "node ./scripts/check-support-ladder.mjs",
     "scripts:references": "node ./scripts/check-npm-script-references.mjs",
     "theme:overlay-contrast": "node ./scripts/check-ionic-overlay-contrast.mjs",
     "test:ionic-host-property": "vitest run scripts/check-ionic-host-property.spec.ts && npm run ionic:host-property",

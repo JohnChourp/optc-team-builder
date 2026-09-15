@@ -270,6 +270,7 @@ describe('ci-check-routing', () => {
       'locale-formatting',
       'support-claims',
       'component-inventory',
+      'support-ladder',
       'dead-code',
       'worker-bundling',
     ]);
