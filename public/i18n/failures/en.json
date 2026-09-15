@@ -1,0 +1,35 @@
+{
+  "safety": {
+    "safe": "Nothing on this device changed.",
+    "lost": "This was not saved, so this change is gone. Everything you had before is still here.",
+    "partial": "Part of it was applied. Everything that was already on this device was kept."
+  },
+  "what": {
+    "invalidFile": "That file could not be read.",
+    "unsupportedPayload": "That file is a real export, but not one this screen can read.",
+    "nothingUsable": "That file was read, and there was nothing in it to import.",
+    "storageQuota": "This browser has no room left to store anything.",
+    "storageUnavailable": "This browser is not letting the app store anything.",
+    "saveFailed": "That could not be saved.",
+    "loadFailed": "That could not be loaded.",
+    "partialImport": "Some of that import could not be applied.",
+    "recognitionFailed": "That screenshot could not be read.",
+    "buildFailed": "The build stopped before it finished.",
+    "searchTooLarge": "This search is too large for this browser session.",
+    "unexpected": "Something went wrong that the app did not expect."
+  },
+  "action": {
+    "invalidFile": "Check you picked the right file, then try again.",
+    "unsupportedPayload": "Export it again from the screen you want to import it into, then pick that file.",
+    "nothingUsable": "Check you exported the right thing, then try again.",
+    "storageQuota": "Open Settings, export all your data, then remove saved teams, boxes or enemies you no longer need.",
+    "storageUnavailable": "Allow site storage for this browser, or try again in a normal window instead of a private one.",
+    "saveFailed": "Try again. If it keeps failing, open Settings and export your data before doing anything else.",
+    "loadFailed": "Reload the page, or restart the app, then try again.",
+    "partialImport": "Check the parts that were skipped, then import them again on their own.",
+    "recognitionFailed": "Take the screenshot again with the whole box visible, then try again.",
+    "buildFailed": "Run the build again.",
+    "searchTooLarge": "Narrow the types or classes, or fill a slot by hand, then run the search again.",
+    "unexpected": "Try again. If it keeps happening, reload the page."
+  }
+}

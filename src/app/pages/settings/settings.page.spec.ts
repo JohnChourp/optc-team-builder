@@ -521,9 +521,12 @@ describe('SettingsPage', () => {
       tone: 'error',
       title: 'Import failed',
       details: [
+        'what.invalidFile',
         'The selected file is not valid JSON.',
         'Diagnostic code: SAVED_TEAMS_INVALID_JSON.',
         'Recovery for import.recovery.invalidJson',
+        'safety.safe',
+        'action.invalidFile',
       ],
     });
   });
@@ -554,9 +557,12 @@ describe('SettingsPage', () => {
       tone: 'error',
       title: 'Import failed',
       details: [
+        'what.storageQuota',
         'Browser storage is full.',
         'Diagnostic code: BROWSER_STORAGE_QUOTA_EXCEEDED.',
         'Recovery for storageFailures.recovery.quota',
+        'safety.lost',
+        'action.storageQuota',
       ],
     });
   });
@@ -818,9 +824,12 @@ describe('SettingsPage', () => {
       tone: 'error',
       title: 'All data import failed',
       details: [
+        'what.storageQuota',
         'Browser storage is full.',
         'Diagnostic code: BROWSER_STORAGE_QUOTA_EXCEEDED.',
         'Recovery for storageFailures.recovery.quota',
+        'safety.lost',
+        'action.storageQuota',
       ],
     });
   });

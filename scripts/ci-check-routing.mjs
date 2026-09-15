@@ -454,6 +454,20 @@ export const SCRIPT_SUITES = {
    * importer reads one and the app reads the other, nothing generates either, and
    * a half-applied edit leaves them disagreeing about which characters conflict.
    */
+  /*
+   * 869f135ra. Every failure the player sees says the same three things: what
+   * happened, whether their data is safe, and the one thing to try.
+   *
+   * 19 of 22 pages catch their own exceptions and each phrased failure its own
+   * way. An error message is the only part of the app a reader reads carefully,
+   * because they are stuck - and the data-safety sentence did not exist at all,
+   * so "browser storage is full" left them unable to tell whether what they had
+   * already saved had survived.
+   */
+  'failure-vocabulary': {
+    label: 'Player-facing failure vocabulary tests',
+    command: 'npm run test:failure-vocabulary',
+  },
   'overlay-register': {
     label: 'Manual overlay register tests',
     command: 'npm run test:overlay-register',
@@ -878,6 +892,24 @@ function touchesStorageKeySources(filePath) {
 function touchesUnusedMemberSources(filePath) {
   return (
     filePath.startsWith('src/app/') && (filePath.endsWith('.ts') || filePath.endsWith('.html'))
+  );
+}
+
+function isFailureVocabularyPath(filePath) {
+  return (
+    filePath === 'scripts/check-failure-vocabulary.mjs' ||
+    filePath === 'scripts/check-failure-vocabulary.spec.ts' ||
+    filePath === 'src/app/core/data/failure-vocabulary.data.ts' ||
+    filePath === 'src/app/core/services/failure-message.utils.ts' ||
+    filePath.startsWith('public/i18n/failures/')
+  );
+}
+
+/* Non-terminating: a page is app source and routes to the Angular lane too. */
+function touchesFailureVocabularySources(filePath) {
+  return (
+    (filePath.startsWith('src/app/pages/') && filePath.endsWith('.page.ts')) ||
+    filePath === 'src/app/app.component.ts'
   );
 }
 
@@ -1325,6 +1357,10 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
       addScriptSuite(scriptSuites, 'overlay-register');
     }
 
+    if (touchesFailureVocabularySources(filePath)) {
+      addScriptSuite(scriptSuites, 'failure-vocabulary');
+    }
+
     if (touchesDatasetConsumerSources(filePath)) {
       addScriptSuite(scriptSuites, 'dataset-consumers');
     }
@@ -1400,6 +1436,11 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
 
     if (isI18nGreekCoveragePath(filePath)) {
       addScriptSuite(scriptSuites, 'i18n-greek-coverage');
+      continue;
+    }
+
+    if (isFailureVocabularyPath(filePath)) {
+      addScriptSuite(scriptSuites, 'failure-vocabulary');
       continue;
     }
 

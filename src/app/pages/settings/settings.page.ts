@@ -1,4 +1,8 @@
 import { CommonModule } from '@angular/common';
+import {
+  buildFailureLines,
+  resolveFailureFamily,
+} from '../../core/services/failure-message.utils';
 import { Component, type OnInit, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { IonSelect, IonToggle } from '@ionic/angular';
@@ -774,7 +778,7 @@ export class SettingsPage implements OnInit {
           undefined,
           'settings',
         ),
-        details: [this.resolveInventoryCaptureError(error)],
+        details: this.failureDetails('recognitionFailed', this.resolveInventoryCaptureError(error), error),
       });
     } finally {
       this.inventoryCaptureImporting.set(false);
@@ -949,7 +953,7 @@ export class SettingsPage implements OnInit {
           undefined,
           'settings',
         ),
-        details: [this.resolveInventoryCaptureError(error)],
+        details: this.failureDetails('recognitionFailed', this.resolveInventoryCaptureError(error), error),
       });
     } finally {
       this.inventoryCaptureImporting.set(false);
@@ -1271,7 +1275,7 @@ export class SettingsPage implements OnInit {
       this.allDataFeedback.set({
         tone: 'error',
         title: this.i18n.translate('management.allData.feedback.errorTitle', undefined, 'settings'),
-        details: this.resolveAllDataImportErrorDetails(error),
+        details: this.failureDetails('invalidFile', this.resolveAllDataImportErrorDetails(error), error),
       });
     } finally {
       this.allDataImporting.set(false);
@@ -1664,7 +1668,7 @@ export class SettingsPage implements OnInit {
           undefined,
           'settings',
         ),
-        details: [this.resolveFavoritesImportError(error)],
+        details: this.failureDetails('invalidFile', this.resolveFavoritesImportError(error), error),
       });
     } finally {
       this.favoritesImporting.set(false);
@@ -1775,7 +1779,7 @@ export class SettingsPage implements OnInit {
           undefined,
           'settings',
         ),
-        details: [this.resolveFavoriteShipsImportError(error)],
+        details: this.failureDetails('invalidFile', this.resolveFavoriteShipsImportError(error), error),
       });
     } finally {
       this.favoriteShipsImporting.set(false);
@@ -1916,7 +1920,7 @@ export class SettingsPage implements OnInit {
           undefined,
           'settings',
         ),
-        details: [this.resolveCharacterBoxesImportError(error)],
+        details: this.failureDetails('invalidFile', this.resolveCharacterBoxesImportError(error), error),
       });
     } finally {
       this.characterBoxesImporting.set(false);
@@ -2051,7 +2055,7 @@ export class SettingsPage implements OnInit {
           undefined,
           'settings',
         ),
-        details: [this.resolveCharacterOverridesImportError(error)],
+        details: this.failureDetails('invalidFile', this.resolveCharacterOverridesImportError(error), error),
       });
     } finally {
       this.characterOverridesImporting.set(false);
@@ -2243,7 +2247,7 @@ export class SettingsPage implements OnInit {
       this.savedTeamsFeedback.set({
         tone: 'error',
         title: this.i18n.translate('import.errorTitle', undefined, 'saved-teams'),
-        details: this.resolveSavedTeamsImportErrorDetails(error),
+        details: this.failureDetails('invalidFile', this.resolveSavedTeamsImportErrorDetails(error), error),
       });
     } finally {
       this.savedTeamsImporting.set(false);
@@ -2439,7 +2443,7 @@ export class SettingsPage implements OnInit {
       this.savedEnemiesFeedback.set({
         tone: 'error',
         title: this.i18n.translate('bulkImport.errorTitle', undefined, 'saved-enemies'),
-        details: [this.resolveSavedEnemiesImportError(error)],
+        details: this.failureDetails('invalidFile', this.resolveSavedEnemiesImportError(error), error),
       });
     } finally {
       this.savedEnemiesImporting.set(false);
@@ -2608,4 +2612,27 @@ export class SettingsPage implements OnInit {
   private confirmAction(message: string): boolean {
     return typeof globalThis.confirm === 'function' ? globalThis.confirm(message) : false;
   }
+
+  /*
+   * 869f135ra. The three sentences every failure owes the player - what
+   * happened, whether their data is safe, and the one thing to try - in the same
+   * words as every other screen. `extra` is whatever this page knows that the
+   * vocabulary cannot: the name of the row that was skipped, the specific parse
+   * error. It sits between the first and second sentence so the message still
+   * ENDS on the thing to do.
+   */
+  private failureDetails(
+    familyId: string,
+    extra?: string | readonly string[] | null,
+    error?: unknown,
+  ): string[] {
+    return [
+      ...buildFailureLines(
+        resolveFailureFamily(error, familyId),
+        (key, params, scope) => this.i18n.translate(key, params, scope),
+        extra ?? null,
+      ),
+    ];
+  }
+
 }

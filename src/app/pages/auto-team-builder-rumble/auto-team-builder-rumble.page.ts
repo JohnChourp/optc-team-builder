@@ -1,4 +1,8 @@
 import { Component, type OnDestroy, type OnInit, computed, signal } from '@angular/core';
+import {
+  buildFailureLines,
+  resolveFailureFamily,
+} from '../../core/services/failure-message.utils';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { IonIcon, IonModal, IonSearchbar, IonSelect, IonToggle } from '@ionic/angular';
@@ -1423,7 +1427,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
       this.importFeedback.set({
         tone: 'error',
         title: this.t('import.errorTitle'),
-        details: [this.resolveImportError(error)],
+        details: this.failureDetails('invalidFile', this.resolveImportError(error), error),
       });
     }
   }
@@ -1456,7 +1460,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
       this.importFeedback.set({
         tone: 'error',
         title: this.t('import.errorTitle'),
-        details: [this.resolveImportError(error)],
+        details: this.failureDetails('invalidFile', this.resolveImportError(error), error),
       });
     }
   }
@@ -2337,4 +2341,27 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   ): string {
     return this.i18n.translate(key, parameters, 'auto-team-builder-rumble');
   }
+
+  /*
+   * 869f135ra. The three sentences every failure owes the player - what
+   * happened, whether their data is safe, and the one thing to try - in the same
+   * words as every other screen. `extra` is whatever this page knows that the
+   * vocabulary cannot: the name of the row that was skipped, the specific parse
+   * error. It sits between the first and second sentence so the message still
+   * ENDS on the thing to do.
+   */
+  private failureDetails(
+    familyId: string,
+    extra?: string | readonly string[] | null,
+    error?: unknown,
+  ): string[] {
+    return [
+      ...buildFailureLines(
+        resolveFailureFamily(error, familyId),
+        (key, params, scope) => this.i18n.translate(key, params, scope),
+        extra ?? null,
+      ),
+    ];
+  }
+
 }

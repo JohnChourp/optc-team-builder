@@ -1,4 +1,8 @@
 import { Component, type ElementRef, type OnInit, ViewChild, computed, signal } from '@angular/core';
+import {
+  buildFailureLines,
+  resolveFailureFamily,
+} from '../../core/services/failure-message.utils';
 import { RouterLink } from '@angular/router';
 import {
   IonCheckbox,
@@ -1609,7 +1613,7 @@ export class SavedTeamsPage implements OnInit {
       this.importFeedback.set({
         tone: 'error',
         title: this.i18n.translate('import.errorTitle', undefined, 'saved-teams'),
-        details: this.resolveImportErrorDetails(error as SavedTeamsImportError),
+        details: this.failureDetails('invalidFile', this.resolveImportErrorDetails(error as SavedTeamsImportError), error),
       });
     } finally {
       this.importing.set(false);
@@ -1741,4 +1745,27 @@ export class SavedTeamsPage implements OnInit {
 
     return details;
   }
+
+  /*
+   * 869f135ra. The three sentences every failure owes the player - what
+   * happened, whether their data is safe, and the one thing to try - in the same
+   * words as every other screen. `extra` is whatever this page knows that the
+   * vocabulary cannot: the name of the row that was skipped, the specific parse
+   * error. It sits between the first and second sentence so the message still
+   * ENDS on the thing to do.
+   */
+  private failureDetails(
+    familyId: string,
+    extra?: string | readonly string[] | null,
+    error?: unknown,
+  ): string[] {
+    return [
+      ...buildFailureLines(
+        resolveFailureFamily(error, familyId),
+        (key, params, scope) => this.i18n.translate(key, params, scope),
+        extra ?? null,
+      ),
+    ];
+  }
+
 }
