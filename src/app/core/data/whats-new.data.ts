@@ -31,6 +31,32 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.40',
+    date: '2026-09-15',
+    userVisible: true,
+    headline: {
+      en: 'Greek numbers read as Greek, and a screen that says what this app supports',
+      el: 'Οι αριθμοί στα ελληνικά διαβάζονται ελληνικά, και μια οθόνη που λέει τι υποστηρίζει η εφαρμογή',
+    },
+    summaryEn:
+      "Two things you can see. If you use the app in Greek, numbers now follow Greek convention everywhere they appear - 1.234.567,89 instead of 1,234,567.89 - so a thousands separator is no longer sitting where you expect a decimal point. And there is a new screen, What this app supports, in the side menu just above Help: it answers in one place which browsers are tested, how to use this on an iPhone, what keeps working without a connection, exactly what the Android app asks permission for and why, and where the character data comes from.",
+    summaryEl:
+      'Δύο πράγματα που βλέπεις. Αν χρησιμοποιείς την εφαρμογή στα ελληνικά, οι αριθμοί ακολουθούν πλέον την ελληνική σύμβαση παντού όπου εμφανίζονται - 1.234.567,89 αντί για 1,234,567.89 - οπότε ο διαχωριστής χιλιάδων δεν κάθεται πια εκεί που περιμένεις υποδιαστολή. Και υπάρχει μια νέα οθόνη, Τι υποστηρίζει αυτή η εφαρμογή, στο πλαϊνό μενού ακριβώς πάνω από τη Βοήθεια: απαντάει σε ένα σημείο ποιοι browsers είναι δοκιμασμένοι, πώς το χρησιμοποιείς σε iPhone, τι συνεχίζει να δουλεύει χωρίς σύνδεση, τι ακριβώς ζητάει η εφαρμογή Android και γιατί, και από πού έρχονται τα δεδομένα των χαρακτήρων.',
+    added: [
+      {
+        en: "A new **What this app supports** screen in the **side menu**, above Help, with five short sections: phones and computers, browsers, what works without a connection, what the Android app asks for, and where the data comes from.",
+        el: 'Μια νέα οθόνη **Τι υποστηρίζει αυτή η εφαρμογή** στο **πλαϊνό μενού**, πάνω από τη Βοήθεια, με πέντε σύντομες ενότητες: κινητά και υπολογιστές, browsers, τι δουλεύει χωρίς σύνδεση, τι ζητάει η εφαρμογή Android, και από πού έρχονται τα δεδομένα.',
+      },
+    ],
+    improved: [
+      {
+        en: "In Greek, every number on every screen now uses Greek grouping and decimals - the **results list** and **Final team report** on **Auto Team Builder**, the scores and stats on **Pirate Rumble characters**, the counts on **Settings**, and the dates on **Saved Rumble teams**.",
+        el: 'Στα ελληνικά, κάθε αριθμός σε κάθε οθόνη χρησιμοποιεί πλέον ελληνική ομαδοποίηση και υποδιαστολή - **η λίστα αποτελεσμάτων** και το **Τελικό report ομάδας** στο **Auto Team Builder**, τα σκορ και τα στατιστικά στους **χαρακτήρες Pirate Rumble**, οι μετρήσεις στις **Ρυθμίσεις**, και οι ημερομηνίες στις **Αποθηκευμένες ομάδες Rumble**.',
+      },
+    ],
+    fixed: [],
+  },
+  {
     version: '0.4.39',
     date: '2026-09-15',
     userVisible: false,
