@@ -1,4 +1,8 @@
-import { type AllDataTransferPayload } from '../settings/all-data-transfer.utils';
+import {
+  ALL_DATA_TRANSFER_SCOPES,
+  type AllDataTransferPayload,
+  type AllDataTransferScope,
+} from '../settings/all-data-transfer.utils';
 
 export type DriveSyncReviewAction = 'merge-and-upload' | 'replace-cloud' | 'replace-local';
 
@@ -38,6 +42,22 @@ export interface DriveSyncReviewSection {
 
 export interface DriveSyncReviewDraft {
   action: DriveSyncReviewAction;
+  /**
+   * 869f135ru. Scopes the review has no section for, resolved once and carried
+   * through to the reviewed payload.
+   *
+   * The review reconciles the seven scopes a reader can make a per-row decision
+   * about. `ALL_DATA_TRANSFER_SCOPES` carries ten. The other three -
+   * `crewForgeProfiles`, `savedRumbleOpponents`, `boostedCharacterIds` - have no
+   * section, and `buildReviewedAllDataPayload` used to rebuild the payload from
+   * the sections alone, so confirming a review UPLOADED A BACKUP WITH THOSE
+   * THREE MISSING. `crewForgeProfiles` had just been added to the export by
+   * 869f12x4p for exactly this class of loss, and the sync path never got it.
+   *
+   * This is derived from the scope list rather than listed, so a new scope is
+   * carried from the day it exists whether or not anybody remembers this file.
+   */
+  carried: Partial<AllDataTransferPayload>;
   sections: DriveSyncReviewSection[];
 }
 
@@ -164,10 +184,50 @@ export function buildDriveSyncReviewDraft(
 ): DriveSyncReviewDraft {
   return {
     action,
+    carried: collectCarriedScopes(localPayload, drivePayload, action),
     sections: sectionConfigs.map((config) =>
       buildReviewSection(localPayload, drivePayload, action, config),
     ),
   };
+}
+
+/** Scopes with no review section, taken from whichever side the action makes authoritative. */
+function collectCarriedScopes(
+  localPayload: AllDataTransferPayload,
+  drivePayload: AllDataTransferPayload,
+  action: DriveSyncReviewAction,
+): Partial<AllDataTransferPayload> {
+  const reviewed = new Set<string>(sectionConfigs.map((config) => config.key));
+  const carried: Partial<AllDataTransferPayload> = {};
+
+  for (const scope of ALL_DATA_TRANSFER_SCOPES) {
+    if (reviewed.has(scope)) {
+      continue;
+    }
+
+    /*
+     * `replace-local` makes Drive authoritative; the other two push the device.
+     * Either way, fall back to the other side rather than dropping a scope that
+     * exists on only one of them - losing it is the defect this exists to stop.
+     */
+    const preferred = action === 'replace-local' ? drivePayload : localPayload;
+    const fallback = action === 'replace-local' ? localPayload : drivePayload;
+    const value = preferred[scope] ?? fallback[scope];
+
+    if (value !== undefined) {
+      assignScope(carried, scope, cloneValue(value));
+    }
+  }
+
+  return carried;
+}
+
+function assignScope(
+  target: Partial<AllDataTransferPayload>,
+  scope: AllDataTransferScope,
+  value: unknown,
+): void {
+  (target as Record<string, unknown>)[scope] = value;
 }
 
 export function buildReviewedAllDataPayload(
@@ -190,6 +250,7 @@ export function buildReviewedAllDataPayload(
       };
     },
     {
+      ...draft.carried,
       exportedAt,
       schemaVersion: 1,
       source: 'all-data',

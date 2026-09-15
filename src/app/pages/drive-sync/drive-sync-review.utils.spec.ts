@@ -5,7 +5,10 @@ import {
   buildReviewedAllDataPayload,
   updateDriveSyncReviewRowChoice,
 } from './drive-sync-review.utils';
-import { type AllDataTransferPayload } from '../settings/all-data-transfer.utils';
+import {
+  ALL_DATA_TRANSFER_SCOPES,
+  type AllDataTransferPayload,
+} from '../settings/all-data-transfer.utils';
 
 describe('drive sync review utils', () => {
   it('builds item-level diff rows for every sync section', () => {
@@ -119,6 +122,88 @@ describe('drive sync review utils', () => {
       1001, 1002, 1003,
     ]);
   });
+
+  /*
+   * 869f135ru. An export is a file the reader can open. A backup is trusted
+   * blindly, which is why the sync path has to be PROVEN to carry the same set
+   * rather than assumed to.
+   *
+   * These walk `ALL_DATA_TRANSFER_SCOPES` rather than a hand-written list, so a
+   * new durable scope joins the backup on the day it is declared or fails here.
+   * A list would have been kept in step exactly as well as the one this found.
+   */
+  describe('every transfer scope survives the review', () => {
+    const actions = ['merge-and-upload', 'replace-cloud', 'replace-local'] as const;
+
+    for (const action of actions) {
+      it(`carries every scope through ${action}`, () => {
+        const draft = buildDriveSyncReviewDraft(
+          createFullyPopulatedPayload('device'),
+          createFullyPopulatedPayload('drive'),
+          action,
+        );
+        const payload = buildReviewedAllDataPayload(draft);
+
+        for (const scope of ALL_DATA_TRANSFER_SCOPES) {
+          expect(payload[scope], `${scope} was dropped by ${action}`).toBeDefined();
+        }
+      });
+    }
+
+    it('keeps a scope that exists on only one side, whichever side that is', () => {
+      const deviceOnly = createFullyPopulatedPayload('device');
+      const driveWithout = createFullyPopulatedPayload('drive');
+
+      delete driveWithout.crewForgeProfiles;
+      delete deviceOnly.boostedCharacterIds;
+
+      for (const action of actions) {
+        const payload = buildReviewedAllDataPayload(
+          buildDriveSyncReviewDraft(deviceOnly, driveWithout, action),
+        );
+
+        expect(payload.crewForgeProfiles, `crewForgeProfiles lost by ${action}`).toBeDefined();
+        expect(payload.boostedCharacterIds, `boostedCharacterIds lost by ${action}`).toBeDefined();
+      }
+    });
+
+    it('takes an unreviewed scope from Drive when Drive is the one replacing local', () => {
+      const payload = buildReviewedAllDataPayload(
+        buildDriveSyncReviewDraft(
+          createFullyPopulatedPayload('device'),
+          createFullyPopulatedPayload('drive'),
+          'replace-local',
+        ),
+      );
+
+      expect(payload.boostedCharacterIds?.characterIds).toEqual([2002]);
+    });
+
+    it('takes an unreviewed scope from the device when the device is the one being pushed', () => {
+      for (const action of ['merge-and-upload', 'replace-cloud'] as const) {
+        const payload = buildReviewedAllDataPayload(
+          buildDriveSyncReviewDraft(
+            createFullyPopulatedPayload('device'),
+            createFullyPopulatedPayload('drive'),
+            action,
+          ),
+        );
+
+        expect(payload.boostedCharacterIds?.characterIds, action).toEqual([1001]);
+      }
+    });
+
+    it('does not share structure with its source, so a later edit cannot reach the payload', () => {
+      const local = createFullyPopulatedPayload('device');
+      const payload = buildReviewedAllDataPayload(
+        buildDriveSyncReviewDraft(local, createFullyPopulatedPayload('drive'), 'replace-cloud'),
+      );
+
+      local.boostedCharacterIds?.characterIds.push(9999);
+
+      expect(payload.boostedCharacterIds?.characterIds).toEqual([1001]);
+    });
+  });
 });
 
 function findRow(
@@ -129,6 +214,38 @@ function findRow(
   return draft.sections
     .find((section) => section.key === sectionKey)
     ?.rows.find((row) => row.key === rowKey);
+}
+
+/**
+ * Every scope in `ALL_DATA_TRANSFER_SCOPES`, populated. `side` makes the two
+ * sides distinguishable so a test can say WHICH one a value came from.
+ */
+function createFullyPopulatedPayload(side: 'device' | 'drive'): AllDataTransferPayload {
+  const base = side === 'device' ? createLocalPayload() : createDrivePayload();
+  const marker = side === 'device' ? 1001 : 2002;
+
+  return {
+    ...base,
+    boostedCharacterIds: {
+      characterIds: [marker],
+      exportedAt: '2026-04-20T18:00:00.000Z',
+      schemaVersion: 1,
+      source: 'boosted-characters',
+    },
+    crewForgeProfiles: {
+      exportedAt: '2026-04-20T18:00:00.000Z',
+      lastProfileId: `${side}-profile`,
+      profiles: [],
+      schemaVersion: 1,
+      source: 'crew-forge-profiles',
+    },
+    savedRumbleOpponents: {
+      exportedAt: '2026-04-20T18:00:00.000Z',
+      opponents: [],
+      schemaVersion: 1,
+      source: 'saved-rumble-opponents',
+    },
+  };
 }
 
 function createLocalPayload(): AllDataTransferPayload {
