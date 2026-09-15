@@ -48,8 +48,38 @@ export const ROUTE_LOAD_BUDGETS = Object.freeze({
     captainCoverageReadyMs: { desktop: 3900, mobile: 4500 },
   },
   bundles: {
-    initialRawBytes: 1_500_000,
-    initialGzipBytes: 383_000,
+    /*
+     * 869f135rq. `initialRawBytes` and `initialGzipBytes` measure the ENTRY
+     * SCRIPTS - the two files `index.html` names, `main-*.js` and
+     * `app-config.js`. They do not measure the initial payload, and the old
+     * values are the proof: 1_500_000 and 383_000 against a real 378_675 and
+     * 96_700 is ~3.96x on both, which is not a margin anybody chooses. They are
+     * almost exactly the INITIAL GRAPH figures below, so the budget was read off
+     * Angular's `Initial total` and written against a metric that measures a
+     * quarter of it. A check whose budget came from a different measurement than
+     * its metric cannot catch anything, which is the whole subject of
+     * 869f135rj.
+     *
+     * Both pairs are now set from their own measurement x1.03, the margin this
+     * file already uses for bytes because bytes are reproducible to 0.01% across
+     * runs. Measured 2026-09-15 on v0.4.48.
+     *
+     *   entry scripts   378_675 raw / 96_700 gzip    (2 files)
+     *   initial graph  1_491_088 raw / 375_577 gzip  (20 files)
+     *
+     * The graph pair is the cost of a first visit and of every service-worker
+     * upgrade, so it is the one to watch. The entry pair is kept because it is
+     * the only number that isolates `main` itself, and its history goes back to
+     * 2026-09-03 under the same metric id.
+     *
+     * `angular.json` keeps a deliberately coarser `initial` budget over the same
+     * graph: these are the gate, that is the backstop, and the split is recorded
+     * beside it.
+     */
+    initialRawBytes: 391_000,
+    initialGzipBytes: 100_000,
+    initialGraphRawBytes: 1_536_000,
+    initialGraphGzipBytes: 387_000,
     guideRawBytes: 14_000,
     manualShareRawBytes: 320_000,
     compareRawBytes: 740_000,
@@ -337,6 +367,11 @@ async function readBundleStats() {
     captainCoverage: ['src/app/layout/tabs.page.ts', 'src/app/pages/captain-coverage/captain-coverage.page.ts'],
   };
 
+  const graphFiles = collectInitialGraphFiles(
+    initialEntries.map(({ file }) => file),
+    outputs,
+  );
+
   return {
     statsPath: path.relative(appRoot, statsPath).replace(/\\/gu, '/'),
     initial: {
@@ -348,6 +383,16 @@ async function readBundleStats() {
         gzipBytes: gzipOutputFile(file),
         entryPoint: output.entryPoint ?? null,
         source,
+      })),
+    },
+    initialGraph: {
+      fileCount: graphFiles.length,
+      rawBytes: graphFiles.reduce((total, file) => total + (outputs[file]?.bytes ?? 0), 0),
+      gzipBytes: graphFiles.reduce((total, file) => total + gzipOutputFile(file), 0),
+      files: graphFiles.map((file) => ({
+        file,
+        rawBytes: outputs[file]?.bytes ?? 0,
+        gzipBytes: gzipOutputFile(file),
       })),
     },
     routes: Object.fromEntries(
@@ -371,6 +416,50 @@ async function readBundleStats() {
 
 function findOutputByEntryPoint(outputs, entryPoint) {
   return Object.entries(outputs).find(([, output]) => String(output.entryPoint ?? '').endsWith(entryPoint)) ?? null;
+}
+
+/**
+ * 869f135rq. Everything a first visit actually downloads, not just what
+ * `index.html` names.
+ *
+ * `readInitialEntries` returns the `<script src>` tags, which on this build are
+ * exactly two files: `main-*.js` and `app-config.js`, 378_675 bytes together.
+ * That is where the number in the `initial raw JS` budget came from, and it is
+ * NOT the initial payload: `main` statically imports 18 further chunks, and a
+ * browser fetches every one of them before the app runs. The real figure is
+ * 1_491_088 bytes across 20 files - measured 2026-09-15 on v0.4.48, and equal to
+ * Angular's own `Initial total` of 1.55 MB once its 58.81 kB of CSS is removed,
+ * which is the cross-check that the two agree.
+ *
+ * Walking `import-statement` edges and stopping at `dynamic-import` is exactly
+ * the line between "arrives on the first visit" and "arrives when the reader
+ * navigates", which is what the per-route budgets below already measure.
+ */
+function collectInitialGraphFiles(entryFiles, outputs) {
+  const seen = new Set();
+  const stack = [...entryFiles];
+
+  while (stack.length > 0) {
+    const file = stack.pop();
+    const key = resolveStatsOutputKey(file, outputs);
+
+    if (!key || seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+
+    for (const dependency of outputs[key].imports ?? []) {
+      if (dependency.kind === 'dynamic-import') {
+        continue;
+      }
+      const dependencyKey = resolveStatsOutputKey(dependency.path, outputs);
+      if (dependencyKey && !seen.has(dependencyKey)) {
+        stack.push(dependencyKey);
+      }
+    }
+  }
+
+  return [...seen];
 }
 
 async function readInitialEntries(outputs) {
@@ -850,8 +939,20 @@ function checkBundleBudgets(bundle) {
   }
 
   const checks = [
-    ['initial raw JS', bundle.initial.rawBytes, ROUTE_LOAD_BUDGETS.bundles.initialRawBytes, 'bytes'],
-    ['initial gzip JS', bundle.initial.gzipBytes, ROUTE_LOAD_BUDGETS.bundles.initialGzipBytes, 'bytes'],
+    ['entry script raw JS', bundle.initial.rawBytes, ROUTE_LOAD_BUDGETS.bundles.initialRawBytes, 'bytes'],
+    ['entry script gzip JS', bundle.initial.gzipBytes, ROUTE_LOAD_BUDGETS.bundles.initialGzipBytes, 'bytes'],
+    [
+      'initial payload raw JS',
+      bundle.initialGraph.rawBytes,
+      ROUTE_LOAD_BUDGETS.bundles.initialGraphRawBytes,
+      'bytes',
+    ],
+    [
+      'initial payload gzip JS',
+      bundle.initialGraph.gzipBytes,
+      ROUTE_LOAD_BUDGETS.bundles.initialGraphGzipBytes,
+      'bytes',
+    ],
     ['guide route raw JS', bundle.routes.guide?.rawBytes, ROUTE_LOAD_BUDGETS.bundles.guideRawBytes, 'bytes'],
     [
       'manual share route raw JS',

@@ -123,8 +123,12 @@ function routeLoadResult(overrides: Record<string, number | null> = {}) {
     runLabel: 'route-load',
     bundle: {
       initial: {
-        rawBytes: value('initialRawBytes', 1_300_000),
-        gzipBytes: value('initialGzipBytes', 320_000),
+        rawBytes: value('initialRawBytes', 370_000),
+        gzipBytes: value('initialGzipBytes', 95_000),
+      },
+      initialGraph: {
+        rawBytes: value('initialGraphRawBytes', 1_450_000),
+        gzipBytes: value('initialGraphGzipBytes', 370_000),
       },
       routes: {
         guide: { rawBytes: value('guideRawBytes', 4_000), gzipBytes: 2_000 },
@@ -227,8 +231,8 @@ describe('perf-budget-report', () => {
     const report = await buildPerformanceBudgetReport({ currentDir });
 
     expect(report.status).toBe('passed');
-    expect(report.summary.metricCount).toBe(56);
-    expect(report.summary.budgetedMetricCount).toBe(50);
+    expect(report.summary.metricCount).toBe(58);
+    expect(report.summary.budgetedMetricCount).toBe(52);
     expect(report.hardBudgetFailures).toEqual([]);
     expect(report.invalidMetricFailures).toEqual([]);
     expect(report.baseline).toBeNull();
@@ -276,9 +280,9 @@ describe('perf-budget-report', () => {
     );
     expect(report.metricRows).toContainEqual(
       expect.objectContaining({
-        id: 'route-load.bundle.bundle.initial-raw-js',
-        actualMs: 1_300_000,
-        budgetMs: 1_500_000,
+        id: 'route-load.bundle.bundle.entry-script-raw-js',
+        actualMs: 370_000,
+        budgetMs: 391_000,
         unit: 'bytes',
       }),
     );
@@ -318,7 +322,7 @@ describe('perf-budget-report', () => {
         metricId: 'ability-filters.desktop.saved-teams.firsttogglems',
       }),
     ]);
-    expect(report.metricRows).toHaveLength(56);
+    expect(report.metricRows).toHaveLength(58);
   });
 
   it('gates on route-load BUNDLE breaches only, reporting timing breaches beside them', async () => {
@@ -623,7 +627,7 @@ describe('perf-budget-report', () => {
 
     await expect(readFile(outputPath, 'utf8')).resolves.toContain('"status": "warning"');
     await expect(readFile(summaryPath, 'utf8')).resolves.toContain('Hard Budget Failures');
-    await expect(readFile(summaryPath, 'utf8')).resolves.toContain('1.30MB');
+    await expect(readFile(summaryPath, 'utf8')).resolves.toContain('1.45MB');
     expect(process.exitCode).toBeUndefined();
   });
 
@@ -771,8 +775,10 @@ describe('budget parity between the harnesses and the report', () => {
   it('route-load bundle budgets match the harness', () => {
     const harness = topLevelConst('scripts/perf-route-load.mjs', 'ROUTE_LOAD_BUDGETS');
     const byLabel: Record<string, string> = {
-      'initial raw JS': 'initialRawBytes',
-      'initial gzip JS': 'initialGzipBytes',
+      'entry script raw JS': 'initialRawBytes',
+      'entry script gzip JS': 'initialGzipBytes',
+      'initial payload raw JS': 'initialGraphRawBytes',
+      'initial payload gzip JS': 'initialGraphGzipBytes',
       'guide route raw JS': 'guideRawBytes',
       'manual share route raw JS': 'manualShareRawBytes',
       'compare route raw JS': 'compareRawBytes',
