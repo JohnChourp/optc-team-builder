@@ -31,6 +31,36 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.43',
+    date: '2026-09-15',
+    userVisible: true,
+    headline: {
+      en: 'The app knows which units have actually reached Global',
+      el: 'Η εφαρμογή ξέρει πλέον ποιες μονάδες έχουν όντως φτάσει στο Global',
+    },
+    summaryEn:
+      "The Japanese version of the game runs about a year ahead of Global, and 933 of the units in this app have never reached Global at all. Until now the app could not tell you which - it was guessing from whether a picture existed, and that guess was wrong for 927 units, always in the direction of promising you a unit you cannot get. It now reads the real release data. Tell the app which version you play on the Settings screen and units you cannot obtain are marked; nothing is hidden unless you ask for it, because the catalogue is still useful when you are looking something up for a friend. Leave the setting alone and nothing changes at all.",
+    summaryEl:
+      'Η ιαπωνική έκδοση του παιχνιδιού τρέχει περίπου έναν χρόνο μπροστά από το Global, και 933 από τις μονάδες αυτής της εφαρμογής δεν έχουν φτάσει ποτέ στο Global. Μέχρι τώρα η εφαρμογή δεν μπορούσε να σου πει ποιες - το μάντευε από το αν υπήρχε εικόνα, και αυτή η εικασία ήταν λάθος για 927 μονάδες, πάντα προς την πλευρά που σου υπόσχεται μια μονάδα που δεν μπορείς να αποκτήσεις. Πλέον διαβάζει τα πραγματικά δεδομένα κυκλοφορίας. Πες στην εφαρμογή ποια έκδοση παίζεις στην οθόνη Ρυθμίσεις και οι μονάδες που δεν μπορείς να αποκτήσεις σημειώνονται - δεν κρύβεται τίποτα αν δεν το ζητήσεις εσύ, γιατί ο κατάλογος παραμένει χρήσιμος όταν ψάχνεις κάτι για φίλο σου. Άσε τη ρύθμιση όπως είναι και δεν αλλάζει απολύτως τίποτα.',
+    added: [
+      {
+        en: "**Game version** on the **Settings** screen: tell the app whether you play Global or Japan. It starts on **Both / not sure**, so nothing changes until you choose.",
+        el: 'Η **Έκδοση παιχνιδιού** στην οθόνη **Ρυθμίσεις**: πες στην εφαρμογή αν παίζεις Global ή Japan. Ξεκινά στο **Και τα δύο / δεν είμαι σίγουρος**, οπότε δεν αλλάζει τίποτα μέχρι να διαλέξεις.',
+      },
+      {
+        en: "**Hide units I can't get**, just under it on the same screen: off by default, and only offered once you have picked a version. Turn it on and the character list, the pickers and both team builders stop offering units that have not reached your version.",
+        el: 'Η **Απόκρυψη μονάδων που δεν μπορώ να αποκτήσω**, ακριβώς από κάτω στην ίδια οθόνη: ανενεργή από προεπιλογή και εμφανίζεται μόνο αφού διαλέξεις έκδοση. Ενεργοποίησέ την και η λίστα χαρακτήρων, οι pickers και οι δύο team builders σταματούν να προτείνουν μονάδες που δεν έχουν φτάσει στην έκδοσή σου.',
+      },
+    ],
+    improved: [],
+    fixed: [
+      {
+        en: 'The release data behind all of this is now read from the source that actually records it, instead of being guessed from whether a unit had a picture - a guess that was wrong for 927 units.',
+        el: 'Τα δεδομένα κυκλοφορίας πίσω από όλα αυτά διαβάζονται πλέον από την πηγή που τα καταγράφει όντως, αντί να μαντεύονται από το αν μια μονάδα είχε εικόνα - μια εικασία που ήταν λάθος για 927 μονάδες.',
+      },
+    ],
+  },
+  {
     version: '0.4.42',
     date: '2026-09-15',
     userVisible: true,
