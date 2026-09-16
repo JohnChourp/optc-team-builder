@@ -81,6 +81,46 @@ Each rule was broken on purpose against a real build before the lane was registe
 the raw seed again, shipping a seed changed after the database was built, and building with
 `ng build` directly so the database step never ran. All three failed, naming the right file.
 
+## What a release costs an installed client
+
+Owner: ClickUp [869f138qb](https://app.clickup.com/t/90121749478/869f138qb).
+
+The service worker compares the new build's file hashes with the ones it has, and downloads
+only the files that changed. So a release costs a returning player exactly the prefetched files
+whose bytes moved.
+
+Until this change, the importer wrote a fresh `generatedAt` into all five generated files on every
+run - including the seed, where it sits in the `meta` row. Every release therefore changed the
+seed, and every installed client downloaded all of it again, whether or not the game data had
+moved. Measured on 2026-09-16 over the release tags:
+
+| Transitions | Seed changed only in `generatedAt` | Seed changed for real |
+| --- | ---: | ---: |
+| since v0.2.0 (65) | **58** | 7 |
+| v0.4.42 to v0.4.53 (11) | **10** | 1 (a new column) |
+
+Each of those 58 cost 27.7 MB per returning player. The real changes that only added characters
+were 2.4-13.8 KB gzipped; the two schema changes were about 0.4 MB.
+
+Now `generatedAt` means "when this data last changed". At the end of an import,
+`keepGeneratedAtWhenOnlyTimestampChanged` (`scripts/lib/optc-dataset.mjs`) compares the five files
+with what was on disk before; when the timestamp is the only difference, it puts the previous files
+back byte for byte. A release that brings no new data therefore costs an installed client
+**nothing** for the dataset; one that does costs the new database, about 2.3 MB.
+
+The check runs at the end on purpose. An import writes the files twice - the importer, then the
+manual overlay, which rebuilds them from the seed and writes again with its own timestamp - so a
+check inside the importer alone compared two versions that never agree. That was tried first and
+measured: a data-identical import still moved the timestamp in all five files. With the check at
+the end, the same import left them byte-identical.
+
+To see what a given release changed in the dataset, compare the two tags:
+`git diff --numstat vA.B.C vX.Y.Z -- public/assets/data/`. A seed line count of `1 1` is the
+timestamp alone - the shape this change removes.
+
+The date on the Settings screen's "App and data" card ("Data generated") reads the same field, so
+it now shows when the data last changed rather than when the last release ran.
+
 ## What this does not cover
 
 - Which host layer skips compression for `.sql` (Cloudflare in front of GitHub Pages) could not be

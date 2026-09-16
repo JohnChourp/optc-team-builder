@@ -13,6 +13,8 @@ The importer writes these files:
 - `optc-unresolved-images.json`: characters that still need image coverage for the installed offline packs.
 - `optc-preview.json`: small preview sample for early UI loading and checks.
 
+`generatedAt` in these files is the time the data last changed, not the time of the last import: an import that would change nothing but that timestamp leaves all five files byte-identical, so a release with no new data costs an installed client nothing (869f138qb, see [dataset-delivery.md](dataset-delivery.md)).
+
 `optc-manifest.json` is versioned with `schemaVersion: 1`. The repository service normalizes older manifests without this field to `1`, so existing local builds keep loading. Breaking generated dataset changes must increment this value and update `DatasetManifest`.
 
 The manifest counts must match the generated records:
