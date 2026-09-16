@@ -200,7 +200,7 @@ export const BROWSER_STORAGE_KEYS: readonly BrowserStorageKeyRecord[] = [
     owner: 'src/app/core/services/drive-sync-state.service.ts',
     backend: 'preferences',
     classification: 'device-preference',
-    note: 'This device’s bookkeeping about its own last sync. Exporting it would describe a sync the importing device never did.',
+    note: 'This device’s bookkeeping about its own last sync, and it carries connectedAccountEmail and connectedAccountId - the signed-in Google identity. Two reasons never to export it, and the identity is the one a reader would act on: exporting it would both describe a sync the importing device never did and hand that device somebody else’s account. Classified device-preference rather than credential because the key is backend: preferences and browser-storage-keys.data.spec.ts:66 binds those together; the value is not a token, it is who the token belonged to.',
   },
   {
     key: 'builderIntroDismissed',

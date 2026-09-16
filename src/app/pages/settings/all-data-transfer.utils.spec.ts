@@ -18,6 +18,7 @@ import {
   downloadAllDataExport,
   parseAllDataImportCandidate,
 } from './all-data-transfer.utils';
+import { neverExportedStorageKeys } from '../../core/data/browser-storage-keys.data';
 
 describe('All data transfer helpers', () => {
   it('builds a full nested export payload', () => {
@@ -515,5 +516,199 @@ describe('every scope survives the round trip', () => {
     for (const scope of ALL_DATA_TRANSFER_SCOPES) {
       expect(body, `applyAllDataPayload restores ${scope}`).toContain(`payload.${scope} !== undefined`);
     }
+  });
+});
+
+/**
+ * 869f135ua. The export must not carry a key that never leaves the device.
+ *
+ * `browser-storage-keys.data.ts` already classifies all 28 stored keys and
+ * `browser-storage-keys.data.spec.ts` already asserts over that REGISTRY - that a
+ * key marked `credential` declares no export scope, that every key carries a
+ * reason. All of it reads the record. None of it reads the object the exporter
+ * actually produces, so the registry could be perfectly consistent while the
+ * builder wrote a session token into a scope payload.
+ *
+ * This is the test that looks at the payload. It asserts on the SERIALISED text
+ * rather than on `Object.keys`, because the only vector the structural
+ * guarantees leave open is a forbidden key nested inside a scope - a session
+ * token spread into a saved team, not a top-level `optc_google_account_session`
+ * field that no reviewer would miss.
+ *
+ * Out of scope on purpose: `appProperties.accountId` at
+ * `drive-backup.service.ts:1113`. That is Drive file metadata in the player's
+ * own Drive, uploaded as a separate multipart part from the payload blob, so it
+ * is not in this object and is not meant to be.
+ */
+describe('never-exported storage keys', () => {
+  const EXPORTED_AT = '2026-09-16T10:00:00.000Z';
+
+  /**
+   * Every scope populated, because an absence test over an empty payload is the
+   * definition of a check that cannot fail. The three richest scopes carry real
+   * fixtures; the rest carry one record each, which is enough for the cloner to
+   * run and for the scope to appear in the serialised text.
+   */
+  function fullSections(
+    savedTeamExtras: Record<string, unknown> = {},
+  ): Parameters<typeof buildAllDataTransferPayload>[0] {
+    return {
+      favorites: { characters: [{ number: 1001, name: 'Luffy' }] },
+      favoriteShips: {
+        schemaVersion: 1,
+        source: 'favorite-ships',
+        exportedAt: EXPORTED_AT,
+        ships: [{ id: 9001, name: 'Going Merry' }],
+      },
+      savedTeams: {
+        schemaVersion: 1,
+        source: 'saved-teams',
+        exportedAt: EXPORTED_AT,
+        teams: [
+          {
+            id: 'team-1',
+            name: 'Crew 1',
+            notes: '',
+            shipId: null,
+            slots: [1001, null, null, null, null, null],
+            createdAt: EXPORTED_AT,
+            updatedAt: EXPORTED_AT,
+            ...savedTeamExtras,
+          } as never,
+        ],
+      },
+      savedRumbleTeams: {
+        schemaVersion: 1,
+        source: 'saved-rumble-teams',
+        exportedAt: EXPORTED_AT,
+        rumbleTeams: [{ id: 'rumble-1', name: 'Rumble crew' }] as never,
+      },
+      savedEnemies: {
+        schemaVersion: 1,
+        source: 'saved-enemies',
+        exportedAt: EXPORTED_AT,
+        enemies: [
+          {
+            id: 'enemy-1',
+            name: 'Boss',
+            notes: '',
+            rawEnemyText: '',
+            imageDataUrl: null,
+            selectedTypes: ['DEX'],
+            selectedClasses: ['Fighter'],
+            requiredAbilities: [],
+            enemyMechanics: [],
+            requireAllSelectedTypesInTeam: false,
+            requireAllSelectedClassesPerCharacter: false,
+            createdAt: EXPORTED_AT,
+            updatedAt: EXPORTED_AT,
+          } as never,
+        ],
+      },
+      characterBoxes: {
+        schemaVersion: 1,
+        source: 'character-boxes',
+        exportedAt: EXPORTED_AT,
+        boxes: [
+          {
+            id: 'box-1',
+            name: 'Powerhouse Box',
+            characterIds: [1001],
+            createdAt: EXPORTED_AT,
+            updatedAt: EXPORTED_AT,
+          },
+        ],
+      },
+      characterOverrides: {
+        schemaVersion: 1,
+        source: 'character-overrides',
+        exportedAt: EXPORTED_AT,
+        overrides: [{ characterId: 1001, name: 'Local Luffy' }] as never,
+      },
+      crewForgeProfiles: {
+        schemaVersion: 1,
+        source: 'crew-forge-profiles',
+        exportedAt: EXPORTED_AT,
+        profiles: [
+          {
+            id: 'profile-1',
+            name: 'Wide',
+            slotDefinitions: [{ id: 'slot-1' }],
+            preprocess: { scale: 1 },
+            examples: [{ id: 'example-1' }],
+            exemplars: [{ id: 'exemplar-1', fingerprint: [1, 2, 3] }],
+          },
+        ] as never,
+        lastProfileId: 'profile-1',
+      },
+      savedRumbleOpponents: {
+        schemaVersion: 1,
+        source: 'saved-rumble-opponents',
+        exportedAt: EXPORTED_AT,
+        opponents: [
+          {
+            id: 'opponent-1',
+            name: 'Kaido',
+            activeCharacterIds: [1001],
+            benchCharacterIds: [],
+          },
+        ] as never,
+      },
+      boostedCharacterIds: {
+        schemaVersion: 1,
+        source: 'boosted-characters',
+        exportedAt: EXPORTED_AT,
+        characterIds: [1001],
+      },
+    };
+  }
+
+  it('populates every scope, so the absence assertions below are not vacuous', () => {
+    const payload = buildAllDataTransferPayload(fullSections(), EXPORTED_AT);
+
+    for (const scope of ALL_DATA_TRANSFER_SCOPES) {
+      expect(payload[scope], `the fixture must populate ${scope}`).toBeDefined();
+    }
+  });
+
+  it('carries no never-exported key anywhere in the serialised export', () => {
+    const records = neverExportedStorageKeys();
+
+    /*
+     * A loop over an empty list passes. 17 of the 28 registered keys are
+     * never-exported today; asserting the count is non-trivial is what stops a
+     * future registry refactor from turning this test into a no-op.
+     */
+    expect(records.length).toBeGreaterThan(10);
+
+    const payload = buildAllDataTransferPayload(fullSections(), EXPORTED_AT);
+    const serialized = JSON.stringify(payload);
+
+    for (const record of records) {
+      expect(serialized, `the export must not carry ${record.key}`).not.toContain(
+        `"${record.key}"`,
+      );
+    }
+
+    const topLevel = Object.keys(payload).filter((key) =>
+      records.some((record) => record.key === key),
+    );
+
+    expect(topLevel).toEqual([]);
+  });
+
+  it('goes red when a forbidden key is nested inside a scope payload', () => {
+    /*
+     * The mutation proof, kept as a test rather than done by hand once.
+     * `cloneSavedTeamsPayload` spreads each team, so an injected key survives -
+     * unlike `boostedCharacterIds` or `favorites`, whose cloners rebuild their
+     * records and would strip the injection, making a broken test look green.
+     */
+    const payload = buildAllDataTransferPayload(
+      fullSections({ optc_google_account_session: 'ya29.leaked' }),
+      EXPORTED_AT,
+    );
+
+    expect(JSON.stringify(payload)).toContain('"optc_google_account_session"');
   });
 });

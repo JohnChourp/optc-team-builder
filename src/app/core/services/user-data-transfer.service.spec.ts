@@ -3,6 +3,7 @@ import { signal } from '@angular/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { UserDataTransferService } from './user-data-transfer.service';
+import { neverExportedStorageKeys } from '../data/browser-storage-keys.data';
 
 describe('UserDataTransferService', () => {
   beforeEach(() => {
@@ -20,6 +21,22 @@ describe('UserDataTransferService', () => {
     );
 
     const payload = await service.buildAllDataPayload('2026-04-20T18:00:00.000Z');
+
+    /*
+     * 869f135ua. The same absence assertion the settings-page exporter carries, applied to the
+     * service that feeds BOTH the "export all data" file and the Drive backup -
+     * `drive-backup.service.ts:1022` serialises this exact object, so there is no separate Drive
+     * test to write. The payload-level check is in
+     * `src/app/pages/settings/all-data-transfer.utils.spec.ts`; this one proves the real service
+     * assembling real signals reaches the same place.
+     */
+    const serializedPayload = JSON.stringify(payload);
+
+    for (const record of neverExportedStorageKeys()) {
+      expect(serializedPayload, `the Drive payload must not carry ${record.key}`).not.toContain(
+        `"${record.key}"`,
+      );
+    }
 
     expect(payload).toMatchObject({
       exportedAt: '2026-04-20T18:00:00.000Z',
