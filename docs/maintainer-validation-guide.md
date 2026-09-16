@@ -278,7 +278,7 @@ upsert, apply, or dataset-integrity contract:
 Command status: CI-executable.
 <!-- docs-command: ci-executable -->
 ```bash
-npx vitest run scripts/lib/dataset-integrity.spec.ts scripts/lib/optc-dataset.spec.ts scripts/lib/manual-character-overlay.spec.ts scripts/lib/manual-character-apply.spec.ts scripts/upsert-manual-character.spec.ts
+npx vitest run scripts/lib/dataset-integrity.spec.ts scripts/lib/manual-character-overlay.spec.ts scripts/lib/manual-character-apply.spec.ts scripts/upsert-manual-character.spec.ts
 ```
 
 Use the broad script sweep when the change affects shared script validation or
