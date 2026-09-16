@@ -10,6 +10,7 @@ import {
   type CaptainCoverageFilterWorkerRequest,
   type CaptainCoverageFilterWorkerResponse,
 } from './captain-coverage-filter.worker.models';
+import { reportWorkerFallback } from './worker-fallback.utils';
 
 interface PendingCaptainCoverageFilterRequest {
   resolve: (outcome: CaptainCoverageResultPassOutcome) => void;
@@ -146,7 +147,8 @@ export class CaptainCoverageFilterRunnerService {
       return new Worker(new URL('captain-coverage-filter.worker', import.meta.url), {
         type: 'module',
       });
-    } catch {
+    } catch (error) {
+      reportWorkerFallback('captain-coverage-filter', 'construction-failed', error);
       return null;
     }
   }
@@ -199,6 +201,7 @@ export class CaptainCoverageFilterRunnerService {
    * worker that dies mid-flight cannot leave the page pending forever.
    */
   private abandonWorker(): void {
+    reportWorkerFallback('captain-coverage-filter', 'worker-failed');
     this.workerUnavailable = true;
 
     const waiting = [...this.pending.values()];

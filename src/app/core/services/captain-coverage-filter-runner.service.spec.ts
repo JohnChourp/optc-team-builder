@@ -137,7 +137,8 @@ describe('CaptainCoverageFilterRunnerService', () => {
     expect(outcome.boostedCount).toBe(0);
   });
 
-  it('runs in-thread when constructing the worker throws', async () => {
+  it('runs in-thread when constructing the worker throws, and says so', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     vi.stubGlobal(
       'Worker',
       class {
@@ -150,6 +151,22 @@ describe('CaptainCoverageFilterRunnerService', () => {
     await expect(
       new CaptainCoverageFilterRunnerService().run(createDataset(), createParams()),
     ).resolves.toEqual({ ids: [2002, 2001], boostedCount: 0 });
+    /* 869f138qj. The fallback is correct and slower; it must not be silent. */
+    expect(warn).toHaveBeenCalledWith(
+      'optc:worker-fallback',
+      'captain-coverage-filter construction-failed (blocked by CSP); running on the main thread instead.',
+    );
+    warn.mockRestore();
+  });
+
+  it('says nothing when the environment simply has no Worker', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    vi.stubGlobal('Worker', undefined);
+
+    await new CaptainCoverageFilterRunnerService().run(createDataset(), createParams());
+
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
   });
 
   it('sends the dataset once and then only filter requests', async () => {

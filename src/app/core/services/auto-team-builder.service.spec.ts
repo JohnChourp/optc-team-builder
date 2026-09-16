@@ -37561,6 +37561,7 @@ describe('Auto team builder', () => {
 
   // 869exmmh5: a worker that fails is retried on the main thread; the path says both.
   it('reports a single worker that failed and the main-thread rerun that followed', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     const repository = {
       getAutoBuilderCandidates: vi.fn().mockResolvedValue(createStrictMixedTeamRecords()),
     };
@@ -37593,6 +37594,12 @@ describe('Auto team builder', () => {
     expect(onExecutionPath.mock.calls).toEqual([['worker'], ['mainThreadAfterWorkerFailure']]);
     expect(worker.terminated).toBe(true);
     expect(result).not.toBeNull();
+    /* 869f138qj. The rerun is right and slower, so it is reported, not absorbed. */
+    expect(warn).toHaveBeenCalledWith(
+      'optc:worker-fallback',
+      'auto-team-builder worker-failed (worker crashed); running on the main thread instead.',
+    );
+    warn.mockRestore();
   });
 
   it('grows the pooled worker count for later fallback attempts when getWorkerCount increases', async () => {
