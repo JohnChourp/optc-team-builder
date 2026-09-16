@@ -117,6 +117,54 @@ type AutoBuildProgressSnapshotBase = Omit<
   inFlightFallbackTimings?: AutoTeamBuildInFlightFallbackTiming[];
 };
 
+/**
+ * 869f135t5. Three numbers the fallback search leans on, and everything that is
+ * actually KNOWABLE about each.
+ *
+ * Written as provenance, not as justification. None of the three has a recorded
+ * benchmark, and inventing one would be worse than the silence it replaces - a
+ * cited measurement nobody ran is a number that then cannot be changed, because
+ * the next reader believes it was chosen. So each says where it came from, what
+ * it moves, and - where it matters - what does NOT pin it.
+ *
+ * `MAX_DYNAMIC_TOTAL_ATTEMPTS = 31_744` (= 31 x 1024) arrived in `3c1fe2eb`
+ * (2026-04-22, "cap auto worker count to four and enhance progress display").
+ * There is no predecessor cap and no stated benchmark, so there is nothing to
+ * cite and no earlier value it replaced. What it MOVES is exact: the planner's
+ * `getTotalAttempts()` feeds `progress.totalAttempts`, so this is the
+ * denominator the reader watches on the loading panel. Changing it changes a
+ * number on screen, not only how long a search runs.
+ *
+ * It is declared a SECOND time, with the same value, in
+ * `auto-team-builder.service.ts`. Neither exports it and nothing imports it, so
+ * the two can drift apart silently - which is why
+ * `auto-team-builder.engine.spec.ts` reads both literals out of the source and
+ * asserts they are equal. That test is the only thing tying them together.
+ *
+ * Do NOT "reconcile" this cap's two consumers. `resolveTheoreticalSubsetTotalAttempts`
+ * here and `resolveProjectedUnboundedTotalAttempts` in the service compute
+ * DIFFERENT quantities on purpose - a plan size and an unbounded upper bound -
+ * and the service combines them with `Math.max` deliberately, because the
+ * planner's own number is clamped to 257 on the preferred-leader fast path.
+ * They were added in the same commit and have never diverged.
+ *
+ * `RECENT_FALLBACK_AVERAGE_ALPHA = 0.35` and
+ * `MIN_CATEGORY_TIMING_SAMPLE_COUNT = 2` both arrived in `4110f777`
+ * (2026-05-02) inside a generic feature commit, again with no stated
+ * measurement.
+ *
+ * The alpha is the ETA's reaction speed: it is the weight of the newest attempt
+ * in the exponential average at `recordAutoTeamBuildFallbackTiming`, which
+ * reaches `averageFallbackAttemptMs` -> `estimatedRemainingMs` ->
+ * `buildEstimatedFinishLabel`. It is player-visible, and it is pinned only from
+ * BELOW: `engine.spec.ts` asserts the recent average is less than the lifetime
+ * average, which fails at 0.10/0.20/0.25 and passes from about 0.277 upward -
+ * so 0.5 and 0.99 would pass that test too. Treat it as unreviewed in the upward
+ * direction.
+ *
+ * The sample count is when a per-category average is trusted over the pooled
+ * one (`resolveFallbackCategoryTimingMs`): 2 completed attempts in a category.
+ */
 const MAX_DYNAMIC_TOTAL_ATTEMPTS = 31_744;
 const MAX_DYNAMIC_SCHEDULED_FALLBACK_ATTEMPTS = MAX_DYNAMIC_TOTAL_ATTEMPTS - 1;
 const RECENT_FALLBACK_AVERAGE_ALPHA = 0.35;
