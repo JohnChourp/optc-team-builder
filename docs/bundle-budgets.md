@@ -126,40 +126,47 @@ The `browser`/`node` split is the one that changes how a number should be read: 
 single observation moves with the runner's weather, a mean over 600 loops does
 not.
 
-### The headroom nobody had looked at
+### The headroom nobody had looked at — measured, then closed
 
 The eight `node` rows are the ones anybody can re-measure without a browser, so
-they were re-measured. `PERF_ASSERT=0 npm run perf:saved-team-codecs`, this
-machine, 2026-09-16:
+they were re-measured. Three runs of `npm run perf:saved-team-codecs` on
+2026-09-16 agreed within 8%, which is what a mean over 40–1,200 loops should do.
 
-| Row | Budget | Measured | Headroom |
-| --- | ---: | ---: | ---: |
-| `invalid input validation` | 1 ms | **0.003 ms** | **333x** |
-| `share decode` | 3 ms | 0.066 ms | **45x** |
-| `share resolve and sanitize` | 4 ms | 0.092 ms | **43x** |
-| `bulk JSON parse` | 10 ms | 0.468 ms | **21x** |
-| `bulk export encode` | 10 ms | 0.549 ms | **18x** |
-| `share encode` | 5 ms | 0.288 ms | **17x** |
-| `bulk sanitize` | 10 ms | 0.816 ms | **12x** |
-| `bulk parse and sanitize` | 15 ms | 1.289 ms | **12x** |
+They were **12x to 333x** their own measurements. That is not headroom, it is
+absence: `invalid input validation` read **0.003 ms against a 1 ms budget**, so the
+codec would have had to get **333 times slower** before the row noticed.
 
-Not one of them can fail under any plausible regression: the codec would have to
-get **twelve times slower** before the tightest row noticed, and **333 times
-slower** before the loosest did. Compare the bundle rows above, which sit at
-**1.03x**.
+**The owner's answer was to re-set them from measurement rather than delete them**,
+and they now sit at roughly **9x**:
 
-(This machine is not `ubuntu-latest`, so the absolute figures will differ in CI.
-The ratios are the point, and a runner three times slower would still leave every
-row between 4x and 100x.)
+| Row | Measured (slowest of 3) | Was | Now | Now at |
+| --- | ---: | ---: | ---: | ---: |
+| `bulk parse and sanitize` | 1.356 ms | 15 | **12** | 8.8x |
+| `bulk sanitize` | 0.881 ms | 10 | **8** | 9.1x |
+| `bulk export encode` | 0.549 ms | 10 | **5** | 9.1x |
+| `bulk JSON parse` | 0.482 ms | 10 | **4** | 8.3x |
+| `share encode` | 0.299 ms | 5 | **2.5** | 8.4x |
+| `share resolve and sanitize` | 0.097 ms | 4 | **1** | 10.3x |
+| `share decode` | 0.067 ms | 3 | **0.6** | 9.0x |
+| `invalid input validation` | 0.003 ms | 1 | **0.1** | 33x — see below |
 
-So these rows are recording a number nobody will ever read, and writing a profile
-and a provenance date onto a budget that is 333x its measurement dresses a
-non-measurement as a governed one.
+**Why 9x and not 1.03x.** The bundle rows above sit at 1.03x because bytes
+reproduce to 0.01% and there is no weather to absorb. These are timings on a CI
+runner, so the multiplier is absorbing a *slower machine*, not run-to-run noise —
+9x covers a runner about 6.7x slower than this one even against the repository's
+documented ±35% day-to-day movement. And these budgets are **advisory**: they
+report and do not gate, so the cost of being slightly tight is a line in a report
+rather than a failed build.
 
-**The honest fix is to re-set them from their measurements, or delete them — and
-that is a decision about what regression is worth catching, not an implementation
-detail.** It is recorded here rather than taken, which is why those rows are
-`provisional` and say so in the report's Metrics table.
+**One row is not at 9x, deliberately.** `invalid input validation` measures 0.003 ms
+per loop — 3.6 ms in total across 1,200 loops — which is near what this harness can
+resolve at all. It keeps a loose 0.1 ms, and saying so is better than pretending
+the ratio is uniform.
+
+All eight are now `provenance: 'measured'` with `setOn: '2026-09-16'`, joining the
+four bundle rows. **The 30 browser rows remain `provisional`** and must stay that
+way until somebody runs those harnesses — they need a browser, and inventing a date
+for them is exactly what that field exists to prevent.
 
 ### `hardBudgets` is gone
 

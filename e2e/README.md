@@ -234,14 +234,20 @@ to `perf-artifacts/saved-team-codecs`.
 
 The recurring workflow budgets are:
 
-- bulk export encode `<=10ms` per loop
-- bulk JSON parse `<=10ms` per loop
-- bulk sanitize `<=10ms` per loop
-- bulk parse/sanitize `<=15ms` per loop
-- share encode `<=5ms` per loop
-- share decode `<=3ms` per loop
-- share resolve/sanitize `<=4ms` per loop
-- invalid-input validation `<=1ms` per loop
+- bulk export encode `<=5ms` per loop
+- bulk JSON parse `<=4ms` per loop
+- bulk sanitize `<=8ms` per loop
+- bulk parse/sanitize `<=12ms` per loop
+- share encode `<=2.5ms` per loop
+- share decode `<=0.6ms` per loop
+- share resolve/sanitize `<=1ms` per loop
+- invalid-input validation `<=0.1ms` per loop
+
+Those eight were re-set from measurement on 2026-09-16 (869f135u7) and sit at
+roughly **9x** their measured per-loop means. They were 12x to 333x, which is not
+headroom - `invalid-input validation` read 0.003ms against a 1ms budget. See
+[`docs/bundle-budgets.md`](../docs/bundle-budgets.md) for why 9x rather than the
+1.03x the byte budgets use, and for the one row that is deliberately looser.
 
 `npm run perf:memory-pressure` replays large compare imports and Saved Teams
 imports in a constrained mobile Chromium profile. It records Chromium

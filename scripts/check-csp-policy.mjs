@@ -84,46 +84,27 @@ const REQUIRED_INJECTED_ORIGINS = [
  *   Microsoft Clarity    0 mentions   NOT disclosed
  *   Cloudflare           0 mentions   NOT disclosed
  *
- * Three of the four measurement surfaces this app ships are named nowhere a
- * reader can see. That is an owner decision, not a typo - the honest options are
- * to disclose them or to remove them, and writing privacy copy for a vendor the
- * owner may prefer to drop would prejudge it.
+ * Three of the four were named nowhere a reader could see. The owner chose to
+ * DISCLOSE them, and the copy was written on 2026-09-16 - so all five origins now
+ * resolve to a vendor the privacy and cookie pages name, in both languages.
  *
- * So the gap is DECLARED here rather than silently green, with a date. The check
- * fails on any origin that is neither disclosed nor on this list - which is the
- * part that was missing: a fifth vendor could have been added tomorrow and
- * nothing would have asked whether the privacy page mentions it.
+ * Two things the copy had to get right, because they are easy to state falsely:
+ * the GTM container loads on EVERY page regardless of consent (what consent gates
+ * is `analytics_storage`, defaulted to `denied` before the container loads), and
+ * Cloudflare Web Analytics is added at the edge, so it is present whatever the
+ * reader chooses here.
+ *
+ * The check fails on any origin that is neither disclosed nor declared with a
+ * reason - which is the part that was missing entirely: a fifth vendor could have
+ * been added tomorrow and nothing would have asked whether the privacy page
+ * mentions it.
  */
 const VENDOR_DISCLOSURE = [
   { origin: 'https://www.google-analytics.com', term: 'Google Analytics', disclosed: true },
-  {
-    origin: 'https://www.googletagmanager.com',
-    term: 'Google Tag Manager',
-    disclosed: false,
-    undisclosedSince: '2026-09-16',
-    reason: '869f135w2 measured it absent from every privacy namespace in both languages. Owner decision pending: disclose, or remove the container.',
-  },
-  {
-    origin: 'https://www.clarity.ms',
-    term: 'Clarity',
-    disclosed: false,
-    undisclosedSince: '2026-09-16',
-    reason: '869f135w2. Injected by the GTM container, so removing GTM removes this too. Owner decision pending.',
-  },
-  {
-    origin: 'https://static.cloudflareinsights.com',
-    term: 'Cloudflare',
-    disclosed: false,
-    undisclosedSince: '2026-09-16',
-    reason: '869f135w2. Injected by Cloudflare at the edge; it is not in the repository at all, which is why it was never written into the copy.',
-  },
-  {
-    origin: 'https://cloudflareinsights.com',
-    term: 'Cloudflare',
-    disclosed: false,
-    undisclosedSince: '2026-09-16',
-    reason: '869f135w2. The beacon endpoint for the same surface as the line above.',
-  },
+  { origin: 'https://www.googletagmanager.com', term: 'Google Tag Manager', disclosed: true },
+  { origin: 'https://www.clarity.ms', term: 'Clarity', disclosed: true },
+  { origin: 'https://static.cloudflareinsights.com', term: 'Cloudflare', disclosed: true },
+  { origin: 'https://cloudflareinsights.com', term: 'Cloudflare', disclosed: true },
 ];
 
 export { VENDOR_DISCLOSURE };
