@@ -31,6 +31,31 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.53',
+    date: '2026-09-16',
+    userVisible: true,
+    headline: {
+      en: 'The privacy and cookie pages now name everything that measures you',
+      el: 'Οι σελίδες απορρήτου και cookies αναφέρουν πλέον όλα όσα σε μετρούν',
+    },
+    summaryEn:
+      'The site loads four things that measure how it is used, and the Privacy and Cookie pages named only one of them. They now name all four, in English and Greek, and say which of them your cookie choice actually controls — because one of them is added by the network in front of the site and is there whatever you choose. Nothing about what the site collects changed; what changed is that the pages now describe it accurately.',
+    summaryEl:
+      'Το site φορτώνει τέσσερα πράγματα που μετρούν πώς χρησιμοποιείται, και οι σελίδες Απορρήτου και Cookies ανέφεραν μόνο ένα από αυτά. Τώρα τα αναφέρουν και τα τέσσερα, στα αγγλικά και στα ελληνικά, και λένε ποιο από αυτά ελέγχει πραγματικά η επιλογή σου για τα cookies — γιατί ένα προστίθεται από το δίκτυο μπροστά από το site και υπάρχει ό,τι κι αν επιλέξεις. Τίποτα από όσα συλλέγει το site δεν άλλαξε· αυτό που άλλαξε είναι ότι οι σελίδες το περιγράφουν σωστά.',
+    added: [],
+    improved: [
+      {
+        en: 'The **Privacy** page now lists Google Tag Manager, Microsoft Clarity and Cloudflare alongside Google Analytics, in the **Recipients** section and in what data may be processed.',
+        el: 'Η σελίδα **Απορρήτου** αναφέρει πλέον Google Tag Manager, Microsoft Clarity και Cloudflare μαζί με το Google Analytics, στην ενότητα **Αποδέκτες** και σε ό,τι δεδομένα μπορεί να υποβληθούν σε επεξεργασία.',
+      },
+      {
+        en: 'The **Cookie** page explains which measurement your choice controls, and which is added by the network in front of the site and is present either way.',
+        el: 'Η σελίδα **Cookies** εξηγεί ποια μέτρηση ελέγχει η επιλογή σου, και ποια προστίθεται από το δίκτυο μπροστά από το site και υπάρχει έτσι κι αλλιώς.',
+      },
+    ],
+    fixed: [],
+  },
+  {
     version: '0.4.52',
     date: '2026-09-16',
     userVisible: true,
