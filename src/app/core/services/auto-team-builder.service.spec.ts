@@ -45139,3 +45139,69 @@ describe('Lane D matrix - Tier 2 service-side pairs, relaxable axes vs a19', () 
     ]);
   });
 });
+
+/**
+ * 869f135t5. The worker-count decision, pinned on both sides of its threshold.
+ *
+ * `DEEP_FALLBACK_ATTEMPT_THRESHOLD = 30_000` reads like an alias for
+ * `MAX_DYNAMIC_TOTAL_ATTEMPTS = 31_744`, and off the preferred-leader fast path
+ * the two are close enough that the difference rarely shows. On that fast path it
+ * is a real boundary: the planner's own projection is clamped to 257
+ * (`PREFERRED_LEADER_MAX_SCHEDULED_FALLBACK_ATTEMPTS`), so the deep decision
+ * rests entirely on `resolveProjectedUnboundedTotalAttempts`, the product form,
+ * which is combined with the planner's number by `Math.max` for exactly that
+ * reason.
+ *
+ * Nothing covered that before. These two cases sit 1,024 attempts either side of
+ * 30,000 and are computed rather than asserted blind:
+ *
+ *   3 types + 10 classes + 2 tags -> (2^3-1) x 2^10 x 2^2 = 28,672  shallow
+ *   4 types + 10 classes + 1 tag  -> (2^4-1) x 2^10 x 2^1 = 30,720  deep
+ *
+ * The type axis uses `excludeEmptySubset`, which is where the `-1` comes from and
+ * why the two sides are not symmetric.
+ */
+type DeepFallbackThresholdProbe = {
+  isDeepFallbackSearch: (projectedTotalAttempts: number) => boolean;
+  resolveProjectedUnboundedTotalAttempts: (input: AutoBuildInput) => number;
+};
+
+describe('deep fallback threshold', () => {
+  function probeInput(
+    typeCount: number,
+    classCount: number,
+    tagCount: number,
+  ): AutoBuildInput {
+    return createInput(
+      AUTO_TEAM_BUILDER_TYPES.slice(0, typeCount) as unknown as AutoTeamBuilderType[],
+      Array.from({ length: classCount }, (_, index) => `Probe Class ${index + 1}`),
+      {
+        selectedCharacterTags: Array.from({ length: tagCount }, (_, index) => `probe-tag-${index}`),
+      },
+    );
+  }
+
+  it('stays shallow just below 30,000 projected attempts', () => {
+    const probe = new AutoTeamBuilderService({} as never) as unknown as DeepFallbackThresholdProbe;
+    const projected = probe.resolveProjectedUnboundedTotalAttempts(probeInput(3, 10, 2));
+
+    expect(projected).toBe(28_672);
+    expect(probe.isDeepFallbackSearch(projected)).toBe(false);
+  });
+
+  it('goes deep just above 30,000 projected attempts', () => {
+    const probe = new AutoTeamBuilderService({} as never) as unknown as DeepFallbackThresholdProbe;
+    const projected = probe.resolveProjectedUnboundedTotalAttempts(probeInput(4, 10, 1));
+
+    expect(projected).toBe(30_720);
+    expect(probe.isDeepFallbackSearch(projected)).toBe(true);
+  });
+
+  it('keeps the threshold below the attempt cap, so it is not an alias for it', () => {
+    const probe = new AutoTeamBuilderService({} as never) as unknown as DeepFallbackThresholdProbe;
+
+    expect(probe.isDeepFallbackSearch(29_999)).toBe(false);
+    expect(probe.isDeepFallbackSearch(30_000)).toBe(true);
+    expect(probe.isDeepFallbackSearch(31_744)).toBe(true);
+  });
+});

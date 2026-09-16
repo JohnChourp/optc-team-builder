@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
 import { describe, expect, it, vi } from 'vitest';
 
 import {
@@ -1554,6 +1557,84 @@ describe('runAutoTeamBuildSearch', () => {
     expect(planner.getTotalAttempts()).toBe(31_744);
     expect(planner.getTotalAttempts()).toBeGreaterThan(1024);
     expect(planner.isAttemptCountFinal()).toBe(true);
+  });
+
+  /*
+   * 869f135t5. The test above pins ONE point, and a single point on a cap tells
+   * you nothing about where the cap begins to bind - or whether it binds at all.
+   *
+   * Measured 2026-09-16, and the measurement corrects the obvious guess. The
+   * plan size is NOT `2^filters - 1`: that expression is
+   * `resolveTheoreticalSubsetTotalAttempts`, and it is used as a CEILING on the
+   * scheduled count (`resolveMaxScheduledFallbackAttemptCount`), not as the
+   * count. Below the cap, the enumeration decides, and it lands well under the
+   * ceiling.
+   *
+   * The consequence is the row pair at 15: the same filter count produces 28,163
+   * or 30,211 attempts depending on how it splits between types and classes. So
+   * anything that reasons about "how big is this search" from the number of
+   * selected filters alone is wrong, and the last row shows the extreme case -
+   * 17 filters producing 4,095 attempts, because selecting ALL FIVE types with
+   * strict coverage off makes the whole type axis neutral and it contributes no
+   * droppable descriptors at all.
+   */
+  it('pins where the 31,744 cap begins to bind, and what does not drive it', () => {
+    const measured = [
+      { types: 2, classes: 12, expectedTotal: 12_290 },
+      { types: 3, classes: 12, expectedTotal: 28_163 },
+      { types: 4, classes: 11, expectedTotal: 30_211 },
+      { types: 4, classes: 12, expectedTotal: 31_744 },
+      { types: 4, classes: 13, expectedTotal: 31_744 },
+      { types: 5, classes: 12, expectedTotal: 4_095 },
+    ];
+
+    for (const { types, classes, expectedTotal } of measured) {
+      const planner = createAutoTeamBuildFallbackPlanner(
+        createInput(
+          AUTO_TEAM_BUILDER_TYPES.slice(0, types) as unknown as AutoTeamBuilderType[],
+          createSyntheticClasses(classes),
+          { requireLeaderSuperSpecialCriteria: true },
+        ),
+        createSingleTypeRecords(),
+      );
+
+      planner.scheduleInitialFallbackAttempts();
+
+      expect(
+        planner.getTotalAttempts(),
+        `${types} types + ${classes} classes`,
+      ).toBe(expectedTotal);
+      expect(planner.getScheduledFallbackAttemptCount()).toBe(expectedTotal - 1);
+    }
+  });
+
+  /*
+   * 869f135t5. `MAX_DYNAMIC_TOTAL_ATTEMPTS` is declared twice with the same
+   * value - here and in `auto-team-builder.service.ts` - and neither is
+   * exported, so nothing but this test stops one being tuned while the other is
+   * not. The consequence of a silent split is a loading panel whose denominator
+   * comes from one number while the worker-count decision uses the other.
+   *
+   * Read out of the source rather than imported, because exporting one of them
+   * to satisfy a test would put a new cross-module binding into the search path
+   * to prove a thing a regex proves for free.
+   */
+  it('keeps both declarations of the attempt cap at the same value', () => {
+    const declaration = /const MAX_DYNAMIC_TOTAL_ATTEMPTS = ([0-9_]+);/u;
+    const read = (relativePath: string): string => {
+      const source = readFileSync(resolve(process.cwd(), relativePath), 'utf8');
+      const match = declaration.exec(source);
+
+      expect(match, `${relativePath} no longer declares MAX_DYNAMIC_TOTAL_ATTEMPTS`).not.toBeNull();
+
+      return match![1]!;
+    };
+
+    const engineLiteral = read('src/app/core/services/auto-team-builder.engine.ts');
+    const serviceLiteral = read('src/app/core/services/auto-team-builder.service.ts');
+
+    expect(engineLiteral).toBe(serviceLiteral);
+    expect(Number(engineLiteral.replaceAll('_', ''))).toBe(31_744);
   });
 
   it('treats all selected types and classes as neutral when strict coverage is off', () => {

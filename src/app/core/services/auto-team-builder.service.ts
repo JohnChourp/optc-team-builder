@@ -106,6 +106,26 @@ export interface AutoTeamBuildExecutionOptions {
 const LEGACY_ABILITY_KEY_ALIASES: Record<string, string> = {
   remove_defense_up: 'remove_enemy_increased_defense',
 };
+/**
+ * 869f135t5. `DEEP_FALLBACK_ATTEMPT_THRESHOLD` arrived in `4110f777`
+ * (2026-05-02) with no recorded benchmark. What it decides is the worker count:
+ * a search projected at or above it gets `DEEP_FALLBACK_WORKER_COUNT`.
+ *
+ * It is NOT an alias for `MAX_DYNAMIC_TOTAL_ATTEMPTS` below, and reading it as
+ * one is the trap. Off the preferred-leader fast path the two are close enough
+ * that the distinction rarely shows; ON that fast path the planner's own
+ * projection is clamped to `PREFERRED_LEADER_MAX_SCHEDULED_FALLBACK_ATTEMPTS`
+ * (<= 257 total), so the deep decision rests entirely on
+ * `resolveProjectedUnboundedTotalAttempts` - the product form - and 30_000 is a
+ * real boundary with searches on both sides of it. `auto-team-builder.service.spec.ts`
+ * pins both sides.
+ *
+ * `MAX_DYNAMIC_TOTAL_ATTEMPTS = 31_744` is the SECOND declaration of the cap;
+ * the first is in `auto-team-builder.engine.ts`, where its provenance is
+ * recorded. Neither is exported and nothing imports the other, so
+ * `auto-team-builder.engine.spec.ts` reads both literals out of the source and
+ * asserts they are equal.
+ */
 const DEEP_FALLBACK_ATTEMPT_THRESHOLD = 30_000;
 const DEEP_FALLBACK_WORKER_COUNT = 2;
 const PREFERRED_LEADER_MAX_SCHEDULED_FALLBACK_ATTEMPTS = 256;
