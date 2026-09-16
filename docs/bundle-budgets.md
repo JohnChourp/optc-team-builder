@@ -101,7 +101,7 @@ So each definition now carries three fields, and the report publishes them:
 | --- | --- |
 | `profile` | which harness produced it — `browser`, `node` or `bundle` |
 | `setOn` | a date for a measured budget, the commit id for a provisional one |
-| `provenance` | `measured` (4 rows) or `provisional` (34 rows) |
+| `provenance` | `measured` (4 rows) or `provisional` (34 rows) - as of 869f138qh, 18 and 27 of 45 |
 
 `provisional` is deliberate and is the honest state. Inventing a measurement date
 for the 34 would be worse than the silence it replaces: the next reader would
@@ -114,13 +114,17 @@ believe the number was chosen from evidence and would stop asking.
 | `browser` | **single observation** | desktop: Chromium 1440x1000, Desktop Chrome UA. mobile: Playwright `devices['Pixel 7']`. **No throttling** on either |
 | `node` | **mean over N loops** (40 to 1,200, per metric) of a 1,500-team / 519,013-byte fixture | Node on `ubuntu-latest`, no throttling |
 | `bundle` | **deterministic** — read from the esbuild `stats.json` | a production build |
+| `payload` | **deterministic** — read from the build output and its `ngsw.json` (869f138qh) | a production build's service-worker prefetch groups |
+| `datasetReady` | **single observation** (869f138qd) | desktop unthrottled; mobile Pixel 7 at **4x CPU** |
 
 All three browser harnesses share one profile, verified at
 `perf-route-load.mjs:265-271`, `perf-ability-filters.mjs:42-48` and
 `perf-explanation-compare.mjs:93-99`. And `grep -rn "throttl" scripts/perf-*.mjs`
-returns **nothing** — which is the single most important line on this page,
+returned **nothing** — which is the single most important line on this page,
 because it means every timing budget describes an **unthrottled CI machine** and
-not a player's phone.
+not a player's phone. Since 869f138qd one row is the exception and says so: `dataset
+ready` throttles the mobile CPU 4x under its own `datasetReady` profile, so every
+`browser` row still means "no throttling".
 
 The `browser`/`node` split is the one that changes how a number should be read: a
 single observation moves with the runner's weather, a mean over 600 loops does
@@ -221,3 +225,62 @@ store — that is the trend.
 
 Proven: grown to **9,010 bytes (75.1%)**, Angular's own budget reports **zero
 warnings** and this check names the file and its share.
+
+## What a first visit downloads — 869f138qh
+
+**Status:** recorded 2026-09-16 · [869f138qh](https://app.clickup.com/t/90121749478/869f138qh)
+
+Until this section, every byte budget here measured JavaScript. The service worker's prefetch
+group was **35,163,757 B**, and **79%** of it was a SQL seed no row mentioned. After
+[dataset-delivery.md](dataset-delivery.md), six rows measure what is actually downloaded, read from
+the build's `ngsw.json` by `scripts/lib/prefetch-payload.mjs`:
+
+| Row | Measured | Budget |
+| --- | ---: | ---: |
+| `prefetch total cached` | 9,596,108 | 10,076,000 (x1.05) |
+| `prefetch total over the wire` | 4,095,891 | 4,218,800 |
+| `dataset database` | 2,289,988 | 2,358,700 |
+| `ability catalogue cached` | 1,674,521 | 1,724,800 |
+| `ability catalogue over the wire` | 202,678 | 208,800 |
+| `sql.js wasm over the wire` | 322,606 | 332,300 |
+
+**Cached** is the file as the device stores it - a response is cached decoded, so host compression
+never shrinks it. **Over the wire** is gzip at level 6 for the types the edge compresses and the
+file itself for everything else. All are `x1.03` except the cached total, which is `x1.05`: that
+total also grows with every character the nightly data release adds, and the same number gates the
+`dataset-delivery` lane on every `verify:local` - a lane that turns red on an unrelated pull request
+after a data release should mean someone decides on purpose, not that 3% ran out.
+
+### The entry-script rows were measuring the graph
+
+`readInitialEntries` added every chunk an entry script imports, whenever the stats resolved the
+file. So `entry script raw JS` read **1,498,225 B** on v0.4.53 against its 391,000 B budget - the
+initial payload under another name, the exact confusion this page was written to end. It now counts
+the files `index.html` names and nothing else:
+
+| Build | Entry scripts raw | gzip |
+| --- | ---: | ---: |
+| v0.4.48 (when the budgets were set) | 378,500 | 96,676 |
+| v0.4.53 | 385,630 | 98,794 |
+| this change | **388,066** | **99,793** |
+
+That is **0.8%** and **0.2%** of headroom. The budgets were deliberately not raised: the next
+change to `main` will trip them, and that is the signal doing its job.
+
+### The characters route was over its budget since the day after it was set
+
+`characters route raw JS` was set to 186,000 B by `b06342bd` on 2026-09-14. v0.4.48, built with the
+same toolchain as `main`, measures **186,778 B** and `main` **186,760 B** - the route grew with the
+wave-3 work shipped on 2026-09-15 and has not grown since. It was re-set to **192,400 B**, `x1.03` of
+`main`, with that reason beside it.
+
+### Why nobody saw either
+
+The scheduled Performance Budgets workflow failed on 2026-09-15 and 2026-09-16 before the report
+ran: `perf-explanation-compare.mjs` loaded the module it measures from a `blob:` URL, and the
+Content-Security-Policy added that day (869f13285) allows `'self'` scripts, not `blob:`. The module
+is now served from the page's own origin. Both harnesses were run after the change and passed.
+
+The result rows (every bundle row) also dropped `basis`, `profile`, `setOn` and `provenance`, so the
+summary printed "unrecorded" and "provisional (undefined)" beside rows whose definitions said
+`measured`. They now carry all four, and the spec says so.

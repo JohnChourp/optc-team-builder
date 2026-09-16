@@ -6,6 +6,15 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { chromium, devices } from 'playwright';
 
+/*
+ * 869f138qh. Served from the page's own origin, because a `blob:` module stopped loading the day
+ * the app gained a Content-Security-Policy (869f13285, 2026-09-15): `script-src` allows 'self' and
+ * not `blob:`. The scheduled Performance Budgets workflow has failed on exactly this import since
+ * then - "Failed to fetch dynamically imported module: blob:..." - so no row had a baseline. Declared up
+ * here because the top-level run below reads it.
+ */
+const SAVED_TEAMS_TRANSFER_MODULE_PATH = '/__perf/saved-teams-transfer.utils.js';
+
 const require = createRequire(import.meta.url);
 const appRoot = process.cwd();
 const port = Number(process.env.PERF_PORT ?? process.env.E2E_PORT ?? 8436);
@@ -194,30 +203,28 @@ async function loadSavedTeamsTransferUtilsSource() {
 async function measureSavedTeamsParseSanitize(page) {
   const moduleSource = await loadSavedTeamsTransferUtilsSource();
 
+  await page.route(`**${SAVED_TEAMS_TRANSFER_MODULE_PATH}`, (route) =>
+    route.fulfill({ status: 200, contentType: 'text/javascript; charset=utf-8', body: moduleSource }),
+  );
+
   return page.evaluate(
-    async ({ source, payloadText }) => {
-      const moduleUrl = URL.createObjectURL(new Blob([source], { type: 'text/javascript' }));
+    async ({ modulePath, payloadText }) => {
+      const transferUtils = await import(modulePath);
+      const start = performance.now();
+      const payload = transferUtils.parseSavedTeamsImportContent(payloadText);
+      const sanitized = transferUtils.sanitizeSavedTeamsImportPayload(payload, {
+        now: '2026-06-26T00:00:00.000Z',
+        untitledTeamName: 'Untitled crew',
+      });
 
-      try {
-        const transferUtils = await import(moduleUrl);
-        const start = performance.now();
-        const payload = transferUtils.parseSavedTeamsImportContent(payloadText);
-        const sanitized = transferUtils.sanitizeSavedTeamsImportPayload(payload, {
-          now: '2026-06-26T00:00:00.000Z',
-          untitledTeamName: 'Untitled crew',
-        });
-
-        return {
-          savedTeamsParseSanitizeMs: Math.round(performance.now() - start),
-          teamCount: sanitized.teams.length,
-          duplicateIdCount: sanitized.duplicateIdCount,
-          invalidTeamCount: sanitized.invalidTeamCount,
-        };
-      } finally {
-        URL.revokeObjectURL(moduleUrl);
-      }
+      return {
+        savedTeamsParseSanitizeMs: Math.round(performance.now() - start),
+        teamCount: sanitized.teams.length,
+        duplicateIdCount: sanitized.duplicateIdCount,
+        invalidTeamCount: sanitized.invalidTeamCount,
+      };
     },
-    { source: moduleSource, payloadText: importPayload },
+    { modulePath: SAVED_TEAMS_TRANSFER_MODULE_PATH, payloadText: importPayload },
   );
 }
 

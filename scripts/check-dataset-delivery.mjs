@@ -1,11 +1,14 @@
 #!/usr/bin/env node
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 import { checkDatasetBinary } from './build-dataset-binary.mjs';
 import { loadSqlJs } from './lib/dataset-binary.mjs';
+import { HOST_COMPRESSED_EXTENSIONS, extensionOf, readPrefetchedAssets } from './lib/prefetch-payload.mjs';
+
+export { HOST_COMPRESSED_EXTENSIONS, extensionOf, readPrefetchedAssets };
 
 /**
  * 869f138q7. What a first visit downloads, checked against the build output.
@@ -31,27 +34,15 @@ import { loadSqlJs } from './lib/dataset-binary.mjs';
 export const LARGE_ASSET_BYTES = 256_000;
 
 /*
- * Extensions whose content types the edge compresses. Cloudflare's default compression list names
- * text/*, application/javascript, application/json, application/manifest+json, application/wasm,
- * image/svg+xml, image/x-icon and the XML types; measured on optcteambuilder.com on 2026-09-16,
- * `.json` and `.wasm` arrive gzipped and `.sql` does not. An extension missing from this list is
- * treated as NOT compressed - the safe default for a guard.
+ * 869f138qh. Everything the service worker prefetches, as it is cached on the device - the number
+ * that decides what a first visit costs, and one no budget named before. Measured 2026-09-16 after
+ * 869f138qe: 9,596,056 B across 152 files. x1.05 rather than the x1.03 the byte rows use, because
+ * this total also grows with every character the nightly data release adds, and a lane that goes
+ * red on an unrelated pull request after a data release teaches nobody anything; growth past 5% is
+ * a decision somebody should make on purpose. perf-route-load.mjs carries the same number as
+ * `prefetchCachedBytes`, and the spec keeps the two equal.
  */
-export const HOST_COMPRESSED_EXTENSIONS = new Set([
-  '.css',
-  '.htm',
-  '.html',
-  '.ico',
-  '.js',
-  '.json',
-  '.map',
-  '.mjs',
-  '.svg',
-  '.txt',
-  '.wasm',
-  '.webmanifest',
-  '.xml',
-]);
+export const PREFETCH_CACHED_BUDGET_BYTES = 10_076_000;
 
 /** Formats that are compressed by construction; compressing them again gains nothing. */
 export const PRECOMPRESSED_EXTENSIONS = new Set([
@@ -138,47 +129,17 @@ export function inspectShippedDataFiles({ distDir, runtimeDataFiles }) {
   return { findings, shipped };
 }
 
-export function extensionOf(url) {
-  const name = String(url).split('?')[0].split('/').pop() ?? '';
-  const dot = name.lastIndexOf('.');
-  return dot <= 0 ? '' : name.slice(dot).toLowerCase();
-}
-
 export function isHostCompressedOrPrecompressed(url) {
   const extension = extensionOf(url);
   return HOST_COMPRESSED_EXTENSIONS.has(extension) || PRECOMPRESSED_EXTENSIONS.has(extension);
 }
 
-export function readPrefetchedAssets(distDir) {
-  const manifestPath = path.join(distDir, 'ngsw.json');
-
-  if (!existsSync(manifestPath)) {
-    return { manifestPath, assets: null };
-  }
-
-  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
-  const assets = [];
-
-  for (const group of manifest.assetGroups ?? []) {
-    if (group.installMode !== 'prefetch') {
-      continue;
-    }
-
-    for (const url of group.urls ?? []) {
-      const filePath = path.join(distDir, decodeURIComponent(url).replace(/^\/+/u, ''));
-      assets.push({
-        group: group.name,
-        url,
-        filePath,
-        bytes: existsSync(filePath) ? statSync(filePath).size : null,
-      });
-    }
-  }
-
-  return { manifestPath, assets };
-}
-
-export async function inspectDatasetDelivery({ distDir, SQL, runtimeDataFiles }) {
+export async function inspectDatasetDelivery({
+  distDir,
+  SQL,
+  runtimeDataFiles,
+  prefetchBudgetBytes = PREFETCH_CACHED_BUDGET_BYTES,
+}) {
   const findings = [];
   const { manifestPath, assets } = readPrefetchedAssets(distDir);
 
@@ -243,6 +204,15 @@ export async function inspectDatasetDelivery({ distDir, SQL, runtimeDataFiles })
     findings.push(...inspectShippedDataFiles({ distDir, runtimeDataFiles }).findings);
   }
 
+  const cachedBytes = assets.reduce((sum, asset) => sum + (asset.bytes ?? 0), 0);
+
+  if (cachedBytes > prefetchBudgetBytes) {
+    findings.push({
+      kind: 'prefetch-over-budget',
+      detail: `the service worker prefetches ${cachedBytes} B, over the ${prefetchBudgetBytes} B budget - find what grew, or re-set the budget on purpose`,
+    });
+  }
+
   return { ok: findings.length === 0, findings, assets };
 }
 
@@ -251,7 +221,9 @@ export function formatDatasetDeliveryResult(result) {
   const totalBytes = result.assets.reduce((sum, asset) => sum + (asset.bytes ?? 0), 0);
   const binary = result.assets.find((asset) => asset.url === DATASET_BINARY_URL);
 
-  lines.push(`Checked ${result.assets.length} prefetched file(s), ${totalBytes} B in total.`);
+  lines.push(
+    `Checked ${result.assets.length} prefetched file(s), ${totalBytes} B in total (budget ${PREFETCH_CACHED_BUDGET_BYTES} B).`,
+  );
 
   if (binary?.bytes) {
     lines.push(`Dataset: ${DATASET_BINARY_URL} is ${binary.bytes} B.`);
