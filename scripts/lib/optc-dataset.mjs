@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { normalizeHtmlToText } from './html-text.mjs';
 
@@ -692,6 +692,122 @@ export function buildPreviewPayload(generatedAt, characters, ships) {
   };
 }
 
+/** The five files an import writes, by the key each has in an outputs object. */
+export const GENERATED_DATASET_FILES = Object.freeze({
+  manifest: 'optc-manifest.json',
+  sqlSeed: 'optc-seed.sql',
+  unresolvedCatalog: 'optc-unresolved-images.json',
+  autoBuilderAbilityCatalog: 'optc-auto-builder-abilities.json',
+  preview: 'optc-preview.json',
+});
+
+/**
+ * The exact text each file is written as. The writer and the "did anything change" comparison
+ * both go through here, so the two cannot disagree about what a file contains.
+ */
+export function serializeGeneratedDatasetFiles({
+  manifest,
+  sqlSeed,
+  unresolvedCatalog,
+  autoBuilderAbilityCatalog,
+  preview,
+}) {
+  return {
+    manifest: JSON.stringify(manifest, null, 2),
+    sqlSeed,
+    unresolvedCatalog: JSON.stringify(unresolvedCatalog, null, 2),
+    autoBuilderAbilityCatalog: JSON.stringify(autoBuilderAbilityCatalog, null, 2),
+    preview: JSON.stringify(preview, null, 2),
+  };
+}
+
+/** What is on disk now, with `''` for a file that does not exist yet. */
+export async function readGeneratedDatasetFiles(dataDir) {
+  const entries = await Promise.all(
+    Object.entries(GENERATED_DATASET_FILES).map(async ([key, fileName]) => {
+      try {
+        return [key, await readFile(path.join(dataDir, fileName), 'utf8')];
+      } catch (error) {
+        if (error?.code === 'ENOENT') {
+          return [key, ''];
+        }
+
+        throw error;
+      }
+    }),
+  );
+
+  return Object.fromEntries(entries);
+}
+
+export function generatedDatasetFilesMatch(currentFiles, outputs) {
+  const nextFiles = serializeGeneratedDatasetFiles(outputs);
+
+  return Object.keys(GENERATED_DATASET_FILES).every((key) => currentFiles[key] === nextFiles[key]);
+}
+
+export function readManifestGeneratedAt(manifestText) {
+  try {
+    const generatedAt = JSON.parse(manifestText)?.generatedAt;
+
+    return typeof generatedAt === 'string' && !Number.isNaN(Date.parse(generatedAt))
+      ? generatedAt
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 869f138qb. Puts the previous files back when an import changed nothing but `generatedAt`.
+ *
+ * `generatedAt` is written into all five files, including the seed's `meta` row, and the service
+ * worker hashes the seed. So an import that found no new data still changed the seed, and every
+ * installed client downloaded the whole dataset again. Measured on 2026-09-16: 58 of the 65
+ * releases since v0.2.0 changed nothing in the seed except that timestamp.
+ *
+ * The comparison has to run on what the import finally leaves on disk. An import writes the
+ * files twice - the importer, then the manual overlay, which rebuilds them from the seed and
+ * writes again with a timestamp of its own - so a check inside either step alone compares two
+ * versions that never agree. Measured the same day: a check in the importer alone still let a
+ * data-identical import move the timestamp in all five files.
+ *
+ * Returns the timestamp that was kept, or `null` when the data really changed (or there was
+ * nothing to compare against) and the new files stand. `generatedAt` therefore means "when this
+ * data last changed".
+ */
+export async function keepGeneratedAtWhenOnlyTimestampChanged({ dataDir, previousFiles }) {
+  const previousGeneratedAt = readManifestGeneratedAt(previousFiles.manifest);
+
+  if (!previousGeneratedAt) {
+    return null;
+  }
+
+  const currentFiles = await readGeneratedDatasetFiles(dataDir);
+  const currentGeneratedAt = readManifestGeneratedAt(currentFiles.manifest);
+
+  if (!currentGeneratedAt || currentGeneratedAt === previousGeneratedAt) {
+    return null;
+  }
+
+  const onlyTheTimestampMoved = Object.keys(GENERATED_DATASET_FILES).every(
+    (key) =>
+      currentFiles[key].split(currentGeneratedAt).join(previousGeneratedAt) === previousFiles[key],
+  );
+
+  if (!onlyTheTimestampMoved) {
+    return null;
+  }
+
+  await Promise.all(
+    Object.entries(GENERATED_DATASET_FILES).map(([key, fileName]) =>
+      writeFile(path.join(dataDir, fileName), previousFiles[key]),
+    ),
+  );
+
+  return previousGeneratedAt;
+}
+
 export async function writeGeneratedDatasetFiles(
   dataDir,
   manifest,
@@ -702,19 +818,19 @@ export async function writeGeneratedDatasetFiles(
 ) {
   await mkdir(dataDir, { recursive: true });
 
-  await Promise.all([
-    writeFile(path.join(dataDir, 'optc-manifest.json'), JSON.stringify(manifest, null, 2)),
-    writeFile(path.join(dataDir, 'optc-seed.sql'), sqlSeed),
-    writeFile(
-      path.join(dataDir, 'optc-unresolved-images.json'),
-      JSON.stringify(unresolvedCatalog, null, 2),
+  const files = serializeGeneratedDatasetFiles({
+    manifest,
+    sqlSeed,
+    unresolvedCatalog,
+    autoBuilderAbilityCatalog,
+    preview,
+  });
+
+  await Promise.all(
+    Object.entries(GENERATED_DATASET_FILES).map(([key, fileName]) =>
+      writeFile(path.join(dataDir, fileName), files[key]),
     ),
-    writeFile(
-      path.join(dataDir, 'optc-auto-builder-abilities.json'),
-      JSON.stringify(autoBuilderAbilityCatalog, null, 2),
-    ),
-    writeFile(path.join(dataDir, 'optc-preview.json'), JSON.stringify(preview, null, 2)),
-  ]);
+  );
 }
 
 export function parseJson(value, fallback) {

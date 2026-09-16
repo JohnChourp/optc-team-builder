@@ -17,7 +17,9 @@ import {
   createSqlSeed,
   createUnresolvedCatalog,
   createCharacterSearchText,
+  generatedDatasetFilesMatch,
   parseJson,
+  readGeneratedDatasetFiles,
   writeGeneratedDatasetFiles,
 } from './optc-dataset.mjs';
 import {
@@ -41,7 +43,7 @@ export async function applyManualCharacterOverlay({
   exactImagesDir = path.join(rootDir, 'public', 'assets', 'exact-character-images'),
   logger = null,
 } = {}) {
-  const currentOutputs = await readCurrentOutputs(dataDir);
+  const currentOutputs = await readGeneratedDatasetFiles(dataDir);
   const dataset = await loadCurrentDataset(seedPath, manifestPath);
   const abilityCorrections = await loadBuilderAbilityCorrections(correctionsPath);
   const manualRecords = await loadManualCharacterOverlay(overlayPath, {
@@ -70,7 +72,7 @@ export async function applyManualCharacterOverlay({
     logger,
   });
 
-  if (outputsMatch(currentOutputs, provisionalOutputs)) {
+  if (generatedDatasetFilesMatch(currentOutputs, provisionalOutputs)) {
     logger?.(
       `[manual-characters] no-op, ${manualRecords.size} manual character(s) already applied.`,
     );
@@ -429,37 +431,3 @@ function isReservedCharacterFile(fileName) {
   return isManualCharacterId(characterId);
 }
 
-async function readCurrentOutputs(dataDir) {
-  return {
-    manifest: await readOptionalFile(path.join(dataDir, 'optc-manifest.json')),
-    sqlSeed: await readOptionalFile(path.join(dataDir, 'optc-seed.sql')),
-    unresolvedCatalog: await readOptionalFile(path.join(dataDir, 'optc-unresolved-images.json')),
-    autoBuilderAbilityCatalog: await readOptionalFile(
-      path.join(dataDir, 'optc-auto-builder-abilities.json'),
-    ),
-    preview: await readOptionalFile(path.join(dataDir, 'optc-preview.json')),
-  };
-}
-
-function outputsMatch(currentOutputs, nextOutputs) {
-  return (
-    currentOutputs.manifest === JSON.stringify(nextOutputs.manifest, null, 2) &&
-    currentOutputs.sqlSeed === nextOutputs.sqlSeed &&
-    currentOutputs.unresolvedCatalog === JSON.stringify(nextOutputs.unresolvedCatalog, null, 2) &&
-    currentOutputs.autoBuilderAbilityCatalog ===
-      JSON.stringify(nextOutputs.autoBuilderAbilityCatalog, null, 2) &&
-    currentOutputs.preview === JSON.stringify(nextOutputs.preview, null, 2)
-  );
-}
-
-async function readOptionalFile(targetPath) {
-  try {
-    return await readFile(targetPath, 'utf8');
-  } catch (error) {
-    if (error?.code === 'ENOENT') {
-      return '';
-    }
-
-    throw error;
-  }
-}

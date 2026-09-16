@@ -28,7 +28,9 @@ import {
   createUnresolvedCatalog,
   flattenValues,
   getSortedUnresolvedCharacters,
+  keepGeneratedAtWhenOnlyTimestampChanged,
   normalizeCharacterClasses,
+  readGeneratedDatasetFiles,
   resolveCharacterCaptainBoosts,
   writeGeneratedDatasetFiles,
 } from './lib/optc-dataset.mjs';
@@ -1794,6 +1796,9 @@ async function main() {
     autoBuilderAbilityCatalog,
   });
 
+  /* 869f138qb. What was on disk before this import, to tell a real change from a new timestamp. */
+  const previousFiles = await readGeneratedDatasetFiles(dataDir);
+
   await writeGeneratedDatasetFiles(
     dataDir,
     manifest,
@@ -1815,6 +1820,14 @@ async function main() {
     rootDir,
     logger: (message) => console.log(message),
   });
+
+  const keptGeneratedAt = await keepGeneratedAtWhenOnlyTimestampChanged({ dataDir, previousFiles });
+
+  if (keptGeneratedAt) {
+    console.log(
+      `Dataset unchanged: generatedAt stays ${keptGeneratedAt} and the generated files are byte-identical, so installed clients download nothing.`,
+    );
+  }
 
   console.log(
     `Imported ${manifest.characterCount} characters, ${manifest.shipCount} ships, ${manifest.rumbleCount} rumble entries.`,
