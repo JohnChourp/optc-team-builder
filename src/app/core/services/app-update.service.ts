@@ -35,8 +35,9 @@ const UPDATE_PROGRESS_TAU_MS = 5_000;
  * Time constant for interpolating across the asset currently being fetched.
  *
  * Slower than the fallback curve because a single asset can take a long time — live
- * measurement put `optc-seed.sql` at ~24 s on a throttled link, and it is ~76% of
- * this app's payload.
+ * measurement put `optc-seed.sql` at ~24 s on a throttled link, when it was ~76% of
+ * this app's payload. Since 869f138q7 the largest asset is the 2.3 MB
+ * `optc-seed.sqlite.gz`, but one asset still owns the biggest share.
  */
 const UPDATE_INFLIGHT_TAU_MS = 12_000;
 
@@ -57,8 +58,8 @@ export const UPDATE_PROGRESS_TICK_MS = 500;
  *
  * Deliberately tiny and deliberately cumulative. A per-tick threshold would
  * declare a healthy download stalled whenever the link is slower than
- * `threshold * payload / tick` — at 0.5% of a ~2.1 MB payload every 500 ms that is
- * ~22 KB/s, which a poor mobile connection is genuinely below. Measured
+ * `threshold * payload / tick` — at 0.5% of a ~2.3 MB database every 500 ms that is
+ * ~23 KB/s, which a poor mobile connection is genuinely below. Measured
  * cumulatively, any real transfer clears it, while a census that has SATURATED
  * reports the same value forever and correctly stops re-arming.
  */
@@ -68,7 +69,7 @@ const UPDATE_PROGRESS_ADVANCE_EPSILON = 0.000_5;
  * How long without progress before the copy admits the download is slow.
  *
  * The census advances one asset at a time, and this app's prefetch payload is
- * dominated by a single ~2.1 MB gzipped `optc-seed.sql`, so a genuinely healthy
+ * dominated by a single ~2.3 MB `optc-seed.sqlite.gz`, so a genuinely healthy
  * install on a slow link shows NO motion for as long as that one file takes. The
  * stall state therefore only changes copy — "this is taking longer than usual" is
  * true and useful in exactly that case, and nothing is torn down.
@@ -92,7 +93,7 @@ export const UPDATE_DOWNLOAD_ABANDON_MS = 1_800_000;
  * Backoff before re-checking after ngsw fails to install a detected version.
  *
  * A failed install is usually a mid-deploy race: `ngsw.json` is already the new
- * build while an UNHASHED prefetch asset - `/assets/data/optc-seed.sql` and the
+ * build while an UNHASHED prefetch asset - `/assets/data/optc-seed.sqlite.gz` and the
  * rest of the `data`, `i18n` and `app` groups in ngsw-config.json - is still the
  * previous body, so `initializeFully` throws on the hash check. That window
  * closes on its own in seconds to minutes. Waiting the full hourly poll wastes
@@ -632,8 +633,9 @@ export class AppUpdateService {
    * Confirmed progress plus a bounded interpolation across the asset being fetched.
    *
    * The census only moves when an asset finishes, and one asset can own most of the
-   * payload — live measurement had the bar frozen at 18% for 24 s while
-   * `optc-seed.sql` (~76% of the bytes) streamed, then snapping to 100%. Easing
+   * payload — live measurement had the bar frozen at 18% for 24 s while the raw
+   * `optc-seed.sql` (~76% of the bytes, before 869f138q7) streamed, then snapping to
+   * 100%. Easing
    * across that one asset's known share keeps the bar moving without inventing
    * anything: the ceiling is `confirmed + share * 0.9`, so it can never claim the
    * asset has landed, and the moment it does the confirmed value takes over.
@@ -676,8 +678,8 @@ export class AppUpdateService {
    *
    * This models ELAPSED TIME, not bytes, and it is only ever used when a byte
    * census is impossible. Do not promote it to the primary source — on a slow
-   * connection the real payload (~2.1 MB gzipped, dominated by
-   * `optc-seed.sql`) takes far longer than any fixed time constant, which is
+   * connection the real payload (~9.7 MB, led by the 2.3 MB
+   * `optc-seed.sqlite.gz`) takes far longer than any fixed time constant, which is
    * exactly the frozen-near-the-end experience the bar exists to remove.
    */
   private modelledProgress(): number {

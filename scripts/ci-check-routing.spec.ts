@@ -202,8 +202,12 @@ describe('ci-check-routing', () => {
      * so a change to it has to re-check that promise as well as the shell. An
      * earlier version consumed the file and STOLE it from pwa-shell, which this
      * assertion caught - hence both, and in this order.
+     *
+     * 869f138q7. `dataset-delivery` joins the same way: the file also decides what a first visit
+     * downloads, and putting the raw seed back into the prefetch group is exactly the defect that
+     * suite exists for.
      */
-    expect(plan.scriptSuites).toEqual(['pwa-shell', 'support-claims']);
+    expect(plan.scriptSuites).toEqual(['pwa-shell', 'support-claims', 'dataset-delivery']);
   });
 
   it('routes a Playwright config change to both e2e triage and the support claims', () => {
@@ -321,7 +325,27 @@ describe('ci-check-routing', () => {
       'component-style-budget',
       'unused-members',
       'worker-bundling',
+      'dataset-delivery',
     ]);
+  });
+
+  it('routes the dataset delivery guard and the database it checks to the delivery suite', () => {
+    const guard = buildCheckPlan([
+      'scripts/build-dataset-binary.mjs',
+      'scripts/check-dataset-delivery.mjs',
+      'scripts/lib/dataset-binary.mjs',
+      'docs/dataset-delivery.md',
+    ]);
+
+    expect(guard.fullPlan).toBe(false);
+    expect(guard.runAngular).toBe(false);
+    expect(guard.scriptSuites).toEqual(['dataset-delivery']);
+
+    /* The loader is app code, so Angular runs too; the delivery suite is added, not substituted. */
+    const loader = buildCheckPlan(['src/app/core/services/dataset-database-loader.utils.ts']);
+
+    expect(loader.runAngular).toBe(true);
+    expect(loader.scriptSuites).toContain('dataset-delivery');
   });
 
   it('routes guide discoverability verifier changes to the focused suite', () => {
