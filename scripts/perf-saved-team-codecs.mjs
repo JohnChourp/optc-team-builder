@@ -29,16 +29,37 @@ const loops = {
   shareResolveSanitize: 600,
   invalidValidation: 1200,
 };
+/**
+ * 869f135u7. Re-set from measurement on 2026-09-16, at roughly 9x the measured
+ * per-loop mean.
+ *
+ * They were 12x to 333x their own measurements, which is not headroom - it is
+ * absence. `invalid input validation` read 0.003 ms against a 1 ms budget, so the
+ * codec would have had to get **333 times slower** before the row noticed. A
+ * budget nothing can trip is a number nobody will ever read.
+ *
+ * 9x is chosen, not conventional. These are means over 40-1,200 loops, so they
+ * barely move: two runs on the same machine agreed within 8%. The multiplier is
+ * therefore absorbing a slower CI runner rather than run-to-run noise - 9x covers
+ * a machine ~6.7x slower than this one even on a bad day, against the repository's
+ * documented ±35% runner weather. These budgets are ADVISORY and only report, so
+ * the cost of being slightly tight is a report line rather than a failed build.
+ *
+ * `invalidValidationMs` is the one row not at 9x. Its measurement (0.003 ms per
+ * loop, 3.6 ms total over 1,200 loops) is close to what this harness can resolve
+ * at all, so it keeps a deliberately loose 0.1 ms. Saying so is better than
+ * pretending the ratio is uniform.
+ */
 const budgets = {
   node: {
-    bulkExportEncodeMs: 10,
-    bulkJsonParseMs: 10,
-    bulkSanitizeMs: 10,
-    bulkParseSanitizeMs: 15,
-    shareEncodeMs: 5,
-    shareDecodeMs: 3,
-    shareResolveSanitizeMs: 4,
-    invalidValidationMs: 1,
+    bulkExportEncodeMs: 5,
+    bulkJsonParseMs: 4,
+    bulkSanitizeMs: 8,
+    bulkParseSanitizeMs: 12,
+    shareEncodeMs: 2.5,
+    shareDecodeMs: 0.6,
+    shareResolveSanitizeMs: 1,
+    invalidValidationMs: 0.1,
   },
 };
 const metricDefinitions = [

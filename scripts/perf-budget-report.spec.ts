@@ -185,14 +185,21 @@ function savedTeamCodecResult(overrides: Record<string, number | null> = {}) {
         viewport: 'node',
         timings: {
           savedTeamCodecs: {
-            bulkExportEncodeMs: value('bulkExportEncodeMs', 1),
-            bulkJsonParseMs: value('bulkJsonParseMs', 1),
-            bulkSanitizeMs: value('bulkSanitizeMs', 1),
-            bulkParseSanitizeMs: value('bulkParseSanitizeMs', 2),
-            shareEncodeMs: value('shareEncodeMs', 1),
-            shareDecodeMs: value('shareDecodeMs', 1),
-            shareResolveSanitizeMs: value('shareResolveSanitizeMs', 1),
-            invalidValidationMs: value('invalidValidationMs', 1),
+            /*
+             * 869f135u7. These are the real per-loop means measured on 2026-09-16,
+             * not round numbers. The fixture used to claim 1 ms for operations that
+             * measure 0.003 - which passed only because the budgets were 12x to 333x
+             * their own measurements. Once the budgets were re-set from measurement,
+             * a fixture of invented round numbers stopped being a passing tree.
+             */
+            bulkExportEncodeMs: value('bulkExportEncodeMs', 0.55),
+            bulkJsonParseMs: value('bulkJsonParseMs', 0.48),
+            bulkSanitizeMs: value('bulkSanitizeMs', 0.88),
+            bulkParseSanitizeMs: value('bulkParseSanitizeMs', 1.36),
+            shareEncodeMs: value('shareEncodeMs', 0.3),
+            shareDecodeMs: value('shareDecodeMs', 0.07),
+            shareResolveSanitizeMs: value('shareResolveSanitizeMs', 0.1),
+            invalidValidationMs: value('invalidValidationMs', 0.003),
           },
         },
       },
@@ -274,8 +281,8 @@ describe('perf-budget-report', () => {
     expect(report.metricRows).toContainEqual(
       expect.objectContaining({
         id: 'saved-team-codecs.node.saved-team-codecs.sharedecodems',
-        actualMs: 1,
-        budgetMs: 3,
+        actualMs: 0.07,
+        budgetMs: 0.6,
       }),
     );
     expect(report.metricRows).toContainEqual(
@@ -411,7 +418,7 @@ describe('perf-budget-report', () => {
     const report = await buildPerformanceBudgetReport({ currentDir });
 
     expect(formatPerformanceBudgetSummary(report)).toContain(
-      '| saved-team-codecs | node | Saved-team codecs | share decode | 0.07ms | 3ms | n/a | n/a |',
+      '| saved-team-codecs | node | Saved-team codecs | share decode | 0.07ms | 0.6ms | n/a | n/a |',
     );
   });
 
@@ -585,7 +592,7 @@ describe('perf-budget-report', () => {
       }),
     );
     expect(formatPerformanceBudgetSummary(report)).toContain(
-      '| saved-team-codecs | node | Saved-team codecs | share decode | 0.07ms | 3ms | 0.08ms | -0.01ms (-12.5%) |',
+      '| saved-team-codecs | node | Saved-team codecs | share decode | 0.07ms | 0.6ms | 0.08ms | -0.01ms (-12.5%) |',
     );
   });
 
@@ -875,11 +882,28 @@ describe('budget parity between the harnesses and the report', () => {
         .map((metric) => metric.metricLabel)
         .sort();
 
+      /*
+       * 869f135u7, twice. Four bundle rows were measured on 2026-09-15; the eight
+       * node rows joined them on 2026-09-16, when they were re-set from two runs
+       * of the harness rather than left at 12x-333x their own measurements.
+       *
+       * The 30 browser rows are still `provisional` and must stay that way until
+       * somebody runs those harnesses - they need a browser, and inventing a date
+       * for them is the thing this field exists to prevent.
+       */
       expect(measured).toEqual([
+        'bulk JSON parse',
+        'bulk export encode',
+        'bulk parse and sanitize',
+        'bulk sanitize',
         'entry script gzip JS',
         'entry script raw JS',
         'initial payload gzip JS',
         'initial payload raw JS',
+        'invalid input validation',
+        'share decode',
+        'share encode',
+        'share resolve and sanitize',
       ]);
     });
 
