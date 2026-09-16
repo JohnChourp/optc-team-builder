@@ -31,6 +31,27 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.52',
+    date: '2026-09-16',
+    userVisible: true,
+    headline: {
+      en: 'Your Google picture shows up again',
+      el: 'Η εικόνα σου από το Google εμφανίζεται ξανά',
+    },
+    summaryEn:
+      'If you are signed in with Google, your profile picture was not loading — not on the Account screen and not on the small account card on the Home screen. It was being blocked before it could download, so you saw a broken image or nothing at all where your picture should be. It loads again now. Nothing else changed on any screen.',
+    summaryEl:
+      'Αν είσαι συνδεδεμένος με Google, η εικόνα του προφίλ σου δεν φόρτωνε — ούτε στην οθόνη Λογαριασμού ούτε στη μικρή κάρτα λογαριασμού στην Αρχική. Βλόκαρε πριν προλάβει να κατεβεί, οπότε έβλεπες σπασμένη εικόνα ή τίποτα εκεί που έπρεπε να είναι η εικόνα σου. Τώρα φορτώνει ξανά. Τίποτα άλλο δεν άλλαξε σε καμία οθόνη.',
+    added: [],
+    improved: [],
+    fixed: [
+      {
+        en: 'Your Google profile picture loads again on the **Account** screen and on the **account card** on the **Home** screen. It had been blocked from downloading at all.',
+        el: 'Η εικόνα προφίλ σου από το Google φορτώνει ξανά στην οθόνη **Λογαριασμού** και στην **κάρτα λογαριασμού** στην **Αρχική**. Πριν εμποδιζόταν να κατεβεί καθόλου.',
+      },
+    ],
+  },
+  {
     version: '0.4.51',
     date: '2026-09-16',
     userVisible: false,
