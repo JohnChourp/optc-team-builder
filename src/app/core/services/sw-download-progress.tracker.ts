@@ -22,9 +22,9 @@
  *
  * So the population of the new version's asset caches is a real, live signal. It
  * must be weighted by BYTES rather than by file count: for this app
- * `public/assets/data/optc-seed.sql` alone is ~25 MB (~2.1 MB gzipped) against 56
- * i18n files totalling ~60 KB, so a plain file-count ratio races to ~96% within a
- * few percent of the transfer and then sits frozen for the whole seed download —
+ * `assets/data/optc-seed.sqlite.gz` alone is ~2.3 MB against 56 i18n files
+ * totalling ~60 KB, so a plain file-count ratio races to ~96% within a few percent
+ * of the transfer and then sits frozen for the whole database download —
  * precisely the "is it stuck?" experience the progress bar exists to remove.
  *
  * The byte weights come from the OUTGOING version's caches, which are still
@@ -45,8 +45,10 @@
  * commits one `cache.put` per URL, so the confirmed count cannot move at all while a
  * single asset is being fetched — and this app's payload is dominated by one file:
  * live measurement showed `optc-seed.sql` accounting for ~76% of the prefetch bytes,
- * which left the bar frozen at 18% for 24 s and then snapping to 100%. Byte
- * weighting alone does not fix that; it only moves the freeze point.
+ * which left the bar frozen at 18% for 24 s and then snapping to 100%. (That was the
+ * raw 27.7 MB seed; since 869f138q7 the largest file is the 2.3 MB
+ * `optc-seed.sqlite.gz`, about a quarter of the payload.) Byte weighting alone does
+ * not fix that; it only moves the freeze point.
  *
  * So {@link SwDownloadProgressTracker.sample} reports two numbers: the CONFIRMED
  * ratio, and the byte share of the next asset expected to land. The caller may

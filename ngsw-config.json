@@ -33,7 +33,7 @@
           "/assets/data/optc-auto-builder-abilities.json",
           "/assets/data/optc-manifest.json",
           "/assets/data/optc-preview.json",
-          "/assets/data/optc-seed.sql",
+          "/assets/data/optc-seed.sqlite.gz",
           "/assets/data/optc-unresolved-images.json",
           "/assets/vendor/sql.js/sql-wasm.wasm"
         ]

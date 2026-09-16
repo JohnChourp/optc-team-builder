@@ -100,7 +100,9 @@ and when a `test:` script is not a lane.
 | `data:monitor-upstream` | workflow · check-optc-db-release.yml | the check-optc-db-release.yml workflow |
 | `data:overlay-register` | npm script · test:overlay-register | `test:overlay-register` |
 | `data:upsert-manual-character` | manual · — | Applies a hand-written character overlay. Run deliberately by a maintainer; automating it would let the dataset drift from upstream without a decision. |
+| `dataset-delivery:check` | npm script · test:dataset-delivery | `test:dataset-delivery` |
 | `dataset:ability-tags` | documented · maintainer-validation-guide.md, post-merge-smoke-pack.md | a documented manual step |
+| `dataset:binary` | npm script · start, build, build:pages | `start`, `build`, `build:pages` |
 | `dataset:consumers` | script file · generate-dataset-consumers.mjs | whatever generate-dataset-consumers.mjs drives |
 | `dataset:digest` | workflow · dataset-change-digest.yml | the dataset-change-digest.yml workflow |
 | `dataset:enemy-vocabulary` | script file · generate-enemy-vocabulary.mjs | whatever generate-enemy-vocabulary.mjs drives |
@@ -179,6 +181,7 @@ and when a `test:` script is not a lane.
 | `test:component-style-budget` | lane · component-style-budget | the `component-style-budget` lane |
 | `test:content-ladder` | lane · content-ladder | the `content-ladder` lane |
 | `test:dataset-consumers` | lane · dataset-consumers | the `dataset-consumers` lane |
+| `test:dataset-delivery` | lane · dataset-delivery | the `dataset-delivery` lane |
 | `test:dataset-digest` | lane · dataset-digest | the `dataset-digest` lane |
 | `test:dataset-measurements` | lane · dataset-measurements | the `dataset-measurements` lane |
 | `test:dataset-provenance` | lane · dataset-provenance | the `dataset-provenance` lane |

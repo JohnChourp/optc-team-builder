@@ -50,6 +50,7 @@ import {
   isCharacterAvailableInRegion,
   normalizeCharacterRegionPreference,
 } from './character-region.utils';
+import { loadDatasetDatabase } from './dataset-database-loader.utils';
 import { UserStateService } from './user-state.service';
 
 interface SqlRow {
@@ -57,14 +58,12 @@ interface SqlRow {
 }
 
 const SQL_WASM_PATH = 'assets/vendor/sql.js/sql-wasm.wasm';
-const SQL_SEED_PATH = 'assets/data/optc-seed.sql';
 const DATASET_MANIFEST_PATH = 'assets/data/optc-manifest.json';
 const AUTO_TEAM_BUILDER_ABILITY_CATALOG_PATH = 'assets/data/optc-auto-builder-abilities.json';
 const FALLBACK_CHARACTER_IMAGE = 'assets/placeholders/character-card.svg';
 const INVALID_CLASS_PATTERN = /^Class\d+$/i;
 const SHIP_THUMBNAIL_PACK_ID = 'ship-thumbnails';
 const SHIP_THUMBNAIL_PACK_KEY = 'shipThumbnails';
-const SQL_EXECUTION_YIELD_INTERVAL = 250;
 const CHARACTER_DECORATION_YIELD_INTERVAL = 500;
 const DETAIL_DECORATION_YIELD_INTERVAL = 250;
 
@@ -1647,20 +1646,14 @@ export class OptcRepositoryService {
 
   private async createDatabase(): Promise<Database> {
     const sql = await this.sqlPromise;
-    const seed = await this.fetchText(SQL_SEED_PATH);
-    const database = new sql.Database();
-    const statements = seed
-      .split(/;\s*\n/)
-      .map((statement) => statement.trim())
-      .filter(Boolean);
-
-    for (const [index, statement] of statements.entries()) {
-      database.run(`${statement};`);
-
-      if (index > 0 && index % SQL_EXECUTION_YIELD_INTERVAL === 0) {
-        await yieldToMainThread();
-      }
-    }
+    const { database } = await loadDatasetDatabase({
+      sql,
+      fetch: (path) => fetch(path),
+      decompressionStream:
+        typeof DecompressionStream === 'function' ? DecompressionStream : undefined,
+      yieldToMainThread,
+      warn: (code, detail) => console.warn(code, detail),
+    });
 
     return database;
   }
@@ -2176,16 +2169,6 @@ export class OptcRepositoryService {
     } catch {
       return fallback;
     }
-  }
-
-  private async fetchText(path: string): Promise<string> {
-    const response = await fetch(path);
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch ${path}: ${response.status}`);
-    }
-
-    return response.text();
   }
 
   private async fetchJson<T>(path: string): Promise<T> {

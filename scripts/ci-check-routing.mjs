@@ -503,6 +503,16 @@ export const SCRIPT_SUITES = {
     label: 'Web Worker bundling tests',
     command: 'npm run test:worker-bundling',
   },
+  /*
+   * 869f138q7. Proves what a first visit downloads: no large prefetched file of a type the host
+   * ships uncompressed, and the dataset as the gzipped database the committed seed builds. The
+   * seed went out at 27.7 MB with no content-encoding for the life of the project because no lane
+   * looked at the build output's prefetch group.
+   */
+  'dataset-delivery': {
+    label: 'Dataset delivery (compression and database) tests',
+    command: 'npm run test:dataset-delivery',
+  },
 };
 
 export const SCRIPT_SUITE_ORDER = Object.keys(SCRIPT_SUITES);
@@ -850,6 +860,31 @@ function touchesDatasetConsumerSources(filePath) {
   return (
     filePath === 'scripts/lib/optc-dataset.mjs' ||
     filePath === 'src/app/core/services/optc-repository.service.ts'
+  );
+}
+
+/* 869f138q7. Terminating: these files are the dataset delivery guard and the database builder. */
+function isDatasetDeliveryPath(filePath) {
+  return (
+    filePath === 'scripts/build-dataset-binary.mjs' ||
+    filePath === 'scripts/build-dataset-binary.spec.ts' ||
+    filePath === 'scripts/check-dataset-delivery.mjs' ||
+    filePath === 'scripts/check-dataset-delivery.spec.ts' ||
+    filePath === 'scripts/lib/dataset-binary.mjs' ||
+    filePath === 'docs/dataset-delivery.md'
+  );
+}
+
+/*
+ * Non-terminating: what the prefetch group is made of, and the code that opens the database. The
+ * seed is data and ngsw-config.json is configuration, and both also route elsewhere.
+ */
+function touchesDatasetDeliverySources(filePath) {
+  return (
+    filePath === 'ngsw-config.json' ||
+    filePath === 'public/assets/data/optc-seed.sql' ||
+    filePath === 'src/app/core/services/dataset-database-loader.utils.ts' ||
+    filePath === 'src/app/core/services/dataset-database-loader.utils.spec.ts'
   );
 }
 
@@ -1387,6 +1422,10 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
       addScriptSuite(scriptSuites, 'dataset-consumers');
     }
 
+    if (touchesDatasetDeliverySources(filePath)) {
+      addScriptSuite(scriptSuites, 'dataset-delivery');
+    }
+
     if (touchesEnemyVocabularySources(filePath)) {
       addScriptSuite(scriptSuites, 'enemy-vocabulary');
     }
@@ -1473,6 +1512,11 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
 
     if (isDatasetConsumerCensusPath(filePath)) {
       addScriptSuite(scriptSuites, 'dataset-consumers');
+      continue;
+    }
+
+    if (isDatasetDeliveryPath(filePath)) {
+      addScriptSuite(scriptSuites, 'dataset-delivery');
       continue;
     }
 

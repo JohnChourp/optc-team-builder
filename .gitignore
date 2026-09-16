@@ -64,3 +64,6 @@ scripts/.*.mjs
 # misplaced folder being committed to THIS repo, where no rule would have
 # caught it.
 /live-artifacts/
+
+# 869f138q7. Built from public/assets/data/optc-seed.sql before every build and serve.
+/public/assets/data/optc-seed.sqlite.gz
