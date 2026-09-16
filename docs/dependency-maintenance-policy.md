@@ -207,9 +207,14 @@ Rollback should prefer the smallest stable action:
 `.github/workflows/test.yml` carries the full suite list and the full job matrix as two generated
 strings, and `scripts/ci-check-routing.spec.ts` asserts the matrix matches `SCRIPT_SUITES` exactly.
 So a new lane is never only a new script: it is a `SCRIPT_SUITES` entry, a routing predicate, both
-workflow strings, and a `docs/npm-script-inventory.md` regeneration. Regenerate the two workflow
-strings from the registry rather than editing them by hand - they are one line each and a hand edit
-is how the matrix and the registry drift apart.
+workflow strings, and a `docs/npm-script-inventory.md` regeneration.
+
+The two workflow strings are edited **by hand**; there is no generator, and this paragraph used to
+say to regenerate them from the registry, which nobody could do (869f135tn). The hand edit is safe
+because it is guarded from two sides: `scripts/ci-check-routing.spec.ts` asserts the matrix is
+identical to `SCRIPT_SUITES`, and `check-npm-script-inventory.mjs` now asserts that every
+`test:<id>` script IS a lane - so a script added without its `SCRIPT_SUITES` entry fails rather than
+shipping as a guard that never runs.
 
 869f1328b added three lanes this way (`enemy-vocabulary`, `ability-tags`, `field-naming`) and each
 routes only to the sources it actually reads. A lane that runs for reasons it cannot be affected by
