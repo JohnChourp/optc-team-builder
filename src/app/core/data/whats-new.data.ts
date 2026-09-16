@@ -31,6 +31,22 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.51',
+    date: '2026-09-16',
+    userVisible: false,
+    headline: {
+      en: 'Housekeeping only - nothing changed on any screen',
+      el: 'Μόνο συντήρηση - τίποτα δεν άλλαξε σε καμία οθόνη',
+    },
+    summaryEn:
+      'Nothing in this release changes anything you can see or do in the app. It was a clean-up of the project\u2019s own records: the numbers the team builder search uses now say where they came from, the checks that guard the code had two that could never fail and now can, the notes describing which character pictures are corrected by hand were wrong about thirty of them, and several internal documents were describing things that had stopped being true.',
+    summaryEl:
+      'Τίποτα σε αυτή την έκδοση δεν αλλάζει κάτι που βλέπεις ή κάνεις στην εφαρμογή. Ήταν μια τακτοποίηση των εσωτερικών αρχείων του project: οι αριθμοί που χρησιμοποιεί η αναζήτηση του team builder λένε πλέον από πού προέκυψαν, δύο από τους ελέγχους που φυλάνε τον κώδικα δεν μπορούσαν ποτέ να αποτύχουν και τώρα μπορούν, οι σημειώσεις για το ποιες εικόνες χαρακτήρων διορθώνονται στο χέρι ήταν λάθος για τριάντα από αυτές, και αρκετά εσωτερικά έγγραφα περιέγραφαν πράγματα που είχαν πάψει να ισχύουν.',
+    added: [],
+    improved: [],
+    fixed: [],
+  },
+  {
     version: '0.4.50',
     date: '2026-09-15',
     userVisible: true,
