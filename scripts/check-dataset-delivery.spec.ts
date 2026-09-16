@@ -11,7 +11,9 @@ import {
   extensionOf,
   formatDatasetDeliveryResult,
   inspectDatasetDelivery,
+  inspectShippedDataFiles,
   isHostCompressedOrPrecompressed,
+  readRuntimeDataFiles,
 } from './check-dataset-delivery.mjs';
 import {
   buildDatasetDatabaseBytes,
@@ -216,6 +218,92 @@ describe('check-dataset-delivery', () => {
       'no-prefetched-assets',
       'dataset-binary-not-prefetched',
     ]);
+  });
+
+  /*
+   * 869f138qe. The build shipped a zero-byte optc.db nothing had ever read, and three files only
+   * scripts use - two of them prefetched on every visit. The list of what the app reads comes from
+   * the app source, so it cannot drift from the code.
+   */
+  describe('the files the app reads', () => {
+    async function makeAppRoot(files: Record<string, string>) {
+      const root = await mkdtemp(path.join(os.tmpdir(), 'optc-dataset-runtime-'));
+      tempDirs.push(root);
+
+      for (const [relativePath, content] of Object.entries(files)) {
+        const filePath = path.join(root, relativePath);
+        await mkdir(path.dirname(filePath), { recursive: true });
+        await writeFile(filePath, content);
+      }
+
+      return root;
+    }
+
+    it('reads every quoted assets/data path in app source, in any quote style, and skips specs', async () => {
+      const appRoot = await makeAppRoot({
+        'src/app/core/services/repository.ts': `const A = 'assets/data/optc-manifest.json';\nconst B = "assets/data/optc-auto-builder-abilities.json";`,
+        'src/app/core/services/nested/loader.utils.ts': 'export const C = `/assets/data/optc-seed.sqlite.gz`;',
+        'src/app/pages/home/home.page.ts': "const D = 'assets/data/optc-seed.sql';",
+        'src/app/pages/home/home.page.spec.ts': "readFileSync('public/assets/data/optc-preview.json');",
+        'src/app/pages/home/notes.md': "'assets/data/ignored.json'",
+      });
+
+      expect([...readRuntimeDataFiles(appRoot)].sort()).toEqual([
+        'optc-auto-builder-abilities.json',
+        'optc-manifest.json',
+        'optc-seed.sql',
+        'optc-seed.sqlite.gz',
+      ]);
+    });
+
+    it('names a shipped file no app code reads, and a read file the build lacks', async () => {
+      const distDir = await makeDist({
+        files: {
+          '/assets/data/optc-preview.json': '{}',
+          '/assets/data/optc.db': '',
+        },
+      });
+      const runtimeDataFiles = new Set(['optc-manifest.json', 'optc-seed.sql', 'optc-seed.sqlite.gz', 'missing.json']);
+
+      const { findings, shipped } = inspectShippedDataFiles({ distDir, runtimeDataFiles });
+
+      expect(shipped.sort()).toEqual([
+        'optc-manifest.json',
+        'optc-preview.json',
+        'optc-seed.sql',
+        'optc-seed.sqlite.gz',
+        'optc.db',
+      ]);
+      expect(findings.map((finding) => `${finding.kind} ${finding.detail.split(' ')[0]}`)).toEqual([
+        'unused-data-file assets/data/optc-preview.json',
+        'unused-data-file assets/data/optc.db',
+        'missing-runtime-data-file the',
+      ]);
+      expect(findings[2]?.detail).toContain('assets/data/missing.json');
+    });
+
+    it('passes a build that ships exactly what the app reads, and refuses an empty list', async () => {
+      const distDir = await makeDist({});
+      const exact = new Set(['optc-manifest.json', 'optc-seed.sql', 'optc-seed.sqlite.gz']);
+
+      expect(inspectShippedDataFiles({ distDir, runtimeDataFiles: exact }).findings).toEqual([]);
+      expect(inspectShippedDataFiles({ distDir, runtimeDataFiles: new Set() }).findings.map((f) => f.kind)).toEqual([
+        'no-runtime-data-files',
+        'unused-data-file',
+        'unused-data-file',
+        'unused-data-file',
+      ]);
+    });
+
+    it('reports those findings through the whole check', async () => {
+      const distDir = await makeDist({ files: { '/assets/data/optc-preview.json': '{}' } });
+      const runtimeDataFiles = new Set(['optc-manifest.json', 'optc-seed.sql', 'optc-seed.sqlite.gz']);
+
+      const result = await inspectDatasetDelivery({ distDir, SQL, runtimeDataFiles });
+
+      expect(kinds(result)).toEqual(['unused-data-file']);
+      expect(result.ok).toBe(false);
+    });
   });
 
   it('classifies extensions, including names with several dots and no extension', () => {

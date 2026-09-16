@@ -32,7 +32,12 @@
             "assets": [
               {
                 "glob": "**/*",
-                "input": "public"
+                "input": "public",
+                "ignore": [
+                  "assets/data/optc-preview.json",
+                  "assets/data/optc-unresolved-images.json",
+                  "assets/data/optc-unresolved-clauses.json"
+                ]
               },
               {
                 "glob": "sql-wasm.wasm",

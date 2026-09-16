@@ -13,6 +13,17 @@ Owner: ClickUp [869f138q7](https://app.clickup.com/t/90121749478/869f138q7) (wav
 | `assets/data/optc-auto-builder-abilities.json` | Ability catalogue for the pickers | yes |
 | `assets/data/optc-manifest.json` | Counts, versions, pack summaries | yes |
 
+Nothing else in `assets/data` ships (869f138qe). `optc-preview.json`, `optc-unresolved-images.json`
+and `optc-unresolved-clauses.json` stay in `public/assets/data/`, where the scripts that read them
+look, and `angular.json` leaves them out of the build; the first two used to be prefetched on every
+visit although no app code reads them. `optc-preview.json` is not the light character list its name
+suggests - it is the first 24 full character records and 12 ships, a sample for scripts - so there
+was nothing for the app to use it for (869f138py).
+
+The empty `optc.db` that sat beside the seed until then was never a database attempt: it was added,
+at zero bytes, by f2c91ba2 on 2026-04-12, a commit about party-conflict keys whose code never
+mentions it, and nothing in the repository ever read it. It is gone.
+
 `public/assets/data/optc-seed.sql` is the source of truth. The importer writes it, git diffs it,
 and about twenty scripts read it as text. `optc-seed.sqlite.gz` is derived from it and is not
 committed: `scripts/build-dataset-binary.mjs` builds it before every `ng build` and `ng serve`
@@ -75,7 +86,10 @@ The `dataset-delivery` lane (`npm run test:dataset-delivery`) builds the app and
   already - the exact shape the seed had;
 - the raw seed is prefetched again;
 - `optc-seed.sqlite.gz` is missing or not prefetched;
-- the shipped database is not the database the shipped seed builds.
+- the shipped database is not the database the shipped seed builds;
+- the built `assets/data` holds a file no app code names, or lacks one that app code names. The
+  list is read from the app source - every quoted `assets/data/<file>` outside a spec - so it
+  cannot drift from the code.
 
 Each rule was broken on purpose against a real build before the lane was registered: prefetching
 the raw seed again, shipping a seed changed after the database was built, and building with

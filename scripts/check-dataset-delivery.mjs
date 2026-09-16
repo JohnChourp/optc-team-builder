@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { existsSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -73,6 +73,71 @@ export const PRECOMPRESSED_EXTENSIONS = new Set([
 export const DATASET_BINARY_URL = '/assets/data/optc-seed.sqlite.gz';
 export const DATASET_SEED_URL = '/assets/data/optc-seed.sql';
 
+/*
+ * 869f138qe. `assets/data` in the build holds only what the app reads. Which files those are is
+ * read from the app source - every `assets/data/<file>` string literal outside a spec - so the list
+ * cannot drift from the code. Before this, the build shipped a zero-byte `optc.db` nothing had ever
+ * read, and three files only scripts use, two of them prefetched on every visit.
+ */
+const RUNTIME_DATA_LITERAL = /['"`]\/?assets\/data\/([A-Za-z0-9._-]+)['"`]/gu;
+
+export function readRuntimeDataFiles(appRoot) {
+  const files = new Set();
+  const visit = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const entryPath = path.join(dir, entry.name);
+
+      if (entry.isDirectory()) {
+        visit(entryPath);
+      } else if (entry.name.endsWith('.ts') && !entry.name.endsWith('.spec.ts')) {
+        for (const match of readFileSync(entryPath, 'utf8').matchAll(RUNTIME_DATA_LITERAL)) {
+          files.add(match[1]);
+        }
+      }
+    }
+  };
+
+  visit(path.join(appRoot, 'src', 'app'));
+  return files;
+}
+
+export function inspectShippedDataFiles({ distDir, runtimeDataFiles }) {
+  const findings = [];
+  const dataDir = path.join(distDir, 'assets', 'data');
+  const shipped = existsSync(dataDir)
+    ? readdirSync(dataDir, { withFileTypes: true })
+        .filter((entry) => entry.isFile())
+        .map((entry) => entry.name)
+    : [];
+
+  if (runtimeDataFiles.size === 0) {
+    findings.push({
+      kind: 'no-runtime-data-files',
+      detail: 'no app source names a file under assets/data, so nothing was checked',
+    });
+  }
+
+  for (const name of shipped.sort()) {
+    if (!runtimeDataFiles.has(name)) {
+      findings.push({
+        kind: 'unused-data-file',
+        detail: `assets/data/${name} ships but no app code reads it - exclude it in angular.json, or read it`,
+      });
+    }
+  }
+
+  for (const name of [...runtimeDataFiles].sort()) {
+    if (!shipped.includes(name)) {
+      findings.push({
+        kind: 'missing-runtime-data-file',
+        detail: `the app reads assets/data/${name}, and the build does not contain it`,
+      });
+    }
+  }
+
+  return { findings, shipped };
+}
+
 export function extensionOf(url) {
   const name = String(url).split('?')[0].split('/').pop() ?? '';
   const dot = name.lastIndexOf('.');
@@ -113,7 +178,7 @@ export function readPrefetchedAssets(distDir) {
   return { manifestPath, assets };
 }
 
-export async function inspectDatasetDelivery({ distDir, SQL }) {
+export async function inspectDatasetDelivery({ distDir, SQL, runtimeDataFiles }) {
   const findings = [];
   const { manifestPath, assets } = readPrefetchedAssets(distDir);
 
@@ -174,6 +239,10 @@ export async function inspectDatasetDelivery({ distDir, SQL }) {
     findings.push({ kind: 'dataset-binary-mismatch', detail: binaryProblem });
   }
 
+  if (runtimeDataFiles) {
+    findings.push(...inspectShippedDataFiles({ distDir, runtimeDataFiles }).findings);
+  }
+
   return { ok: findings.length === 0, findings, assets };
 }
 
@@ -191,7 +260,9 @@ export function formatDatasetDeliveryResult(result) {
   lines.push('');
 
   if (result.ok) {
-    lines.push('Status: passed - every large prefetched file is compressed, and the dataset is the seed.');
+    lines.push(
+      'Status: passed - every large prefetched file is compressed, the dataset is the seed, and assets/data ships only what the app reads.',
+    );
   } else {
     lines.push('Status: FAILED');
 
@@ -210,7 +281,11 @@ async function main() {
     appRoot,
     distFlag === -1 ? 'dist/optc-team-builder/browser' : process.argv[distFlag + 1],
   );
-  const result = await inspectDatasetDelivery({ distDir, SQL: await loadSqlJs() });
+  const result = await inspectDatasetDelivery({
+    distDir,
+    SQL: await loadSqlJs(),
+    runtimeDataFiles: readRuntimeDataFiles(appRoot),
+  });
 
   process.stdout.write(`${formatDatasetDeliveryResult(result)}\n`);
 
