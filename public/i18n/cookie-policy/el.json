@@ -28,11 +28,14 @@
     },
     "analytics": {
       "title": "Προαιρετικά analytics cookies",
-      "copy": "Αν αποδεχτείς analytics, το site φορτώνει Google Analytics 4 και μπορεί να δημιουργήσει analytics cookies όπως _ga και _ga_<id> για να ξεχωρίζει επισκέψεις και να μετρά συγκεντρωτική χρήση.",
+      "copy": "Το site φορτώνει ένα container του Google Tag Manager σε κάθε σελίδα, με το analytics storage απενεργοποιημένο από προεπιλογή μέχρι να επιλέξεις. Αν αποδεχτείς analytics, φορτώνει Google Analytics 4 και μπορεί να δημιουργήσει analytics cookies όπως _ga και _ga_<id> για να ξεχωρίζει επισκέψεις και να μετρά συγκεντρωτική χρήση.",
       "items": {
+        "container": "Το ίδιο το container του Google Tag Manager φορτώνει σε κάθε σελίδα ώστε να διαχειρίζεται αυτά τα tags. Το analytics storage ορίζεται ως denied πριν φορτώσει και γίνεται granted μόνο αν αποδεχτείς.",
         "cookies": "Αυτά τα analytics identifiers είναι προαιρετικά και δεν φορτώνονται μέχρι να δώσεις consent.",
         "purpose": "Χρησιμοποιούνται μόνο για να μετρούν κίνηση και να καταλαβαίνουν ποιες σελίδες ή οθόνες είναι χρήσιμες.",
-        "noAds": "Το site δεν χρησιμοποιεί αυτό το analytics setup για ενεργοποίηση advertising ή personalized ads."
+        "noAds": "Το site δεν χρησιμοποιεί αυτό το analytics setup για ενεργοποίηση advertising ή personalized ads.",
+        "clarity": "Το Microsoft Clarity μετρά πώς χρησιμοποιούνται στην πράξη οι σελίδες, και παραδίδεται από εκείνο το container αντί να φορτώνεται απευθείας από την εφαρμογή.",
+        "cloudflare": "Το Cloudflare Web Analytics μετρά κίνηση σε επίπεδο σελίδας χωρίς cookies. Προστίθεται από το δίκτυο μπροστά από το site, οπότε υπάρχει ανεξάρτητα από την επιλογή σου εδώ."
       }
     },
     "duration": {

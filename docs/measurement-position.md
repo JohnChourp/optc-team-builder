@@ -33,29 +33,34 @@ Only the first is in the app's own code as an analytics call. The other three ar
 `scripts/check-csp-policy.mjs` asserts their origins from a list rather than
 discovering them.
 
-## ⚠️ Three of the four are disclosed nowhere
+## All four are disclosed — as of 2026-09-16
 
-Measured 2026-09-16 across every privacy and cookie namespace in `public/i18n`, in
-both languages:
+They were not. Measured that morning across every privacy and cookie namespace in
+`public/i18n`, in both languages: **Google Analytics 18 mentions, Google Tag
+Manager 0, Microsoft Clarity 0, Cloudflare 0.** Three of the four surfaces this app
+ships were named nowhere a reader could see.
 
-| Vendor | Mentions in the privacy copy |
-| --- | ---: |
-| Google Analytics | **18** |
-| Google Tag Manager | **0** |
-| Microsoft Clarity | **0** |
-| Cloudflare | **0** |
+The owner's answer was **disclose**, and the copy was written the same day — the
+privacy page's *Recipients* and *What data may be processed* sections, its
+*International transfers* paragraph, and the cookie page's *Optional analytics*
+section, in English and Greek.
 
-This is an **owner decision, and it is open**. The two honest resolutions are to
-disclose them or to remove them, and writing privacy copy for a vendor the owner
-may prefer to drop would prejudge it. Removing the GTM container removes Clarity
-with it, since the container is what injects it.
+Two things that copy had to get right, because both are easy to state falsely and
+a privacy page is the worst place to be loosely worded:
 
-Until it is resolved, the gap is **declared** in `VENDOR_DISCLOSURE`
-(`scripts/check-csp-policy.mjs`) with a reason and a date, so it is visible in the
-code rather than merely absent from the copy. The check fails on any origin that is
-neither disclosed nor declared — which is the part that did not exist before: a
-fifth vendor could have been added and nothing would have asked whether the privacy
-page mentions it.
+- **The GTM container loads on every page regardless of consent.** What consent
+  gates is `analytics_storage`, which is defaulted to `denied` *before* the
+  container loads and granted only on acceptance. "Nothing loads until you
+  consent" would have been untrue of the container.
+- **Cloudflare Web Analytics is added at the edge**, not by the app, so it is
+  present whatever the reader chooses on the cookie page. It is cookieless, which
+  is why that is defensible — but it still had to be said.
+
+`VENDOR_DISCLOSURE` in `scripts/check-csp-policy.mjs` now records all five origins
+as disclosed, and the check fails if the copy ever stops naming one. The reverse
+direction is what actually fired here: every row began `disclosed: false`, and
+without the "flip the flag" branch they would have stayed that way while the pages
+named all four.
 
 ## The cheaper thing that already works
 

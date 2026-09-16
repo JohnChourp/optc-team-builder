@@ -155,34 +155,47 @@ describe('measurement vendors against the privacy copy', () => {
   });
 
   it('fails a row claiming disclosure the copy does not carry', () => {
-    const lying = VENDOR_DISCLOSURE.map((entry) =>
-      entry.term === 'Clarity' ? { ...entry, disclosed: true } : entry,
-    );
+    const lying = [{ origin: 'https://example.test', term: 'NotInTheCopy', disclosed: true }];
 
     expect(
-      findUndeclaredVendors(REQUIRED_INJECTED_ORIGINS, lying, privacyCopy)[0],
+      findUndeclaredVendors([{ directive: 'script-src', origin: 'https://example.test' }], lying, privacyCopy)[0],
     ).toContain('appears nowhere in the privacy copy');
   });
 
   it('fails an undisclosed row with no reason or no date', () => {
-    const bare = VENDOR_DISCLOSURE.map((entry) =>
-      entry.term === 'Cloudflare' ? { ...entry, reason: undefined } : entry,
-    );
+    const bare = [{ origin: 'https://example.test', term: 'NotInTheCopy', disclosed: false }];
 
-    expect(findUndeclaredVendors(REQUIRED_INJECTED_ORIGINS, bare, privacyCopy).length).toBeGreaterThan(0);
+    expect(
+      findUndeclaredVendors([{ directive: 'script-src', origin: 'https://example.test' }], bare, privacyCopy)[0],
+    ).toContain('no reason or no date');
   });
 
   it('tells you to flip the flag once the copy DOES name the vendor', () => {
     /*
-     * The self-healing direction. Without it, disclosing Clarity tomorrow would
-     * leave a row permanently lying in the other direction, and nothing would say so.
+     * The self-healing direction, and the one that actually fired. Every vendor was
+     * undisclosed until 869f135w2 wrote the copy; without this the rows would have
+     * stayed `disclosed: false` while the pages named all four, and nothing would
+     * have said so.
      */
-    const problems = findUndeclaredVendors(
-      REQUIRED_INJECTED_ORIGINS,
-      VENDOR_DISCLOSURE,
-      `${privacyCopy} Microsoft Clarity`,
-    );
+    const stale = [
+      {
+        origin: 'https://example.test',
+        term: 'Clarity',
+        disclosed: false,
+        undisclosedSince: '2026-09-16',
+        reason: 'a reason',
+      },
+    ];
 
-    expect(problems[0]).toContain('Flip');
+    expect(
+      findUndeclaredVendors([{ directive: 'script-src', origin: 'https://example.test' }], stale, privacyCopy)[0],
+    ).toContain('Flip');
+  });
+
+  it('records every injected origin as disclosed, now that the copy names all four', () => {
+    for (const entry of VENDOR_DISCLOSURE) {
+      expect(entry.disclosed, `${entry.origin} should be disclosed`).toBe(true);
+      expect(privacyCopy, `${entry.term} must be in the copy`).toContain(entry.term);
+    }
   });
 });
