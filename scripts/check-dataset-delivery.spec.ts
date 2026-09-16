@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -8,6 +8,7 @@ import {
   DATASET_BINARY_URL,
   DATASET_SEED_URL,
   LARGE_ASSET_BYTES,
+  PREFETCH_CACHED_BUDGET_BYTES,
   extensionOf,
   formatDatasetDeliveryResult,
   inspectDatasetDelivery,
@@ -304,6 +305,31 @@ describe('check-dataset-delivery', () => {
       expect(kinds(result)).toEqual(['unused-data-file']);
       expect(result.ok).toBe(false);
     });
+  });
+
+  /*
+   * 869f138qh. The whole prefetch group, as the device caches it. Adding a large file to it is the
+   * failure this rule exists for; a file that is only lazily cached does not count.
+   */
+  it('fails when the prefetch group as a whole goes over its budget, and not before', async () => {
+    const distDir = await makeDist({});
+    const within = await inspectDatasetDelivery({ distDir, SQL });
+    const total = within.assets.reduce((sum, asset) => sum + (asset.bytes ?? 0), 0);
+
+    expect(kinds(within)).toEqual([]);
+    expect(kinds(await inspectDatasetDelivery({ distDir, SQL, prefetchBudgetBytes: total }))).toEqual([]);
+
+    const over = await inspectDatasetDelivery({ distDir, SQL, prefetchBudgetBytes: total - 1 });
+    expect(kinds(over)).toEqual(['prefetch-over-budget']);
+    expect(over.findings[0]?.detail).toContain(`${total} B`);
+  });
+
+  it('keeps the budget identical to the one the route-load harness reports', async () => {
+    const harness = await readFile(path.resolve(process.cwd(), 'scripts/perf-route-load.mjs'), 'utf8');
+    const match = harness.match(/prefetchCachedBytes:\s*([\d_]+),/u);
+
+    expect(match).not.toBeNull();
+    expect(Number(match?.[1].replaceAll('_', ''))).toBe(PREFETCH_CACHED_BUDGET_BYTES);
   });
 
   it('classifies extensions, including names with several dots and no extension', () => {

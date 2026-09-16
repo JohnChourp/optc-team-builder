@@ -871,6 +871,8 @@ function isDatasetDeliveryPath(filePath) {
     filePath === 'scripts/check-dataset-delivery.mjs' ||
     filePath === 'scripts/check-dataset-delivery.spec.ts' ||
     filePath === 'scripts/lib/dataset-binary.mjs' ||
+    filePath === 'scripts/lib/prefetch-payload.mjs' ||
+    filePath === 'scripts/lib/prefetch-payload.spec.ts' ||
     filePath === 'docs/dataset-delivery.md'
   );
 }

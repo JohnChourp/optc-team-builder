@@ -138,6 +138,14 @@ function routeLoadResult(overrides: Record<string, number | null> = {}) {
         savedTeams: { rawBytes: value('savedTeamsRawBytes', 74_000), gzipBytes: 19_000 },
         captainCoverage: { rawBytes: value('captainCoverageRawBytes', 78_000), gzipBytes: 19_000 },
       },
+      payload: {
+        cachedBytes: value('prefetchCachedBytes', 9_500_000),
+        wireBytes: value('prefetchWireBytes', 4_000_000),
+        databaseBytes: value('databaseBytes', 2_280_000),
+        abilityCatalogCachedBytes: value('abilityCatalogCachedBytes', 1_670_000),
+        abilityCatalogWireBytes: value('abilityCatalogWireBytes', 202_000),
+        sqlWasmWireBytes: value('sqlWasmWireBytes', 322_000),
+      },
     },
     viewportRuns: [
       {
@@ -244,9 +252,9 @@ describe('perf-budget-report', () => {
     const report = await buildPerformanceBudgetReport({ currentDir });
 
     expect(report.status).toBe('passed');
-    /* 869f138qd added `dataset ready`, one row per viewport. */
-    expect(report.summary.metricCount).toBe(60);
-    expect(report.summary.budgetedMetricCount).toBe(54);
+    /* 869f138qd added `dataset ready`, one row per viewport; 869f138qh six prefetch payload rows. */
+    expect(report.summary.metricCount).toBe(66);
+    expect(report.summary.budgetedMetricCount).toBe(60);
     expect(report.hardBudgetFailures).toEqual([]);
     expect(report.invalidMetricFailures).toEqual([]);
     expect(report.baseline).toBeNull();
@@ -312,10 +320,34 @@ describe('perf-budget-report', () => {
       expect.objectContaining({
         id: 'route-load.bundle.bundle.characters-route-raw-js',
         actualMs: 70_000,
-        budgetMs: 186_000,
+        budgetMs: 192_400,
         unit: 'bytes',
       }),
     );
+    /*
+     * 869f138qh. Result rows used to drop basis, profile, setOn and provenance, so the summary
+     * printed "unrecorded" and "provisional (undefined)" for rows whose definitions said measured.
+     */
+    expect(report.metricRows).toContainEqual(
+      expect.objectContaining({
+        id: 'route-load.bundle.bundle.entry-script-raw-js',
+        basis: 'deterministic - read from the esbuild stats.json',
+        profile: 'esbuild stats.json from a production build',
+        setOn: '2026-09-15',
+        provenance: 'measured',
+      }),
+    );
+    expect(report.metricRows).toContainEqual(
+      expect.objectContaining({
+        id: 'route-load.bundle.prefetch-payload.dataset-database',
+        actualMs: 2_280_000,
+        budgetMs: 2_358_700,
+        unit: 'bytes',
+        profile: expect.stringContaining('service-worker prefetch groups'),
+        provenance: 'measured',
+      }),
+    );
+    expect(formatPerformanceBudgetSummary(report)).not.toContain('provisional (undefined)');
   });
 
   it('fails hard budgets while still reporting all metrics', async () => {
@@ -336,7 +368,7 @@ describe('perf-budget-report', () => {
         metricId: 'ability-filters.desktop.saved-teams.firsttogglems',
       }),
     ]);
-    expect(report.metricRows).toHaveLength(60);
+    expect(report.metricRows).toHaveLength(66);
   });
 
   it('gates on route-load BUNDLE breaches only, reporting timing breaches beside them', async () => {
@@ -799,6 +831,12 @@ describe('budget parity between the harnesses and the report', () => {
       'characters route raw JS': 'charactersRawBytes',
       'saved teams route raw JS': 'savedTeamsRawBytes',
       'captain coverage route raw JS': 'captainCoverageRawBytes',
+      'prefetch total cached': 'prefetchCachedBytes',
+      'prefetch total over the wire': 'prefetchWireBytes',
+      'dataset database': 'databaseBytes',
+      'ability catalogue cached': 'abilityCatalogCachedBytes',
+      'ability catalogue over the wire': 'abilityCatalogWireBytes',
+      'sql.js wasm over the wire': 'sqlWasmWireBytes',
     };
     const metrics = reportMetrics().filter((m) => m.group === 'ROUTE_LOAD_METRICS' && m.scope === 'result');
 
@@ -843,7 +881,7 @@ describe('budget parity between the harnesses and the report', () => {
    * date pattern cannot do that.
    */
   describe('budget provenance', () => {
-    const PROFILE_IDS = ['browser', 'node', 'bundle', 'datasetReady'];
+    const PROFILE_IDS = ['browser', 'node', 'bundle', 'payload', 'datasetReady'];
     const PROVENANCE_STATES = ['measured', 'provisional'];
 
     it('gives every metric a profile from the declared set', () => {
@@ -898,19 +936,26 @@ describe('budget parity between the harnesses and the report', () => {
        * somebody runs those harnesses - they need a browser, and inventing a date
        * for them is the thing this field exists to prevent.
        */
+      /* 869f138qh. The six prefetch payload rows, measured from a build on 2026-09-16. */
       expect(measured).toEqual([
+        'ability catalogue cached',
+        'ability catalogue over the wire',
         'bulk JSON parse',
         'bulk export encode',
         'bulk parse and sanitize',
         'bulk sanitize',
+        'dataset database',
         'entry script gzip JS',
         'entry script raw JS',
         'initial payload gzip JS',
         'initial payload raw JS',
         'invalid input validation',
+        'prefetch total cached',
+        'prefetch total over the wire',
         'share decode',
         'share encode',
         'share resolve and sanitize',
+        'sql.js wasm over the wire',
       ]);
     });
 

@@ -8,6 +8,8 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { gzipSync } from 'node:zlib';
 import { chromium, devices } from 'playwright';
 
+import { measurePrefetchPayload } from './lib/prefetch-payload.mjs';
+
 export const ROUTE_LOAD_SCHEMA_VERSION = 2;
 
 /**
@@ -90,9 +92,34 @@ export const ROUTE_LOAD_BUDGETS = Object.freeze({
     guideRawBytes: 14_000,
     manualShareRawBytes: 320_000,
     compareRawBytes: 740_000,
-    charactersRawBytes: 186_000,
+    /*
+     * 869f138qh. Re-set from 186_000, which b06342bd set on 2026-09-14 and the route passed a day
+     * later: v0.4.48, built with the same toolchain as main, measures 186,778 B and main 186,760 B,
+     * so the growth is the shipped wave-3 work, not a regression waiting to be found. It went
+     * unreported because the scheduled workflow failed earlier, on the compare harness. x1.03 of
+     * main, like the other byte rows.
+     */
+    charactersRawBytes: 192_400,
     savedTeamsRawBytes: 187_000,
     captainCoverageRawBytes: 330_000,
+    /*
+     * 869f138qh. What the service worker prefetches, measured from the build's ngsw.json on
+     * 2026-09-16 (scripts/lib/prefetch-payload.mjs). `Cached` is the file as the device stores it;
+     * `wire` is gzip level 6 for types the edge compresses and the file itself otherwise. x1.03 like
+     * every byte row, except the cached total, which is x1.05 and shared with the dataset-delivery
+     * lane - see PREFETCH_CACHED_BUDGET_BYTES there for why.
+     *
+     *   prefetch total    9,596,108 cached / 4,095,891 wire   (152 files)
+     *   dataset database  2,289,988
+     *   ability catalogue 1,674,521 cached /   202,678 wire
+     *   sql.js wasm         658,410 cached /   322,606 wire
+     */
+    prefetchCachedBytes: 10_076_000,
+    prefetchWireBytes: 4_218_800,
+    databaseBytes: 2_358_700,
+    abilityCatalogCachedBytes: 1_724_800,
+    abilityCatalogWireBytes: 208_800,
+    sqlWasmWireBytes: 332_300,
   },
 });
 
@@ -237,7 +264,7 @@ if (shouldBuild) {
   runProductionStatsBuild();
 }
 
-const bundle = await readBundleStats();
+const bundle = { ...(await readBundleStats()), payload: measurePrefetchPayload(browserRoot) };
 const server = process.env.PERF_BASE_URL || process.env.E2E_BASE_URL ? null : await startStaticServer();
 let browser;
 
@@ -373,7 +400,6 @@ async function readBundleStats() {
   const stats = JSON.parse(await readFile(statsPath, 'utf8'));
   const outputs = stats.outputs ?? {};
   const initialEntries = await readInitialEntries(outputs);
-  const initialFiles = new Set(initialEntries.map(({ file }) => file));
 
   const routeEntries = {
     guide: ['src/app/pages/seo-content/seo-content.page.ts'],
@@ -388,6 +414,11 @@ async function readBundleStats() {
     initialEntries.map(({ file }) => file),
     outputs,
   );
+  /*
+   * 869f138qh. A route chunk is whatever the route adds on top of the initial payload, so the
+   * graph is what gets excluded - not just the entry scripts, which are now counted on their own.
+   */
+  const initialFiles = new Set(graphFiles);
 
   return {
     statsPath: path.relative(appRoot, statsPath).replace(/\\/gu, '/'),
@@ -506,10 +537,13 @@ async function readInitialEntries(outputs) {
       continue;
     }
 
+    /*
+     * 869f138qh. Only the file itself. This loop also added every chunk the entry imports, which made
+     * `entry script` the same number as `initial payload` - 1,498,225 B against a 391,000 B budget
+     * on v0.4.53 - whenever the stats resolved the file. docs/bundle-budgets.md defines entry
+     * scripts as the files index.html names and nothing else; the graph has its own rows.
+     */
     addInitialStatsEntry(entries, outputKey, outputs, 'index.html');
-    for (const importedKey of collectImportedOutputKeys(outputKey, outputs)) {
-      addInitialStatsEntry(entries, importedKey, outputs, outputKey);
-    }
   }
 
   if (!entries.size) {
@@ -1049,6 +1083,22 @@ function checkBundleBudgets(bundle) {
       ROUTE_LOAD_BUDGETS.bundles.savedTeamsRawBytes,
       'bytes',
     ],
+    ['prefetch total cached', bundle.payload.cachedBytes, ROUTE_LOAD_BUDGETS.bundles.prefetchCachedBytes, 'bytes'],
+    ['prefetch total over the wire', bundle.payload.wireBytes, ROUTE_LOAD_BUDGETS.bundles.prefetchWireBytes, 'bytes'],
+    ['dataset database', bundle.payload.databaseBytes, ROUTE_LOAD_BUDGETS.bundles.databaseBytes, 'bytes'],
+    [
+      'ability catalogue cached',
+      bundle.payload.abilityCatalogCachedBytes,
+      ROUTE_LOAD_BUDGETS.bundles.abilityCatalogCachedBytes,
+      'bytes',
+    ],
+    [
+      'ability catalogue over the wire',
+      bundle.payload.abilityCatalogWireBytes,
+      ROUTE_LOAD_BUDGETS.bundles.abilityCatalogWireBytes,
+      'bytes',
+    ],
+    ['sql.js wasm over the wire', bundle.payload.sqlWasmWireBytes, ROUTE_LOAD_BUDGETS.bundles.sqlWasmWireBytes, 'bytes'],
     [
       'captain coverage route raw JS',
       bundle.routes.captainCoverage?.rawBytes,

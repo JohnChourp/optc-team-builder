@@ -89,7 +89,10 @@ The `dataset-delivery` lane (`npm run test:dataset-delivery`) builds the app and
 - the shipped database is not the database the shipped seed builds;
 - the built `assets/data` holds a file no app code names, or lacks one that app code names. The
   list is read from the app source - every quoted `assets/data/<file>` outside a spec - so it
-  cannot drift from the code.
+  cannot drift from the code;
+- the whole prefetch group, as cached, goes over **10,076,000 B** (869f138qh; 9,596,108 B measured,
+  x1.05). The same number is a row in the performance report, and a spec keeps the two equal.
+  Adding a 757,776 B JSON file to the i18n group of a real build failed it.
 
 Each rule was broken on purpose against a real build before the lane was registered: prefetching
 the raw seed again, shipping a seed changed after the database was built, and building with
