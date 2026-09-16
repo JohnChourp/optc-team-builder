@@ -10,8 +10,8 @@ The importer writes these files:
 - `optc-seed.sql`: SQLite seed containing `characters`, `character_details`, `character_evolutions`, `character_drops`, `ships`, and `meta`. The source of truth for the dataset; the app only executes it as a fallback.
 - `optc-seed.sqlite.gz` (build output, not committed): the same rows as a gzipped SQLite database, built from `optc-seed.sql` by `npm run dataset:binary` before every build. This is what the app downloads and opens - see [dataset-delivery.md](dataset-delivery.md).
 - `optc-auto-builder-abilities.json`: ability catalog consumed by Auto Team Builder filters and saved enemy requirements.
-- `optc-unresolved-images.json`: characters that still need image coverage for the installed offline packs.
-- `optc-preview.json`: small preview sample for early UI loading and checks.
+- `optc-unresolved-images.json`: characters that still need image coverage for the installed offline packs. Read by scripts only; not shipped.
+- `optc-preview.json`: the first 24 character records and 12 ships, a sample the scripts read. The app does not read it and it is not shipped (869f138py).
 
 `generatedAt` in these files is the time the data last changed, not the time of the last import: an import that would change nothing but that timestamp leaves all five files byte-identical, so a release with no new data costs an installed client nothing (869f138qb, see [dataset-delivery.md](dataset-delivery.md)).
 

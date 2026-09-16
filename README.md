@@ -462,7 +462,7 @@ The importer writes these generated files:
 
 - `public/assets/data/optc-manifest.json`
 - `public/assets/data/optc-seed.sql` (the build turns it into `assets/data/optc-seed.sqlite.gz`, the file the app downloads - see `docs/dataset-delivery.md`)
-- `public/assets/data/optc-preview.json`
+- `public/assets/data/optc-preview.json` (a sample for scripts; not part of the build)
 - `public/assets/offline-packs/<pack-id>/...`
 
 Available offline image packs also include:
