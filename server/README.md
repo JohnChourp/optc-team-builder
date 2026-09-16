@@ -99,13 +99,29 @@ maintenance obligation.
 
 1. Create a Google OAuth Web application client.
 2. Add `http://localhost:8787/auth/google/callback` as an authorized redirect URI.
-3. Copy `.env.example` to `.env.local` and set:
-   - `APP_GOOGLE_DRIVE_BACKEND_URL=http://localhost:8787`
-   - `GOOGLE_OAUTH_CLIENT_ID`
+3. Copy `.env.example` to `.env.local`.
+
+   **The server requires exactly four** of these, and refuses to start without
+   them (`normalizeRequiredString`, `resolveDriveSyncConfig`):
+
+   - `GOOGLE_OAUTH_CLIENT_ID` — or `APP_GOOGLE_WEB_CLIENT_ID`, which the server
+     reads as its fallback
    - `GOOGLE_OAUTH_CLIENT_SECRET`
-   - `GOOGLE_OAUTH_REDIRECT_URI=http://localhost:8787/auth/google/callback`
    - `DRIVE_SYNC_SESSION_SECRET`
    - `DRIVE_SYNC_TOKEN_ENCRYPTION_KEY`
+
+   The other two this list used to demand are **not** required:
+
+   - `GOOGLE_OAUTH_REDIRECT_URI` defaults to
+     `${DRIVE_SYNC_PUBLIC_BASE_URL}/auth/google/callback`, which is
+     `http://localhost:8787/auth/google/callback` locally. Set it only when it
+     has to differ.
+   - `APP_GOOGLE_DRIVE_BACKEND_URL` is **never read by this server**. It is an
+     app build-time variable consumed only by `scripts/write-app-config.mjs:14`,
+     and it belongs in `.env.local` for the **Angular** app — which is what makes
+     it look like a server setting. Set it to `http://localhost:8787` for step 5.
+
+   Every other variable has a default; see the full table in section 2.
 4. Start the backend with `npm run server:drive-sync`.
 5. Start the Angular app with `npm start`.
 
@@ -158,19 +174,52 @@ Prefer the subdomain.
 
 ### 2. Environment (set in the host's secret store — never commit)
 
-| Variable | Value |
-| --- | --- |
-| `APP_ORIGIN` | `https://optcteambuilder.com` (CORS allow-origin + `return_to` allowlist) |
-| `DRIVE_SYNC_PUBLIC_BASE_URL` | `https://drive-sync.optcteambuilder.com` |
-| `GOOGLE_OAUTH_REDIRECT_URI` | `https://drive-sync.optcteambuilder.com/auth/google/callback` |
-| `GOOGLE_OAUTH_CLIENT_ID` | the app's Google **Web** client id |
-| `GOOGLE_OAUTH_CLIENT_SECRET` | that client's secret (from the secret store) |
-| `DRIVE_SYNC_SESSION_SECRET` | a fresh random string (`openssl rand -hex 32`) |
-| `DRIVE_SYNC_TOKEN_ENCRYPTION_KEY` | a fresh 32-byte key (`openssl rand -hex 32`) — see warning |
-| `DRIVE_SYNC_DATA_DIR` | the persistent volume path, e.g. `/data/drive-sync` |
-| `DRIVE_SYNC_COOKIE_SECURE` | `true` (auto-true on an https redirect URI; set explicitly to be safe) |
-| `PORT` | the port your proxy forwards to |
-| `DRIVE_SYNC_SESSION_DAYS` | optional, default `30` |
+**869f135tx.** This table is the complete list: the server reads **20** environment
+names in `resolveDriveSyncConfig` (`server/drive-sync-server.mjs:78-131`) and every
+one of them is below. It used to name 12, so eight settings — including the body
+cap and both rate limits — were configurable by anyone who read the source and
+invisible to anyone who read this file.
+
+| Variable | Required | Default | What it does |
+| --- | --- | --- | --- |
+| `GOOGLE_OAUTH_CLIENT_ID` | **yes** | — | the app's Google **Web** client id |
+| `GOOGLE_OAUTH_CLIENT_SECRET` | **yes** | — | that client's secret (from the secret store) |
+| `DRIVE_SYNC_SESSION_SECRET` | **yes** | — | HMAC key for the session cookie (`openssl rand -hex 32`) |
+| `DRIVE_SYNC_TOKEN_ENCRYPTION_KEY` | **yes** | — | encrypts every stored refresh token — see warning below |
+| `APP_GOOGLE_WEB_CLIENT_ID` | — | — | read as the client id **only** when `GOOGLE_OAUTH_CLIENT_ID` is unset |
+| `APP_ORIGIN` | — | `http://localhost:4200` | CORS allow-origin + `return_to` allowlist. In production: `https://optcteambuilder.com` |
+| `DRIVE_SYNC_APP_ORIGIN` | — | — | second name for `APP_ORIGIN`, read only when that one is unset. Set one, not both |
+| `DRIVE_SYNC_PUBLIC_BASE_URL` | — | `http://localhost:${PORT}` | the backend's own public origin. In production: `https://drive-sync.optcteambuilder.com` |
+| `GOOGLE_OAUTH_REDIRECT_URI` | — | `${publicBaseUrl}/auth/google/callback` | override only when it must differ from that |
+| `PORT` | — | `8787` | the port your proxy forwards to |
+| `DRIVE_SYNC_DATA_DIR` | — | `.data/drive-sync`, resolved against the **working directory** | the persistent volume path, e.g. `/data/drive-sync` |
+| `DRIVE_SYNC_COOKIE_SECURE` | — | `true` when the redirect URI is `https:` | accepts `1/true/yes/on` and `0/false/no/off`; anything else falls back to the protocol |
+| `DRIVE_SYNC_SESSION_DAYS` | — | `30` | rolling session cookie lifetime, refreshed on use |
+| `DRIVE_SYNC_SESSION_COOKIE` | — | `optc_drive_session` | session cookie name |
+| `DRIVE_SYNC_STATE_COOKIE` | — | `optc_drive_oauth_state` | OAuth state cookie name |
+| `DRIVE_SYNC_WORKER_INTERVAL_MS` | — | `900000` (**15 minutes**) | background refresh worker period |
+| `DRIVE_SYNC_MAX_JSON_BYTES` | — | `20971520` (**20 MB**) | request body cap; asserted by test 10 |
+| `DRIVE_SYNC_RATE_LIMIT_PER_MINUTE` | — | `120` | requests per minute **per client IP** |
+| `DRIVE_SYNC_RATE_LIMIT_WRITE_PER_MINUTE` | — | `20` | writes per minute **per client IP**, counted in a window independent of the one above |
+| `APP_GOOGLE_DRIVE_FOLDER_NAME` | — | `OPTC Team Builder` | the Drive folder the backup is written into |
+
+Four details the table cannot carry in a cell:
+
+- **"Per client IP" is exact, not approximate.** `createRateLimiter`
+  (`:1358`) keys its buckets by `resolveClientKey` (`:1431`) — the first hop of
+  `X-Forwarded-For`, else `socket.remoteAddress`, else the literal `unknown`.
+  Behind a proxy that does not set `X-Forwarded-For`, every client shares one
+  bucket.
+- **`0` disables a rate limit** — both checks are guarded by `> 0`. That is the
+  only way to turn one off; there is no separate switch.
+- **`0` does not disable the worker.** `parseInteger` accepts only integers
+  **greater than zero**, so `DRIVE_SYNC_WORKER_INTERVAL_MS=0` silently restores
+  the 15-minute default. The suite disables the worker by passing
+  `workerIntervalMs: 0` in the config object, which is not reachable from the
+  environment.
+- **`APP_GOOGLE_DRIVE_BACKEND_URL` is not in this table on purpose.** The server
+  never reads it; it is the app's build-time pointer *at* the server, set in step
+  4 below.
 
 > ⚠️ **`DRIVE_SYNC_TOKEN_ENCRYPTION_KEY` is permanent.** It decrypts every stored refresh
 > token. Rotating it makes all stored tokens unreadable → every user must reconnect. Set it
