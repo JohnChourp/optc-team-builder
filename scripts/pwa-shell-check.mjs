@@ -8,6 +8,8 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
+import { isThirdPartyPageError, isThirdPartyUrl, topFrameUrl } from './lib/page-error-origin.mjs';
+
 import {
   PUBLIC_ENTRY_GUIDE,
   PUBLIC_ENTRY_SHARE_LINK,
@@ -372,6 +374,11 @@ function attachPageDiagnostics(page, diagnostics, scope) {
     if (message.type() !== 'error') return;
     const text = message.text();
     if (isIgnorableConsoleError(text)) return;
+    /* 869f138q7. A third-party script's own failure - a rate-limited tag manager - is not this app's. */
+    if (isThirdPartyUrl(message.location()?.url)) {
+      diagnostics.thirdPartyConsoleErrors.push({ scope, text, location: message.location() });
+      return;
+    }
     diagnostics.consoleErrors.push({
       scope,
       text,
@@ -380,7 +387,17 @@ function attachPageDiagnostics(page, diagnostics, scope) {
   });
   page.on('pageerror', (error) => {
     if (isIgnorableConsoleError(error.message)) return;
-    diagnostics.pageErrors.push({ scope, message: error.message });
+    /*
+     * 869f138q7. Where it came from, so a failure can say whose code threw. A third-party
+     * script's error is recorded and reported, and does not fail the check - see
+     * lib/page-error-origin.mjs.
+     */
+    const entry = { scope, message: error.message, frame: topFrameUrl(error.stack) };
+    if (isThirdPartyPageError(error)) {
+      diagnostics.thirdPartyPageErrors.push(entry);
+      return;
+    }
+    diagnostics.pageErrors.push(entry);
   });
   page.on('requestfailed', (request) => {
     const failure = request.failure();
@@ -1025,9 +1042,15 @@ function failOnDiagnostics(diagnostics) {
   );
   const errors = [
     ...diagnostics.consoleErrors.map((item) => `console ${item.scope}: ${item.text}`),
-    ...diagnostics.pageErrors.map((item) => `page ${item.scope}: ${item.message}`),
+    ...diagnostics.pageErrors.map((item) => `page ${item.scope}: ${item.message}${item.frame ? ` (at ${item.frame})` : ''}`),
     ...blockingRequestFailures.map((item) => `request ${item.scope}: ${item.url} ${item.errorText}`),
   ];
+  for (const item of diagnostics.thirdPartyConsoleErrors) {
+    console.warn(`[pwa-shell] third-party console error, not counted - ${item.scope}: ${item.text} (at ${item.location?.url})`);
+  }
+  for (const item of diagnostics.thirdPartyPageErrors) {
+    console.warn(`[pwa-shell] third-party page error, not counted - ${item.scope}: ${item.message} (at ${item.frame})`);
+  }
   if (errors.length > 0) {
     throw new Error(`PWA shell diagnostics found ${errors.length} issue(s):\n${errors.join('\n')}`);
   }
@@ -1051,7 +1074,13 @@ async function main() {
   };
 
   const serverHandle = await startStaticServer(RELEASE_A_DIR);
-  const diagnostics = { consoleErrors: [], pageErrors: [], requestFailures: [] };
+  const diagnostics = {
+    consoleErrors: [],
+    thirdPartyConsoleErrors: [],
+    pageErrors: [],
+    thirdPartyPageErrors: [],
+    requestFailures: [],
+  };
   const startedAt = new Date().toISOString();
   let browser;
   try {

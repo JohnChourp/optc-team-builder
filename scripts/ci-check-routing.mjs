@@ -1275,7 +1275,9 @@ function isPwaShellPath(filePath) {
     filePath === 'src/index.html' ||
     filePath === 'public/manifest.webmanifest' ||
     filePath.startsWith('public/brand/pwa-icon-') ||
-    filePath === 'scripts/pwa-shell-check.mjs'
+    filePath === 'scripts/pwa-shell-check.mjs' ||
+    filePath === 'scripts/lib/page-error-origin.mjs' ||
+    filePath === 'scripts/lib/page-error-origin.spec.ts'
   );
 }
 
