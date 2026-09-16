@@ -151,6 +151,9 @@ function routeLoadResult(overrides: Record<string, number | null> = {}) {
             savedTeamsReadyMs: value('desktopSavedTeamsReadyMs', 1500),
             captainCoverageReadyMs: value('desktopCaptainCoverageReadyMs', 1600),
           },
+          dataset: {
+            datasetReadyMs: value('desktopDatasetReadyMs', 400),
+          },
         },
       },
       {
@@ -163,6 +166,9 @@ function routeLoadResult(overrides: Record<string, number | null> = {}) {
             charactersSearchReadyMs: value('mobileCharactersSearchReadyMs', 1100),
             savedTeamsReadyMs: value('mobileSavedTeamsReadyMs', 1500),
             captainCoverageReadyMs: value('mobileCaptainCoverageReadyMs', 1600),
+          },
+          dataset: {
+            datasetReadyMs: value('mobileDatasetReadyMs', 400),
           },
         },
       },
@@ -238,8 +244,9 @@ describe('perf-budget-report', () => {
     const report = await buildPerformanceBudgetReport({ currentDir });
 
     expect(report.status).toBe('passed');
-    expect(report.summary.metricCount).toBe(58);
-    expect(report.summary.budgetedMetricCount).toBe(52);
+    /* 869f138qd added `dataset ready`, one row per viewport. */
+    expect(report.summary.metricCount).toBe(60);
+    expect(report.summary.budgetedMetricCount).toBe(54);
     expect(report.hardBudgetFailures).toEqual([]);
     expect(report.invalidMetricFailures).toEqual([]);
     expect(report.baseline).toBeNull();
@@ -329,7 +336,7 @@ describe('perf-budget-report', () => {
         metricId: 'ability-filters.desktop.saved-teams.firsttogglems',
       }),
     ]);
-    expect(report.metricRows).toHaveLength(58);
+    expect(report.metricRows).toHaveLength(60);
   });
 
   it('gates on route-load BUNDLE breaches only, reporting timing breaches beside them', async () => {
@@ -836,7 +843,7 @@ describe('budget parity between the harnesses and the report', () => {
    * date pattern cannot do that.
    */
   describe('budget provenance', () => {
-    const PROFILE_IDS = ['browser', 'node', 'bundle'];
+    const PROFILE_IDS = ['browser', 'node', 'bundle', 'datasetReady'];
     const PROVENANCE_STATES = ['measured', 'provisional'];
 
     it('gives every metric a profile from the declared set', () => {

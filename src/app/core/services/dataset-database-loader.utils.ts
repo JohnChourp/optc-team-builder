@@ -19,8 +19,19 @@ import type { Database, SqlJsStatic } from 'sql.js';
 export const DATASET_DATABASE_PATH = 'assets/data/optc-seed.sqlite.gz';
 export const DATASET_SEED_PATH = 'assets/data/optc-seed.sql';
 
-/** Statements executed between two yields on the fallback path. */
+/**
+ * Statements executed between two yields on the fallback path.
+ *
+ * 869f138qd. The value predates any measurement; it is kept because the measurement supports it.
+ * In Chromium at 4x CPU, inside the transaction below, the 13,863 statements took 882 ms in 56
+ * chunks - about 16 ms a chunk, so the page gets a frame roughly every 16 ms. Chunk cost follows
+ * bytes rather than statement count, and the newest characters carry the longest detail JSON, so
+ * the last chunks are the slowest: the longest task measured was 81 ms.
+ */
 export const SEED_STATEMENT_YIELD_INTERVAL = 250;
+
+/** `performance.mark` name set when the database is ready; scripts/perf-route-load.mjs reads it. */
+export const DATASET_READY_MARK = 'optc:dataset-ready';
 
 /** `scripts/lib/dataset-binary.mjs` splits the seed the same way when it builds the database. */
 const SEED_STATEMENT_SEPARATOR = /;\s*\n/u;
@@ -201,15 +212,45 @@ export async function buildDatabaseFromSeed(
   const seed = await response.text();
   const database = new dependencies.sql.Database();
 
-  for (const [index, statement] of splitSeedStatements(seed).entries()) {
-    database.run(`${statement};`);
+  /*
+   * 869f138qd. One transaction around the whole seed. Without it every INSERT commits on its own:
+   * 1,584 ms against 1,003 ms in Chromium at 4x CPU. The database file is the normal path now, so
+   * this only speeds up the fallback, but the fallback is exactly when a player is already waiting
+   * longer than they should. Nothing else can reach the database before it is returned, so the
+   * transaction may stay open across the yields.
+   */
+  try {
+    database.run('BEGIN');
 
-    if (index > 0 && index % SEED_STATEMENT_YIELD_INTERVAL === 0) {
-      await dependencies.yieldToMainThread();
+    for (const [index, statement] of splitSeedStatements(seed).entries()) {
+      database.run(`${statement};`);
+
+      if (index > 0 && index % SEED_STATEMENT_YIELD_INTERVAL === 0) {
+        await dependencies.yieldToMainThread();
+      }
     }
+
+    database.run('COMMIT');
+    return database;
+  } catch (error) {
+    database.close();
+    throw error;
+  }
+}
+
+/**
+ * 869f138qd. Records when the database became usable, and which way it was built, so a browser
+ * harness can budget it and a report can tell a slow fallback from a slow download.
+ */
+export function markDatasetReady(
+  source: DatasetDatabaseSource,
+  timeline: Pick<Performance, 'mark'> | undefined = globalThis.performance,
+): void {
+  if (typeof timeline?.mark !== 'function') {
+    return;
   }
 
-  return database;
+  timeline.mark(DATASET_READY_MARK, { detail: { source } });
 }
 
 function describe(error: unknown): string {

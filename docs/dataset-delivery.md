@@ -121,6 +121,49 @@ timestamp alone - the shape this change removes.
 The date on the Settings screen's "App and data" card ("Data generated") reads the same field, so
 it now shows when the data last changed rather than when the last release ran.
 
+## How long the database takes
+
+Owner: ClickUp [869f138qd](https://app.clickup.com/t/90121749478/869f138qd).
+
+The database used to be rebuilt from the seed on **every** app start, on the main thread, one
+statement at a time with a yield every 250. Opening the database file replaced that on the normal
+path. The fallback still executes the seed, and now does it inside one transaction.
+
+| Chromium, files cached | CPU x1 | CPU x4 | CPU x6 |
+| --- | ---: | ---: | ---: |
+| before: statement by statement | 634 ms | 1,584 ms | 2,353 ms |
+| fallback now: inside one transaction | 496 ms | 1,003 ms | 1,406 ms |
+| normal path now: open the database file | 29 ms | 120 ms | 178 ms |
+
+In Node, `npm run perf:dataset` reads the same three: `seedExecuteMs` (the fallback, 232 ms on an
+M4 Pro, 401 ms before the transaction), `databaseBuildMs` (the build step) and `databaseOpenMs`
+(decompress, open, read one table - 16 ms).
+
+**Why 250.** The interval predates any measurement and is kept because the measurement supports
+it: inside the transaction, at 4x CPU, 250 statements take about 16 ms, so the page still gets a
+frame roughly every 16 ms. Cost follows bytes rather than statement count, and the newest
+characters carry the longest detail JSON, so the last chunks are the slowest (81 ms at 4x).
+
+**The budget row.** The app sets a `performance.mark` named `optc:dataset-ready`, with the path it
+took in `detail.source`, when the database is usable. `scripts/perf-route-load.mjs` loads
+`/tabs/characters` in a fresh context, waits for the mark, and reports `datasetReadyMs` - desktop
+unthrottled, mobile at 4x CPU, under its own measurement profile so the other browser rows keep
+meaning "no throttling". A run where the mark says the database came from the seed statements is a
+failure, not a fast number.
+
+First observation, 2026-09-16, M4 Pro: **desktop 141 ms, mobile 437 ms**. The budgets (700 ms /
+2,200 ms) are provisional - about 5x, for a slower CI machine - until the row has history.
+
+The same run, against a control run of v0.4.53 on the same machine, shows what the database file
+did to the routes that need it (`readyMs`, desktop; mobile moved the same way):
+
+| Route | v0.4.53 | after |
+| --- | ---: | ---: |
+| Characters, search ready | 1,045 ms | 434 ms |
+| Saved Teams | 2,045 ms | 951 ms |
+| Captain Coverage | 1,511 ms | 583 ms |
+| Manual Team Builder share link | 1,110 ms | 480 ms |
+
 ## What this does not cover
 
 - Which host layer skips compression for `.sql` (Cloudflare in front of GitHub Pages) could not be

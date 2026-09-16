@@ -6,15 +6,27 @@ import { fileURLToPath } from 'node:url';
 
 import initSqlJs from 'sql.js';
 
+import { buildDatasetDatabaseBytes, gunzipDatasetDatabase, gzipDatasetDatabase } from './lib/dataset-binary.mjs';
+
 const require = createRequire(import.meta.url);
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const assertMode = process.argv.includes('--assert');
 const repeatArg = process.argv.find((arg) => arg.startsWith('--repeat='));
 const repeatCount = Math.max(1, Number.parseInt(repeatArg?.split('=')[1] ?? '8', 10) || 8);
 
+/*
+ * 869f138qd. `databaseBuildMs` is the build step that turns the seed into the shipped database, and
+ * `databaseOpenMs` is what the app now does instead of executing the seed: decompress, open, read one
+ * table. Measured on 2026-09-16 on an M4 Pro: build 243 ms, open under 15 ms. Their thresholds are as
+ * generous as the seed row's, because this benchmark runs on whatever machine runs verify:local and a
+ * threshold here guards against a structural regression - the open path executing statements again -
+ * not against weather.
+ */
 const thresholds = {
   abilityCatalogLoadMs: 750,
   combinedAverageMs: 75,
+  databaseBuildMs: 12000,
+  databaseOpenMs: 500,
   filterAverageMs: 60,
   previewLoadMs: 750,
   searchAverageMs: 60,
@@ -38,9 +50,21 @@ async function main() {
       locateFile: () => path.join(path.dirname(require.resolve('sql.js')), 'sql-wasm.wasm'),
     }),
   );
-  const database = new SQL.Database();
+  const seededDatabase = new SQL.Database();
 
-  await measure('seedExecuteMs', () => executeSeed(database, seedSql));
+  await measure('seedExecuteMs', () => executeSeed(seededDatabase, seedSql));
+  seededDatabase.close?.();
+
+  const compressedDatabase = await measure('databaseBuildMs', () =>
+    gzipDatasetDatabase(buildDatasetDatabaseBytes(SQL, seedSql)),
+  );
+  const database = await measure('databaseOpenMs', () => {
+    const opened = new SQL.Database(gunzipDatasetDatabase(compressedDatabase));
+    opened.exec('SELECT COUNT(*) FROM characters');
+    return opened;
+  });
+
+  results.databaseGzipBytes = compressedDatabase.length;
 
   results.previewCharacterCount = preview.characters?.length ?? 0;
   results.previewShipCount = preview.ships?.length ?? 0;
@@ -128,15 +152,20 @@ async function readDatasetFile(fileName) {
   return readFile(path.join(rootDir, 'public', 'assets', 'data', fileName), 'utf8');
 }
 
+/* The app's fallback path: every statement, inside one transaction (869f138qd). */
 async function executeSeed(database, seedSql) {
   const statements = seedSql
     .split(/;\s*\n/u)
     .map((statement) => statement.trim())
     .filter(Boolean);
 
+  database.run('BEGIN');
+
   for (const statement of statements) {
     database.run(`${statement};`);
   }
+
+  database.run('COMMIT');
 }
 
 function selectAll(database, sql, params) {
@@ -156,6 +185,10 @@ function assertBenchmark(measured) {
 
   if (measured.abilityCount <= 0) {
     failures.push('abilityCount must be positive');
+  }
+
+  if (!(measured.databaseGzipBytes > 0)) {
+    failures.push('databaseGzipBytes must be positive');
   }
 
   if (failures.length) {

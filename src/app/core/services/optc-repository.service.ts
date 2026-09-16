@@ -50,7 +50,7 @@ import {
   isCharacterAvailableInRegion,
   normalizeCharacterRegionPreference,
 } from './character-region.utils';
-import { loadDatasetDatabase } from './dataset-database-loader.utils';
+import { loadDatasetDatabase, markDatasetReady } from './dataset-database-loader.utils';
 import { UserStateService } from './user-state.service';
 
 interface SqlRow {
@@ -1646,7 +1646,7 @@ export class OptcRepositoryService {
 
   private async createDatabase(): Promise<Database> {
     const sql = await this.sqlPromise;
-    const { database } = await loadDatasetDatabase({
+    const { database, source } = await loadDatasetDatabase({
       sql,
       fetch: (path) => fetch(path),
       decompressionStream:
@@ -1655,6 +1655,7 @@ export class OptcRepositoryService {
       warn: (code, detail) => console.warn(code, detail),
     });
 
+    markDatasetReady(source);
     return database;
   }
 
