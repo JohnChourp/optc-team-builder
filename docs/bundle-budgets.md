@@ -87,6 +87,91 @@ four actuals; `npx ng build --configuration production` prints `Initial total`.
 A budget raised to make a build pass, with no measurement beside it, is how the
 old numbers got there.
 
+## What every other budgeted number is — 869f135u7
+
+The four rows above are the **only** budgets in this repository set from a
+recorded measurement. The performance report carries **38** budgeted metric
+definitions; the other **34** were committed in
+[`b06342bd`](https://github.com/JohnChourp/optc-team-builder/commit/b06342bd)
+(2026-09-14) with no measurement recorded beside them.
+
+So each definition now carries three fields, and the report publishes them:
+
+| Field | What it says |
+| --- | --- |
+| `profile` | which harness produced it — `browser`, `node` or `bundle` |
+| `setOn` | a date for a measured budget, the commit id for a provisional one |
+| `provenance` | `measured` (4 rows) or `provisional` (34 rows) |
+
+`provisional` is deliberate and is the honest state. Inventing a measurement date
+for the 34 would be worse than the silence it replaces: the next reader would
+believe the number was chosen from evidence and would stop asking.
+
+### The profiles, measured rather than assumed
+
+| Profile | Basis | Conditions |
+| --- | --- | --- |
+| `browser` | **single observation** | desktop: Chromium 1440x1000, Desktop Chrome UA. mobile: Playwright `devices['Pixel 7']`. **No throttling** on either |
+| `node` | **mean over N loops** (40 to 1,200, per metric) of a 1,500-team / 519,013-byte fixture | Node on `ubuntu-latest`, no throttling |
+| `bundle` | **deterministic** — read from the esbuild `stats.json` | a production build |
+
+All three browser harnesses share one profile, verified at
+`perf-route-load.mjs:265-271`, `perf-ability-filters.mjs:42-48` and
+`perf-explanation-compare.mjs:93-99`. And `grep -rn "throttl" scripts/perf-*.mjs`
+returns **nothing** — which is the single most important line on this page,
+because it means every timing budget describes an **unthrottled CI machine** and
+not a player's phone.
+
+The `browser`/`node` split is the one that changes how a number should be read: a
+single observation moves with the runner's weather, a mean over 600 loops does
+not.
+
+### The headroom nobody had looked at
+
+The eight `node` rows are the ones anybody can re-measure without a browser, so
+they were re-measured. `PERF_ASSERT=0 npm run perf:saved-team-codecs`, this
+machine, 2026-09-16:
+
+| Row | Budget | Measured | Headroom |
+| --- | ---: | ---: | ---: |
+| `invalid input validation` | 1 ms | **0.003 ms** | **333x** |
+| `share decode` | 3 ms | 0.066 ms | **45x** |
+| `share resolve and sanitize` | 4 ms | 0.092 ms | **43x** |
+| `bulk JSON parse` | 10 ms | 0.468 ms | **21x** |
+| `bulk export encode` | 10 ms | 0.549 ms | **18x** |
+| `share encode` | 5 ms | 0.288 ms | **17x** |
+| `bulk sanitize` | 10 ms | 0.816 ms | **12x** |
+| `bulk parse and sanitize` | 15 ms | 1.289 ms | **12x** |
+
+Not one of them can fail under any plausible regression: the codec would have to
+get **twelve times slower** before the tightest row noticed, and **333 times
+slower** before the loosest did. Compare the bundle rows above, which sit at
+**1.03x**.
+
+(This machine is not `ubuntu-latest`, so the absolute figures will differ in CI.
+The ratios are the point, and a runner three times slower would still leave every
+row between 4x and 100x.)
+
+So these rows are recording a number nobody will ever read, and writing a profile
+and a provenance date onto a budget that is 333x its measurement dresses a
+non-measurement as a governed one.
+
+**The honest fix is to re-set them from their measurements, or delete them — and
+that is a decision about what regression is worth catching, not an implementation
+detail.** It is recorded here rather than taken, which is why those rows are
+`provisional` and say so in the report's Metrics table.
+
+### `hardBudgets` is gone
+
+`budgetPolicy.hardBudgets` was a second hand-maintained copy of every budget,
+published inside the report. **Nine** of its entries contradicted the enforced
+values — `savedTeamsImportReadyMs` read 3000/4000 against an enforced 5800/6000 —
+it was misnamed (42 of the 52 budgeted rows are advisory, not hard), and nothing
+in the repository read it: one occurrence, its own declaration.
+
+`metricRows` is now the only statement of a budget, and
+`perf-budget-report.spec.ts` asserts no second budget literal grows back.
+
 ## The other budget in that block: `anyComponentStyle`
 
 **Status:** recorded 2026-09-15 · [869f135rr](https://app.clickup.com/t/90121749478/869f135rr)

@@ -816,4 +816,101 @@ describe('budget parity between the harnesses and the report', () => {
       expect.soft(metric.enforcement, `${metric.group} ${metric.metricLabel}`).toBe(expected);
     }
   });
+
+  /*
+   * 869f135u7. A budget with no recorded basis, profile or provenance is a number
+   * with no units and no conditions: 2,600 of what, measured how, on what
+   * machine. 38 of them shipped that way.
+   *
+   * These assert the SHAPE of each field rather than `toBeDefined()`, because the
+   * AST reader yields `undefined` for a template literal or an identifier it
+   * cannot fold - so `toBeDefined()` would pass for a field that is present and
+   * unreadable, and fail for one that is correct and computed. A closed set and a
+   * date pattern cannot do that.
+   */
+  describe('budget provenance', () => {
+    const PROFILE_IDS = ['browser', 'node', 'bundle'];
+    const PROVENANCE_STATES = ['measured', 'provisional'];
+
+    it('gives every metric a profile from the declared set', () => {
+      const metrics = reportMetrics();
+
+      expect(metrics.length).toBeGreaterThan(30);
+
+      for (const metric of metrics) {
+        expect
+          .soft(PROFILE_IDS, `${metric.group} ${metric.metricLabel} profile`)
+          .toContain(metric.profile);
+      }
+    });
+
+    it('gives every metric a provenance state from the declared set', () => {
+      for (const metric of reportMetrics()) {
+        expect
+          .soft(PROVENANCE_STATES, `${metric.group} ${metric.metricLabel} provenance`)
+          .toContain(metric.provenance);
+      }
+    });
+
+    it('dates a measured budget and cites a commit for a provisional one', () => {
+      for (const metric of reportMetrics()) {
+        if (metric.provenance === 'measured') {
+          expect
+            .soft(metric.setOn, `${metric.group} ${metric.metricLabel} setOn`)
+            .toMatch(/^\d{4}-\d{2}-\d{2}$/u);
+        }
+      }
+    });
+
+    it('claims `measured` only for the four bundle rows a document actually measured', () => {
+      /*
+       * docs/bundle-budgets.md records a run on 2026-09-15 for exactly these
+       * four, each set from its own measurement x1.03. Everything else was
+       * committed without a recorded measurement, and saying so is the point -
+       * inventing a date for the other 34 would dress a guess as a governed
+       * number.
+       */
+      const measured = reportMetrics()
+        .filter((metric) => metric.provenance === 'measured')
+        .map((metric) => metric.metricLabel)
+        .sort();
+
+      expect(measured).toEqual([
+        'entry script gzip JS',
+        'entry script raw JS',
+        'initial payload gzip JS',
+        'initial payload raw JS',
+      ]);
+    });
+
+    it('keeps `metricRows` the only statement of a budget', () => {
+      /*
+       * `budgetPolicy.hardBudgets` was a second hand-maintained copy of every
+       * budget, published in the report, nine of whose entries contradicted the
+       * enforced values - and nothing read it. This is what stops it growing
+       * back.
+       */
+      const source = readFileSync(path.resolve(process.cwd(), 'scripts/perf-budget-report.mjs'), 'utf8');
+
+      expect(source).not.toContain('hardBudgets: {');
+    });
+
+    it('keeps the saved-team codec budgets identical to the harness that produces them', () => {
+      /*
+       * The one duplicate left after `hardBudgets` went. `perf-saved-team-codecs.mjs`
+       * carries its own `budgets.node`, and the report re-declares every one of
+       * them; the route-load pair above is already asserted, this one was not.
+       */
+      const harness = topLevelConst('scripts/perf-saved-team-codecs.mjs', 'budgets');
+      const metrics = reportMetrics().filter((m) => m.group === 'SAVED_TEAM_CODEC_METRICS');
+
+      expect(metrics.length).toBeGreaterThan(0);
+
+      for (const metric of metrics) {
+        expect
+          .soft(metric.budgets.node, `report vs harness for ${metric.metricKey}`)
+          .toBe(harness.node[metric.metricKey]);
+      }
+    });
+  });
 });

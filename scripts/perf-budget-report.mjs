@@ -38,6 +38,59 @@ export const BASELINE_WARNING_POLICY = Object.freeze({
   minBytesIncrease: 10_000,
 });
 
+/**
+ * What a budgeted number IS, per harness. 869f135u7.
+ *
+ * A budget without this is a number with no units and no conditions: 2,600 of
+ * what, measured how, on what machine. The report published 38 of them and said
+ * none of it, so "did this regress" could only ever be answered by whoever wrote
+ * the harness.
+ *
+ * Declared once and referenced by id rather than copied onto 40 definitions,
+ * because the profile is a property of the HARNESS - all three browser harnesses
+ * share one, verified at perf-route-load.mjs:265-271,
+ * perf-ability-filters.mjs:42-48 and perf-explanation-compare.mjs:93-99.
+ *
+ * `grep -rn "throttl" scripts/perf-*.mjs` returns nothing, so "no throttling" is
+ * measured rather than assumed - and it is the single most important thing on
+ * this page, because it means these numbers describe an unthrottled CI machine
+ * and NOT a player's phone.
+ */
+export const MEASUREMENT_PROFILES = Object.freeze({
+  browser: {
+    basis: 'single observation',
+    desktop: 'Chromium 1440x1000, Desktop Chrome UA, no throttling',
+    mobile: 'Playwright devices[Pixel 7], no throttling',
+  },
+  node: {
+    basis: 'mean over N loops of a 1500-team / 519,013-byte fixture',
+    node: 'Node on ubuntu-latest, no throttling',
+  },
+  bundle: {
+    basis: 'deterministic - read from the esbuild stats.json',
+    bundle: 'esbuild stats.json from a production build',
+  },
+});
+
+/**
+ * Where a budget's value came from. 869f135u7.
+ *
+ * Two honest states, and no third:
+ *
+ *   measured    a run exists and the doc records it. Four bundle rows qualify -
+ *               docs/bundle-budgets.md, 2026-09-15, headroom x1.03.
+ *   provisional the value was committed without a recorded measurement. `setOn`
+ *               cites the commit that introduced it, which is all that is
+ *               knowable, and the flag says so rather than dressing a guess as a
+ *               governed number.
+ *
+ * Inventing a measurement date for the provisional rows would be worse than the
+ * silence it replaces: the next reader would believe the number was chosen.
+ */
+export const BUDGET_PROVENANCE_STATES = Object.freeze(['measured', 'provisional']);
+
+const TIMING_BUDGETS_SET_IN = 'b06342bd';
+
 const ABILITY_METRICS = Object.freeze([
   {
     area: 'Saved Teams',
@@ -45,6 +98,9 @@ const ABILITY_METRICS = Object.freeze([
     metricKey: 'pageReadyMs',
     metricLabel: 'page ready',
     budgets: {},
+    profile: 'browser',
+    setOn: TIMING_BUDGETS_SET_IN,
+    provenance: 'provisional',
   },
   {
     area: 'Saved Teams',
@@ -52,6 +108,9 @@ const ABILITY_METRICS = Object.freeze([
     metricKey: 'firstToggleMs',
     metricLabel: 'first ability toggle',
     budgets: { desktop: 2600, mobile: 2100 },
+    profile: 'browser',
+    setOn: TIMING_BUDGETS_SET_IN,
+    provenance: 'provisional',
   },
   {
     area: 'Saved Enemies',
@@ -59,6 +118,9 @@ const ABILITY_METRICS = Object.freeze([
     metricKey: 'pageReadyMs',
     metricLabel: 'page ready',
     budgets: {},
+    profile: 'browser',
+    setOn: TIMING_BUDGETS_SET_IN,
+    provenance: 'provisional',
   },
   {
     area: 'Saved Enemies',
@@ -66,6 +128,9 @@ const ABILITY_METRICS = Object.freeze([
     metricKey: 'firstToggleMs',
     metricLabel: 'first ability toggle',
     budgets: { desktop: 500, mobile: 500 },
+    profile: 'browser',
+    setOn: TIMING_BUDGETS_SET_IN,
+    provenance: 'provisional',
   },
   {
     area: 'Manual Picker',
@@ -73,6 +138,9 @@ const ABILITY_METRICS = Object.freeze([
     metricKey: 'pageReadyMs',
     metricLabel: 'page ready',
     budgets: {},
+    profile: 'browser',
+    setOn: TIMING_BUDGETS_SET_IN,
+    provenance: 'provisional',
   },
   {
     area: 'Manual Picker',
@@ -80,6 +148,9 @@ const ABILITY_METRICS = Object.freeze([
     metricKey: 'pickerOpenMs',
     metricLabel: 'picker open',
     budgets: { desktop: 800, mobile: 800 },
+    profile: 'browser',
+    setOn: TIMING_BUDGETS_SET_IN,
+    provenance: 'provisional',
   },
   {
     area: 'Manual Picker',
@@ -87,6 +158,9 @@ const ABILITY_METRICS = Object.freeze([
     metricKey: 'specialFilterMs',
     metricLabel: 'special filter apply',
     budgets: { desktop: 2500, mobile: 2500 },
+    profile: 'browser',
+    setOn: TIMING_BUDGETS_SET_IN,
+    provenance: 'provisional',
   },
 ]);
 
@@ -97,6 +171,9 @@ const EXPLANATION_METRICS = Object.freeze([
     metricKey: 'compareOpenMs',
     metricLabel: 'compare panel open',
     budgets: { desktop: 800, mobile: 1000 },
+    profile: 'browser',
+    setOn: TIMING_BUDGETS_SET_IN,
+    provenance: 'provisional',
   },
   {
     area: 'Compare',
@@ -104,6 +181,9 @@ const EXPLANATION_METRICS = Object.freeze([
     metricKey: 'compareImportMs',
     metricLabel: 'imported compare apply',
     budgets: { desktop: 1200, mobile: 1500 },
+    profile: 'browser',
+    setOn: TIMING_BUDGETS_SET_IN,
+    provenance: 'provisional',
   },
   {
     area: 'Import/share hydration',
@@ -111,6 +191,9 @@ const EXPLANATION_METRICS = Object.freeze([
     metricKey: 'savedTeamsParseSanitizeMs',
     metricLabel: 'saved-team parse/sanitize',
     budgets: { desktop: 500, mobile: 500 },
+    profile: 'browser',
+    setOn: TIMING_BUDGETS_SET_IN,
+    provenance: 'provisional',
   },
   {
     area: 'Import/share hydration',
@@ -118,6 +201,9 @@ const EXPLANATION_METRICS = Object.freeze([
     metricKey: 'savedTeamsImportReadyMs',
     metricLabel: 'saved-team import ready',
     budgets: { desktop: 5800, mobile: 6000 },
+    profile: 'browser',
+    setOn: TIMING_BUDGETS_SET_IN,
+    provenance: 'provisional',
   },
   {
     area: 'Import/share hydration',
@@ -125,6 +211,9 @@ const EXPLANATION_METRICS = Object.freeze([
     metricKey: 'manualShareHydrationMs',
     metricLabel: 'manual share-link hydration',
     budgets: { desktop: 3800, mobile: 4000 },
+    profile: 'browser',
+    setOn: TIMING_BUDGETS_SET_IN,
+    provenance: 'provisional',
   },
   {
     area: 'Explanations',
@@ -132,6 +221,9 @@ const EXPLANATION_METRICS = Object.freeze([
     metricKey: 'firstExplanationToggleMs',
     metricLabel: 'first explanation toggle',
     budgets: { desktop: 300, mobile: 450 },
+    profile: 'browser',
+    setOn: TIMING_BUDGETS_SET_IN,
+    provenance: 'provisional',
   },
   {
     area: 'Explanations',
@@ -139,6 +231,9 @@ const EXPLANATION_METRICS = Object.freeze([
     metricKey: 'allExplanationToggleMs',
     metricLabel: 'all explanation toggles',
     budgets: { desktop: 900, mobile: 1200 },
+    profile: 'browser',
+    setOn: TIMING_BUDGETS_SET_IN,
+    provenance: 'provisional',
   },
 ]);
 
@@ -149,6 +244,9 @@ const SAVED_TEAM_CODEC_METRICS = Object.freeze([
     metricKey: 'bulkExportEncodeMs',
     metricLabel: 'bulk export encode',
     budgets: { node: 10 },
+    profile: 'node',
+    setOn: TIMING_BUDGETS_SET_IN,
+    provenance: 'provisional',
   },
   {
     area: 'Saved-team codecs',
@@ -156,6 +254,9 @@ const SAVED_TEAM_CODEC_METRICS = Object.freeze([
     metricKey: 'bulkJsonParseMs',
     metricLabel: 'bulk JSON parse',
     budgets: { node: 10 },
+    profile: 'node',
+    setOn: TIMING_BUDGETS_SET_IN,
+    provenance: 'provisional',
   },
   {
     area: 'Saved-team codecs',
@@ -163,6 +264,9 @@ const SAVED_TEAM_CODEC_METRICS = Object.freeze([
     metricKey: 'bulkSanitizeMs',
     metricLabel: 'bulk sanitize',
     budgets: { node: 10 },
+    profile: 'node',
+    setOn: TIMING_BUDGETS_SET_IN,
+    provenance: 'provisional',
   },
   {
     area: 'Saved-team codecs',
@@ -170,6 +274,9 @@ const SAVED_TEAM_CODEC_METRICS = Object.freeze([
     metricKey: 'bulkParseSanitizeMs',
     metricLabel: 'bulk parse and sanitize',
     budgets: { node: 15 },
+    profile: 'node',
+    setOn: TIMING_BUDGETS_SET_IN,
+    provenance: 'provisional',
   },
   {
     area: 'Saved-team codecs',
@@ -177,6 +284,9 @@ const SAVED_TEAM_CODEC_METRICS = Object.freeze([
     metricKey: 'shareEncodeMs',
     metricLabel: 'share encode',
     budgets: { node: 5 },
+    profile: 'node',
+    setOn: TIMING_BUDGETS_SET_IN,
+    provenance: 'provisional',
   },
   {
     area: 'Saved-team codecs',
@@ -184,6 +294,9 @@ const SAVED_TEAM_CODEC_METRICS = Object.freeze([
     metricKey: 'shareDecodeMs',
     metricLabel: 'share decode',
     budgets: { node: 3 },
+    profile: 'node',
+    setOn: TIMING_BUDGETS_SET_IN,
+    provenance: 'provisional',
   },
   {
     area: 'Saved-team codecs',
@@ -191,6 +304,9 @@ const SAVED_TEAM_CODEC_METRICS = Object.freeze([
     metricKey: 'shareResolveSanitizeMs',
     metricLabel: 'share resolve and sanitize',
     budgets: { node: 4 },
+    profile: 'node',
+    setOn: TIMING_BUDGETS_SET_IN,
+    provenance: 'provisional',
   },
   {
     area: 'Saved-team codecs',
@@ -198,6 +314,9 @@ const SAVED_TEAM_CODEC_METRICS = Object.freeze([
     metricKey: 'invalidValidationMs',
     metricLabel: 'invalid input validation',
     budgets: { node: 1 },
+    profile: 'node',
+    setOn: TIMING_BUDGETS_SET_IN,
+    provenance: 'provisional',
   },
 ]);
 
@@ -208,6 +327,9 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     metricKey: 'guideShareCompareReadyMs',
     metricLabel: 'guide route ready',
     budgets: { desktop: 1500, mobile: 2200 },
+    profile: 'browser',
+    setOn: TIMING_BUDGETS_SET_IN,
+    provenance: 'provisional',
   },
   {
     area: 'Route load',
@@ -215,6 +337,9 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     metricKey: 'manualShareLandingReadyMs',
     metricLabel: 'manual share landing ready',
     budgets: { desktop: 4000, mobile: 3500 },
+    profile: 'browser',
+    setOn: TIMING_BUDGETS_SET_IN,
+    provenance: 'provisional',
   },
   {
     area: 'Route load',
@@ -222,6 +347,9 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     metricKey: 'compareEntryReadyMs',
     metricLabel: 'compare entry ready',
     budgets: { desktop: 3000, mobile: 4500 },
+    profile: 'browser',
+    setOn: TIMING_BUDGETS_SET_IN,
+    provenance: 'provisional',
   },
   {
     area: 'Route load',
@@ -229,6 +357,9 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     metricKey: 'charactersSearchReadyMs',
     metricLabel: 'characters search ready',
     budgets: { desktop: 3700, mobile: 3200 },
+    profile: 'browser',
+    setOn: TIMING_BUDGETS_SET_IN,
+    provenance: 'provisional',
   },
   {
     area: 'Route load',
@@ -236,6 +367,9 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     metricKey: 'savedTeamsReadyMs',
     metricLabel: 'saved teams ready',
     budgets: { desktop: 6100, mobile: 5700 },
+    profile: 'browser',
+    setOn: TIMING_BUDGETS_SET_IN,
+    provenance: 'provisional',
   },
   {
     area: 'Route load',
@@ -243,6 +377,9 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     metricKey: 'captainCoverageReadyMs',
     metricLabel: 'captain coverage ready',
     budgets: { desktop: 3900, mobile: 4500 },
+    profile: 'browser',
+    setOn: TIMING_BUDGETS_SET_IN,
+    provenance: 'provisional',
   },
   {
     scope: 'result',
@@ -255,6 +392,9 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     unit: 'bytes',
     minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
     budgets: { bundle: 391_000 },
+    profile: 'bundle',
+    setOn: '2026-09-15',
+    provenance: 'measured',
   },
   {
     scope: 'result',
@@ -267,6 +407,9 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     unit: 'bytes',
     minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
     budgets: { bundle: 100_000 },
+    profile: 'bundle',
+    setOn: '2026-09-15',
+    provenance: 'measured',
   },
   /*
    * 869f135rq. The initial PAYLOAD: the entry scripts plus every chunk they
@@ -285,6 +428,9 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     unit: 'bytes',
     minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
     budgets: { bundle: 1_536_000 },
+    profile: 'bundle',
+    setOn: '2026-09-15',
+    provenance: 'measured',
   },
   {
     scope: 'result',
@@ -297,6 +443,9 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     unit: 'bytes',
     minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
     budgets: { bundle: 387_000 },
+    profile: 'bundle',
+    setOn: '2026-09-15',
+    provenance: 'measured',
   },
   {
     scope: 'result',
@@ -309,6 +458,9 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     unit: 'bytes',
     minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
     budgets: { bundle: 14_000 },
+    profile: 'bundle',
+    setOn: TIMING_BUDGETS_SET_IN,
+    provenance: 'provisional',
   },
   {
     scope: 'result',
@@ -321,6 +473,9 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     unit: 'bytes',
     minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
     budgets: { bundle: 320_000 },
+    profile: 'bundle',
+    setOn: TIMING_BUDGETS_SET_IN,
+    provenance: 'provisional',
   },
   {
     scope: 'result',
@@ -333,6 +488,9 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     unit: 'bytes',
     minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
     budgets: { bundle: 740_000 },
+    profile: 'bundle',
+    setOn: TIMING_BUDGETS_SET_IN,
+    provenance: 'provisional',
   },
   {
     scope: 'result',
@@ -345,6 +503,9 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     unit: 'bytes',
     minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
     budgets: { bundle: 186_000 },
+    profile: 'bundle',
+    setOn: TIMING_BUDGETS_SET_IN,
+    provenance: 'provisional',
   },
   {
     scope: 'result',
@@ -357,6 +518,9 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     unit: 'bytes',
     minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
     budgets: { bundle: 187_000 },
+    profile: 'bundle',
+    setOn: TIMING_BUDGETS_SET_IN,
+    provenance: 'provisional',
   },
   {
     scope: 'result',
@@ -369,6 +533,9 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     unit: 'bytes',
     minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
     budgets: { bundle: 330_000 },
+    profile: 'bundle',
+    setOn: TIMING_BUDGETS_SET_IN,
+    provenance: 'provisional',
   },
 ]);
 
@@ -620,6 +787,16 @@ function buildMetricRowsForResult(kind, resultEntry, baselineRows) {
         metricKey: metric.metricKey,
         unit: metric.unit ?? 'ms',
         enforcement: resolveBudgetEnforcement(metric),
+        /*
+         * 869f135u7. What this number IS, carried on the row rather than left to
+         * whoever wrote the harness. `basis` says single observation vs mean over
+         * loops - the difference between a figure that moves with CI weather and
+         * one that does not - and `profile` says on what.
+         */
+        basis: MEASUREMENT_PROFILES[metric.profile]?.basis ?? null,
+        profile: MEASUREMENT_PROFILES[metric.profile]?.[viewport] ?? null,
+        setOn: metric.setOn ?? null,
+        provenance: metric.provenance ?? null,
         actualMs,
         budgetMs,
         baselineMs,
@@ -779,52 +956,21 @@ export async function buildPerformanceBudgetReport(options = {}, env = process.e
           workflow: baselineReport.workflow ?? null,
         }
       : null,
+    /*
+     * 869f135u7. `hardBudgets` used to sit here: a second, hand-maintained copy
+     * of every budget, published in the report. Nine of its entries CONTRADICTED
+     * the enforced values - `savedTeamsImportReadyMs` read 3000/4000 against an
+     * enforced 5800/6000 - it was misnamed (42 of the 52 budgeted rows are
+     * advisory, not hard), and nothing in the repository read it: one occurrence,
+     * its own declaration.
+     *
+     * Deriving it was possible and pointless - derived, it restates `metricRows`,
+     * which every consumer already has. So `metricRows` is now the ONLY statement
+     * of a budget, and `perf-budget-report.spec.ts` asserts no second budget
+     * literal grows back.
+     */
     budgetPolicy: {
-      hardBudgets: {
-        abilityFilters: {
-          savedTeamsFirstToggleMs: { desktop: 800, mobile: 1000 },
-          savedEnemiesFirstToggleMs: { desktop: 500, mobile: 500 },
-          manualPickerOpenMs: { desktop: 800, mobile: 800 },
-          manualSpecialFilterMs: { desktop: 2500, mobile: 2500 },
-        },
-        explanationCompare: {
-          compareOpenMs: { desktop: 800, mobile: 1000 },
-          compareImportMs: { desktop: 1200, mobile: 1500 },
-          savedTeamsParseSanitizeMs: { desktop: 500, mobile: 500 },
-          savedTeamsImportReadyMs: { desktop: 3000, mobile: 4000 },
-          manualShareHydrationMs: { desktop: 1800, mobile: 2500 },
-          firstExplanationToggleMs: { desktop: 300, mobile: 450 },
-          allExplanationToggleMs: { desktop: 900, mobile: 1200 },
-        },
-        savedTeamCodecs: {
-          bulkExportEncodeMs: { node: 10 },
-          bulkJsonParseMs: { node: 10 },
-          bulkSanitizeMs: { node: 10 },
-          bulkParseSanitizeMs: { node: 15 },
-          shareEncodeMs: { node: 5 },
-          shareDecodeMs: { node: 3 },
-          shareResolveSanitizeMs: { node: 4 },
-          invalidValidationMs: { node: 1 },
-        },
-        routeLoad: {
-          guideShareCompareReadyMs: { desktop: 1500, mobile: 2200 },
-          manualShareLandingReadyMs: { desktop: 2500, mobile: 3500 },
-          compareEntryReadyMs: { desktop: 3000, mobile: 4500 },
-          charactersSearchReadyMs: { desktop: 1600, mobile: 2200 },
-          savedTeamsReadyMs: { desktop: 2200, mobile: 2200 },
-          captainCoverageReadyMs: { desktop: 3000, mobile: 4500 },
-          initialRawBytes: 391_000,
-          initialGzipBytes: 100_000,
-          initialGraphRawBytes: 1_536_000,
-          initialGraphGzipBytes: 387_000,
-          guideRawBytes: 14_000,
-          manualShareRawBytes: 320_000,
-          compareRawBytes: 740_000,
-          charactersRawBytes: 170_000,
-          savedTeamsRawBytes: 140_000,
-          captainCoverageRawBytes: 330_000,
-        },
-      },
+      measurementProfiles: MEASUREMENT_PROFILES,
       baselineWarning: BASELINE_WARNING_POLICY,
     },
     summary: {
@@ -932,8 +1078,8 @@ export function formatPerformanceBudgetSummary(report) {
   lines.push(
     '',
     '## Metrics',
-    '| Harness | Viewport | Area | Metric | Current | Budget | Baseline | Delta |',
-    '| --- | --- | --- | --- | ---: | ---: | ---: | ---: |',
+    '| Harness | Viewport | Area | Metric | Current | Budget | Baseline | Delta | Basis | Set |',
+    '| --- | --- | --- | --- | ---: | ---: | ---: | ---: | --- | --- |',
   );
 
   for (const row of report.metricRows) {
@@ -945,7 +1091,9 @@ export function formatPerformanceBudgetSummary(report) {
       `| ${row.harness} | ${row.viewport} | ${row.area} | ${row.metric} | ${formatMetricValue(
         row.actualMs,
         row.unit,
-      )} | ${formatMetricValue(row.budgetMs, row.unit)} | ${formatMetricValue(row.baselineMs, row.unit)} | ${delta} |`,
+      )} | ${formatMetricValue(row.budgetMs, row.unit)} | ${formatMetricValue(row.baselineMs, row.unit)} | ${delta} | ${
+        row.basis ?? 'unrecorded'
+      } | ${row.provenance === 'measured' ? `measured ${row.setOn}` : `provisional (${row.setOn})`} |`,
     );
   }
 

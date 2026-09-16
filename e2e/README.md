@@ -216,8 +216,8 @@ repo.
 - desktop compare open `<=800ms`, imported compare apply `<=1200ms`
 - mobile compare open `<=1000ms`, imported compare apply `<=1500ms`
 - saved-team parse/sanitize `<=500ms` desktop and mobile
-- saved-team import ready `<=3000ms` desktop and `<=4000ms` mobile
-- manual share-link hydration `<=1800ms` desktop and `<=2500ms` mobile
+- saved-team import ready `<=5800ms` desktop and `<=6000ms` mobile
+- manual share-link hydration `<=3800ms` desktop and `<=4000ms` mobile
 - desktop first/all explanation toggles `<=300ms` / `<=900ms`
 - mobile first/all explanation toggles `<=450ms` / `<=1200ms`
 
@@ -255,7 +255,7 @@ to `perf-artifacts/memory-pressure`.
 Enemies, and Manual Team Builder ability-filter flows in desktop and mobile
 Chromium viewports. The recurring workflow budgets are:
 
-- saved teams first ability toggle `<=800ms` desktop and `<=1000ms` mobile
+- saved teams first ability toggle `<=2600ms` desktop and `<=2100ms` mobile
 - saved enemies first ability toggle `<=500ms`
 - manual picker open `<=800ms`
 - manual special-filter apply `<=2500ms`
@@ -273,12 +273,31 @@ to record initial JS and route chunk sizes with top source contributors.
 The recurring workflow budgets are:
 
 - guide route ready `<=1500ms` desktop and `<=2200ms` mobile
-- manual share-link landing ready `<=2500ms` desktop and `<=3500ms` mobile
+- manual share-link landing ready `<=4000ms` desktop and `<=3500ms` mobile
 - compare entry ready `<=3000ms` desktop and `<=4500ms` mobile
-- initial raw JS `<=1.50MB` and initial gzip JS `<=370KB`
-- guide route raw JS `<=14KB`
-- manual share route raw JS `<=320KB`
-- compare route raw JS `<=740KB`
+- characters search ready `<=3700ms` desktop and `<=3200ms` mobile
+- saved teams ready `<=6100ms` desktop and `<=5700ms` mobile
+- captain coverage ready `<=3900ms` desktop and `<=4500ms` mobile
+- entry script raw JS `<=391,000` and entry script gzip JS `<=100,000`
+- initial payload raw JS `<=1,536,000` and initial payload gzip JS `<=387,000`
+- guide route raw JS `<=14,000`
+- manual share route raw JS `<=320,000`
+- compare route raw JS `<=740,000`
+- characters route raw JS `<=186,000`
+- saved teams route raw JS `<=187,000`
+- captain coverage route raw JS `<=330,000`
+
+The old single line here said *initial raw JS `<=1.50MB` and initial gzip JS
+`<=370KB`*. There is no one "initial": **entry scripts** and **initial payload**
+are different measurements that differ by **3.9x**, and budgeting one with the
+other's number is the defect `docs/bundle-budgets.md` exists to record. Both
+pairs are listed above, named.
+
+**The byte budgets are the only hard ones on this page.** Every millisecond
+budget here is **advisory** — it is reported and does not gate, because a
+millisecond on a shared runner is weather; see
+`docs/maintainer-validation-guide.md`. Bytes reproduce to 0.01% across runs, so
+they bite.
 
 Set `PERF_ASSERT=0` to collect artifacts without failing on the budgets.
 
