@@ -50,6 +50,30 @@ import { fileURLToPath } from 'node:url';
  *   D. a `correction` overlay entry is provably superseded by the shipped
  *      dataset.
  *
+ *   E. a character-image override names an id the shipped dataset does not carry
+ *      and is not on the register's declared `stagedIds` list;
+ *   F. an image the SEO home page hardcodes as a hero is missing from disk.
+ *
+ * 869f135u6. E and F are one finding. Measured 2026-09-16: **30 of the 44**
+ * character-image overrides name ids the seed does not have (5490, 5491, and
+ * 5574-5601 against a maximum shipped id of 5056), and the split is exact -
+ * every `source: 'manual'` entry is for an id the dataset HAS, every
+ * `source: 'upstream'` entry is for one it does NOT. Those 30 re-point a real
+ * upstream pack path onto a character that has not landed yet: they are STAGED,
+ * not stale.
+ *
+ * That distinction is the whole purpose of this register, and it was invisible.
+ * It matters because `materializeExactImageSources` iterates the full map with
+ * `clearDir: true`, so all 44 are wiped and re-fetched from GitHub on every full
+ * import, and a moved upstream path throws at `import-optc-data.mjs:828`. 30
+ * entries nobody can account for are 30 ways for an import to stop.
+ *
+ * F exists because one of the 30 is load-bearing in production.
+ * `generate-seo-pages.mjs` hardcodes `assets/exact-character-images/5601.png` as
+ * a home-page hero, and 5601 is not in the dataset - the image exists ONLY
+ * because the override materialises it. Pruning the staged entries as "stale"
+ * would have put a broken image on the front page with nothing to catch it.
+ *
  * D is the "report when upstream has caught up" the subtask asks for, and it is
  * deliberately narrow. Only `ship-thumbnail-overrides` can be checked from the
  * shipped data: the ships table carries `thumb`, so an override whose file is not
@@ -161,6 +185,56 @@ export function findSupersededShipOverrides(overrides, shipThumbs) {
       return { id, expected: entry?.file ?? null, shipped, known: shipThumbs.has(id) };
     })
     .filter((row) => row.known && row.shipped !== row.expected);
+}
+
+/**
+ * Every character id the shipped seed carries.
+ *
+ * 869f135u6. Read from the same `INSERT INTO characters (...) VALUES (` shape
+ * `parseShipThumbs` uses for ships, and asserted against the real seed in the
+ * spec so a schema change cannot leave this silently measuring nothing.
+ */
+export function parseCharacterIds(seedSql) {
+  const ids = new Set();
+
+  for (const match of String(seedSql).matchAll(
+    /INSERT INTO characters \([\s\S]*?\) VALUES \(\s*\n\s*(\d+),/gu,
+  )) {
+    ids.add(Number(match[1]));
+  }
+
+  return ids;
+}
+
+/**
+ * Overrides for characters the dataset does not carry, minus the ones the
+ * register declares as deliberately staged.
+ *
+ * The register's job is that a still-needed correction and a stale one stop
+ * looking identical. An override keyed on an id nobody can look up is the purest
+ * case of that: it costs a fetch on every import and it cannot be verified
+ * against anything shipped.
+ */
+export function findUnstagedAbsentIds(overrides, characterIds, stagedIds = []) {
+  const staged = new Set(stagedIds.map(Number));
+
+  return Object.keys(overrides)
+    .map(Number)
+    .filter((id) => !characterIds.has(id) && !staged.has(id))
+    .sort((left, right) => left - right);
+}
+
+/**
+ * Hero images the generated home page hardcodes, and whether they exist.
+ *
+ * 869f135u6. `5601.png` is one of these and 5601 is not in the dataset, so the
+ * file exists only because a character-image override materialises it. Nothing
+ * checked that before.
+ */
+export function findMissingHeroImages(generatorSource, fileExists) {
+  return [...String(generatorSource).matchAll(/src: '([^']*exact-character-images\/[^']+)'/gu)]
+    .map((match) => match[1])
+    .filter((source) => !fileExists(source));
 }
 
 export function collectOverlayFiles(dataDir = DATA_DIR) {
@@ -295,6 +369,45 @@ function main() {
         `They are not empty now. Add a "${PROVENANCE_MARKER}" marker to the character card and\n` +
         `detail page, next to the existing editedLocally chip.\n` +
         unmarked.map((file) => `  ${file}: ${overlayCounts[file]} entr(ies)`).join('\n'),
+    );
+  }
+
+  /* E. */
+  const imageOverlay = register.overlays.find(
+    (overlay) => overlay.file === 'character-image-overrides.json',
+  );
+
+  if (imageOverlay && present.includes(imageOverlay.file)) {
+    const unstaged = findUnstagedAbsentIds(
+      JSON.parse(readFileSync(path.join(DATA_DIR, imageOverlay.file), 'utf8')),
+      parseCharacterIds(readFileSync(SEED_PATH, 'utf8')),
+      imageOverlay.stagedIds ?? [],
+    );
+
+    if (unstaged.length > 0) {
+      problems.push(
+        `${unstaged.length} character-image override(s) name an id the shipped dataset does not\n` +
+          `carry and are not on the register's stagedIds list. Every one of them is re-fetched from\n` +
+          `GitHub on each full import - materializeExactImageSources clears the directory and walks\n` +
+          `the whole map - and a moved upstream path throws. Add the id to stagedIds with the\n` +
+          `reason, or remove the override and its image.\n` +
+          unstaged.map((id) => `  character ${id}`).join('\n'),
+      );
+    }
+  }
+
+  /* F. */
+  const missingHeroes = findMissingHeroImages(
+    readFileSync(path.join(HERE, 'generate-seo-pages.mjs'), 'utf8'),
+    (source) => existsSync(path.join(REPO_ROOT, 'public', source)),
+  );
+
+  if (missingHeroes.length > 0) {
+    problems.push(
+      `${missingHeroes.length} hero image(s) the generated home page hardcodes are not on disk.\n` +
+        `These are materialised by character-image overrides, not shipped by the dataset, so\n` +
+        `removing an override silently replaces the front page's artwork with a broken image.\n` +
+        missingHeroes.map((source) => `  ${source}`).join('\n'),
     );
   }
 

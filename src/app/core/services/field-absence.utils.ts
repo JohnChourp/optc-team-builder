@@ -10,9 +10,15 @@
  * survive an editor save, blank fields read as unknown - but for one surface only. This is the
  * convention those decisions imply, in a form every reader can consume.
  *
- * The region work in the same wave depends on it directly: `thumbnailGlobal: false` means *no
- * thumbnail is installed*, which is NOT *not available on Global*, and reading the first as the
- * second is what made the old field wrong for 927 units.
+ * The region work in the same wave depends on it directly: `thumbnailGlobal: false` is NOT *not
+ * available on Global*, and reading it that way is what made the old field wrong for 927 units.
+ *
+ * 869f135u6 corrects the other half of that sentence, which used to say it means *no thumbnail is
+ * installed*. It does not. It means **no path was found in the upstream pack listing** when the
+ * dataset was built (`buildCharacterAssetsMap`, `import-optc-data.mjs:454` -> `:1484`).
+ * Installedness is a separate, later fact - `.pack-ready` -> `manifest.installed` - read at
+ * runtime on the device. A character can have a recorded path and no installed pack, and the two
+ * answers disagree on every device that has not downloaded the pack.
  */
 
 /**
