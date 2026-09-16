@@ -1939,6 +1939,38 @@ export class OptcRepositoryService {
     ].some((key) => Array.isArray(rumbleData[key]) && rumbleData[key].length > 0);
   }
 
+  /**
+   * Which image a character card shows, in order.
+   *
+   * 869f135u6. There are FIVE image precedence orders in this app and none of
+   * them was written down. `docs/character-image-precedence.md` holds all five
+   * side by side; this comment is the one the next reader of this file needs.
+   *
+   * Two orders live here, and `preferExactLocal` is the switch. List rows call it
+   * `false` (`:1753`), detail rows call it `true` (`:1788-1789`):
+   *
+   *   preferExactLocal: false   thumbnailLocal -> exactLocal -> glo if installed
+   *                             -> jap if installed -> placeholder
+   *   preferExactLocal: true    exactLocal -> thumbnailLocal -> ... the same tail
+   *
+   * So a locally corrected portrait wins on the detail page and loses on the list
+   * - deliberately, because the exact image is the large one.
+   *
+   * Two things this order does NOT decide:
+   *
+   *   - The reader's own override outranks all of it, applied afterwards in
+   *     `character-overrides.utils.ts` (`:466-467`, `:484`): a stored
+   *     `thumbnailDataUrl` or `detailDataUrl` replaces whatever this returns.
+   *   - Nothing here handles an image that 404s. There is no `(error)` handler on
+   *     any of the 63 `<img>` sites in the app, so a manifest claiming a pack is
+   *     installed against a device where the file is gone renders a broken image
+   *     rather than reaching `FALLBACK_CHARACTER_IMAGE`. The placeholder is the
+   *     fallback for "no path recorded", never for "the path did not load".
+   *
+   * `thumbnailGlobal: false` does not mean "no thumbnail is installed" - it means
+   * no path was found in the upstream pack listing at import time. Installedness
+   * is the separate `.pack-ready` -> `manifest.installed` fact read above.
+   */
   private resolveImageUrl(
     assets: CharacterAssets,
     options: {

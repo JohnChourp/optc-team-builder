@@ -8,9 +8,12 @@ import {
   collectOverlayFiles,
   compareWithRegister,
   countEntries,
+  findMissingHeroImages,
   findSupersededShipOverrides,
   findTwinDivergence,
   findUnmarkedProvenance,
+  findUnstagedAbsentIds,
+  parseCharacterIds,
   parseShipThumbs,
 } from './check-manual-overlay-register.mjs';
 
@@ -171,6 +174,95 @@ describe('findUnmarkedProvenance', () => {
   });
 });
 
+describe('parseCharacterIds', () => {
+  it('reads the real seed, so a schema change cannot leave it measuring nothing', () => {
+    const ids = parseCharacterIds(
+      readFileSync(path.join(REPO_ROOT, 'public/assets/data/optc-seed.sql'), 'utf8'),
+    );
+
+    expect(ids.size).toBeGreaterThan(4000);
+    expect(ids.has(1)).toBe(true);
+    /* 869f135u6. The measurement this whole check rests on: 5601 is NOT shipped. */
+    expect(ids.has(5601)).toBe(false);
+  });
+});
+
+describe('findUnstagedAbsentIds', () => {
+  /*
+   * 869f135u6. 30 of the 44 character-image overrides name ids the dataset does
+   * not carry, and they are STAGED rather than stale - every `source: 'upstream'`
+   * entry is for an absent id and every `source: 'manual'` entry for a present
+   * one. The register declares them; this reports anything that appears outside
+   * that declaration.
+   */
+  it('stays quiet while every absent id is declared staged', () => {
+    expect(findUnstagedAbsentIds({ 5601: {} }, new Set([1]), [5601])).toEqual([]);
+  });
+
+  it('reports an absent id nobody staged', () => {
+    expect(findUnstagedAbsentIds({ 5601: {} }, new Set([1]), [])).toEqual([5601]);
+  });
+
+  it('says nothing about an override for an id the dataset has', () => {
+    expect(findUnstagedAbsentIds({ 4202: {} }, new Set([4202]), [])).toEqual([]);
+  });
+
+  it('accepts a staged list written as strings, because JSON keys are strings', () => {
+    expect(findUnstagedAbsentIds({ 5601: {} }, new Set([1]), ['5601'])).toEqual([]);
+  });
+
+  it('partitions the real overlay exactly, with no id in both halves', () => {
+    const overrides = JSON.parse(
+      readFileSync(path.join(REPO_ROOT, 'scripts/data/character-image-overrides.json'), 'utf8'),
+    );
+    const characterIds = parseCharacterIds(
+      readFileSync(path.join(REPO_ROOT, 'public/assets/data/optc-seed.sql'), 'utf8'),
+    );
+    const absent = findUnstagedAbsentIds(overrides, characterIds, []);
+
+    expect(absent).toHaveLength(30);
+    expect(Object.keys(overrides)).toHaveLength(44);
+
+    /*
+     * The correlation is the evidence that these are staged. If it ever breaks -
+     * a `manual` entry for an absent id, or an `upstream` entry for a present one
+     * - the staged/stale story no longer holds and this must be re-measured.
+     */
+    for (const [id, entry] of Object.entries(overrides)) {
+      const isAbsent = absent.includes(Number(id));
+
+      expect(entry.source, `character ${id}`).toBe(isAbsent ? 'upstream' : 'manual');
+    }
+  });
+});
+
+describe('findMissingHeroImages', () => {
+  /*
+   * 869f135u6. The generated home page hardcodes three hero images, and one of
+   * them - 5601.png - belongs to a character the dataset does not carry. The file
+   * exists only because a character-image override materialises it, so pruning
+   * the staged overrides would have put a broken image on the front page with
+   * nothing to catch it.
+   */
+  const generator = "src: 'assets/exact-character-images/5601.png',";
+
+  it('reports a hero image that is not on disk', () => {
+    expect(findMissingHeroImages(generator, () => false)).toEqual([
+      'assets/exact-character-images/5601.png',
+    ]);
+  });
+
+  it('stays quiet while the file is there', () => {
+    expect(findMissingHeroImages(generator, () => true)).toEqual([]);
+  });
+
+  it('reads the real generator, so a renamed hero cannot slip past it', () => {
+    const source = readFileSync(path.join(REPO_ROOT, 'scripts/generate-seo-pages.mjs'), 'utf8');
+
+    expect(findMissingHeroImages(source, () => false)).toHaveLength(3);
+  });
+});
+
 describe('the committed register', () => {
   it('classifies every overlay as a correction or a definition', () => {
     for (const overlay of register.overlays) {
@@ -220,6 +312,15 @@ describe('the committed register', () => {
 
       expect(actual, `${overlay.file} count drifted`).toBe(overlay.entryCount);
     }
+  });
+
+  it('declares every staged image id with a reason', () => {
+    const overlay = register.overlays.find(
+      (entry) => entry.file === 'character-image-overrides.json',
+    );
+
+    expect(overlay.stagedIds).toHaveLength(30);
+    expect(overlay.stagedWhy.length).toBeGreaterThan(200);
   });
 
   it('names both copies of the duplicated party-conflict overlay', () => {

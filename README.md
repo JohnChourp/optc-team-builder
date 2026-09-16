@@ -54,6 +54,10 @@ Maintainer validation guide:
   release-critical guide, guided/compare/share, and release-check handoff paths.
 - `docs/post-dispatch-production-smoke.md` defines the bounded production smoke
   check that runs after successful Android release dispatches.
+- `docs/character-image-precedence.md` records all five image precedence orders -
+  list rows, detail rows, the reader's own override, ships, and the build-time
+  `og:image` - plus what `thumbnailGlobal: false` actually means and the fact that
+  nothing handles an image that fails to load.
 - `docs/feature-coverage-map.md` maps major product and operational flows to
   their tests, docs, performance checks, evidence, and owning area.
 - `docs/docs-drift-map.json` maps those flows to documentation entry points so
