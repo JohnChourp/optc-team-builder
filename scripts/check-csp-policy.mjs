@@ -71,6 +71,103 @@ const REQUIRED_INJECTED_ORIGINS = [
   { directive: 'connect-src', origin: 'https://cloudflareinsights.com', injectedBy: 'Cloudflare Web Analytics beacon' },
 ];
 
+/**
+ * Which vendor each injected origin belongs to, and the term a reader would
+ * recognise it by in the privacy copy.
+ *
+ * 869f135w2. The CSP list above proves a vendor is ALLOWED to load. It says
+ * nothing about whether the reader was told. Measured 2026-09-16 across every
+ * privacy and cookie namespace in `public/i18n`, both languages:
+ *
+ *   Google Analytics    18 mentions   disclosed
+ *   Google Tag Manager   0 mentions   NOT disclosed
+ *   Microsoft Clarity    0 mentions   NOT disclosed
+ *   Cloudflare           0 mentions   NOT disclosed
+ *
+ * Three of the four measurement surfaces this app ships are named nowhere a
+ * reader can see. That is an owner decision, not a typo - the honest options are
+ * to disclose them or to remove them, and writing privacy copy for a vendor the
+ * owner may prefer to drop would prejudge it.
+ *
+ * So the gap is DECLARED here rather than silently green, with a date. The check
+ * fails on any origin that is neither disclosed nor on this list - which is the
+ * part that was missing: a fifth vendor could have been added tomorrow and
+ * nothing would have asked whether the privacy page mentions it.
+ */
+const VENDOR_DISCLOSURE = [
+  { origin: 'https://www.google-analytics.com', term: 'Google Analytics', disclosed: true },
+  {
+    origin: 'https://www.googletagmanager.com',
+    term: 'Google Tag Manager',
+    disclosed: false,
+    undisclosedSince: '2026-09-16',
+    reason: '869f135w2 measured it absent from every privacy namespace in both languages. Owner decision pending: disclose, or remove the container.',
+  },
+  {
+    origin: 'https://www.clarity.ms',
+    term: 'Clarity',
+    disclosed: false,
+    undisclosedSince: '2026-09-16',
+    reason: '869f135w2. Injected by the GTM container, so removing GTM removes this too. Owner decision pending.',
+  },
+  {
+    origin: 'https://static.cloudflareinsights.com',
+    term: 'Cloudflare',
+    disclosed: false,
+    undisclosedSince: '2026-09-16',
+    reason: '869f135w2. Injected by Cloudflare at the edge; it is not in the repository at all, which is why it was never written into the copy.',
+  },
+  {
+    origin: 'https://cloudflareinsights.com',
+    term: 'Cloudflare',
+    disclosed: false,
+    undisclosedSince: '2026-09-16',
+    reason: '869f135w2. The beacon endpoint for the same surface as the line above.',
+  },
+];
+
+export { VENDOR_DISCLOSURE };
+
+/**
+ * Every injected origin is either named in the privacy copy or declared undisclosed
+ * with a reason and a date. A new one is neither, so it fails.
+ */
+export function findUndeclaredVendors(injectedOrigins, disclosure, privacyText) {
+  const declared = new Map(disclosure.map((entry) => [entry.origin, entry]));
+  const problems = [];
+
+  for (const { origin, directive } of injectedOrigins) {
+    const entry = declared.get(origin);
+
+    if (!entry) {
+      problems.push(
+        `${directive} allows ${origin}, which is in no VENDOR_DISCLOSURE row. Say which vendor it is and whether the privacy copy names it.`,
+      );
+      continue;
+    }
+
+    const named = privacyText.toLowerCase().includes(entry.term.toLowerCase());
+
+    if (entry.disclosed && !named) {
+      problems.push(
+        `${origin} is recorded as disclosed, but "${entry.term}" appears nowhere in the privacy copy.`,
+      );
+    }
+
+    if (!entry.disclosed && named) {
+      problems.push(
+        `${origin} is recorded as undisclosed, but "${entry.term}" now appears in the privacy copy. Flip \`disclosed\` to true and drop the reason.`,
+      );
+    }
+
+    if (!entry.disclosed && !(entry.reason && entry.undisclosedSince)) {
+      problems.push(`${origin} is undisclosed with no reason or no date.`);
+    }
+  }
+
+  return problems;
+}
+
 const ROUTES = ['/', '/tabs/characters', '/tabs/auto-team-builder', '/tabs/settings'];
 
 export function extractMetaCsp(html) {
@@ -211,6 +308,35 @@ async function startStaticServer(root) {
   });
 }
 
+/**
+ * Every privacy- and cookie-facing translation file, both languages, as one string.
+ * 869f135w2.
+ */
+export function readPrivacyCopy(root = ROOT_DIR) {
+  const i18n = path.join(root, 'public', 'i18n');
+  const files = [];
+
+  const walk = (dir) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+
+      if (entry.isDirectory()) {
+        walk(full);
+      } else if (entry.name.endsWith('.json') && /privacy|cookie/iu.test(full)) {
+        files.push(full);
+      }
+    }
+  };
+
+  walk(i18n);
+  files.push(path.join(i18n, 'en.json'), path.join(i18n, 'el.json'));
+
+  return files
+    .filter((file) => fs.existsSync(file))
+    .map((file) => fs.readFileSync(file, 'utf8'))
+    .join('\n');
+}
+
 async function main() {
   const html = fs.readFileSync(INDEX_HTML, 'utf8');
   const policy = extractMetaCsp(html);
@@ -227,6 +353,22 @@ async function main() {
     console.error('[csp] policy shape rejected:');
     for (const error of shapeErrors) {
       console.error(`  - ${error}`);
+    }
+    process.exitCode = 1;
+    return;
+  }
+
+  /* 869f135w2. Allowed to load is not the same as disclosed to the reader. */
+  const vendorProblems = findUndeclaredVendors(
+    REQUIRED_INJECTED_ORIGINS,
+    VENDOR_DISCLOSURE,
+    readPrivacyCopy(),
+  );
+
+  if (vendorProblems.length) {
+    console.error('[csp] measurement vendors and the privacy copy disagree:');
+    for (const problem of vendorProblems) {
+      console.error(`  - ${problem}`);
     }
     process.exitCode = 1;
     return;
