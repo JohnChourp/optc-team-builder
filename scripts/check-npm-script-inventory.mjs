@@ -35,7 +35,28 @@ import { NPM_SCRIPT_REGISTRY } from './npm-script-registry.mjs';
  *   B. every script resolves to a caller kind, so "nobody calls this" is a
  *      classification rather than a gap in the check;
  *   C. every lane in SCRIPT_SUITES points at a script that exists, so the source
- *      of the CI matrix cannot name something package.json dropped.
+ *      of the CI matrix cannot name something package.json dropped;
+ *   D. every `test:<id>` script IS a lane, so a guard that is merely mentioned
+ *      somewhere cannot ship green and never run.
+ *
+ * 869f135tn. C and D are the two directions of one claim, and until this task
+ * only one of them existed - while the doc said both did.
+ *
+ * C could not fail. It asked whether the lane's command CONTAINS any of the 161
+ * script names as a substring, and two of those names are `ng` and `test`: every
+ * lane command is `npm run <something>`, every one of them contains `test`
+ * somewhere, and several contain `ng`. Deleting a lane's real script left it
+ * green. It now extracts the `npm run <name>` tokens and matches them exactly.
+ *
+ * The same substring bug sat in `classify`'s lane branch, where it mis-attributed
+ * callers rather than failing to fail.
+ *
+ * D is new and is the direction the subtask actually names. 56 of the 57 suites
+ * map 1:1 onto a `test:<id>` script; 8 `test:` scripts are deliberately not
+ * lanes and are allowlisted below with the reason. Without D, adding
+ * `test:my-new-guard` to package.json and forgetting the SCRIPT_SUITES entry
+ * produces a guard nobody ever runs - and every existing check stays green,
+ * because the script IS classified: something references it.
  *
  * Run: npm run scripts:inventory
  */
@@ -56,6 +77,65 @@ const MECHANISM_FILES = new Set([
   'scripts/check-npm-script-inventory.mjs',
   'scripts/check-npm-script-inventory.spec.ts',
   DOC_PATH,
+]);
+
+/**
+ * The npm scripts a lane command actually invokes.
+ *
+ * 869f135tn. `command.includes(name)` is not this, and the difference is the
+ * whole of check C: `test` and `ng` are real script names, so the substring test
+ * matched every lane command that had ever been written.
+ *
+ * 56 of the 57 commands are a bare `npm run <name>`; the 57th (`source-data`)
+ * runs an inline `npx vitest ...` and then `npm run dataset:spec-pins`, which is
+ * why this returns every occurrence rather than the first.
+ */
+export function extractInvokedScriptNames(command) {
+  return [...String(command).matchAll(/npm run ([\w:@./-]+)/gu)].map((match) => match[1]);
+}
+
+/**
+ * `test:` scripts that are deliberately NOT lanes, each with the reason.
+ *
+ * 869f135tn. Measured 2026-09-16: these 8 are exactly the `test:` scripts with no
+ * SCRIPT_SUITES entry of the same id, and every one of them is intentional. The
+ * allowlist is small and each row must stay justifiable - it is the escape hatch
+ * for check D, so a row added to silence a failure is the failure.
+ */
+/**
+ * Whether a file names this script as a script, rather than merely containing its
+ * letters.
+ *
+ * 869f135tn. The same substring bug that made check C unfailable also made the
+ * caller column wrong, and more visibly: `ng` is a real script name, so
+ * `contents.includes('ng')` matched the word "running" and the generated table
+ * published `ng` as reached by eleven workflows.
+ *
+ * The boundary is `[\w:@./-]`, not `\b`, because script names contain colons and
+ * dots - a plain word boundary would let `test:e2e` match inside
+ * `test:e2e:chromium`, which is a different script with a different lane.
+ *
+ * Deliberately NOT narrowed to `npm run <name>`. A bare mention is a real
+ * reference here: workflows reach lanes through `${{ matrix.suite }}`
+ * interpolation, and a runbook naming a script is exactly the `documented` kind.
+ * Requiring the prefix was measured to strand six scripts as unclassified,
+ * including `test:e2e`, which genuinely runs.
+ */
+export function mentionsScript(text, name) {
+  const escaped = name.replaceAll(/[.*+?^${}()|[\]\\]/gu, String.raw`\$&`);
+
+  return new RegExp(String.raw`(?<![\w:@./-])${escaped}(?![\w:@./-])`, 'u').test(text);
+}
+
+export const NON_LANE_TEST_SCRIPTS = new Map([
+  ['test:ci', 'The aggregate that runs the lanes. Making it a lane would nest the matrix inside itself.'],
+  ['test:e2e', 'Browser e2e. Runs in verify:local:full, not in the script-lane matrix.'],
+  ['test:e2e:install', 'Installs Playwright browsers. Setup, not a suite.'],
+  ['test:e2e:chromium', 'One browser projection of test:e2e.'],
+  ['test:e2e:firefox', 'One browser projection of test:e2e.'],
+  ['test:e2e:webkit', 'One browser projection of test:e2e.'],
+  ['test:public-entry-visual', 'Visual check on a scheduled workflow, not a verify:local lane.'],
+  ['test:post-merge-smoke', 'Runs after a merge against the deployed site, on its own workflow.'],
 ]);
 
 export function listFiles(root = projectRoot) {
@@ -88,14 +168,14 @@ export function readAll(files, root = projectRoot) {
  * the one kind where "what breaks" is a human following a doc.
  */
 export function classify({ name, scripts, sources, lanes, registered }) {
-  const lane = lanes.find(([, suite]) => suite.command.includes(name));
+  const lane = lanes.find(([, suite]) => extractInvokedScriptNames(suite.command).includes(name));
 
   if (lane) {
     return { kind: 'lane', detail: lane[0], breaks: `the \`${lane[0]}\` lane` };
   }
 
   const workflows = [...sources.entries()]
-    .filter(([file, contents]) => file.startsWith('.github/workflows/') && contents.includes(name))
+    .filter(([file, contents]) => file.startsWith('.github/workflows/') && mentionsScript(contents, name))
     .map(([file]) => path.basename(file));
 
   if (workflows.length) {
@@ -107,7 +187,7 @@ export function classify({ name, scripts, sources, lanes, registered }) {
   }
 
   const callers = Object.keys(scripts).filter(
-    (other) => other !== name && scripts[other].includes(name),
+    (other) => other !== name && mentionsScript(scripts[other], name),
   );
 
   if (callers.length) {
@@ -130,7 +210,7 @@ export function classify({ name, scripts, sources, lanes, registered }) {
       ([file, contents]) =>
         file.startsWith('scripts/') &&
         /\.(?:mjs|js|ts)$/u.test(file) &&
-        contents.includes(name),
+        mentionsScript(contents, name),
     )
     .map(([file]) => path.basename(file));
 
@@ -143,7 +223,7 @@ export function classify({ name, scripts, sources, lanes, registered }) {
   }
 
   const docs = [...sources.entries()]
-    .filter(([file, contents]) => file.endsWith('.md') && contents.includes(name))
+    .filter(([file, contents]) => file.endsWith('.md') && mentionsScript(contents, name))
     .map(([file]) => file);
 
   if (docs.length) {
@@ -206,10 +286,36 @@ export function checkNpmScriptInventory({ scripts, sources, doc, suites = SCRIPT
 
   /* C. */
   for (const [id, suite] of Object.entries(suites)) {
-    const named = Object.keys(scripts).some((name) => suite.command.includes(name));
+    const invoked = extractInvokedScriptNames(suite.command);
 
-    if (!named) {
-      errors.push(`The \`${id}\` lane runs \`${suite.command}\`, which names no script package.json has.`);
+    if (!invoked.length) {
+      errors.push(
+        `The \`${id}\` lane runs \`${suite.command}\`, which invokes no npm script at all, so package.json cannot own it.`,
+      );
+      continue;
+    }
+
+    for (const name of invoked) {
+      if (!Object.hasOwn(scripts, name)) {
+        errors.push(
+          `The \`${id}\` lane runs \`npm run ${name}\`, which package.json does not have.`,
+        );
+      }
+    }
+  }
+
+  /* D. */
+  for (const name of Object.keys(scripts)) {
+    if (!name.startsWith('test:') || NON_LANE_TEST_SCRIPTS.has(name)) {
+      continue;
+    }
+
+    const laneId = name.slice('test:'.length);
+
+    if (!Object.hasOwn(suites, laneId)) {
+      errors.push(
+        `\`${name}\` is not the \`${laneId}\` lane in SCRIPT_SUITES, so it never runs in verify:local. Add the lane, or add it to NON_LANE_TEST_SCRIPTS with the reason.`,
+      );
     }
   }
 
