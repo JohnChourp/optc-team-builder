@@ -140,8 +140,19 @@ access tokens automatically. The rolling session cookie lasts `DRIVE_SYNC_SESSIO
 
 This exact flow was verified locally on 2026-07-23 (real Google sign-in → encrypted
 refresh token stored → fresh access token minted from it with zero interaction → live
-Drive read). Follow the steps below to put it in production. Nothing here needs a code
-change except step 4 (one workflow env line); everything else is host config + Google
+Drive read). Follow the steps below to put it in production.
+
+> **869f135v0 — this needs TWO code changes, not one.** Step 4 is the workflow env
+> line. The other is the **Content-Security-Policy** in `src/index.html`: its
+> `connect-src` names no drive-sync origin, and `'self'` does **not** cover a
+> subdomain (CSP matches `'self'` on scheme/host/port equality — subdomains need an
+> explicit wildcard, which is why `https://*.clarity.ms` is written out three
+> sources later in the same directive). Both backend call sites —
+> `google-account.service.ts:585` and `drive-backup.service.ts:708` — would be
+> blocked by the shipped policy. Deploying without that edit produces a backend
+> that is reachable by `curl` and unreachable from the app.
+
+Everything else is host config + Google
 Cloud Console + secrets.
 
 ### 0. The one hard rule — host the backend on a **same-site subdomain**
@@ -253,7 +264,11 @@ artifact` step, alongside `APP_GOOGLE_WEB_CLIENT_ID`):
 
 Then set the repo secret `APP_GOOGLE_DRIVE_BACKEND_URL =
 https://drive-sync.optcteambuilder.com` and redeploy Pages. The next build bakes the backend
-URL into `app-config.js`, and the app switches every user to the server-session path.
+URL into `app-config.js`, and the app switches **web** users to the server-session
+path. Android and iOS are untouched: `isBackendSessionEnabled()`
+(`google-account.service.ts:519-521`) ANDs `Capacitor.getPlatform() === 'web'` with
+a non-empty URL, so every native call site takes the client-side branch whatever
+`app-config.js` says.
 
 ### 5. Deploy & verify
 

@@ -54,6 +54,9 @@ Maintainer validation guide:
   release-critical guide, guided/compare/share, and release-check handoff paths.
 - `docs/post-dispatch-production-smoke.md` defines the bounded production smoke
   check that runs after successful Android release dispatches.
+- `docs/measurement-position.md` records what the app measures - four browser
+  surfaces, of which the privacy copy names one - and why the default answer to
+  "should we track this?" is no.
 - `docs/character-image-precedence.md` records all five image precedence orders -
   list rows, detail rows, the reader's own override, ships, and the build-time
   `og:image` - plus what `thumbnailGlobal: false` actually means and the fact that

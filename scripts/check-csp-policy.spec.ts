@@ -8,6 +8,9 @@ import {
   parseDirectives,
   REQUIRED_INJECTED_ORIGINS,
   validatePolicyShape,
+  VENDOR_DISCLOSURE,
+  findUndeclaredVendors,
+  readPrivacyCopy,
 } from './check-csp-policy.mjs';
 
 const ROOT = resolve(import.meta.dirname, '..');
@@ -112,5 +115,74 @@ describe('the shipped policy', () => {
 
   it('ships a referrer policy alongside it', () => {
     expect(indexHtml).toContain('<meta name="referrer" content="strict-origin-when-cross-origin">');
+  });
+});
+
+/**
+ * 869f135w2. The CSP proves a vendor is ALLOWED to load. It says nothing about
+ * whether the reader was ever told, and measured 2026-09-16 three of the four
+ * measurement surfaces this app ships are named nowhere in the privacy copy, in
+ * either language.
+ *
+ * That gap is an owner decision — disclose them, or remove them — so it is
+ * DECLARED in `VENDOR_DISCLOSURE` with a reason and a date rather than left
+ * silently green. What these tests protect is the part that was missing entirely:
+ * a fifth vendor could have been added and nothing would have asked.
+ */
+describe('measurement vendors against the privacy copy', () => {
+  const privacyCopy = readPrivacyCopy();
+
+  it('reads privacy copy at all, so an empty string cannot pass everything', () => {
+    expect(privacyCopy.length).toBeGreaterThan(1000);
+    expect(privacyCopy).toContain('Google Analytics');
+  });
+
+  it('accepts the shipped tree', () => {
+    expect(findUndeclaredVendors(REQUIRED_INJECTED_ORIGINS, VENDOR_DISCLOSURE, privacyCopy)).toEqual(
+      [],
+    );
+  });
+
+  it('fails a vendor nobody declared — the case that did not exist before', () => {
+    const problems = findUndeclaredVendors(
+      [...REQUIRED_INJECTED_ORIGINS, { directive: 'script-src', origin: 'https://cdn.hotjar.com' }],
+      VENDOR_DISCLOSURE,
+      privacyCopy,
+    );
+
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain('cdn.hotjar.com');
+  });
+
+  it('fails a row claiming disclosure the copy does not carry', () => {
+    const lying = VENDOR_DISCLOSURE.map((entry) =>
+      entry.term === 'Clarity' ? { ...entry, disclosed: true } : entry,
+    );
+
+    expect(
+      findUndeclaredVendors(REQUIRED_INJECTED_ORIGINS, lying, privacyCopy)[0],
+    ).toContain('appears nowhere in the privacy copy');
+  });
+
+  it('fails an undisclosed row with no reason or no date', () => {
+    const bare = VENDOR_DISCLOSURE.map((entry) =>
+      entry.term === 'Cloudflare' ? { ...entry, reason: undefined } : entry,
+    );
+
+    expect(findUndeclaredVendors(REQUIRED_INJECTED_ORIGINS, bare, privacyCopy).length).toBeGreaterThan(0);
+  });
+
+  it('tells you to flip the flag once the copy DOES name the vendor', () => {
+    /*
+     * The self-healing direction. Without it, disclosing Clarity tomorrow would
+     * leave a row permanently lying in the other direction, and nothing would say so.
+     */
+    const problems = findUndeclaredVendors(
+      REQUIRED_INJECTED_ORIGINS,
+      VENDOR_DISCLOSURE,
+      `${privacyCopy} Microsoft Clarity`,
+    );
+
+    expect(problems[0]).toContain('Flip');
   });
 });
