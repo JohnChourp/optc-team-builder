@@ -112,6 +112,7 @@ and when a `test:` script is not a lane.
 | `dead-code:check` | npm script · test:dead-code | `test:dead-code` |
 | `discoverability:verify` | workflow · guide-discoverability.yml | the guide-discoverability.yml workflow |
 | `docs:commands` | workflow · docs-integrity.yml | the docs-integrity.yml workflow |
+| `docs:coverage-grades` | npm script · test:feature-coverage-grades | `test:feature-coverage-grades` |
 | `docs:drift` | workflow · docs-integrity.yml | the docs-integrity.yml workflow |
 | `docs:integrity` | workflow · docs-integrity.yml | the docs-integrity.yml workflow |
 | `docs:release-runbook-drift` | workflow · docs-integrity.yml | the docs-integrity.yml workflow |
@@ -196,6 +197,7 @@ and when a `test:` script is not a lane.
 | `test:enemy-vocabulary` | lane · enemy-vocabulary | the `enemy-vocabulary` lane |
 | `test:engine-divergences` | lane · engine-divergences | the `engine-divergences` lane |
 | `test:failure-vocabulary` | lane · failure-vocabulary | the `failure-vocabulary` lane |
+| `test:feature-coverage-grades` | lane · feature-coverage-grades | the `feature-coverage-grades` lane |
 | `test:field-naming` | lane · field-naming | the `field-naming` lane |
 | `test:i18n-greek-coverage` | lane · i18n-greek-coverage | the `i18n-greek-coverage` lane |
 | `test:i18n-ownership` | lane · i18n-ownership | the `i18n-ownership` lane |

@@ -472,6 +472,10 @@ export const SCRIPT_SUITES = {
     label: 'Manual overlay register tests',
     command: 'npm run test:overlay-register',
   },
+  'feature-coverage-grades': {
+    label: 'Feature coverage grade tests',
+    command: 'npm run test:feature-coverage-grades',
+  },
   'i18n-greek-coverage': {
     label: 'Greek translation coverage tests',
     command: 'npm run test:i18n-greek-coverage',
@@ -910,6 +914,20 @@ function touchesFailureVocabularySources(filePath) {
   return (
     (filePath.startsWith('src/app/pages/') && filePath.endsWith('.page.ts')) ||
     filePath === 'src/app/app.component.ts'
+  );
+}
+
+/**
+ * 869f135u5. The grade of a flow is derived from cells that name specs, npm
+ * scripts and evidence files, so the map itself is only half the input - the
+ * other half is `package.json` and the smoke pack it reads its routes from.
+ */
+function touchesFeatureCoverageGradeSources(filePath) {
+  return (
+    filePath === 'docs/feature-coverage-map.md' ||
+    filePath === 'package.json' ||
+    filePath === 'e2e/smoke.spec.ts' ||
+    filePath.startsWith('scripts/check-feature-coverage-grades')
   );
 }
 
@@ -1355,6 +1373,10 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
 
     if (touchesOverlaySources(filePath)) {
       addScriptSuite(scriptSuites, 'overlay-register');
+    }
+
+    if (touchesFeatureCoverageGradeSources(filePath)) {
+      addScriptSuite(scriptSuites, 'feature-coverage-grades');
     }
 
     if (touchesFailureVocabularySources(filePath)) {

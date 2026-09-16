@@ -13,7 +13,17 @@ describe('ci-check-routing', () => {
     expect(plan.runE2e).toBe(false);
     expect(plan.runQuarantine).toBe(false);
     expect(plan.runDatasetPerf).toBe(false);
-    expect(plan.scriptSuites).toEqual(['docs-integrity', 'docs-commands', 'docs-drift']);
+    /*
+     * 869f135u5. `feature-coverage-grades` is here because one of the two files
+     * IS the map it grades - a change to `docs/feature-coverage-map.md` has to
+     * re-derive the grades, or the lane only ever runs on a full plan.
+     */
+    expect(plan.scriptSuites).toEqual([
+      'docs-integrity',
+      'docs-commands',
+      'docs-drift',
+      'feature-coverage-grades',
+    ]);
   });
 
   it('routes runtime changes to Angular and blocking browser e2e', () => {
@@ -306,6 +316,7 @@ describe('ci-check-routing', () => {
       'dead-code',
       'failure-vocabulary',
       'overlay-register',
+      'feature-coverage-grades',
       'i18n-greek-coverage',
       'component-style-budget',
       'unused-members',
