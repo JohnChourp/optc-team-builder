@@ -67,6 +67,17 @@ describe('ci-check-routing', () => {
     ]);
   });
 
+  it('runs the dataset benchmark when the shipped dataset changes', () => {
+    /*
+     * 869f138qd. The predicate only knew `src/assets/data/`, where the dataset lived before it moved
+     * to `public/`, so a seed change never reached the benchmark that times opening it.
+     */
+    const plan = buildCheckPlan(['public/assets/data/optc-seed.sql']);
+
+    expect(plan.runDatasetPerf).toBe(true);
+    expect(plan.categories).toContain('dataset');
+  });
+
   it('routes source data inputs to validation instead of dataset performance only', () => {
     const plan = buildCheckPlan(['scripts/data/manual-characters.json', 'scripts/data/party-conflict-overrides.json']);
 

@@ -1294,9 +1294,14 @@ function isCaptainContractPath(filePath) {
   );
 }
 
+/*
+ * 869f138qd. `src/assets/data/` is where the dataset lived before it moved to `public/`; with only
+ * that prefix, a seed change routed nowhere near the dataset benchmark.
+ */
 function isDatasetPath(filePath) {
   return (
     filePath === 'scripts/benchmark-dataset.mjs' ||
+    filePath.startsWith('public/assets/data/') ||
     filePath.startsWith('src/assets/data/')
   );
 }

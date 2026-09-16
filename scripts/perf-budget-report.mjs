@@ -55,6 +55,10 @@ export const BASELINE_WARNING_POLICY = Object.freeze({
  * measured rather than assumed - and it is the single most important thing on
  * this page, because it means these numbers describe an unthrottled CI machine
  * and NOT a player's phone.
+ *
+ * 869f138qd added the one exception, and gave it its own profile so the rows
+ * above keep meaning what they say: `datasetReady` throttles the mobile CPU 4x
+ * (perf-route-load.mjs, DATASET_READY_CPU_THROTTLING).
  */
 export const MEASUREMENT_PROFILES = Object.freeze({
   browser: {
@@ -69,6 +73,11 @@ export const MEASUREMENT_PROFILES = Object.freeze({
   bundle: {
     basis: 'deterministic - read from the esbuild stats.json',
     bundle: 'esbuild stats.json from a production build',
+  },
+  datasetReady: {
+    basis: 'single observation',
+    desktop: 'Chromium 1440x1000, Desktop Chrome UA, no throttling',
+    mobile: 'Playwright devices[Pixel 7], 4x CPU throttling',
   },
 });
 
@@ -321,6 +330,16 @@ const SAVED_TEAM_CODEC_METRICS = Object.freeze([
 ]);
 
 const ROUTE_LOAD_METRICS = Object.freeze([
+  {
+    area: 'Dataset',
+    sourcePath: ['timings', 'dataset'],
+    metricKey: 'datasetReadyMs',
+    metricLabel: 'dataset ready',
+    budgets: { desktop: 700, mobile: 2200 },
+    profile: 'datasetReady',
+    setOn: '869f138qd',
+    provenance: 'provisional',
+  },
   {
     area: 'Route load',
     sourcePath: ['timings', 'routes'],

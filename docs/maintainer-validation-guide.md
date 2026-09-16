@@ -679,6 +679,15 @@ Captain Coverage. Set `PERF_ROUTE_LOAD_BUILD=0` only when an existing
 production build and `dist/optc-team-builder/stats.json` already match the code
 under test.
 
+It also records `datasetReadyMs`: from navigation to the `optc:dataset-ready`
+mark the app sets when its database is usable, on `/tabs/characters` in a
+fresh context (869f138qd). Unlike every other browser row, the mobile run
+throttles the CPU 4x, because opening the database is CPU work; the row has its
+own `datasetReady` measurement profile so the others keep meaning "no
+throttling". A run whose mark says the database was built from the SQL seed
+rather than opened from `optc-seed.sqlite.gz` fails, since a fast number from the
+fallback would be a pass for the wrong reason.
+
 ### PWA Shell Safety
 
 Use the PWA shell check before changing the Angular service-worker config,

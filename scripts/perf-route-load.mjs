@@ -46,6 +46,13 @@ export const ROUTE_LOAD_BUDGETS = Object.freeze({
     charactersSearchReadyMs: { desktop: 3700, mobile: 3200 },
     savedTeamsReadyMs: { desktop: 6100, mobile: 5700 },
     captainCoverageReadyMs: { desktop: 3900, mobile: 4500 },
+    /*
+     * 869f138qd. From navigation to the `optc:dataset-ready` mark on /tabs/characters, in its own
+     * fresh context. Mobile runs at 4x CPU, desktop unthrottled - see measureDatasetReady.
+     * Provisional: one observation each on 2026-09-16 on an M4 Pro - desktop 141 ms, mobile
+     * 437 ms - with about 5x room for a slower CI machine until there is history to set it from.
+     */
+    datasetReadyMs: { desktop: 700, mobile: 2200 },
   },
   bundles: {
     /*
@@ -88,6 +95,15 @@ export const ROUTE_LOAD_BUDGETS = Object.freeze({
     captainCoverageRawBytes: 330_000,
   },
 });
+
+/*
+ * 869f138qd. Opening the database is CPU work, and an unthrottled Pixel 7 profile is a desktop CPU
+ * behind a small window - so the mobile run throttles 4x, the rate the wave-5 lab and live checks
+ * used, and the desktop run does not. Declared up here because the top-level run below reads
+ * them, and a const further down would still be in its temporal dead zone.
+ */
+const DATASET_READY_CPU_THROTTLING = Object.freeze({ desktop: 1, mobile: 4 });
+const DATASET_READY_MARK = 'optc:dataset-ready';
 
 const appRoot = process.cwd();
 const npmBin = process.platform === 'win32' ? 'npm.cmd' : 'npm';
@@ -283,8 +299,9 @@ try {
       }
     }
 
+    run.timings.dataset = { datasetReadyMs: await measureDatasetReady(viewport) };
     results.viewportRuns.push(run);
-    checkTimingBudgets(viewport.label, run.timings.routes);
+    checkTimingBudgets(viewport.label, { ...run.timings.routes, ...run.timings.dataset });
   }
 
   checkBundleBudgets(bundle);
@@ -836,6 +853,43 @@ async function measureRoute(context, route, viewportLabel) {
     };
   } finally {
     await page.close().catch(() => {});
+  }
+}
+
+async function measureDatasetReady(viewport) {
+  const context = await createRouteContext(viewport, {});
+  const page = await context.newPage();
+  attachPageDiagnostics(page, 'dataset-ready', viewport.label);
+
+  try {
+    const cdp = await context.newCDPSession(page);
+    await cdp.send('Emulation.setCPUThrottlingRate', {
+      rate: DATASET_READY_CPU_THROTTLING[viewport.label] ?? 1,
+    });
+    await page.goto('/tabs/characters', { waitUntil: 'domcontentloaded', timeout: 60_000 });
+
+    const handle = await page.waitForFunction(
+      (name) => {
+        const entry = performance.getEntriesByName(name)[0];
+        return entry ? { startTime: entry.startTime, source: entry.detail?.source ?? null } : null;
+      },
+      DATASET_READY_MARK,
+      { timeout: 60_000 },
+    );
+    const { startTime, source } = await handle.jsonValue();
+
+    /* A fast number from the fallback would be a pass for the wrong reason. */
+    if (source !== 'database-file') {
+      failures.push(`${viewport.label} dataset-ready: the database came from ${source}, not the database file`);
+    }
+
+    return Math.round(startTime);
+  } catch (error) {
+    failures.push(`${viewport.label} dataset-ready: ${error instanceof Error ? error.message : String(error)}`);
+    return null;
+  } finally {
+    await page.close().catch(() => {});
+    await context.close().catch(() => {});
   }
 }
 

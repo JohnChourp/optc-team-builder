@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   DATASET_DATABASE_PATH,
+  DATASET_READY_MARK,
   DATASET_SEED_PATH,
   SEED_STATEMENT_YIELD_INTERVAL,
   type DatasetDatabaseFetchResponse,
@@ -14,6 +15,7 @@ import {
   hasGzipHeader,
   hasSqliteFileHeader,
   loadDatasetDatabase,
+  markDatasetReady,
   splitSeedStatements,
 } from './dataset-database-loader.utils';
 
@@ -34,10 +36,15 @@ class FakeDatabase {
   constructor(
     readonly bytes: Uint8Array | null | undefined,
     private readonly failOnExec: boolean,
+    private readonly failOnRun: string | null = null,
   ) {}
 
   run(sql: string): void {
     this.statements.push(sql);
+
+    if (this.failOnRun !== null && sql.includes(this.failOnRun)) {
+      throw new Error(`near "${this.failOnRun}": syntax error`);
+    }
   }
 
   exec(sql: string): [] {
@@ -73,6 +80,7 @@ function setUp(
     seed?: DatasetDatabaseFetchResponse;
     decompressionStream?: DecompressionStreamConstructor | undefined;
     failOnExec?: boolean;
+    failOnRun?: string;
   } = {},
 ) {
   const databases: FakeDatabase[] = [];
@@ -83,7 +91,11 @@ function setUp(
   const sql = {
     Database: class {
       constructor(data?: Uint8Array | null) {
-        const database = new FakeDatabase(data, options.failOnExec ?? false);
+        const database = new FakeDatabase(
+          data,
+          options.failOnExec ?? false,
+          options.failOnRun ?? null,
+        );
         databases.push(database);
         return database;
       }
@@ -205,9 +217,11 @@ describe('dataset database loader', () => {
           true,
         );
         expect(asFake(loaded.database).statements).toEqual([
+          'BEGIN',
           'CREATE TABLE characters (id INTEGER PRIMARY KEY);',
           'INSERT INTO characters (id) VALUES (1);',
           'INSERT INTO characters (id) VALUES (2);',
+          'COMMIT',
         ]);
       });
     }
@@ -232,7 +246,8 @@ describe('dataset database loader', () => {
 
     const loaded = await loadDatasetDatabase(withSeed.dependencies);
 
-    expect(asFake(loaded.database).statements).toHaveLength(SEED_STATEMENT_YIELD_INTERVAL * 2 + 10);
+    /* Every statement, plus the BEGIN and COMMIT around them. */
+    expect(asFake(loaded.database).statements).toHaveLength(SEED_STATEMENT_YIELD_INTERVAL * 2 + 12);
     expect(withSeed.yields()).toBe(2);
 
     const withoutSeed = setUp({ database: response(404, ''), seed: response(503, '') });
@@ -240,6 +255,42 @@ describe('dataset database loader', () => {
     await expect(loadDatasetDatabase(withoutSeed.dependencies)).rejects.toThrow(
       `Failed to fetch ${DATASET_SEED_PATH}: 503`,
     );
+  });
+
+  it('closes the half-built database and fails when a seed statement fails', async () => {
+    const { dependencies, databases } = setUp({
+      database: response(404, ''),
+      failOnRun: 'VALUES (2)',
+    });
+
+    await expect(loadDatasetDatabase(dependencies)).rejects.toThrow('near "VALUES (2)": syntax error');
+    expect(databases).toHaveLength(1);
+    expect(databases[0]?.closed).toBe(true);
+    /* It stopped at the failing statement and never committed. */
+    expect(databases[0]?.statements.at(-1)).toBe('INSERT INTO characters (id) VALUES (2);');
+    expect(databases[0]?.statements).not.toContain('COMMIT');
+  });
+
+  it('marks the moment the database is ready, with the way it was built', () => {
+    const marks: Array<{ name: string; options: PerformanceMarkOptions | undefined }> = [];
+    const timeline = {
+      mark: (name: string, options?: PerformanceMarkOptions) => {
+        marks.push({ name, options });
+        return undefined as unknown as PerformanceMark;
+      },
+    };
+
+    markDatasetReady('database-file', timeline);
+    markDatasetReady('seed-statements', timeline);
+
+    expect(marks).toEqual([
+      { name: DATASET_READY_MARK, options: { detail: { source: 'database-file' } } },
+      { name: DATASET_READY_MARK, options: { detail: { source: 'seed-statements' } } },
+    ]);
+    /* A timeline without `mark` (an old engine) is skipped, not an error. */
+    expect(() =>
+      markDatasetReady('database-file', { mark: undefined } as unknown as Pick<Performance, 'mark'>),
+    ).not.toThrow();
   });
 
   it('decompresses real gzip with the platform DecompressionStream', async () => {
