@@ -719,6 +719,14 @@ control, switches the local server to release B, confirms the old route-visible
 guide/share content can remain before explicit update activation, then runs
 `CHECK_FOR_UPDATES` and `ACTIVATE_UPDATE` and verifies the release B guide
 bundle and Manual Team Builder i18n content are visible.
+
+Every uncaught page error and console error fails the check - unless it came from a third-party
+script (Google Tag Manager, Google Analytics, Cloudflare Web Analytics, Microsoft Clarity), which
+`index.html` loads on every page. Those are printed as "third-party ... not counted" and kept in
+the report under `thirdPartyPageErrors` / `thirdPartyConsoleErrors` (869f138q7). The origin is read
+from the error's top stack frame, or from a console message's location; an error from the app's own
+code, or with no frame to read, still fails. Each page error in the report now carries that frame,
+so a failure says whose code threw.
 When `PWA_SHELL_ARTIFACT_DIR` is not set, local OPTC sibling checkouts write to
 `../optc-team-builder-brain/live-artifacts/<PWA_SHELL_TASK_ID>/pwa-shell` when
 `PWA_SHELL_TASK_ID` is set, otherwise
