@@ -560,6 +560,15 @@ export const SCRIPT_SUITES = {
     label: 'Shared component host map tests',
     command: 'npm run test:component-map',
   },
+  /*
+   * 869f138qx. Proves docs/worker-protocols.json is still what the three workers' models declare,
+   * and that every message kind has a direction. Two proposals from earlier waves send more traffic
+   * across these boundaries, and neither can be designed against a protocol nobody wrote down.
+   */
+  'worker-protocols': {
+    label: 'Web Worker protocol document tests',
+    command: 'npm run test:worker-protocols',
+  },
 };
 
 export const SCRIPT_SUITE_ORDER = Object.keys(SCRIPT_SUITES);
@@ -944,6 +953,21 @@ function touchesDatasetDeliverySources(filePath) {
     filePath === 'src/app/core/services/dataset-database-loader.utils.ts' ||
     filePath === 'src/app/core/services/dataset-database-loader.utils.spec.ts'
   );
+}
+
+/* 869f138qx. Terminating: the protocol generator, its reader, and the document it writes. */
+function isWorkerProtocolPath(filePath) {
+  return (
+    filePath === 'scripts/generate-worker-protocols.mjs' ||
+    filePath === 'scripts/generate-worker-protocols.spec.ts' ||
+    filePath === 'scripts/lib/worker-protocol.mjs' ||
+    filePath === 'docs/worker-protocols.json'
+  );
+}
+
+/* 869f138qx. Non-terminating: a models file is app source, so the Angular suite needs it too. */
+function touchesWorkerProtocolSources(filePath) {
+  return /^src\/app\/core\/services\/[\w.-]+\.worker\.models\.ts$/u.test(filePath);
 }
 
 /* 869f138qz. Terminating: the host map generator, its reader, and the document it writes. */
@@ -1603,6 +1627,10 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
       addScriptSuite(scriptSuites, 'component-map');
     }
 
+    if (touchesWorkerProtocolSources(filePath)) {
+      addScriptSuite(scriptSuites, 'worker-protocols');
+    }
+
     if (touchesEnemyVocabularySources(filePath)) {
       addScriptSuite(scriptSuites, 'enemy-vocabulary');
     }
@@ -1719,6 +1747,11 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
 
     if (isComponentMapPath(filePath)) {
       addScriptSuite(scriptSuites, 'component-map');
+      continue;
+    }
+
+    if (isWorkerProtocolPath(filePath)) {
+      addScriptSuite(scriptSuites, 'worker-protocols');
       continue;
     }
 
