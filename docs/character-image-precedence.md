@@ -54,6 +54,23 @@ installed on a build machine. So the generated page's `og:image` can name a pack
 image that a given reader's device does not have — which is correct, since the
 crawler fetches it from the site rather than from the device.
 
+## The packs themselves, as data — 869f138qw
+
+`docs/offline-pack-contract.json` declares each pack as data: what it holds, what it
+weighs **on disk**, where it sits in the chain above, and the `runtime-media` cache
+policy that decides how much of it is ever available offline. A pack directory with
+no manifest entry, or one whose file count no longer matches the manifest's claim,
+fails `npm run packs:contract -- --check`.
+
+**The byte totals are recorded, not enforced, and that is deliberate.**
+`import-optc-data.mjs` writes `totalBytes: cached?.totalBytes` - what the pack weighed
+when it was cached, not what is on disk now. Measured 2026-09-17 the two disagree by
+**+919 B** for `thumbnails-glo` and **-563 B** for `thumbnails-jap`, against exact
+agreement on every file count. Nothing had ever compared them, and the Settings card
+added by [869f138pr](https://app.clickup.com/t/90121749478/869f138pr) shows the
+manifest's claim. The drift is a fraction of a percent and harmless on screen; failing
+a lane on it would be red today for something nobody has decided to change.
+
 ## What `thumbnailGlobal: false` means
 
 **Not** "no thumbnail is installed." It means **no path was found in the upstream

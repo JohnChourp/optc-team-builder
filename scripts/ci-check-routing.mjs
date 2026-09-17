@@ -569,6 +569,15 @@ export const SCRIPT_SUITES = {
     label: 'Web Worker protocol document tests',
     command: 'npm run test:worker-protocols',
   },
+  /*
+   * 869f138qw. Proves every offline image pack has a contract entry and still holds the number of
+   * files the manifest claims. The manifest's BYTE total comes from a cache record rather than from
+   * the files, so that drift is recorded rather than enforced - see the module for why.
+   */
+  'packs-contract': {
+    label: 'Offline pack contract tests',
+    command: 'npm run test:packs-contract',
+  },
 };
 
 export const SCRIPT_SUITE_ORDER = Object.keys(SCRIPT_SUITES);
@@ -952,6 +961,28 @@ function touchesDatasetDeliverySources(filePath) {
     filePath === 'public/assets/data/optc-seed.sql' ||
     filePath === 'src/app/core/services/dataset-database-loader.utils.ts' ||
     filePath === 'src/app/core/services/dataset-database-loader.utils.spec.ts'
+  );
+}
+
+/* 869f138qw. Terminating: the pack contract generator, its reader, and the document it writes. */
+function isPackContractPath(filePath) {
+  return (
+    filePath === 'scripts/generate-offline-pack-contract.mjs' ||
+    filePath === 'scripts/generate-offline-pack-contract.spec.ts' ||
+    filePath === 'scripts/lib/offline-pack-contract.mjs' ||
+    filePath === 'docs/offline-pack-contract.json'
+  );
+}
+
+/*
+ * 869f138qw. Non-terminating: the packs themselves, the manifest that claims their sizes, and the
+ * service-worker config whose cache policy the contract records. All three route elsewhere too.
+ */
+function touchesPackContractSources(filePath) {
+  return (
+    filePath.startsWith('public/assets/offline-packs/') ||
+    filePath === 'public/assets/data/optc-manifest.json' ||
+    filePath === 'ngsw-config.json'
   );
 }
 
@@ -1631,6 +1662,10 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
       addScriptSuite(scriptSuites, 'worker-protocols');
     }
 
+    if (touchesPackContractSources(filePath)) {
+      addScriptSuite(scriptSuites, 'packs-contract');
+    }
+
     if (touchesEnemyVocabularySources(filePath)) {
       addScriptSuite(scriptSuites, 'enemy-vocabulary');
     }
@@ -1752,6 +1787,11 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
 
     if (isWorkerProtocolPath(filePath)) {
       addScriptSuite(scriptSuites, 'worker-protocols');
+      continue;
+    }
+
+    if (isPackContractPath(filePath)) {
+      addScriptSuite(scriptSuites, 'packs-contract');
       continue;
     }
 

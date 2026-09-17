@@ -235,7 +235,17 @@ describe('ci-check-routing', () => {
      * downloads, and putting the raw seed back into the prefetch group is exactly the defect that
      * suite exists for.
      */
-    expect(plan.scriptSuites).toEqual(['pwa-shell', 'support-claims', 'dataset-delivery']);
+    /*
+     * 869f138qw. `packs-contract` joins because ngsw-config.json is where the runtime-media cache
+     * policy lives, and the pack contract records it - the number that decides how much of a pack
+     * is ever available offline.
+     */
+    expect(plan.scriptSuites).toEqual([
+      'pwa-shell',
+      'support-claims',
+      'dataset-delivery',
+      'packs-contract',
+    ]);
   });
 
   it('routes a Playwright config change to both e2e triage and the support claims', () => {
@@ -360,6 +370,7 @@ describe('ci-check-routing', () => {
       'dataset-schema',
       'component-map',
       'worker-protocols',
+      'packs-contract',
     ]);
   });
 
@@ -475,6 +486,26 @@ describe('ci-check-routing', () => {
 
     expect(models.runAngular).toBe(true);
     expect(models.scriptSuites).toContain('worker-protocols');
+  });
+
+  /* 869f138qw. The generator terminates; the packs and the manifest join without terminating. */
+  it('routes the pack contract generator, the packs and the manifest that claims their sizes', () => {
+    const guard = buildCheckPlan([
+      'scripts/generate-offline-pack-contract.mjs',
+      'scripts/lib/offline-pack-contract.mjs',
+      'docs/offline-pack-contract.json',
+    ]);
+
+    expect(guard.fullPlan).toBe(false);
+    expect(guard.scriptSuites).toEqual(['packs-contract']);
+
+    const pack = buildCheckPlan(['public/assets/offline-packs/thumbnails-glo/1.png']);
+
+    expect(pack.scriptSuites).toContain('packs-contract');
+
+    const manifest = buildCheckPlan(['public/assets/data/optc-manifest.json']);
+
+    expect(manifest.scriptSuites).toContain('packs-contract');
   });
 
   it('routes guide discoverability verifier changes to the focused suite', () => {
