@@ -7,7 +7,7 @@ This document records the canonical local data shapes used by OPTC Team Builder.
 The importer writes these files:
 
 - `optc-manifest.json`: dataset metadata, counts, schema version, source version, and offline pack summaries.
-- `optc-seed.sql`: SQLite seed containing `characters`, `character_details`, `character_evolutions`, `character_drops`, `ships`, and `meta`. The source of truth for the dataset; the app only executes it as a fallback.
+- `optc-seed.sql`: SQLite seed containing `characters`, `character_details`, `character_evolutions`, `character_drops`, `ships`, and `meta`. The source of truth for the dataset; the app only executes it as a fallback. **Every table, column, type and row count is generated from it into [dataset-schema.json](dataset-schema.json)** by `npm run dataset:schema` (869f138qt) - this page documents the application shapes those rows become, that file documents the rows.
 - `optc-seed.sqlite.gz` (build output, not committed): the same rows as a gzipped SQLite database, built from `optc-seed.sql` by `npm run dataset:binary` before every build. This is what the app downloads and opens - see [dataset-delivery.md](dataset-delivery.md).
 - `optc-auto-builder-abilities.json`: ability catalog consumed by Auto Team Builder filters and saved enemy requirements. Written minified, and an index over `character_details` rather than a second set of facts - see [The catalogue is an index over the database](#the-catalogue-is-an-index-over-the-database-869f138qm).
 - `optc-unresolved-images.json`: characters that still need image coverage for the installed offline packs. Read by scripts only; not shipped.

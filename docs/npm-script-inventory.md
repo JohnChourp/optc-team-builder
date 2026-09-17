@@ -111,6 +111,7 @@ and when a `test:` script is not a lane.
 | `dataset:measure` | script file · check-dataset-measurements.mjs, measure-dataset-facts.mjs | whatever check-dataset-measurements.mjs, measure-dataset-facts.mjs drives |
 | `dataset:measurements` | npm script · test:dataset-measurements | `test:dataset-measurements` |
 | `dataset:provenance` | script file · generate-dataset-provenance.mjs, dataset-provenance.mjs | whatever generate-dataset-provenance.mjs, dataset-provenance.mjs drives |
+| `dataset:schema` | npm script · test:dataset-schema | `test:dataset-schema` |
 | `dataset:spec-pins` | lane · source-data | the `source-data` lane |
 | `dataset:unresolved-clauses` | script file · generate-unresolved-clauses.mjs | whatever generate-unresolved-clauses.mjs drives |
 | `dead-code:check` | npm script · test:dead-code | `test:dead-code` |
@@ -189,6 +190,7 @@ and when a `test:` script is not a lane.
 | `test:dataset-digest` | lane · dataset-digest | the `dataset-digest` lane |
 | `test:dataset-measurements` | lane · dataset-measurements | the `dataset-measurements` lane |
 | `test:dataset-provenance` | lane · dataset-provenance | the `dataset-provenance` lane |
+| `test:dataset-schema` | lane · dataset-schema | the `dataset-schema` lane |
 | `test:dead-code` | lane · dead-code | the `dead-code` lane |
 | `test:discoverability` | lane · discoverability | the `discoverability` lane |
 | `test:docs-commands` | lane · docs-commands | the `docs-commands` lane |
