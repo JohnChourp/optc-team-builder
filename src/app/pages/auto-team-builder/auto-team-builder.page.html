@@ -3381,6 +3381,27 @@
                   </div>
                 </section>
               }
+              <!--
+                869f138r7. An incomplete character is fully eligible for a team - deliberately, since
+                most of them are the reader's own manual entries - and until now nothing said so
+                once one reached a result. The debug report counted them for a maintainer; the
+                player got nothing.
+              -->
+              @if (incompleteResultCharacterNames().length) {
+                <section class="glass-card report-card" data-test="atb-incomplete-notice">
+                  <div class="slot-grid__header">
+                    <h2>{{ t('incompleteData.title') }}</h2>
+                    <p>
+                      {{
+                        t('incompleteData.copy', {
+                          names: incompleteResultCharacterNames().join(', '),
+                          count: incompleteResultCharacterNames().length
+                        })
+                      }}
+                    </p>
+                  </div>
+                </section>
+              }
               <section class="glass-card report-card">
                 <div class="slot-grid__header">
                   <h2>{{ t('report.title') }}</h2>

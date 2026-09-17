@@ -83,7 +83,37 @@ Where an effect is worded differently depending on who applies it, or where the 
 
 Existing examples are `Boost Type Effects (Color Affinity)`, `Tap-Timing Requirement (PERFECT)` and `Protect from Defeat (Resilience)` — the last being the crew-side survival buff, which is deliberately *not* labelled bare "Resilience" because that word names the opposite actor's buff in the enemy mechanic picker and in `remove_resilience` ("Enemy Resilience").
 
-#### How the seed is built — 869f138r4
+#### What `isIncomplete` means, and what the app does with one — 869f138r7
+
+**Status:** measured 2026-09-17 · [869f138r7](https://app.clickup.com/t/90121749478/869f138r7)
+
+The dataset has carried a notion of its own quality in three shapes for a long time -
+`isIncomplete` on a character, `optc-unresolved-images.json`, and the importer's
+`thumbnailGlobal` / `thumbnailJapan` booleans - with no shared definition. This is the
+one for the whole record.
+
+**Zero of 4,618 characters in the shipped dataset carry the flag.** It can only become
+true three ways, and all three are the reader's own data:
+
+| How it becomes true | Where |
+| --- | --- |
+| A manual character declares it | `scripts/data/manual-characters.json` |
+| A manual character is missing min/max stats, and it is inferred | `hasIncompleteManualStats` in `manual-character-overlay.mjs` |
+| The reader ticks it themselves | The **Character edit** screen |
+
+**An incomplete character is fully eligible for a team, deliberately.** Nothing in the
+builder filters on the flag, and it should not: since the flag is almost always on
+something the reader added or edited on purpose, silently refusing to use it would be
+the app second-guessing its owner.
+
+**What was missing is that nothing said so.** The Characters and Rumble Characters
+screens badge an incomplete card, and the debug report has always counted
+`incompleteTeamCharacterIds` for whoever reads a bug report - but a player whose team
+came back containing one was told nothing. **Auto Team Builder now names them above the
+Final team report**, says the team was built with them anyway, and points at the
+screen where they can be corrected. EN + EL.
+
+### How the seed is built — 869f138r4
 
 `docs/import-pipeline.json` lists the importer's stages and, for every hand-maintained file under
 `scripts/data/`, which script reads it. Generated, so it moves with the importer rather than
