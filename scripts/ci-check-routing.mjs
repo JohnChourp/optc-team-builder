@@ -513,6 +513,15 @@ export const SCRIPT_SUITES = {
     label: 'Dataset delivery (compression and database) tests',
     command: 'npm run test:dataset-delivery',
   },
+  /*
+   * 869f138qm. Proves the 1.6 MB ability catalogue is still the index of the seed beside it. Both
+   * files are written by the same import and regenerated separately by the manual character
+   * overlay, so the pair can drift without either file looking wrong on its own.
+   */
+  'ability-catalogue': {
+    label: 'Ability catalogue against the seed tests',
+    command: 'npm run test:ability-catalogue',
+  },
 };
 
 export const SCRIPT_SUITE_ORDER = Object.keys(SCRIPT_SUITES);
@@ -877,6 +886,15 @@ function isDatasetDeliveryPath(filePath) {
   );
 }
 
+/* 869f138qm. Terminating: the catalogue guard and the index it re-derives. */
+function isAbilityCataloguePath(filePath) {
+  return (
+    filePath === 'scripts/check-ability-catalogue.mjs' ||
+    filePath === 'scripts/check-ability-catalogue.spec.ts' ||
+    filePath === 'scripts/lib/ability-catalogue-index.mjs'
+  );
+}
+
 /*
  * Non-terminating: what the prefetch group is made of, and the code that opens the database. The
  * seed is data and ngsw-config.json is configuration, and both also route elsewhere.
@@ -887,6 +905,20 @@ function touchesDatasetDeliverySources(filePath) {
     filePath === 'public/assets/data/optc-seed.sql' ||
     filePath === 'src/app/core/services/dataset-database-loader.utils.ts' ||
     filePath === 'src/app/core/services/dataset-database-loader.utils.spec.ts'
+  );
+}
+
+/*
+ * 869f138qm. Non-terminating: the two artifacts the lane compares and the code that writes them.
+ * The seed and the importer route elsewhere as well, so neither can terminate here.
+ */
+function touchesAbilityCatalogueSources(filePath) {
+  return (
+    filePath === 'public/assets/data/optc-auto-builder-abilities.json' ||
+    filePath === 'public/assets/data/optc-seed.sql' ||
+    filePath === 'scripts/auto-team-builder-ability-parser.mjs' ||
+    filePath === 'scripts/lib/optc-dataset.mjs' ||
+    filePath === 'scripts/lib/manual-character-apply.mjs'
   );
 }
 
@@ -1435,6 +1467,10 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
       addScriptSuite(scriptSuites, 'dataset-delivery');
     }
 
+    if (touchesAbilityCatalogueSources(filePath)) {
+      addScriptSuite(scriptSuites, 'ability-catalogue');
+    }
+
     if (touchesEnemyVocabularySources(filePath)) {
       addScriptSuite(scriptSuites, 'enemy-vocabulary');
     }
@@ -1526,6 +1562,11 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
 
     if (isDatasetDeliveryPath(filePath)) {
       addScriptSuite(scriptSuites, 'dataset-delivery');
+      continue;
+    }
+
+    if (isAbilityCataloguePath(filePath)) {
+      addScriptSuite(scriptSuites, 'ability-catalogue');
       continue;
     }
 

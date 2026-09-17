@@ -58,12 +58,17 @@ describe('ci-check-routing', () => {
      * 869f1328p. `ability-tags` joins these because the parser is what produces the tags, so a
      * parser change is exactly when the catalogue's counts and phrasings can move. The enemy and
      * naming lanes deliberately do NOT join: neither reads the parser.
+     *
+     * 869f138qm. `ability-catalogue` joins for the same reason from the other side: the parser
+     * writes each character's abilities into the seed AND the index of them into the catalogue, so
+     * a parser change is exactly when the two can stop agreeing.
      */
     expect(plan.scriptSuites).toEqual([
       'captain-contracts',
       'ability-tags',
       'source-data',
       'overlay-register',
+      'ability-catalogue',
     ]);
   });
 
@@ -337,6 +342,7 @@ describe('ci-check-routing', () => {
       'unused-members',
       'worker-bundling',
       'dataset-delivery',
+      'ability-catalogue',
     ]);
   });
 
@@ -357,6 +363,28 @@ describe('ci-check-routing', () => {
 
     expect(loader.runAngular).toBe(true);
     expect(loader.scriptSuites).toContain('dataset-delivery');
+  });
+
+  /* 869f138qm. The catalogue guard, and the two artifacts it compares. */
+  it('routes the ability catalogue guard and the pair it compares to the catalogue suite', () => {
+    const guard = buildCheckPlan([
+      'scripts/check-ability-catalogue.mjs',
+      'scripts/lib/ability-catalogue-index.mjs',
+    ]);
+
+    expect(guard.fullPlan).toBe(false);
+    expect(guard.runAngular).toBe(false);
+    expect(guard.scriptSuites).toEqual(['ability-catalogue']);
+
+    /* The catalogue is regenerated data, so it also routes to the digest and the tag catalogue. */
+    const catalogue = buildCheckPlan(['public/assets/data/optc-auto-builder-abilities.json']);
+
+    expect(catalogue.scriptSuites).toContain('ability-catalogue');
+
+    /* The parser writes the abilities into both files, so a change to it re-checks the pair. */
+    const parser = buildCheckPlan(['scripts/auto-team-builder-ability-parser.mjs']);
+
+    expect(parser.scriptSuites).toContain('ability-catalogue');
   });
 
   it('routes guide discoverability verifier changes to the focused suite', () => {

@@ -109,16 +109,20 @@ export const ROUTE_LOAD_BUDGETS = Object.freeze({
      * every byte row, except the cached total, which is x1.05 and shared with the dataset-delivery
      * lane - see PREFETCH_CACHED_BUDGET_BYTES there for why.
      *
-     *   prefetch total    9,596,108 cached / 4,095,891 wire   (152 files)
+     * 869f138qm re-measured them on 2026-09-17, after the ability catalogue stopped being written
+     * pretty-printed: 880,193 B of it were indentation. Nothing else about the build changed, and
+     * the whole drop in the prefetch total is that file.
+     *
+     *   prefetch total    8,716,771 cached / 4,033,008 wire   (152 files)
      *   dataset database  2,289,988
-     *   ability catalogue 1,674,521 cached /   202,678 wire
+     *   ability catalogue   794,328 cached /   139,403 wire
      *   sql.js wasm         658,410 cached /   322,606 wire
      */
-    prefetchCachedBytes: 10_076_000,
-    prefetchWireBytes: 4_218_800,
+    prefetchCachedBytes: 9_153_000,
+    prefetchWireBytes: 4_154_000,
     databaseBytes: 2_358_700,
-    abilityCatalogCachedBytes: 1_724_800,
-    abilityCatalogWireBytes: 208_800,
+    abilityCatalogCachedBytes: 818_200,
+    abilityCatalogWireBytes: 143_600,
     sqlWasmWireBytes: 332_300,
   },
 });

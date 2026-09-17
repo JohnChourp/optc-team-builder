@@ -237,12 +237,19 @@ the build's `ngsw.json` by `scripts/lib/prefetch-payload.mjs`:
 
 | Row | Measured | Budget |
 | --- | ---: | ---: |
-| `prefetch total cached` | 9,596,108 | 10,076,000 (x1.05) |
-| `prefetch total over the wire` | 4,095,891 | 4,218,800 |
+| `prefetch total cached` | 8,716,771 | 9,153,000 (x1.05) |
+| `prefetch total over the wire` | 4,033,008 | 4,154,000 |
 | `dataset database` | 2,289,988 | 2,358,700 |
-| `ability catalogue cached` | 1,674,521 | 1,724,800 |
-| `ability catalogue over the wire` | 202,678 | 208,800 |
+| `ability catalogue cached` | 794,328 | 818,200 |
+| `ability catalogue over the wire` | 139,403 | 143,600 |
 | `sql.js wasm over the wire` | 322,606 | 332,300 |
+
+Four of the six were re-measured on **2026-09-17** by
+[869f138qm](https://app.clickup.com/t/90121749478/869f138qm), which stopped writing the ability
+catalogue pretty-printed: **880,193 B of that file were indentation**, 52.6% of it, downloaded by
+every first visit and re-downloaded by every installed client whenever the data changed. The two
+rows it did not touch keep the date they were set on. Nothing else about the build moved, which is
+why the drop in the total is exactly the drop in that one file.
 
 **Cached** is the file as the device stores it - a response is cached decoded, so host compression
 never shrinks it. **Over the wire** is gzip at level 6 for the types the edge compresses and the

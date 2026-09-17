@@ -9,7 +9,7 @@ The importer writes these files:
 - `optc-manifest.json`: dataset metadata, counts, schema version, source version, and offline pack summaries.
 - `optc-seed.sql`: SQLite seed containing `characters`, `character_details`, `character_evolutions`, `character_drops`, `ships`, and `meta`. The source of truth for the dataset; the app only executes it as a fallback.
 - `optc-seed.sqlite.gz` (build output, not committed): the same rows as a gzipped SQLite database, built from `optc-seed.sql` by `npm run dataset:binary` before every build. This is what the app downloads and opens - see [dataset-delivery.md](dataset-delivery.md).
-- `optc-auto-builder-abilities.json`: ability catalog consumed by Auto Team Builder filters and saved enemy requirements.
+- `optc-auto-builder-abilities.json`: ability catalog consumed by Auto Team Builder filters and saved enemy requirements. Written minified, and an index over `character_details` rather than a second set of facts - see [The catalogue is an index over the database](#the-catalogue-is-an-index-over-the-database-869f138qm).
 - `optc-unresolved-images.json`: characters that still need image coverage for the installed offline packs. Read by scripts only; not shipped.
 - `optc-preview.json`: the first 24 character records and 12 ships, a sample the scripts read. The app does not read it and it is not shipped (869f138py).
 
@@ -82,6 +82,46 @@ Canonical keys are deterministic, labels are display-only, and collisions are re
 Where an effect is worded differently depending on who applies it, or where the community name differs from the wording in ability text, the definition label carries both as `Primary (Alias)`: the wording our own characters' ability text literally uses first, the other actor's or community name in parentheses. The pickers search both the key and the label, so one remembered name is enough to find the effect.
 
 Existing examples are `Boost Type Effects (Color Affinity)`, `Tap-Timing Requirement (PERFECT)` and `Protect from Defeat (Resilience)` — the last being the crew-side survival buff, which is deliberately *not* labelled bare "Resilience" because that word names the opposite actor's buff in the enemy mechanic picker and in `remove_resilience` ("Enemy Resilience").
+
+### The catalogue is an index over the database — 869f138qm
+
+`optc-auto-builder-abilities.json` and `optc-seed.sql` are written by the same import, from the
+same upstream, on the same release, and the first is prefetched beside the second. So the question
+[869f138qm](https://app.clickup.com/t/90121749478/869f138qm) asked is worth answering here rather
+than re-deriving it every time somebody notices the file size: **what does the JSON hold that the
+database does not?**
+
+The importer parses each character's ability text and stores the result on that character, in
+`character_details.detail_json.builderAbilities`. The catalogue's per-key character lists are the
+inverted index of exactly those rows — the same facts, read the other way round. Measured
+2026-09-17: all **241** keys some character actually has re-derive from the database with identical
+id sets, and rebuilding the whole index from the database took **76 ms** in Node.
+
+Three things are genuinely only in the file, and they are why it exists:
+
+| Only in the catalogue | Why the database cannot hold it |
+| --- | --- |
+| **22 keys no character has** | An index has no entry for a key nothing matched. The app still needs them, so the picker can offer an effect and say nothing matches it. |
+| **`label`, `category`, `groupLabel`, `groupOrder`, `effectOrder`** | Presentation, defined in `scripts/data/*ability-definitions.json` — a property of the effect, not of any character. |
+| **`sampleCharacterIds` / `sampleTexts`** | The first five matches in import order and the text each matched, which is a choice the importer makes rather than something the rows state. |
+
+Everything else — `matchCount`, `matchingCharacterIds`, `turnMatchingCharacterIds`,
+`completeRemovalCharacterIds` and the three `captainAbility*` lists — is derived, and therefore can
+drift: two files regenerated separately, one of them again by the manual character overlay, and
+until 869f138qm nothing compared them. `npm run abilities:catalogue-check` now re-derives the lists
+from the seed and fails on any difference. It deliberately does not call the importer's own
+accumulator; a guard that runs the code under test proves the file was written, not that it is
+right.
+
+The scope lists (`effectTargetScopeMatchingCharacterIds`, `captainAbilityEffectMatches`) are checked
+one way only. Both are filtered by the importer's `CAPTAIN_STRUCTURED_EFFECT_KEYS`, which is a
+policy rather than something the data states, so the guard checks that every character they name
+really carries that key with that scope — the direction a stale file fails — and leaves the
+completeness of the filter with the importer.
+
+**The file is written minified**, unlike the four beside it, because it is the only one that is
+prefetched: pretty printing was 880,193 of its 1,674,521 bytes. `npm run dataset:digest` is how a
+data change is reviewed, not `git diff` on an index.
 
 ## Enemy Definitions
 

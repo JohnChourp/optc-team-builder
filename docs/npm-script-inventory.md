@@ -76,6 +76,7 @@ and when a `test:` script is not a lane.
 <!-- npm-script-inventory:start -->
 | Script | Reached by | What breaks without it |
 | --- | --- | --- |
+| `abilities:catalogue-check` | npm script · test:ability-catalogue | `test:ability-catalogue` |
 | `actions:ci-triggers` | lane · ci-triggers | the `ci-triggers` lane |
 | `actions:pins` | lane · actions-pins | the `actions-pins` lane |
 | `actions:workflow-budgets` | lane · workflow-budgets | the `workflow-budgets` lane |
@@ -170,6 +171,7 @@ and when a `test:` script is not a lane.
 | `synthetic:public-entry` | workflow · public-entry-synthetics.yml, release-android.yml | the public-entry-synthetics.yml, release-android.yml workflow |
 | `teams:published` | npm script · test:published-teams | `test:published-teams` |
 | `test` | npm script · test:ci, test:saved-team-codecs | `test:ci`, `test:saved-team-codecs` |
+| `test:ability-catalogue` | lane · ability-catalogue | the `ability-catalogue` lane |
 | `test:ability-tags` | lane · ability-tags | the `ability-tags` lane |
 | `test:actions-pins` | lane · actions-pins | the `actions-pins` lane |
 | `test:branch-cleanup` | lane · branch-cleanup | the `branch-cleanup` lane |
