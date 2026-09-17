@@ -82,7 +82,7 @@ export const REQUIRED_PACKAGE_SCRIPTS = [
     name: 'test:perf-budget',
     group: 'performance',
     expectedCommand:
-      'node --check ./scripts/perf-route-load.mjs && node --check ./scripts/perf-saved-team-codecs.mjs && vitest run scripts/perf-budget-report.spec.ts scripts/perf-budget-history.spec.ts',
+      'node --check ./scripts/perf-route-load.mjs && node --check ./scripts/perf-saved-team-codecs.mjs && vitest run scripts/perf-budget-report.spec.ts scripts/perf-budget-history.spec.ts scripts/lib/size-units.spec.ts',
     fix: 'Restore the performance budget unit test package script, including route-load and saved-team codec syntax checks.',
   },
   {
