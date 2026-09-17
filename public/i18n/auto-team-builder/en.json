@@ -8,6 +8,10 @@
     "manualCopyLabel": "Debug report",
     "reportLink": "Report a problem on GitHub"
   },
+  "incompleteData": {
+    "copy": "{{names}} — data for these is marked incomplete, so some of their numbers may be missing or wrong. The team was still built with them. You can check or correct them on the character's own screen.",
+    "title": "Some data here is incomplete"
+  },
   "intro": {
     "actions": {
       "dismiss": "Hide",

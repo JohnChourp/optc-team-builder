@@ -1177,6 +1177,27 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
    * requirements it was given. Null until a search fails, and null again the moment an input moves.
    */
   public readonly lastBuildInfeasibility = signal<AutoBuildInfeasibilityDiagnosis | null>(null);
+  /**
+   * 869f138r7. The characters in this result whose data the dataset marks as incomplete.
+   *
+   * They are NOT excluded from a build, and that is the deliberate half of this: nothing in the
+   * shipped dataset sets the flag, so an incomplete character is almost always one the reader added
+   * or edited themselves, and silently refusing to use it would be the app second-guessing them.
+   * What was missing is the other half - saying so once one lands in a team, which the debug report
+   * already did for a maintainer and nothing did for the player.
+   */
+  public readonly incompleteResultCharacterNames = computed(() => {
+    const slots = this.result()?.slots ?? [];
+
+    return [
+      ...new Set(
+        slots
+          .filter((slot) => slot.character.isIncomplete)
+          .map((slot) => slot.character.name),
+      ),
+    ];
+  });
+
   /** The last build's timings, kept once it ends rather than dropped with the progress (869exmkep). */
   public readonly lastBuildStats = signal<AutoTeamBuildStats | null>(null);
   public readonly debugReportFeedback = signal<AutoTeamDebugReportFeedback | null>(null);
