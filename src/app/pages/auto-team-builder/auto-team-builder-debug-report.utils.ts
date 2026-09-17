@@ -11,6 +11,7 @@ import {
   type AutoBuildSlotExplanationReasonParam,
 } from '../../core/models/auto-team-builder.models';
 import { type DatasetManifest } from '../../core/models/optc.models';
+import type { AutoBuildInfeasibilityDiagnosis } from '../../core/services/auto-team-builder-infeasibility.utils';
 
 /*
  * "Copy debug report" on Auto Team Builder (869exmkdp; owner, 2026-09-11).
@@ -85,6 +86,8 @@ export interface AutoTeamDebugReportInput {
   /** The team the build found, even when a guided build could not use it. */
   result: AutoBuildResult | null;
   failure: AutoTeamBuildFailureCode | null;
+  /** Issue #523. Which requirement the pool had nothing behind, when the search found no team. */
+  infeasibility?: AutoBuildInfeasibilityDiagnosis | null;
   rules: readonly AutoTeamDebugReportRuleState[];
   performance: AutoTeamBuildStats | null;
 }
@@ -161,6 +164,20 @@ export interface AutoTeamDebugReport {
   };
   outcome: {
     status: AutoTeamDebugReportStatus;
+    /*
+     * Issue #523. A report that says `noTeam` and nothing else costs a whole investigation to
+     * answer. This carries the requirement the pool had nobody for, as keys and counts, so the next
+     * one arrives with its own answer. Ids and keys only, like everything else here.
+     */
+    infeasibility?: Array<{
+      kind: string;
+      abilities: Array<{ key: string; minTurns: number | null }>;
+      battleIndex: number | null;
+      poolMatchCount: number;
+      poolSize: number;
+      requiredCharacterCount?: number;
+      leaderCharacterId?: number;
+    }>;
     candidateCount?: number;
     teamKey?: string;
     ship?: { id: number; source: 'manual' | 'recommended' } | null;
@@ -238,7 +255,29 @@ export function buildAutoTeamDebugReport(input: AutoTeamDebugReportInput): AutoT
     },
     context: { ...input.context },
     request: compactRequest(input.request),
-    outcome: { status: resolveStatus(input) },
+    outcome: {
+      status: resolveStatus(input),
+      ...(input.infeasibility?.reasons.length
+        ? {
+            infeasibility: input.infeasibility.reasons.map((reason) => ({
+              kind: reason.kind,
+              abilities: reason.subject.abilities.map((ability) => ({
+                key: ability.abilityKey,
+                minTurns: ability.minTurns,
+              })),
+              battleIndex: reason.subject.battleIndex,
+              poolMatchCount: reason.poolMatchCount,
+              poolSize: input.infeasibility?.poolSize ?? 0,
+              ...(reason.kind === 'notEnoughCandidatesForRequirement'
+                ? { requiredCharacterCount: reason.requiredCharacterCount }
+                : {}),
+              ...(reason.kind === 'requirementOutsideLeaderScope'
+                ? { leaderCharacterId: reason.leader.characterId }
+                : {}),
+            })),
+          }
+        : {}),
+    },
   };
 
   if (result) {

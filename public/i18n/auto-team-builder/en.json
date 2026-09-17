@@ -1070,6 +1070,13 @@
       "title": "Ability filters are unavailable"
     },
     "buildFailed": "The auto build failed unexpectedly. Please try again.",
+    "impossible": {
+      "battle": " in {{battle}}",
+      "noCandidate": "Nothing in this search can do {{requirement}}{{battle}}. {{poolSize}} characters passed your type and class filters and not one of them has it, so no team could contain it. Change that requirement, or widen the types and classes.",
+      "notEnough": "You asked for {{requiredCount}} characters that can do {{requirement}}{{battle}}, and only {{matchCount}} in this search can.",
+      "outsideLeaderScope": "{{matchCount}} character(s) in this search can do {{requirement}}{{battle}}, but {{leader}} does not boost any of them - and you asked for both leaders to cover the whole team. Pick a Captain that boosts them, or turn off full Captain ability coverage.",
+      "separator": " and "
+    },
     "guided": {
       "fallbackOnly": "Guided auto build only locks a slot from a team found by its first, exact search, and this team came from a later one. Turn off Guided auto build to see it.",
       "relaxedOnly": "Guided auto build only locks a slot from a team that keeps every filter. The closest team it found relaxes: {{relaxed}}. Loosen those, or turn off Guided auto build to see that team."
