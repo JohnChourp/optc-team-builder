@@ -83,6 +83,7 @@ import {
   resolveNextPreviewState,
   type AutoTeamBuildPreviewState,
 } from './auto-team-builder-preview.utils';
+import { reportWorkerFallback } from './worker-fallback.utils';
 
 export interface AutoTeamBuildExecutionOptions {
   onProgress?: (snapshot: AutoBuildProgressSnapshot) => void;
@@ -878,6 +879,7 @@ export class AutoTeamBuilderService {
 
         // Every way into this catch had a worker: a pool that never got one runs the search
         // itself and returns, so it never fails here.
+        reportWorkerFallback('auto-team-builder', 'worker-failed', error);
         executionOptions.onExecutionPath?.('mainThreadAfterWorkerFailure');
 
         return runAutoTeamBuildSearch(records, requestedInput, {
@@ -942,6 +944,7 @@ export class AutoTeamBuilderService {
         throw new AutoTeamBuildSearchTooLargeError();
       }
 
+      reportWorkerFallback('auto-team-builder', 'worker-failed', error);
       executionOptions.onExecutionPath?.('mainThreadAfterWorkerFailure');
 
       return runAutoTeamBuildSearch(records, requestedInput, {
@@ -1869,7 +1872,8 @@ export class AutoTeamBuilderService {
       return new Worker(new URL('auto-team-builder.worker', import.meta.url), {
         type: 'module',
       });
-    } catch {
+    } catch (error) {
+      reportWorkerFallback('auto-team-builder', 'construction-failed', error);
       return null;
     }
   }

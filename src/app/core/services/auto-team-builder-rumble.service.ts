@@ -20,6 +20,7 @@ import {
   type AutoTeamBuilderRumbleWorkerRequest,
   type AutoTeamBuilderRumbleWorkerResponse,
 } from './auto-team-builder-rumble.worker.models';
+import { reportWorkerFallback } from './worker-fallback.utils';
 
 export interface RumbleTeamBuildExecutionOptions {
   onProgress?: (snapshot: RumbleBuildProgressSnapshot) => void;
@@ -178,7 +179,15 @@ export class AutoTeamBuilderRumbleService {
         executionOptions,
         limit,
       );
-    } catch {
+    } catch (error) {
+      /*
+       * 869f138qj. The caller retries in a single worker, so this is not the player's error - but it
+       * is a failed worker, and it used to vanish here. A cancelled build is not a failure.
+       */
+      if (!executionOptions.signal?.aborted) {
+        reportWorkerFallback('auto-team-builder-rumble', 'worker-failed', error);
+      }
+
       return null;
     } finally {
       worker.terminate();
@@ -276,7 +285,8 @@ export class AutoTeamBuilderRumbleService {
       return new Worker(new URL('auto-team-builder-rumble.worker', import.meta.url), {
         type: 'module',
       });
-    } catch {
+    } catch (error) {
+      reportWorkerFallback('auto-team-builder-rumble', 'construction-failed', error);
       return null;
     }
   }

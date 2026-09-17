@@ -10,11 +10,13 @@ import { fileURLToPath } from 'node:url';
  * Three services run their heavy pass in a Worker and fall back to running it
  * in-thread when the Worker cannot be constructed. That fallback is deliberate
  * and correct - it runs the SAME function, so the answer is right either way -
- * but it is also completely silent: `createWorker()` returns `null` inside a
- * bare `catch`, the service latches `workerUnavailable` so it never retries,
- * and nothing anywhere records that the fast path was abandoned. A worker that
- * stops being emitted therefore degrades the page forever without a single
- * error.
+ * but it was also completely silent: `createWorker()` returned `null` inside a
+ * bare `catch`. Only the Captain Coverage runner latches `workerUnavailable` and
+ * never retries; the two builders try again on every build and fall back every
+ * time. A worker that stops being emitted therefore degraded the page with no
+ * error at all. Since 869f138qj each fallback logs `optc:worker-fallback`
+ * (src/app/core/services/worker-fallback.utils.ts) - the run reports it, and
+ * this guard still catches it before it ships.
  *
  * Nothing caught that. `e2e/smoke.spec.ts` asserts a non-zero result count,
  * which passes identically on the fallback, because the fallback calls the same

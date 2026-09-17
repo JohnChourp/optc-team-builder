@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -207,6 +207,40 @@ describe('check-worker-bundling', () => {
     expect(result.ok).toBe(true);
     expect(result.sites).toHaveLength(1);
     expect(result.chunks).toEqual(['worker-AAAAAAAA.js']);
+  });
+
+  /*
+   * 869f138qj. The rejected forms above are fixtures. This breaks each REAL worker call site, one at
+   * a time, in a copy of the real file - so each of the three workers has a proven-red mutation of
+   * its own rather than an argument that one would exist.
+   */
+  it('fails for each shipped worker when its call site stops matching, and when its module goes', async () => {
+    const real = inspectWorkerSources(process.cwd());
+
+    expect(real.sites).toHaveLength(3);
+
+    for (const site of real.sites) {
+      const source = await readFile(path.join(process.cwd(), site.file), 'utf8');
+      const mutated = source.replace('new Worker(new URL(', 'new Worker(workerUrlFor(');
+
+      expect(mutated, `${site.file} has no call site to mutate`).not.toBe(source);
+
+      const hoisted = await makeRoot({
+        [site.file]: mutated,
+        [site.module]: 'export {};\n',
+      });
+      const hoistedFindings = inspectWorkerSources(hoisted).findings;
+
+      expect(hoistedFindings.map((finding) => `${finding.kind} ${finding.file}`)).toEqual([
+        `unbundlable-worker-expression ${site.file}`,
+      ]);
+
+      const orphaned = await makeRoot({ [site.file]: source });
+
+      expect(inspectWorkerSources(orphaned).findings.map((finding) => `${finding.kind} ${finding.file}`)).toEqual([
+        `missing-worker-module ${site.file}`,
+      ]);
+    }
   });
 
   it('keeps every shipped worker under the guard', () => {

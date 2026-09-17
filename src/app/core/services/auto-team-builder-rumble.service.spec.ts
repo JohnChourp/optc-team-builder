@@ -218,6 +218,38 @@ describe('AutoTeamBuilderRumbleService', () => {
     ).toBeGreaterThan(0);
   });
 
+  it('builds on the main thread when a worker cannot be constructed, and says so', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    vi.stubGlobal(
+      'Worker',
+      class {
+        public constructor() {
+          throw new Error('blocked by CSP');
+        }
+      },
+    );
+    const candidates = Array.from({ length: 12 }, (_, index) =>
+      createCharacter(5075 + index, {
+        partyConflictKeys: [`fallback-${index}`],
+        rumbleData: createRumbleData(index),
+      }),
+    );
+
+    try {
+      const results = await createService(candidates).buildBestTeams({}, { workerCount: 2 }, 2);
+
+      expect(results.length).toBeGreaterThan(0);
+      /* 869f138qj. Correct and slower, and no longer silent. */
+      expect(warn).toHaveBeenCalledWith(
+        'optc:worker-fallback',
+        'auto-team-builder-rumble construction-failed (blocked by CSP); running on the main thread instead.',
+      );
+    } finally {
+      vi.unstubAllGlobals();
+      warn.mockRestore();
+    }
+  });
+
   it('returns the top two unique full teams within the Rumble cost cap', () => {
     const service = createService();
     const candidates = Array.from({ length: 12 }, (_, index) =>
