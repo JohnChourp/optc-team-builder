@@ -43,8 +43,17 @@ describe('ci-check-routing', () => {
      *
      * 869f138q3. A `.page.ts` also routes to `modal-labels`, because the handler a modal binds on
      * (didPresent) lives there - editing it is exactly when a modal can lose its name.
+     *
+     * 869f138qz. `component-map` joins from ANY app source, and deliberately so: the host map is
+     * built from imports, so any file can become - or stop being - a host of a shared component.
+     * Narrowing it would be narrowing what the map is for.
      */
-    expect(plan.scriptSuites).toEqual(['failure-vocabulary', 'unused-members', 'modal-labels']);
+    expect(plan.scriptSuites).toEqual([
+      'failure-vocabulary',
+      'unused-members',
+      'modal-labels',
+      'component-map',
+    ]);
   });
 
   it('runs Angular tests for captain parser and generated metadata changes', () => {
@@ -127,7 +136,7 @@ describe('ci-check-routing', () => {
     expect(plan.runAngular).toBe(true);
     expect(plan.runE2e).toBe(true);
     expect(plan.runQuarantine).toBe(false);
-    expect(plan.scriptSuites).toEqual(['saved-team-codecs', 'unused-members']);
+    expect(plan.scriptSuites).toEqual(['saved-team-codecs', 'unused-members', 'component-map']);
   });
 
   it('routes Markdown fixtures before generic docs rules', () => {
@@ -349,6 +358,7 @@ describe('ci-check-routing', () => {
       'modal-labels',
       'picker-dismissal',
       'dataset-schema',
+      'component-map',
     ]);
   });
 
@@ -427,6 +437,23 @@ describe('ci-check-routing', () => {
     expect(picker.scriptSuites).toContain('picker-dismissal');
     /* The same file is a modal template, so both shared-component lanes join. */
     expect(picker.scriptSuites).toContain('modal-labels');
+  });
+
+  /* 869f138qz. The generator terminates; any app source joins, because imports make the map. */
+  it('routes the shared component map generator and every file that can host one', () => {
+    const guard = buildCheckPlan([
+      'scripts/generate-shared-component-map.mjs',
+      'scripts/lib/shared-component-map.mjs',
+      'docs/shared-component-map.json',
+    ]);
+
+    expect(guard.fullPlan).toBe(false);
+    expect(guard.runAngular).toBe(false);
+    expect(guard.scriptSuites).toEqual(['component-map']);
+
+    const host = buildCheckPlan(['src/app/pages/crew-forge/crew-forge.page.ts']);
+
+    expect(host.scriptSuites).toContain('component-map');
   });
 
   it('routes guide discoverability verifier changes to the focused suite', () => {
