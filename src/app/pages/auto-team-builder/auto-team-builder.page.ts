@@ -303,6 +303,7 @@ import {
   AutoTeamBuilderResultsPanelComponent,
 } from './auto-team-builder-style-panels.component';
 import { formattingLanguage } from '../../core/i18n/app-locale-format';
+import { applyIonicModalDialogLabel } from '../../shared/a11y/ionic-modal-dialog-label.utils';
 
 type LoadingProgressRowTone = 'primary' | 'secondary' | 'fallback' | 'warning';
 type AutoBuildFinalReportState = 'passed' | 'relaxed' | 'notApplicable';
@@ -842,6 +843,15 @@ function resolveManualSlotRequiredAbilities(
   styleUrl: './auto-team-builder.page.scss',
 })
 export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
+  /**
+   * 869f138q3. Ionic gives the dialog inside a modal's shadow root no accessible name, so a screen
+   * reader announces "dialog" and nothing else. Every `<ion-modal>` in this app binds this on
+   * (didPresent); `npm run a11y:modal-labels` fails when one does not.
+   */
+  public labelModalDialog(event: Event, label: string): void {
+    applyIonicModalDialogLabel(event, label);
+  }
+
   @ViewChild(IonContent) private content?: IonContent;
   @ViewChild('buildSubmitButton', { read: ElementRef })
   private readonly buildSubmitButton?: ElementRef<HTMLElement>;

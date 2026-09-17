@@ -91,6 +91,7 @@ import {
   CharactersCatalogPanelComponent,
   CharactersImportPanelComponent,
 } from './characters-style-panels.component';
+import { applyIonicModalDialogLabel } from '../../shared/a11y/ionic-modal-dialog-label.utils';
 
 const PAGE_SIZE = 100;
 /** Shared empty catalog so `allCatalogItems` keeps a stable identity while loading. */
@@ -147,6 +148,15 @@ interface CharacterCatalogCardView {
   styleUrl: './characters.page.scss',
 })
 export class CharactersPage implements OnInit {
+  /**
+   * 869f138q3. Ionic gives the dialog inside a modal's shadow root no accessible name, so a screen
+   * reader announces "dialog" and nothing else. Every `<ion-modal>` in this app binds this on
+   * (didPresent); `npm run a11y:modal-labels` fails when one does not.
+   */
+  public labelModalDialog(event: Event, label: string): void {
+    applyIonicModalDialogLabel(event, label);
+  }
+
   public readonly summary = signal<DatasetManifest | null>(null);
   public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
   public readonly characters = signal<CharacterListItem[]>([]);

@@ -375,6 +375,8 @@
       #driveReviewModal
       class="drive-review-modal"
       [isOpen]="reviewDraft() !== null"
+      [attr.aria-label]="reviewDialogLabel(t)"
+      (didPresent)="labelModalDialog($event, reviewDialogLabel(t))"
       (didDismiss)="closeReview()"
     >
       <ng-template>

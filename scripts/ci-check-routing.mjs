@@ -522,6 +522,16 @@ export const SCRIPT_SUITES = {
     label: 'Ability catalogue against the seed tests',
     command: 'npm run test:ability-catalogue',
   },
+  /*
+   * 869f138q3. Proves every `<ion-modal>` carries a name a screen reader can read. Measured before
+   * the guard: 22 modals, 10 of them nameless, including all four on Auto Team Builder - the same
+   * shape as the overlay-contrast rule, where each call site was right and the next one inherited
+   * nothing.
+   */
+  'modal-labels': {
+    label: 'Modal dialog label tests',
+    command: 'npm run test:modal-labels',
+  },
 };
 
 export const SCRIPT_SUITE_ORDER = Object.keys(SCRIPT_SUITES);
@@ -908,6 +918,16 @@ function touchesDatasetDeliverySources(filePath) {
   );
 }
 
+/* 869f138q3. Terminating: the guard and the utility every modal has to reach. */
+function isModalLabelPath(filePath) {
+  return (
+    filePath === 'scripts/check-modal-dialog-labels.mjs' ||
+    filePath === 'scripts/check-modal-dialog-labels.spec.ts' ||
+    filePath === 'scripts/lib/modal-dialog-labels.mjs' ||
+    filePath === 'src/app/shared/a11y/ionic-modal-dialog-label.utils.ts'
+  );
+}
+
 /*
  * 869f138qm. Non-terminating: the two artifacts the lane compares and the code that writes them.
  * The seed and the importer route elsewhere as well, so neither can terminate here.
@@ -919,6 +939,24 @@ function touchesAbilityCatalogueSources(filePath) {
     filePath === 'scripts/auto-team-builder-ability-parser.mjs' ||
     filePath === 'scripts/lib/optc-dataset.mjs' ||
     filePath === 'scripts/lib/manual-character-apply.mjs'
+  );
+}
+
+/*
+ * 869f138q3. Non-terminating: a template can declare a modal, and the page or component beside it is
+ * where the handler lives. Deliberately NOT every `.ts` under those folders - a utils file cannot
+ * declare a modal, and routing it here put this lane into every unrelated plan. Both kinds also
+ * route to the Angular suite.
+ */
+function touchesModalLabelSources(filePath) {
+  if (!filePath.startsWith('src/app/pages/') && !filePath.startsWith('src/app/shared/')) {
+    return false;
+  }
+
+  return (
+    filePath.endsWith('.html') ||
+    filePath.endsWith('.page.ts') ||
+    filePath.endsWith('.component.ts')
   );
 }
 
@@ -1471,6 +1509,10 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
       addScriptSuite(scriptSuites, 'ability-catalogue');
     }
 
+    if (touchesModalLabelSources(filePath)) {
+      addScriptSuite(scriptSuites, 'modal-labels');
+    }
+
     if (touchesEnemyVocabularySources(filePath)) {
       addScriptSuite(scriptSuites, 'enemy-vocabulary');
     }
@@ -1567,6 +1609,11 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
 
     if (isAbilityCataloguePath(filePath)) {
       addScriptSuite(scriptSuites, 'ability-catalogue');
+      continue;
+    }
+
+    if (isModalLabelPath(filePath)) {
+      addScriptSuite(scriptSuites, 'modal-labels');
       continue;
     }
 

@@ -20,6 +20,7 @@ import { AppI18nService } from '../../core/services/app-i18n.service';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
 import { formattingLanguage } from '../../core/i18n/app-locale-format';
+import { applyIonicModalDialogLabel } from '../../shared/a11y/ionic-modal-dialog-label.utils';
 
 interface SavedRumbleTeamPreviewCard {
   opponentCount: number;
@@ -54,6 +55,15 @@ interface SavedRumbleTeamPreviewCard {
   styleUrl: './saved-rumble-teams.page.scss',
 })
 export class SavedRumbleTeamsPage implements OnInit, ViewWillEnter {
+  /**
+   * 869f138q3. Ionic gives the dialog inside a modal's shadow root no accessible name, so a screen
+   * reader announces "dialog" and nothing else. Every `<ion-modal>` in this app binds this on
+   * (didPresent); `npm run a11y:modal-labels` fails when one does not.
+   */
+  public labelModalDialog(event: Event, label: string): void {
+    applyIonicModalDialogLabel(event, label);
+  }
+
   public readonly loading = signal(true);
   public readonly savedRumbleTeams;
   public readonly savedRumbleTeamCards = signal<SavedRumbleTeamPreviewCard[]>([]);

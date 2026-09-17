@@ -1009,6 +1009,8 @@
 
   <ion-modal
     #rumbleManualPickerModal
+    [attr.aria-label]="t('manualPicker.title')"
+    (didPresent)="labelModalDialog($event, t('manualPicker.title'))"
     [isOpen]="manualPickerOpen()"
     cssClass="rumble-manual-picker-modal"
     (didDismiss)="closeManualCharacterPicker()"

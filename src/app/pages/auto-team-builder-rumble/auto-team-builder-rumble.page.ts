@@ -108,6 +108,7 @@ import {
   AutoTeamBuilderRumbleRosterPanelComponent,
 } from './auto-team-builder-rumble-style-panels.component';
 import { formattingLanguage } from '../../core/i18n/app-locale-format';
+import { applyIonicModalDialogLabel } from '../../shared/a11y/ionic-modal-dialog-label.utils';
 
 type LoadingProgressRowTone = 'primary' | 'secondary' | 'fallback';
 
@@ -193,6 +194,15 @@ function createEmptyRumbleSlots(count: number): OptionalRumbleTeamSlot[] {
   styleUrl: './auto-team-builder-rumble.page.scss',
 })
 export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
+  /**
+   * 869f138q3. Ionic gives the dialog inside a modal's shadow root no accessible name, so a screen
+   * reader announces "dialog" and nothing else. Every `<ion-modal>` in this app binds this on
+   * (didPresent); `npm run a11y:modal-labels` fails when one does not.
+   */
+  public labelModalDialog(event: Event, label: string): void {
+    applyIonicModalDialogLabel(event, label);
+  }
+
   public readonly teamResults = signal<RumbleTeamResult[]>([]);
   public readonly selectedTeamIndex = signal(0);
   public readonly currentResult = computed(

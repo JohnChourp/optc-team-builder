@@ -76,6 +76,7 @@ and when a `test:` script is not a lane.
 <!-- npm-script-inventory:start -->
 | Script | Reached by | What breaks without it |
 | --- | --- | --- |
+| `a11y:modal-labels` | npm script · test:modal-labels | `test:modal-labels` |
 | `abilities:catalogue-check` | npm script · test:ability-catalogue | `test:ability-catalogue` |
 | `actions:ci-triggers` | lane · ci-triggers | the `ci-triggers` lane |
 | `actions:pins` | lane · actions-pins | the `actions-pins` lane |
@@ -210,6 +211,7 @@ and when a `test:` script is not a lane.
 | `test:ionic-host-property` | lane · ionic-host-property | the `ionic-host-property` lane |
 | `test:locale-formatting` | lane · locale-formatting | the `locale-formatting` lane |
 | `test:maintainer-doctor` | lane · maintainer-doctor | the `maintainer-doctor` lane |
+| `test:modal-labels` | lane · modal-labels | the `modal-labels` lane |
 | `test:overlay-contrast` | lane · overlay-contrast | the `overlay-contrast` lane |
 | `test:overlay-register` | lane · overlay-register | the `overlay-register` lane |
 | `test:page-doc-coverage` | lane · page-doc-coverage | the `page-doc-coverage` lane |

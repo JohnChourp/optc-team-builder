@@ -334,6 +334,8 @@
 
         <ion-modal
           #favoritesImportModal
+          [attr.aria-label]="t('import.title')"
+          (didPresent)="labelModalDialog($event, t('import.title'))"
           [isOpen]="importModalOpen()"
           cssClass="favorites-import-modal"
           (didDismiss)="closeImportModal()"

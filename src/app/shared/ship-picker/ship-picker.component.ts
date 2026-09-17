@@ -20,6 +20,7 @@ import { boatOutline, closeOutline, heart, heartOutline } from 'ionicons/icons';
 
 import { type ShipRecord } from '../../core/models/optc.models';
 import { ShipPickerStylePanelsComponent } from './ship-picker-style-panels.component';
+import { applyIonicModalDialogLabel } from '../a11y/ionic-modal-dialog-label.utils';
 
 interface ShipPickerCardView {
   isFavorite: boolean;
@@ -69,6 +70,15 @@ interface ShipPickerCardView {
   styleUrl: './ship-picker.component.scss',
 })
 export class ShipPickerComponent implements OnChanges {
+  /**
+   * 869f138q3. Ionic gives the dialog inside a modal's shadow root no accessible name, so a screen
+   * reader announces "dialog" and nothing else. Every `<ion-modal>` in this app binds this on
+   * (didPresent); `npm run a11y:modal-labels` fails when one does not.
+   */
+  public labelModalDialog(event: Event, label: string): void {
+    applyIonicModalDialogLabel(event, label);
+  }
+
   @Input({ required: true }) public isOpen = false;
   @Input({ required: true }) public title = '';
   @Input({ required: true }) public copy = '';
