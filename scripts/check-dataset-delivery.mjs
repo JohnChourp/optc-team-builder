@@ -35,14 +35,15 @@ export const LARGE_ASSET_BYTES = 256_000;
 
 /*
  * 869f138qh. Everything the service worker prefetches, as it is cached on the device - the number
- * that decides what a first visit costs, and one no budget named before. Measured 2026-09-16 after
- * 869f138qe: 9,596,056 B across 152 files. x1.05 rather than the x1.03 the byte rows use, because
+ * that decides what a first visit costs, and one no budget named before. Measured 2026-09-17 after
+ * 869f138qm stopped pretty-printing the ability catalogue: 8,716,771 B across 152 files, down from
+ * 9,596,056 B, all of the difference being that file's indentation. x1.05 rather than the x1.03 the byte rows use, because
  * this total also grows with every character the nightly data release adds, and a lane that goes
  * red on an unrelated pull request after a data release teaches nobody anything; growth past 5% is
  * a decision somebody should make on purpose. perf-route-load.mjs carries the same number as
  * `prefetchCachedBytes`, and the spec keeps the two equal.
  */
-export const PREFETCH_CACHED_BUDGET_BYTES = 10_076_000;
+export const PREFETCH_CACHED_BUDGET_BYTES = 9_153_000;
 
 /** Formats that are compressed by construction; compressing them again gains nothing. */
 export const PRECOMPRESSED_EXTENSIONS = new Set([

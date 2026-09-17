@@ -716,7 +716,14 @@ export function serializeGeneratedDatasetFiles({
     manifest: JSON.stringify(manifest, null, 2),
     sqlSeed,
     unresolvedCatalog: JSON.stringify(unresolvedCatalog, null, 2),
-    autoBuilderAbilityCatalog: JSON.stringify(autoBuilderAbilityCatalog, null, 2),
+    /*
+     * 869f138qm. Minified, unlike the four beside it, because this one is prefetched. Pretty
+     * printing was 880,193 of its 1,674,521 bytes - 52.6% of a file every first visit downloads,
+     * and every installed client re-downloads whenever it changes. Indentation of an index nobody
+     * reads by hand: `npm run dataset:digest` is what a data change is reviewed through, and the
+     * app parses it. 1,674,521 -> 794,328 B on disk, 192,575 -> 137,657 B gzipped.
+     */
+    autoBuilderAbilityCatalog: JSON.stringify(autoBuilderAbilityCatalog),
     preview: JSON.stringify(preview, null, 2),
   };
 }
