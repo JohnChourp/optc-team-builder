@@ -123,6 +123,58 @@ completeness of the filter with the importer.
 prefetched: pretty printing was 880,193 of its 1,674,521 bytes. `npm run dataset:digest` is how a
 data change is reviewed, not `git diff` on an index.
 
+## Queries over 9,303 rows: no indexes, and none justified — 869f138q1
+
+**Status:** measured 2026-09-17 on `f2e98a09` · [869f138q1](https://app.clickup.com/t/90121749478/869f138q1)
+
+The seed inserts 9,303 rows and every catalogue query, facet filter and picker search runs against
+them through sql.js. Three questions were worth answering with numbers rather than instinct.
+
+**Is anything indexed?** No. The schema declares **zero** `CREATE INDEX` statements. The only index
+that exists is the one SQLite gives for free: `characters.id` and `character_details.character_id`
+are `INTEGER PRIMARY KEY`, so they *are* the rowid and a lookup by id is already a tree descent.
+Everything else — `search_text`, `type`, the class columns — is a scan.
+
+**Does that cost anything?** Measured by the `dataset-perf` lane over all 4,618 characters:
+
+| | Measured |
+| --- | ---: |
+| `searchAverageMs` | **0.35** |
+| `filterAverageMs` | **0.66** |
+| `combinedAverageMs` | **0.89** |
+
+A scan of 4,618 rows inside WebAssembly is under a millisecond, so an index would buy a fraction of
+that and cost real bytes in a database [869f138q7](https://app.clickup.com/t/90121749478/869f138q7)
+had just spent a wave shrinking. **The answer is no, and the number is written here so it is not
+asked a fourth time.** Re-check with `npm run dataset:perf` if the row count ever changes by an
+order of magnitude.
+
+**Where do they run?** All of them on the main thread, in `optc-repository.service.ts`. The app's
+three Web Workers exist for the long CPU passes — Auto Team Builder's search, its Rumble variant,
+and Captain Coverage's filter pass — and not for SQL. The numbers above are why that split is
+correct rather than accidental: moving a 0.89 ms query to a worker would add more postMessage
+latency than it removes.
+
+**What does a picker feel like?** Measured the same day on a 390x844 mobile profile:
+
+| Flow | Measured |
+| --- | ---: |
+| Manual picker opens | **146 ms** |
+| Special ability picker opens | **344 ms** |
+| Special filter applies | **436 ms** |
+| Character image picker opens | **518 ms** |
+| Character image picker loads more | **290 ms** |
+
+All inside budget, and none of them near the threshold where a search box stops feeling like one.
+
+**What the measurement did turn up** is not about rows at all: `savedTeams.firstToggleMs` measured
+**1,041 ms** against a **600 ms** warning threshold in `perf-mobile-pickers.mjs`, while
+`perf-budget-report.mjs` enforces **2,100 ms** for the same metric. That is the two-copies-of-one-
+budget shape [869f135u7](https://app.clickup.com/t/90121749478/869f135u7) audited; the warning
+threshold has been re-set from the measurement so it stops reporting a regression that is not one.
+The enforced budget is still `provisional` and twice what the app measures, which is a decision for
+whoever re-bases that set rather than something to change quietly here.
+
 ## Enemy Definitions
 
 Saved enemy definitions use the `SavedEnemy` model and the enemy mechanic catalog in `enemy-mechanic-draft.utils.ts`.
