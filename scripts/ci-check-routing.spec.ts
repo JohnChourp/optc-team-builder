@@ -359,6 +359,7 @@ describe('ci-check-routing', () => {
       'picker-dismissal',
       'dataset-schema',
       'component-map',
+      'worker-protocols',
     ]);
   });
 
@@ -454,6 +455,26 @@ describe('ci-check-routing', () => {
     const host = buildCheckPlan(['src/app/pages/crew-forge/crew-forge.page.ts']);
 
     expect(host.scriptSuites).toContain('component-map');
+  });
+
+  /* 869f138qx. The generator terminates; a models file is app source and joins without terminating. */
+  it('routes the worker protocol generator and the models it reads', () => {
+    const guard = buildCheckPlan([
+      'scripts/generate-worker-protocols.mjs',
+      'scripts/lib/worker-protocol.mjs',
+      'docs/worker-protocols.json',
+    ]);
+
+    expect(guard.fullPlan).toBe(false);
+    expect(guard.runAngular).toBe(false);
+    expect(guard.scriptSuites).toEqual(['worker-protocols']);
+
+    const models = buildCheckPlan([
+      'src/app/core/services/captain-coverage-filter.worker.models.ts',
+    ]);
+
+    expect(models.runAngular).toBe(true);
+    expect(models.scriptSuites).toContain('worker-protocols');
   });
 
   it('routes guide discoverability verifier changes to the focused suite', () => {

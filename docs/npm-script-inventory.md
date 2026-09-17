@@ -245,6 +245,7 @@ and when a `test:` script is not a lane.
 | `test:unused-members` | lane · unused-members | the `unused-members` lane |
 | `test:whats-new` | lane · whats-new | the `whats-new` lane |
 | `test:worker-bundling` | lane · worker-bundling | the `worker-bundling` lane |
+| `test:worker-protocols` | lane · worker-protocols | the `worker-protocols` lane |
 | `test:workflow-budgets` | lane · workflow-budgets | the `workflow-budgets` lane |
 | `theme:overlay-contrast` | npm script · test:overlay-contrast | `test:overlay-contrast` |
 | `verify:local` | workflow · docs-integrity.yml, test.yml | the docs-integrity.yml, test.yml workflow |
@@ -252,4 +253,5 @@ and when a `test:` script is not a lane.
 | `watch` | documented · README.md, ci-trigger-policy.md, maintainer-validation-guide.md | a documented manual step |
 | `whats-new:check` | npm script · test:whats-new | `test:whats-new` |
 | `worker-bundling:check` | npm script · test:worker-bundling | `test:worker-bundling` |
+| `workers:protocols` | npm script · test:worker-protocols | `test:worker-protocols` |
 <!-- npm-script-inventory:end -->
