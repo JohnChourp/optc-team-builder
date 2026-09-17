@@ -348,6 +348,7 @@ describe('ci-check-routing', () => {
       'ability-catalogue',
       'modal-labels',
       'picker-dismissal',
+      'dataset-schema',
     ]);
   });
 

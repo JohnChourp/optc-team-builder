@@ -541,6 +541,15 @@ export const SCRIPT_SUITES = {
     label: 'Shared picker dismissal tests',
     command: 'npm run test:picker-dismissal',
   },
+  /*
+   * 869f138qt. Proves docs/dataset-schema.json is still the schema the committed seed has. The
+   * seed is regenerated every release, so a hand-written schema would be wrong the first time a
+   * column changed and nobody would find out.
+   */
+  'dataset-schema': {
+    label: 'Dataset schema document tests',
+    command: 'npm run test:dataset-schema',
+  },
 };
 
 export const SCRIPT_SUITE_ORDER = Object.keys(SCRIPT_SUITES);
@@ -924,6 +933,16 @@ function touchesDatasetDeliverySources(filePath) {
     filePath === 'public/assets/data/optc-seed.sql' ||
     filePath === 'src/app/core/services/dataset-database-loader.utils.ts' ||
     filePath === 'src/app/core/services/dataset-database-loader.utils.spec.ts'
+  );
+}
+
+/* 869f138qt. Terminating: the schema generator, its reader, and the document it writes. */
+function isDatasetSchemaPath(filePath) {
+  return (
+    filePath === 'scripts/generate-dataset-schema.mjs' ||
+    filePath === 'scripts/generate-dataset-schema.spec.ts' ||
+    filePath === 'scripts/lib/dataset-schema.mjs' ||
+    filePath === 'docs/dataset-schema.json'
   );
 }
 
@@ -1535,6 +1554,11 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
       addScriptSuite(scriptSuites, 'ability-catalogue');
     }
 
+    if (filePath === 'public/assets/data/optc-seed.sql') {
+      /* 869f138qt. The schema document is generated from this file, so it moves with it. */
+      addScriptSuite(scriptSuites, 'dataset-schema');
+    }
+
     if (touchesModalLabelSources(filePath)) {
       addScriptSuite(scriptSuites, 'modal-labels');
     }
@@ -1649,6 +1673,11 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
 
     if (isPickerDismissalPath(filePath)) {
       addScriptSuite(scriptSuites, 'picker-dismissal');
+      continue;
+    }
+
+    if (isDatasetSchemaPath(filePath)) {
+      addScriptSuite(scriptSuites, 'dataset-schema');
       continue;
     }
 
