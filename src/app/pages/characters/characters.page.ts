@@ -8,6 +8,7 @@ import { IonButtons } from '@ionic/angular/ion-buttons';
 import { IonContent } from '@ionic/angular/ion-content';
 import { IonHeader } from '@ionic/angular/ion-header';
 import { IonMenuButton } from '@ionic/angular/ion-menu-button';
+import { IonProgressBar } from '@ionic/angular/ion-progress-bar';
 import { IonSpinner } from '@ionic/angular/ion-spinner';
 import { IonTitle } from '@ionic/angular/ion-title';
 import { IonToolbar } from '@ionic/angular/ion-toolbar';
@@ -50,6 +51,7 @@ import {
   isCharacterFacetSelectionEmpty,
 } from '../../core/services/character-facet-filter.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
+import { formatDownloadSize } from '../../core/services/update-payload-size.utils';
 import { OptcbxImportService } from '../../core/services/optcbx-import.service';
 import { UserStateService } from '../../core/services/user-state.service';
 import { resolveCharacterRegionStatus } from '../../core/services/character-region.utils';
@@ -130,6 +132,7 @@ interface CharacterCatalogCardView {
     IonMenuButton,
     IonModal,
     IonSearchbar,
+    IonProgressBar,
     IonSpinner,
     IonTitle,
     IonToolbar,
@@ -161,6 +164,31 @@ export class CharactersPage implements OnInit {
   public readonly abilityCatalog = signal<AutoBuildAbilityCatalog | null>(null);
   public readonly characters = signal<CharacterListItem[]>([]);
   public readonly loading = signal(true);
+  /**
+   * 869f138pm. What the first visit is actually waiting for, said in bytes.
+   *
+   * Null on every visit after the first: the service worker answers from cache, nothing crosses the
+   * wire, and a progress bar that appears and vanishes in one frame is noise rather than an answer.
+   * Null too when the host sends no `content-length` - there is a number of bytes received but
+   * nothing to be a fraction OF, and a bar with a made-up denominator is the spinner's problem
+   * wearing a different shape.
+   */
+  public readonly datasetDownloadLabel = computed(() => {
+    const progress = this.repository.datasetDownload();
+
+    return progress && progress.totalBytes
+      ? `${formatDownloadSize(progress.receivedBytes)} / ${formatDownloadSize(progress.totalBytes)}`
+      : null;
+  });
+
+  public readonly datasetDownloadRatio = computed(() => {
+    const progress = this.repository.datasetDownload();
+
+    return progress?.totalBytes
+      ? Math.min(1, progress.receivedBytes / progress.totalBytes)
+      : 0;
+  });
+
   public readonly loadingMore = signal(false);
   public readonly hasMore = signal(true);
   public readonly searchTerm = signal('');

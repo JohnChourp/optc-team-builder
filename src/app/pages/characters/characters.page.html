@@ -190,9 +190,26 @@
           }
 
           @if (loading()) {
-            <section class="loading-card glass-card">
-              <ion-spinner name="crescent"></ion-spinner>
-              <span>{{ t('loading') }}</span>
+            <!--
+              869f138pm. A spinner for a multi-megabyte download is indistinguishable from a hang,
+              and the reader's next move is to close the tab. When the dataset is actually coming
+              down the wire this says so, by bytes; when it is not - every visit after the first,
+              where the service worker answers from cache - the spinner is the honest state, because
+              there is nothing to be a fraction of.
+            -->
+            <section class="loading-card glass-card" aria-live="polite">
+              @if (datasetDownloadLabel(); as downloaded) {
+                <ion-progress-bar
+                  class="loading-card__progress"
+                  type="determinate"
+                  [value]="datasetDownloadRatio()"
+                  [attr.aria-label]="t('datasetDownload.progressLabel')"
+                ></ion-progress-bar>
+                <span>{{ t('datasetDownload.progress', { downloaded }) }}</span>
+              } @else {
+                <ion-spinner name="crescent"></ion-spinner>
+                <span>{{ t('loading') }}</span>
+              }
             </section>
           } @else if (!characterCardViews().length) {
             <section class="loading-card glass-card empty-card">

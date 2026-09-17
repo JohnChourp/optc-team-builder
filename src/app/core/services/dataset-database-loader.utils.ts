@@ -42,8 +42,21 @@ export type DatasetDatabaseSource = 'database-file' | 'seed-statements';
 export interface DatasetDatabaseFetchResponse {
   readonly ok: boolean;
   readonly status: number;
+  /*
+   * 869f138pm. Present on a real `Response` and absent from the test doubles, which is exactly the
+   * distinction the reader below makes: streaming is how the download reports progress, and
+   * `arrayBuffer()` stays the path when there is no body to stream.
+   */
+  readonly body?: ReadableStream<Uint8Array> | null;
+  readonly headers?: { get(name: string): string | null };
   arrayBuffer(): Promise<ArrayBuffer>;
   text(): Promise<string>;
+}
+
+/** 869f138pm. Bytes so far and, when the host says so, the total. */
+export interface DatasetDownloadProgress {
+  readonly receivedBytes: number;
+  readonly totalBytes: number | null;
 }
 
 export type DecompressionStreamConstructor = typeof DecompressionStream;
@@ -59,6 +72,14 @@ export interface DatasetDatabaseLoaderDependencies {
    * uncompressed for the life of the project. Every fallback reports here, with a stable code.
    */
   readonly warn: (code: string, detail: string) => void;
+  /**
+   * 869f138pm. Called as the database downloads, so the first visit can say how far along it is.
+   *
+   * The wait it reports is the one a reader actually sits through: on a throttled mobile profile
+   * the database is seconds of the first visit and a spinner cannot tell them apart from a hang.
+   * Optional because every caller that is not the app - specs, benchmarks - has nobody to tell.
+   */
+  readonly onProgress?: (progress: DatasetDownloadProgress) => void;
 }
 
 export interface LoadedDatasetDatabase {
@@ -127,6 +148,54 @@ export async function gunzipBytes(
   return output;
 }
 
+/**
+ * 869f138pm. The body, read in chunks so the download can be reported while it happens.
+ *
+ * Falls back to `arrayBuffer()` whenever there is no stream to read - an old browser, a test double,
+ * a response the host buffered - and the reader then simply sees no progress rather than an error.
+ * `content-length` is the compressed length on a `.gz` served as-is, which is what this file is, so
+ * the two numbers are the same units; a host that recompresses it sends no length at all and the
+ * total is reported as unknown rather than guessed.
+ */
+export async function readResponseBytes(
+  response: DatasetDatabaseFetchResponse,
+  onProgress?: (progress: DatasetDownloadProgress) => void,
+): Promise<Uint8Array<ArrayBuffer>> {
+  const body = response.body;
+
+  if (!body || typeof body.getReader !== 'function') {
+    return new Uint8Array(await response.arrayBuffer());
+  }
+
+  const declared = Number(response.headers?.get('content-length') ?? '');
+  const totalBytes = Number.isFinite(declared) && declared > 0 ? declared : null;
+  const reader = body.getReader();
+  const chunks: Uint8Array[] = [];
+  let receivedBytes = 0;
+
+  for (;;) {
+    const { done, value } = await reader.read();
+
+    if (done) {
+      break;
+    }
+
+    chunks.push(value);
+    receivedBytes += value.length;
+    onProgress?.({ receivedBytes, totalBytes });
+  }
+
+  const output = new Uint8Array(receivedBytes);
+  let offset = 0;
+
+  for (const chunk of chunks) {
+    output.set(chunk, offset);
+    offset += chunk.length;
+  }
+
+  return output;
+}
+
 export async function loadDatasetDatabase(
   dependencies: DatasetDatabaseLoaderDependencies,
 ): Promise<LoadedDatasetDatabase> {
@@ -164,7 +233,7 @@ async function openDatabaseFile(
       return reject(`${DATASET_DATABASE_PATH} answered ${response.status}`);
     }
 
-    received = new Uint8Array(await response.arrayBuffer());
+    received = await readResponseBytes(response, dependencies.onProgress);
   } catch (error) {
     return reject(`${DATASET_DATABASE_PATH} could not be downloaded (${describe(error)})`);
   }

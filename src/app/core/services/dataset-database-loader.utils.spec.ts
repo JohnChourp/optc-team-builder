@@ -7,16 +7,17 @@ import {
   DATASET_DATABASE_PATH,
   DATASET_READY_MARK,
   DATASET_SEED_PATH,
-  SEED_STATEMENT_YIELD_INTERVAL,
-  type DatasetDatabaseFetchResponse,
-  type DatasetDatabaseLoaderDependencies,
-  type DecompressionStreamConstructor,
   gunzipBytes,
   hasGzipHeader,
   hasSqliteFileHeader,
   loadDatasetDatabase,
   markDatasetReady,
+  readResponseBytes,
+  SEED_STATEMENT_YIELD_INTERVAL,
   splitSeedStatements,
+  type DatasetDatabaseFetchResponse,
+  type DatasetDatabaseLoaderDependencies,
+  type DecompressionStreamConstructor,
 } from './dataset-database-loader.utils';
 
 const SQLITE_BYTES = new Uint8Array([
@@ -313,5 +314,100 @@ describe('dataset database loader', () => {
     expect(hasSqliteFileHeader(SQLITE_BYTES.subarray(0, 10))).toBe(false);
     expect(hasSqliteFileHeader(new TextEncoder().encode('SQLite format 2\u0000xxxx'))).toBe(false);
     expect(splitSeedStatements("A;\n  B ;  \nC 'x; y';\n\n")).toEqual(['A', 'B', "C 'x; y'"]);
+  });
+});
+
+/**
+ * 869f138pm. The download reports itself, and reports nothing it cannot stand behind.
+ *
+ * The quiet paths carry the design: a response without a stream, and a host that sends no
+ * `content-length`, both have to degrade to "no progress" rather than to a fabricated denominator -
+ * a bar filling against a made-up total is the spinner's problem wearing a different shape.
+ */
+describe('readResponseBytes', () => {
+  function streamingResponse(chunks: number[][], contentLength: string | null) {
+    return {
+      ok: true,
+      status: 200,
+      headers: { get: (name: string) => (name === 'content-length' ? contentLength : null) },
+      body: {
+        getReader() {
+          let index = 0;
+
+          return {
+            async read() {
+              if (index >= chunks.length) {
+                return { done: true as const, value: undefined };
+              }
+
+              const value = new Uint8Array(chunks[index]);
+
+              index += 1;
+
+              return { done: false as const, value };
+            },
+          };
+        },
+      },
+      arrayBuffer: async () => new ArrayBuffer(0),
+      text: async () => '',
+    };
+  }
+
+  it('reports each chunk against the declared total', async () => {
+    const seen: Array<{ receivedBytes: number; totalBytes: number | null }> = [];
+    const bytes = await readResponseBytes(
+      streamingResponse([[1, 2], [3], [4, 5, 6]], '6') as never,
+      (progress) => seen.push(progress),
+    );
+
+    expect([...bytes]).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(seen).toEqual([
+      { receivedBytes: 2, totalBytes: 6 },
+      { receivedBytes: 3, totalBytes: 6 },
+      { receivedBytes: 6, totalBytes: 6 },
+    ]);
+  });
+
+  it('reports an unknown total rather than inventing one', async () => {
+    const seen: Array<number | null> = [];
+
+    await readResponseBytes(streamingResponse([[1, 2]], null) as never, (progress) =>
+      seen.push(progress.totalBytes),
+    );
+
+    expect(seen).toEqual([null]);
+  });
+
+  it('ignores a content-length that is not a size', async () => {
+    const seen: Array<number | null> = [];
+
+    await readResponseBytes(streamingResponse([[1]], 'banana') as never, (progress) =>
+      seen.push(progress.totalBytes),
+    );
+
+    expect(seen).toEqual([null]);
+  });
+
+  it('falls back to the buffered body when there is no stream, and says nothing', async () => {
+    const calls: unknown[] = [];
+    const bytes = await readResponseBytes(
+      {
+        ok: true,
+        status: 200,
+        arrayBuffer: async () => new Uint8Array([7, 8]).buffer,
+        text: async () => '',
+      } as never,
+      (progress) => calls.push(progress),
+    );
+
+    expect([...bytes]).toEqual([7, 8]);
+    expect(calls).toEqual([]);
+  });
+
+  it('works with no listener at all', async () => {
+    const bytes = await readResponseBytes(streamingResponse([[9]], '1') as never);
+
+    expect([...bytes]).toEqual([9]);
   });
 });

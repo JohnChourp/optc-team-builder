@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal, type Signal } from '@angular/core';
 import type { Database, SqlJsStatic } from 'sql.js';
 
 import {
@@ -50,7 +50,11 @@ import {
   isCharacterAvailableInRegion,
   normalizeCharacterRegionPreference,
 } from './character-region.utils';
-import { loadDatasetDatabase, markDatasetReady } from './dataset-database-loader.utils';
+import {
+  loadDatasetDatabase,
+  markDatasetReady,
+  type DatasetDownloadProgress,
+} from './dataset-database-loader.utils';
 import { UserStateService } from './user-state.service';
 
 interface SqlRow {
@@ -1644,6 +1648,18 @@ export class OptcRepositoryService {
     }));
   }
 
+  /**
+   * 869f138pm. How far the dataset download has got, or null when nothing is downloading.
+   *
+   * Exposed so the first visit can say what it is waiting for. On every visit after the first the
+   * service worker answers from cache and this stays null for the whole load, which is correct:
+   * there is no download to report, and a progress bar that flashes and vanishes is noise.
+   */
+  private readonly datasetDownloadSignal = signal<DatasetDownloadProgress | null>(null);
+
+  public readonly datasetDownload: Signal<DatasetDownloadProgress | null> =
+    this.datasetDownloadSignal.asReadonly();
+
   private async createDatabase(): Promise<Database> {
     const sql = await this.sqlPromise;
     const { database, source } = await loadDatasetDatabase({
@@ -1653,9 +1669,13 @@ export class OptcRepositoryService {
         typeof DecompressionStream === 'function' ? DecompressionStream : undefined,
       yieldToMainThread,
       warn: (code, detail) => console.warn(code, detail),
+      onProgress: (progress) => this.datasetDownloadSignal.set(progress),
     });
 
     markDatasetReady(source);
+    /* 869f138pm. The download is over; anything still waiting is the open, which is milliseconds. */
+    this.datasetDownloadSignal.set(null);
+
     return database;
   }
 

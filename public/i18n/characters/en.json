@@ -126,6 +126,10 @@
     }
   },
   "loadMore": "Load more units",
+  "datasetDownload": {
+    "progress": "Downloading characters — {{downloaded}}",
+    "progressLabel": "Character data download progress"
+  },
   "loading": "Loading character catalog...",
   "search": {
     "placeholder": "Search names, classes, types..."

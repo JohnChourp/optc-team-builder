@@ -126,6 +126,10 @@
     }
   },
   "loadMore": "Φόρτωση περισσότερων units",
+  "datasetDownload": {
+    "progress": "Γίνεται λήψη χαρακτήρων — {{downloaded}}",
+    "progressLabel": "Πρόοδος λήψης δεδομένων χαρακτήρων"
+  },
   "loading": "Φόρτωση character catalog...",
   "search": {
     "placeholder": "Αναζήτηση σε ονόματα, classes, types..."

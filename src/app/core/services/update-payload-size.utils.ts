@@ -149,3 +149,12 @@ export function formatUpdateSize(bytes: number): string {
  * banner stays exactly as it was underneath.
  */
 export const UPDATE_SIZE_WORTH_SAYING_BYTES = 300_000;
+
+/**
+ * 869f138pm. The same formatting, for the first-visit download.
+ *
+ * Shared deliberately: a reader who sees "2.3 MB" while the app first loads and "2.3 MB" when it
+ * later updates is looking at the same file, and two spellings of one number would suggest
+ * otherwise.
+ */
+export const formatDownloadSize = formatUpdateSize;
