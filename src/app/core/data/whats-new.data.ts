@@ -31,6 +31,31 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.57',
+    date: '2026-09-17',
+    userVisible: true,
+    headline: {
+      en: 'Pictures you have opened now stay offline, and a team says when a character\'s data is patchy',
+      el: 'Οι εικόνες που άνοιξες μένουν πλέον offline, και η ομάδα σου λέει όταν τα δεδομένα ενός χαρακτήρα είναι ελλιπή',
+    },
+    summaryEn:
+      'Two changes you can see. Until now your device kept only 750 character pictures for offline use and threw away the oldest to make room, so a picture you had already looked at could disappear — and anything it did keep expired after a month. It now keeps every picture you open, for a year, which is more than the app has. Only pictures you actually open are ever stored. Separately, if you have added or edited a character yourself and marked its data as incomplete, Auto Team Builder now says so when that character ends up in a team it builds for you, instead of leaving you to wonder why a number looks odd. The team is still built with it — the app does not refuse to use something you added on purpose.',
+    summaryEl:
+      'Δύο αλλαγές που φαίνονται. Μέχρι τώρα η συσκευή σου κρατούσε μόνο 750 εικόνες χαρακτήρων για offline χρήση και πετούσε τις παλαιότερες για να χωρέσει, οπότε μια εικόνα που είχες ήδη δει μπορούσε να εξαφανιστεί — και ό,τι κρατούσε έληγε μετά από έναν μήνα. Τώρα κρατά κάθε εικόνα που ανοίγεις, για έναν χρόνο, που είναι περισσότερες από όσες έχει η εφαρμογή. Αποθηκεύονται μόνο όσες όντως ανοίγεις. Χωριστά, αν έχεις προσθέσει ή επεξεργαστεί ο ίδιος έναν χαρακτήρα και έχεις σημειώσει τα δεδομένα του ως ελλιπή, το Auto Team Builder σου το λέει πλέον όταν αυτός ο χαρακτήρας καταλήξει σε ομάδα που σου χτίζει, αντί να σε αφήνει να απορείς γιατί ένας αριθμός φαίνεται περίεργος. Η ομάδα χτίζεται κανονικά μαζί του — η εφαρμογή δεν αρνείται να χρησιμοποιήσει κάτι που πρόσθεσες επίτηδες.',
+    added: [],
+    improved: [
+      {
+        en: 'Character and ship pictures you have opened now stay available offline instead of being dropped to make room, and they no longer expire after a month. **Settings → Offline images** shows how many your device is keeping.',
+        el: 'Οι εικόνες χαρακτήρων και πλοίων που έχεις ανοίξει μένουν πλέον διαθέσιμες offline αντί να πετιούνται για να χωρέσουν άλλες, και δεν λήγουν πια μετά από έναν μήνα. Στις **Ρυθμίσεις → Εικόνες offline** βλέπεις πόσες κρατά η συσκευή σου.',
+      },
+      {
+        en: 'The **Auto Team Builder** results now name any character whose data you have marked incomplete, just above the **Final team report**, and say the team was built with it anyway.',
+        el: 'Τα αποτελέσματα στο **Auto Team Builder** ονομάζουν πλέον όποιον χαρακτήρα έχεις σημειώσει με ελλιπή δεδομένα, ακριβώς πάνω από το **Τελικό report ομάδας**, και λένε ότι η ομάδα χτίστηκε παρ\' όλα αυτά μαζί του.',
+      },
+    ],
+    fixed: [],
+  },
+  {
     version: '0.4.56',
     date: '2026-09-17',
     userVisible: true,
