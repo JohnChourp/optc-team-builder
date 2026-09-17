@@ -1135,6 +1135,59 @@ function buildCharacterTagSelection(
   };
 }
 
+/**
+ * 869f138pm. What the loading card is allowed to claim.
+ *
+ * The two null cases are the design, not edge cases: a visit the service worker serves from cache
+ * has no download to report, and a host that sends no `content-length` gives a byte count with
+ * nothing to be a fraction of. Both fall back to the spinner rather than to a bar filling against a
+ * number nobody measured.
+ */
+describe('CharactersPage first-visit download', () => {
+  it('says nothing while nothing is downloading', () => {
+    const { page } = createPage();
+
+    expect(page.datasetDownloadLabel()).toBeNull();
+    expect(page.datasetDownloadRatio()).toBe(0);
+  });
+
+  it('reads received against total once the download starts', () => {
+    const { page, datasetDownload } = createPage();
+
+    datasetDownload.set({ receivedBytes: 1_145_000, totalBytes: 2_289_988 });
+
+    expect(page.datasetDownloadLabel()).toBe('1.1 MB / 2.3 MB');
+    expect(page.datasetDownloadRatio()).toBeCloseTo(0.5, 2);
+  });
+
+  it('refuses to guess when the host declares no total', () => {
+    const { page, datasetDownload } = createPage();
+
+    datasetDownload.set({ receivedBytes: 1_145_000, totalBytes: null });
+
+    expect(page.datasetDownloadLabel()).toBeNull();
+    expect(page.datasetDownloadRatio()).toBe(0);
+  });
+
+  it('never reports more than finished, even if the total was understated', () => {
+    const { page, datasetDownload } = createPage();
+
+    datasetDownload.set({ receivedBytes: 3_000_000, totalBytes: 2_289_988 });
+
+    expect(page.datasetDownloadRatio()).toBe(1);
+  });
+
+  it('goes quiet again when the download ends', () => {
+    const { page, datasetDownload } = createPage();
+
+    datasetDownload.set({ receivedBytes: 2_289_988, totalBytes: 2_289_988 });
+    expect(page.datasetDownloadLabel()).toBe('2.3 MB / 2.3 MB');
+
+    datasetDownload.set(null);
+    expect(page.datasetDownloadLabel()).toBeNull();
+  });
+});
+
 function createPage(overrides: { favoriteIds?: number[]; importParam?: string | null } = {}) {
   const importParam = overrides.importParam ?? null;
   const favoriteIds = signal(overrides.favoriteIds ?? []);
@@ -1161,7 +1214,10 @@ function createPage(overrides: { favoriteIds?: number[]; importParam?: string | 
       favoriteIds.set(nextFavoriteIds);
     }),
   };
+  /* 869f138pm. The first visit's download, as the page reads it. */
+  const datasetDownload = signal<{ receivedBytes: number; totalBytes: number | null } | null>(null);
   const repository = {
+    datasetDownload,
     getDatasetManifest: vi.fn().mockResolvedValue({
       schemaVersion: 1,
       characterCount: 0,
@@ -1229,5 +1285,14 @@ function createPage(overrides: { favoriteIds?: number[]; importParam?: string | 
     route as never,
   );
 
-  return { page, repository, characterCatalogCache, userState, optcbxImport, i18n, route };
+  return {
+    page,
+    repository,
+    datasetDownload,
+    characterCatalogCache,
+    userState,
+    optcbxImport,
+    i18n,
+    route,
+  };
 }
