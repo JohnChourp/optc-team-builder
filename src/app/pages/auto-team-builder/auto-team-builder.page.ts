@@ -114,6 +114,7 @@ import {
 import { AppI18nService } from '../../core/services/app-i18n.service';
 import { CharacterOverridesService } from '../../core/services/character-overrides.service';
 import { matchesAnyAbilityRequirement } from '../../core/services/auto-team-builder-ability-match.utils';
+import type { AutoBuildInfeasibilityDiagnosis } from '../../core/services/auto-team-builder-infeasibility.utils';
 import { isAutoTeamBuildCancelledError } from '../../core/services/auto-team-builder.engine';
 import { resolveAutoBuildShipSelection } from '../../core/services/auto-team-builder-ship.utils';
 import {
@@ -1161,6 +1162,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly errorMessage = signal('');
   /** Why the last build shows no team, as a code the debug report can carry (869exmkf4). */
   public readonly lastBuildFailure = signal<AutoTeamBuildFailureCode | null>(null);
+  /**
+   * Issue #523. WHICH requirement the last failed search had no candidate for, as opposed to which
+   * requirements it was given. Null until a search fails, and null again the moment an input moves.
+   */
+  public readonly lastBuildInfeasibility = signal<AutoBuildInfeasibilityDiagnosis | null>(null);
   /** The last build's timings, kept once it ends rather than dropped with the progress (869exmkep). */
   public readonly lastBuildStats = signal<AutoTeamBuildStats | null>(null);
   public readonly debugReportFeedback = signal<AutoTeamDebugReportFeedback | null>(null);
@@ -6490,6 +6496,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
             this.lastExecutionPath = path;
           }
         },
+        onInfeasibility: (diagnosis) => {
+          if (buildInputRevision === this.buildInputRevision) {
+            this.lastBuildInfeasibility.set(diagnosis);
+          }
+        },
         onPreviewResult: (preview) => {
           // A preview from a search the reader has already replaced is not a preview of anything.
           if (buildInputRevision === this.buildInputRevision) {
@@ -6948,6 +6959,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         },
       result,
       failure: this.lastBuildFailure(),
+      infeasibility: this.lastBuildInfeasibility(),
       rules: result ? this.buildFinalReportRows(result) : [],
       performance: this.lastBuildStats(),
     });
@@ -7188,6 +7200,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   private resetBuildState(): void {
     this.buildInputRevision += 1;
     this.buildInputsUntouched.set(false);
+    this.lastBuildInfeasibility.set(null);
 
     // An input changed under a running build - a page re-entry reset, a preset import. Stop the
     // search now rather than let it run on unseen with every control still locked. A build's own
@@ -7823,6 +7836,50 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     });
   }
 
+  /**
+   * Issue #523. The sentence a failed search owes the reader: which requirement had nothing behind
+   * it, and what to change. Returns null when the diagnosis found nothing to say, and the messages
+   * below - which restate the request - are then still the best available answer.
+   */
+  private resolveInfeasibilityMessage(): string | null {
+    const reason = this.lastBuildInfeasibility()?.reasons[0];
+
+    if (!reason) {
+      return null;
+    }
+
+    const requirement = reason.subject.abilities
+      .map((ability) => this.formatAbilityRequirement(ability))
+      .join(this.t('errors.impossible.separator'));
+    const battle = reason.subject.battleTitle
+      ? this.t('errors.impossible.battle', { battle: reason.subject.battleTitle })
+      : '';
+
+    if (reason.kind === 'noCandidateForRequirement') {
+      return this.t('errors.impossible.noCandidate', {
+        requirement,
+        battle,
+        poolSize: this.lastBuildInfeasibility()?.poolSize ?? 0,
+      });
+    }
+
+    if (reason.kind === 'requirementOutsideLeaderScope') {
+      return this.t('errors.impossible.outsideLeaderScope', {
+        requirement,
+        battle,
+        matchCount: reason.poolMatchCount,
+        leader: reason.leader.name,
+      });
+    }
+
+    return this.t('errors.impossible.notEnough', {
+      requirement,
+      battle,
+      matchCount: reason.poolMatchCount,
+      requiredCount: reason.requiredCharacterCount,
+    });
+  }
+
   private resolveBuildFailureMessage(): string {
     if (this.buildBlockedByCharacterScope()) {
       return this.characterBoxBlockedMessage();
@@ -7838,6 +7895,17 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       return this.t('errors.uniqueNames.manualConflict', {
         names: manualConflictNames.join(' / '),
       });
+    }
+
+    /*
+     * Issue #523. Ahead of every message below, because they restate the request and this one
+     * answers it. It only speaks when the pool really had nothing behind a requirement; otherwise
+     * the older messages stand.
+     */
+    const infeasibilityMessage = this.resolveInfeasibilityMessage();
+
+    if (infeasibilityMessage) {
+      return infeasibilityMessage;
     }
 
     const lockedCount = this.manualSelectionCount();

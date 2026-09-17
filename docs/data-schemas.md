@@ -303,6 +303,13 @@ The example shortens `request`, `outcome.slots`, `relaxation` and `coverage`; th
   `context` is also read when Build is pressed, so starring a favourite afterwards changes nothing.
 - **`outcome.fallbackReasons`** appears once, when the engine relaxed something: the engine gives
   every slot the same fallback reasons, derived from `relaxation`.
+- **`outcome.infeasibility`** appears when the search found no team AND the pool it searched had
+  nothing behind one of the requirements (issue #523). One entry per requirement group, each with
+  the ability keys and turn counts asked for, how many characters in the pool satisfied the group,
+  the pool's size, and - for `requirementOutsideLeaderScope` - the pinned leader whose captain
+  ability boosts none of them. `battleIndex` and never the battle's title, which is player text the
+  redaction rule below keeps out. An empty or absent list means every requirement was individually
+  satisfiable and the search failed on their combination, which this does not diagnose.
 - **`dataQuality.executionPath`** says where the build ran: `pool`, `worker`, `mainThread`, or
   `mainThreadAfterWorkerFailure`, which is otherwise silent. It is present when the service
   reported a path.

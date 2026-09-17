@@ -61,6 +61,11 @@ import {
 } from './auto-team-builder.engine';
 import { resolveAutoBuildShipSelection } from './auto-team-builder-ship.utils';
 import { normalizeEnemyMechanicRequirements } from './enemy-mechanic-draft.utils';
+import {
+  collectPinnedLeaderScopes,
+  diagnoseAutoBuildInfeasibility,
+  type AutoBuildInfeasibilityDiagnosis,
+} from './auto-team-builder-infeasibility.utils';
 import { OptcRepositoryService } from './optc-repository.service';
 import { cloneRequiredCharacterGroups } from './required-character-groups.utils';
 import {
@@ -99,6 +104,12 @@ export interface AutoTeamBuildExecutionOptions {
    * the property the whole feature rests on, and it holds by construction rather than by test.
    */
   onPreviewResult?: (result: AutoBuildResult) => void;
+  /*
+   * Issue #523. Called only when the search found nothing, with which requirement had no candidate
+   * behind it in the pool it just searched. A READ-ONLY side channel like `onPreviewResult`: it is
+   * computed after the result is already null, so nothing it says can change what was returned.
+   */
+  onInfeasibility?: (diagnosis: AutoBuildInfeasibilityDiagnosis) => void;
   signal?: AbortSignal;
   workerCount?: number;
   getWorkerCount?: () => number;
@@ -597,6 +608,8 @@ export class AutoTeamBuilderService {
     ]);
 
     if (!result) {
+      this.reportInfeasibility(records, requestedInput, executionOptions);
+
       return null;
     }
 
@@ -604,6 +617,47 @@ export class AutoTeamBuilderService {
       ...result,
       shipSelection: resolveAutoBuildShipSelection(result, ships),
     };
+  }
+
+  /*
+   * Issue #523. A search that fails says what was asked for and never what was impossible. This
+   * walks the pool it just searched and reports the first requirement nothing in it satisfies - or
+   * satisfies only outside the pinned leaders' boost scope, which is the case that report was.
+   *
+   * Guarded, and deliberately: a diagnosis that throws must not turn "no team found" into "the auto
+   * build failed unexpectedly", which is a different and wronger message.
+   */
+  private reportInfeasibility(
+    records: CharacterDetailRecord[],
+    requestedInput: AutoBuildInput,
+    executionOptions: AutoTeamBuildExecutionOptions,
+  ): void {
+    if (!executionOptions.onInfeasibility) {
+      return;
+    }
+
+    try {
+      const manualLeaderCharacterIds = (requestedInput.manualSlots ?? [])
+        .filter((slot) => slot.role === 'captain' || slot.role === 'friendCaptain')
+        .flatMap((slot) => slot.characterIds);
+      const diagnosis = diagnoseAutoBuildInfeasibility({
+        poolRecords: records,
+        requiredAbilities: requestedInput.requiredAbilities,
+        requiredCharacterGroups: requestedInput.requiredCharacterGroups,
+        battleRequirements: requestedInput.battleRequirements,
+        leaderScopes: collectPinnedLeaderScopes({
+          records,
+          manualLeaderCharacterIds,
+          requireFullCoverage:
+            requestedInput.requireFullCaptainAbilityCoverage ||
+            requestedInput.requireBothLeadersFullCaptainAbilityCoverage,
+        }),
+      });
+
+      executionOptions.onInfeasibility(diagnosis);
+    } catch {
+      /* A failed diagnosis is one missing sentence, never a failed build. */
+    }
   }
 
   public async buildRankedTeamsFromRoster(
