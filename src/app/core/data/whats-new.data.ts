@@ -31,6 +31,35 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.55',
+    date: '2026-09-17',
+    userVisible: true,
+    headline: {
+      en: 'When Auto Team Builder finds no team, it now says which requirement was impossible',
+      el: 'Όταν το Auto Team Builder δεν βρίσκει ομάδα, λέει πλέον ποια απαίτηση ήταν αδύνατη',
+    },
+    summaryEn:
+      'Until now, a search that found no team repeated your own settings back at you and left you to guess which one was the problem — so the only way forward was to turn things off one at a time and wait out another search. It now names the requirement that had nobody behind it: how many characters in the search could do it, and, when you asked for both leaders to cover the whole team, whether your Captain simply does not boost any of them. It also says what to change. The search itself is unchanged, and a search that finds a team looks exactly as it did.',
+    summaryEl:
+      'Μέχρι τώρα, μια αναζήτηση που δεν έβρισκε ομάδα σου επαναλάμβανε τις ίδιες σου τις ρυθμίσεις και σε άφηνε να μαντέψεις ποια έφταιγε — οπότε ο μόνος δρόμος ήταν να κλείνεις πράγματα ένα ένα και να περιμένεις άλλη μια αναζήτηση. Τώρα ονομάζει την απαίτηση που δεν είχε κανέναν από πίσω: πόσοι χαρακτήρες στην αναζήτηση μπορούσαν να την καλύψουν και, όταν ζήτησες να καλύπτουν και οι δύο leaders όλη την ομάδα, αν ο Captain σου απλώς δεν δίνει boost σε κανέναν τους. Λέει επίσης τι να αλλάξεις. Η ίδια η αναζήτηση δεν άλλαξε, και μια αναζήτηση που βρίσκει ομάδα δείχνει ακριβώς ό,τι έδειχνε.',
+    added: [],
+    improved: [],
+    fixed: [
+      {
+        en: 'The message under **Auto Team Build** on the **Auto Team Builder** screen now names the requirement no character in your search could meet, instead of listing the settings you already chose.',
+        el: 'Το μήνυμα κάτω από το **Auto Team Build** στην οθόνη **Auto Team Builder** ονομάζει πλέον την απαίτηση που κανένας χαρακτήρας στην αναζήτησή σου δεν μπορούσε να καλύψει, αντί να απαριθμεί τις ρυθμίσεις που ήδη διάλεξες.',
+      },
+      {
+        en: 'When you pin a Captain and ask for both leaders to cover the whole team, that message now tells you when the characters who could meet a requirement are simply not boosted by the Captain you pinned.',
+        el: 'Όταν καρφιτσώνεις Captain και ζητάς να καλύπτουν και οι δύο leaders όλη την ομάδα, το μήνυμα σου λέει πλέον πότε οι χαρακτήρες που θα κάλυπταν μια απαίτηση απλώς δεν παίρνουν boost από τον Captain που καρφίτσωσες.',
+      },
+      {
+        en: 'The report that **Copy debug report** puts on your clipboard now carries the same answer, so a report you send already says which requirement was impossible.',
+        el: 'Το report που βάζει στο πρόχειρο το **Copy debug report** μεταφέρει πλέον την ίδια απάντηση, οπότε ένα report που στέλνεις λέει ήδη ποια απαίτηση ήταν αδύνατη.',
+      },
+    ],
+  },
+  {
     version: '0.4.54',
     date: '2026-09-17',
     userVisible: true,
