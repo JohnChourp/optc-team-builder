@@ -578,6 +578,15 @@ export const SCRIPT_SUITES = {
     label: 'Offline pack contract tests',
     command: 'npm run test:packs-contract',
   },
+  /*
+   * 869f138r4. Proves docs/import-pipeline.json is still what the importer declares, and that every
+   * file in scripts/data/ is read by something - or has a recorded reason why only a person reads
+   * it, which is how manual-character-template.json turned out to be legitimate rather than dead.
+   */
+  'import-pipeline': {
+    label: 'Import pipeline document tests',
+    command: 'npm run test:import-pipeline',
+  },
 };
 
 export const SCRIPT_SUITE_ORDER = Object.keys(SCRIPT_SUITES);
@@ -962,6 +971,21 @@ function touchesDatasetDeliverySources(filePath) {
     filePath === 'src/app/core/services/dataset-database-loader.utils.ts' ||
     filePath === 'src/app/core/services/dataset-database-loader.utils.spec.ts'
   );
+}
+
+/* 869f138r4. Terminating: the pipeline generator, its reader, and the document it writes. */
+function isImportPipelinePath(filePath) {
+  return (
+    filePath === 'scripts/generate-import-pipeline.mjs' ||
+    filePath === 'scripts/generate-import-pipeline.spec.ts' ||
+    filePath === 'scripts/lib/import-pipeline.mjs' ||
+    filePath === 'docs/import-pipeline.json'
+  );
+}
+
+/* 869f138r4. Non-terminating: the importer and the hand-maintained data it reads. */
+function touchesImportPipelineSources(filePath) {
+  return filePath === 'scripts/import-optc-data.mjs' || filePath.startsWith('scripts/data/');
 }
 
 /* 869f138qw. Terminating: the pack contract generator, its reader, and the document it writes. */
@@ -1666,6 +1690,10 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
       addScriptSuite(scriptSuites, 'packs-contract');
     }
 
+    if (touchesImportPipelineSources(filePath)) {
+      addScriptSuite(scriptSuites, 'import-pipeline');
+    }
+
     if (touchesEnemyVocabularySources(filePath)) {
       addScriptSuite(scriptSuites, 'enemy-vocabulary');
     }
@@ -1792,6 +1820,11 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
 
     if (isPackContractPath(filePath)) {
       addScriptSuite(scriptSuites, 'packs-contract');
+      continue;
+    }
+
+    if (isImportPipelinePath(filePath)) {
+      addScriptSuite(scriptSuites, 'import-pipeline');
       continue;
     }
 

@@ -110,6 +110,7 @@ and when a `test:` script is not a lane.
 | `dataset:enemy-vocabulary` | script file · generate-enemy-vocabulary.mjs | whatever generate-enemy-vocabulary.mjs drives |
 | `dataset:measure` | script file · check-dataset-measurements.mjs, measure-dataset-facts.mjs | whatever check-dataset-measurements.mjs, measure-dataset-facts.mjs drives |
 | `dataset:measurements` | npm script · test:dataset-measurements | `test:dataset-measurements` |
+| `dataset:pipeline` | npm script · test:import-pipeline | `test:import-pipeline` |
 | `dataset:provenance` | script file · generate-dataset-provenance.mjs, dataset-provenance.mjs | whatever generate-dataset-provenance.mjs, dataset-provenance.mjs drives |
 | `dataset:schema` | npm script · test:dataset-schema | `test:dataset-schema` |
 | `dataset:spec-pins` | lane · source-data | the `source-data` lane |
@@ -214,6 +215,7 @@ and when a `test:` script is not a lane.
 | `test:i18n-greek-coverage` | lane · i18n-greek-coverage | the `i18n-greek-coverage` lane |
 | `test:i18n-ownership` | lane · i18n-ownership | the `i18n-ownership` lane |
 | `test:i18n-regression` | lane · i18n-regression | the `i18n-regression` lane |
+| `test:import-pipeline` | lane · import-pipeline | the `import-pipeline` lane |
 | `test:ionic-host-property` | lane · ionic-host-property | the `ionic-host-property` lane |
 | `test:locale-formatting` | lane · locale-formatting | the `locale-formatting` lane |
 | `test:maintainer-doctor` | lane · maintainer-doctor | the `maintainer-doctor` lane |

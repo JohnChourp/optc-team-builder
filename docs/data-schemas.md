@@ -83,7 +83,25 @@ Where an effect is worded differently depending on who applies it, or where the 
 
 Existing examples are `Boost Type Effects (Color Affinity)`, `Tap-Timing Requirement (PERFECT)` and `Protect from Defeat (Resilience)` — the last being the crew-side survival buff, which is deliberately *not* labelled bare "Resilience" because that word names the opposite actor's buff in the enemy mechanic picker and in `remove_resilience` ("Enemy Resilience").
 
-### The catalogue is an index over the database — 869f138qm
+#### How the seed is built — 869f138r4
+
+`docs/import-pipeline.json` lists the importer's stages and, for every hand-maintained file under
+`scripts/data/`, which script reads it. Generated, so it moves with the importer rather than
+lagging it.
+
+**The format question is closed and recorded.** The seed is a SQL text dump because it is diffable
+and about twenty scripts read it as text; what *ships* is a gzipped SQLite database built from it at
+build time - [869f138q7](https://app.clickup.com/t/90121749478/869f138q7), reasoning in
+[dataset-delivery.md](dataset-delivery.md). The zero-byte `optc.db` that used to sit beside the seed,
+which is what made the question look unanswered, was removed by
+[869f138qe](https://app.clickup.com/t/90121749478/869f138qe).
+
+The census found one file read by **no code at all**: `manual-character-template.json`, which a
+maintainer copies by hand when adding an entry to `manual-characters.json`. Legitimate,
+undocumented, and indistinguishable from dead until somebody looked - so a readerless file now needs
+a recorded reason or the lane fails.
+
+## The catalogue is an index over the database — 869f138qm
 
 `optc-auto-builder-abilities.json` and `optc-seed.sql` are written by the same import, from the
 same upstream, on the same release, and the first is prefetched beside the second. So the question
