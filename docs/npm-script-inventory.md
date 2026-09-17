@@ -137,6 +137,7 @@ and when a `test:` script is not a lane.
 | `members:unused` | npm script · test:unused-members | `test:unused-members` |
 | `model:field-naming` | npm script · test:field-naming | `test:field-naming` |
 | `ng` | npm script · start, build, build:pages, watch, test, test:ci, test:saved-team-codecs | `start`, `build`, `build:pages`, `watch`, `test`, `test:ci`, `test:saved-team-codecs` |
+| `packs:contract` | npm script · test:packs-contract | `test:packs-contract` |
 | `pages:doc-coverage` | npm script · test:page-doc-coverage | `test:page-doc-coverage` |
 | `perf:ability-filters` | workflow · performance-budgets.yml | the performance-budgets.yml workflow |
 | `perf:budget-history` | workflow · performance-budgets.yml | the performance-budgets.yml workflow |
@@ -219,6 +220,7 @@ and when a `test:` script is not a lane.
 | `test:modal-labels` | lane · modal-labels | the `modal-labels` lane |
 | `test:overlay-contrast` | lane · overlay-contrast | the `overlay-contrast` lane |
 | `test:overlay-register` | lane · overlay-register | the `overlay-register` lane |
+| `test:packs-contract` | lane · packs-contract | the `packs-contract` lane |
 | `test:page-doc-coverage` | lane · page-doc-coverage | the `page-doc-coverage` lane |
 | `test:perf-budget` | lane · perf-budget | the `perf-budget` lane |
 | `test:picker-dismissal` | lane · picker-dismissal | the `picker-dismissal` lane |
