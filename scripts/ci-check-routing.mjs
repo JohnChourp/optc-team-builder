@@ -532,6 +532,15 @@ export const SCRIPT_SUITES = {
     label: 'Modal dialog label tests',
     command: 'npm run test:modal-labels',
   },
+  /*
+   * 869f138pv. Proves every shared picker still closes the same way. All six already did when this
+   * was written; what nothing protected was the contract, and a pop-up that keeps a draft on a
+   * backdrop tap in an app where every other one discards it is invisible until somebody reports it.
+   */
+  'picker-dismissal': {
+    label: 'Shared picker dismissal tests',
+    command: 'npm run test:picker-dismissal',
+  },
 };
 
 export const SCRIPT_SUITE_ORDER = Object.keys(SCRIPT_SUITES);
@@ -918,6 +927,15 @@ function touchesDatasetDeliverySources(filePath) {
   );
 }
 
+/* 869f138pv. Terminating: the dismissal guard itself. */
+function isPickerDismissalPath(filePath) {
+  return (
+    filePath === 'scripts/check-shared-picker-dismissal.mjs' ||
+    filePath === 'scripts/check-shared-picker-dismissal.spec.ts' ||
+    filePath === 'scripts/lib/shared-picker-dismissal.mjs'
+  );
+}
+
 /* 869f138q3. Terminating: the guard and the utility every modal has to reach. */
 function isModalLabelPath(filePath) {
   return (
@@ -957,6 +975,14 @@ function touchesModalLabelSources(filePath) {
     filePath.endsWith('.html') ||
     filePath.endsWith('.page.ts') ||
     filePath.endsWith('.component.ts')
+  );
+}
+
+/* 869f138pv. Non-terminating: a shared component's template or the component beside it. */
+function touchesPickerDismissalSources(filePath) {
+  return (
+    filePath.startsWith('src/app/shared/') &&
+    (filePath.endsWith('.html') || filePath.endsWith('.component.ts'))
   );
 }
 
@@ -1513,6 +1539,10 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
       addScriptSuite(scriptSuites, 'modal-labels');
     }
 
+    if (touchesPickerDismissalSources(filePath)) {
+      addScriptSuite(scriptSuites, 'picker-dismissal');
+    }
+
     if (touchesEnemyVocabularySources(filePath)) {
       addScriptSuite(scriptSuites, 'enemy-vocabulary');
     }
@@ -1614,6 +1644,11 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
 
     if (isModalLabelPath(filePath)) {
       addScriptSuite(scriptSuites, 'modal-labels');
+      continue;
+    }
+
+    if (isPickerDismissalPath(filePath)) {
+      addScriptSuite(scriptSuites, 'picker-dismissal');
       continue;
     }
 
