@@ -19,7 +19,11 @@ import { IonToolbar } from '@ionic/angular/ion-toolbar';
 import { TranslocoDirective } from '@jsverse/transloco';
 
 import { APP_VERSION } from '../../core/data/app-version.data';
-import { type CharacterBox, type CharacterListItem } from '../../core/models/optc.models';
+import {
+  type CharacterBox,
+  type CharacterListItem,
+  type OfflinePackSummary,
+} from '../../core/models/optc.models';
 import { AnalyticsConsentService } from '../../core/services/analytics-consent.service';
 import { AppI18nService } from '../../core/services/app-i18n.service';
 import { resolveBrowserStorageFailureDiagnostic } from '../../core/services/browser-storage-error.utils';
@@ -34,7 +38,14 @@ import {
   type InventoryCapturePreview,
 } from '../../core/services/inventory-capture-import.service';
 import { OptcbxImportService } from '../../core/services/optcbx-import.service';
+import {
+  RUNTIME_MEDIA_MAX_ENTRIES,
+  readRuntimeMediaUrls,
+  summarizeOfflinePacks,
+  type OfflinePackStatus,
+} from '../../core/services/offline-pack-status.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
+import { formatDownloadSize } from '../../core/services/update-payload-size.utils';
 import { UserDataTransferService } from '../../core/services/user-data-transfer.service';
 import {
   buildCharacterOverrideDiffs,
@@ -144,6 +155,20 @@ export class SettingsPage implements OnInit {
   public readonly appVersion = APP_VERSION;
   /** null until the manifest resolves, and again if it cannot be trusted. */
   public readonly datasetSummary = signal<DatasetSummary | null>(null);
+  /**
+   * 869f138pr. The offline image packs, and how much of each is actually held for offline use.
+   *
+   * Empty until the manifest and the caches have both been read, and empty again wherever the
+   * answer cannot be had. The card is hidden rather than showing zeros nobody measured.
+   */
+  public readonly offlinePacks = signal<OfflinePackStatus[]>([]);
+  /** 869f138pr. The same spelling the first visit and the update banner use for a size. */
+  public formatPackSize(bytes: number): string {
+    return formatDownloadSize(bytes);
+  }
+
+  /** The ceiling ngsw keeps on runtime media, quoted because it is the reason the counts are low. */
+  public readonly runtimeMediaMaxEntries = RUNTIME_MEDIA_MAX_ENTRIES;
   /**
    * 869f12x49. What this device is actually holding, and how close to full.
    *
@@ -468,10 +493,32 @@ export class SettingsPage implements OnInit {
    */
   private async loadDatasetSummary(): Promise<void> {
     try {
-      this.datasetSummary.set(buildDatasetSummary(await this.repository.getDatasetManifest()));
+      const manifest = await this.repository.getDatasetManifest();
+
+      this.datasetSummary.set(buildDatasetSummary(manifest));
+      await this.loadOfflinePackStatus(manifest.packs ?? []);
     } catch {
       this.datasetSummary.set(null);
+      this.offlinePacks.set([]);
     }
+  }
+
+  /**
+   * 869f138pr. Counts what is cached rather than asking the manifest what it thinks is installed.
+   *
+   * The manifest's own `installed: true` means the files exist on the server; it says nothing about
+   * this device. The only honest source is Cache Storage, so that is what is read.
+   */
+  private async loadOfflinePackStatus(packs: readonly OfflinePackSummary[]): Promise<void> {
+    if (!packs.length) {
+      this.offlinePacks.set([]);
+
+      return;
+    }
+
+    const cachedUrls = await readRuntimeMediaUrls(globalThis.caches);
+
+    this.offlinePacks.set(summarizeOfflinePacks({ packs, cachedUrls }));
   }
 
   public ionViewDidEnter(): void {

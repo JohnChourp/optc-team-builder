@@ -852,6 +852,43 @@
         </div>
       </section>
 
+      <!--
+        869f138pr. The offline image packs were built, wired and invisible: 189 MB across 11,023
+        files that nothing on any screen mentioned. This says what they are and - counted, not
+        claimed - how many of each are actually held for offline use right now.
+      -->
+      @if (offlinePacks().length) {
+        <section class="glass-card stored-data-card" data-test="settings-offline-packs">
+          <div class="section-head section-head--compact">
+            <div>
+              <h2>{{ t('management.offlinePacks.title') }}</h2>
+              <p>{{ t('management.offlinePacks.copy') }}</p>
+            </div>
+          </div>
+
+          <dl class="about-grid stored-data-grid">
+            @for (pack of offlinePacks(); track pack.id) {
+              <div [attr.data-test]="'settings-offline-pack-' + pack.id">
+                <dt>{{ pack.label }}</dt>
+                <dd>
+                  {{
+                    t('management.offlinePacks.pack', {
+                      cached: pack.cachedCount,
+                      total: pack.fileCount,
+                      size: formatPackSize(pack.totalBytes)
+                    })
+                  }}
+                </dd>
+              </div>
+            }
+          </dl>
+
+          <p class="build-hint" data-test="settings-offline-packs-cap">
+            {{ t('management.offlinePacks.cap', { cap: runtimeMediaMaxEntries }) }}
+          </p>
+        </section>
+      }
+
       <section class="glass-card stored-data-card" data-test="settings-stored-data">
         <div class="section-head section-head--compact">
           <div>

@@ -466,6 +466,12 @@
       "processing": "Importing saved teams...",
       "title": "Saved Teams"
     },
+    "offlinePacks": {
+      "cap": "Your device keeps at most {{cap}} pictures for offline use, and drops the oldest after that. Browsing more pictures does not use more space than that limit.",
+      "copy": "Character and ship pictures are downloaded as you browse, not up front. These are the picture sets the app can draw from, and how many of each your device is currently keeping for offline use.",
+      "pack": "{{cached}} of {{total}} kept offline · {{size}} in total",
+      "title": "Offline images"
+    },
     "storedData": {
       "copy": "{{count}} items are stored in this browser.",
       "diagnosticsCopy": "The diagnostics file holds counts only - no team names, no characters, no account.",
