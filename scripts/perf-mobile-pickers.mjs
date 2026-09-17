@@ -5,10 +5,22 @@ import path from 'node:path';
 import { chromium, devices } from 'playwright';
 
 export const MOBILE_PICKER_PERFORMANCE_SCHEMA_VERSION = 1;
+/*
+ * 869f138q1. These are WARNING thresholds, printed by this harness and never exit-code enforced -
+ * `perf-budget-report.mjs` owns the enforced numbers for the same metrics. Two sets for one metric
+ * is the shape 869f135u7 audited, and one of them had drifted into crying wolf: `savedTeams`'
+ * `firstToggleMs` warned at 600 while the run measured 1,041 ms and the enforced budget is 2,100,
+ * so every run printed a warning nobody could act on and the harness still exited 0.
+ *
+ * Re-set from the measurement on 2026-09-17 (mobile 390x844, `f2e98a09`): x1.3 of what was measured,
+ * which keeps this an EARLY signal - tighter than the enforced budget by design - without reporting
+ * a regression that is not one. Where a warning threshold now sits above the enforced budget, the
+ * enforced one wins and this number is redundant rather than wrong.
+ */
 export const MOBILE_PICKER_THRESHOLDS = Object.freeze({
   savedTeams: {
     pageReadyMs: 6000,
-    firstToggleMs: 600,
+    firstToggleMs: 1400,
     scrollToBottomMs: 250,
     maxHorizontalOverflowPx: 0,
   },
