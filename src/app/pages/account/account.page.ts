@@ -43,6 +43,7 @@ import {
   type DriveSyncReviewSectionKey,
   updateDriveSyncReviewRowChoice,
 } from '../drive-sync/drive-sync-review.utils';
+import { applyIonicModalDialogLabel } from '../../shared/a11y/ionic-modal-dialog-label.utils';
 import { AccountStylePanelsComponent } from './account-style-panels.component';
 
 @Component({
@@ -352,6 +353,21 @@ export class AccountPage {
 
   public getReviewActionLabelKey(action: DriveReviewedSyncAction): string {
     return `driveSync.review.actions.${action}`;
+  }
+
+  /**
+   * 869f138q3. The review pop-up is named after the action it is reviewing, and that action changes
+   * while the pop-up stays mounted - so the name is re-applied on present rather than rendered once.
+   * `t` comes from the template's transloco scope, which is where the translations live.
+   */
+  public reviewDialogLabel(translate: (key: string) => string): string {
+    const draft = this.reviewDraft();
+
+    return draft ? translate(this.getReviewActionLabelKey(draft.action)) : '';
+  }
+
+  public labelModalDialog(event: Event, label: string): void {
+    applyIonicModalDialogLabel(event, label);
   }
 
   public getReviewRowImage(row: DriveSyncReviewRow): string | null {

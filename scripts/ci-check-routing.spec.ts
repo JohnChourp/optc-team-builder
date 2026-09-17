@@ -40,8 +40,11 @@ describe('ci-check-routing', () => {
      * 869f135rm. App source routes to `unused-members` as well: a public member
      * goes dead when somebody edits the file that USED it, which is usually not
      * the file that declares it.
+     *
+     * 869f138q3. A `.page.ts` also routes to `modal-labels`, because the handler a modal binds on
+     * (didPresent) lives there - editing it is exactly when a modal can lose its name.
      */
-    expect(plan.scriptSuites).toEqual(['failure-vocabulary', 'unused-members']);
+    expect(plan.scriptSuites).toEqual(['failure-vocabulary', 'unused-members', 'modal-labels']);
   });
 
   it('runs Angular tests for captain parser and generated metadata changes', () => {
@@ -343,6 +346,7 @@ describe('ci-check-routing', () => {
       'worker-bundling',
       'dataset-delivery',
       'ability-catalogue',
+      'modal-labels',
     ]);
   });
 
@@ -385,6 +389,23 @@ describe('ci-check-routing', () => {
     const parser = buildCheckPlan(['scripts/auto-team-builder-ability-parser.mjs']);
 
     expect(parser.scriptSuites).toContain('ability-catalogue');
+  });
+
+  /* 869f138q3. The guard terminates; a template that could declare a modal joins without doing so. */
+  it('routes the modal label guard and every template that could hold a modal', () => {
+    const guard = buildCheckPlan([
+      'scripts/check-modal-dialog-labels.mjs',
+      'scripts/lib/modal-dialog-labels.mjs',
+    ]);
+
+    expect(guard.fullPlan).toBe(false);
+    expect(guard.runAngular).toBe(false);
+    expect(guard.scriptSuites).toEqual(['modal-labels']);
+
+    const template = buildCheckPlan(['src/app/pages/characters/characters.page.html']);
+
+    expect(template.runAngular).toBe(true);
+    expect(template.scriptSuites).toContain('modal-labels');
   });
 
   it('routes guide discoverability verifier changes to the focused suite', () => {

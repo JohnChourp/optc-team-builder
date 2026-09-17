@@ -116,6 +116,8 @@
 
     <ion-modal
       #savedRumbleTeamEditModal
+      [attr.aria-label]="t('edit.title')"
+      (didPresent)="labelModalDialog($event, t('edit.title'))"
       [isOpen]="editModalOpen()"
       cssClass="saved-rumble-teams-edit-modal"
       (didDismiss)="closeEditModal()"

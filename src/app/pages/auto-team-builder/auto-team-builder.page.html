@@ -433,6 +433,8 @@
 
                                   <ion-modal
                                     #requirementSourceModal
+                                    [attr.aria-label]="t('filters.characterRequirements.modal.title')"
+                                    (didPresent)="labelModalDialog($event, t('filters.characterRequirements.modal.title'))"
                                     [isOpen]="requirementSourceModalOpen()"
                                     cssClass="pick-editor-modal"
                                     (didDismiss)="closeRequirementSourceModal()"
@@ -1149,6 +1151,8 @@
 
                                       <ion-modal
                                         #manualPickerModal
+                                        [attr.aria-label]="t('manual.modal.title')"
+                                        (didPresent)="labelModalDialog($event, t('manual.modal.title'))"
                                         [isOpen]="manualPickerModalOpen()"
                                         cssClass="pick-editor-modal"
                                         (didDismiss)="closeManualPickerModal()"
@@ -1852,6 +1856,8 @@
 
                                   <ion-modal
                                     #manualCopyModal
+                                    [attr.aria-label]="t('manual.copyModal.title')"
+                                    (didPresent)="labelModalDialog($event, t('manual.copyModal.title'))"
                                     [isOpen]="manualCopyModalOpen()"
                                     cssClass="manual-copy-modal"
                                     (didDismiss)="closeManualCopyModal()"
@@ -2170,6 +2176,8 @@
 
                                       <ion-modal
                                         #excludePickerModal
+                                        [attr.aria-label]="t('exclude.modal.title')"
+                                        (didPresent)="labelModalDialog($event, t('exclude.modal.title'))"
                                         [isOpen]="excludePickerModalOpen()"
                                         cssClass="pick-editor-modal"
                                         (didDismiss)="closeExcludePickerModal()"

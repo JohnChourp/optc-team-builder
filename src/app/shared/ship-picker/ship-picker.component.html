@@ -2,6 +2,8 @@
   <app-ship-picker-style-panels>
     <ion-modal
       #shipPickerModal
+      [attr.aria-label]="title"
+      (didPresent)="labelModalDialog($event, title)"
       [isOpen]="isOpen"
       cssClass="ship-picker-modal"
       (didDismiss)="onModalDidDismiss()"
