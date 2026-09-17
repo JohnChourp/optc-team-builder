@@ -4,6 +4,8 @@ import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
+import { findUndeclaredSizeUnits } from './lib/size-units.mjs';
+
 export const PERFORMANCE_REPORT_SCHEMA_VERSION = 1;
 
 /**
@@ -413,6 +415,7 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     metricKey: 'rawBytes',
     metricLabel: 'entry script raw JS',
     unit: 'bytes',
+    sizeUnit: 'raw',
     minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
     budgets: { bundle: 391_000 },
     profile: 'bundle',
@@ -428,6 +431,7 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     metricKey: 'gzipBytes',
     metricLabel: 'entry script gzip JS',
     unit: 'bytes',
+    sizeUnit: 'gzip',
     minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
     budgets: { bundle: 100_000 },
     profile: 'bundle',
@@ -449,6 +453,7 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     metricKey: 'rawBytes',
     metricLabel: 'initial payload raw JS',
     unit: 'bytes',
+    sizeUnit: 'raw',
     minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
     budgets: { bundle: 1_536_000 },
     profile: 'bundle',
@@ -464,6 +469,7 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     metricKey: 'gzipBytes',
     metricLabel: 'initial payload gzip JS',
     unit: 'bytes',
+    sizeUnit: 'gzip',
     minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
     budgets: { bundle: 387_000 },
     profile: 'bundle',
@@ -479,6 +485,7 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     metricKey: 'rawBytes',
     metricLabel: 'guide route raw JS',
     unit: 'bytes',
+    sizeUnit: 'raw',
     minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
     budgets: { bundle: 14_000 },
     profile: 'bundle',
@@ -494,6 +501,7 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     metricKey: 'rawBytes',
     metricLabel: 'manual share route raw JS',
     unit: 'bytes',
+    sizeUnit: 'raw',
     minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
     budgets: { bundle: 320_000 },
     profile: 'bundle',
@@ -509,6 +517,7 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     metricKey: 'rawBytes',
     metricLabel: 'compare route raw JS',
     unit: 'bytes',
+    sizeUnit: 'raw',
     minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
     budgets: { bundle: 740_000 },
     profile: 'bundle',
@@ -524,6 +533,7 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     metricKey: 'rawBytes',
     metricLabel: 'characters route raw JS',
     unit: 'bytes',
+    sizeUnit: 'raw',
     minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
     budgets: { bundle: 192_400 },
     profile: 'bundle',
@@ -539,6 +549,7 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     metricKey: 'rawBytes',
     metricLabel: 'saved teams route raw JS',
     unit: 'bytes',
+    sizeUnit: 'raw',
     minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
     budgets: { bundle: 187_000 },
     profile: 'bundle',
@@ -554,6 +565,7 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     metricKey: 'rawBytes',
     metricLabel: 'captain coverage route raw JS',
     unit: 'bytes',
+    sizeUnit: 'raw',
     minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
     budgets: { bundle: 330_000 },
     profile: 'bundle',
@@ -574,6 +586,7 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     metricKey: 'cachedBytes',
     metricLabel: 'prefetch total cached',
     unit: 'bytes',
+    sizeUnit: 'cached',
     minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
     budgets: { bundle: 9_153_000 },
     profile: 'payload',
@@ -589,6 +602,7 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     metricKey: 'wireBytes',
     metricLabel: 'prefetch total over the wire',
     unit: 'bytes',
+    sizeUnit: 'gzip',
     minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
     budgets: { bundle: 4_154_000 },
     profile: 'payload',
@@ -604,6 +618,7 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     metricKey: 'databaseBytes',
     metricLabel: 'dataset database',
     unit: 'bytes',
+    sizeUnit: 'cached',
     minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
     budgets: { bundle: 2_358_700 },
     profile: 'payload',
@@ -619,6 +634,7 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     metricKey: 'abilityCatalogCachedBytes',
     metricLabel: 'ability catalogue cached',
     unit: 'bytes',
+    sizeUnit: 'cached',
     minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
     budgets: { bundle: 818_200 },
     profile: 'payload',
@@ -634,6 +650,7 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     metricKey: 'abilityCatalogWireBytes',
     metricLabel: 'ability catalogue over the wire',
     unit: 'bytes',
+    sizeUnit: 'gzip',
     minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
     budgets: { bundle: 143_600 },
     profile: 'payload',
@@ -649,6 +666,7 @@ const ROUTE_LOAD_METRICS = Object.freeze([
     metricKey: 'sqlWasmWireBytes',
     metricLabel: 'sql.js wasm over the wire',
     unit: 'bytes',
+    sizeUnit: 'gzip',
     minDeltaWarning: BASELINE_WARNING_POLICY.minBytesIncrease,
     budgets: { bundle: 332_300 },
     profile: 'payload',
@@ -915,6 +933,8 @@ function buildMetricRowsForResult(kind, resultEntry, baselineRows) {
         profile: MEASUREMENT_PROFILES[metric.profile]?.[viewport] ?? null,
         setOn: metric.setOn ?? null,
         provenance: metric.provenance ?? null,
+        /* 869f138r0. Which of the four sizes this is. Null for anything not measured in bytes. */
+        sizeUnit: metric.sizeUnit ?? null,
         actualMs,
         budgetMs,
         baselineMs,
@@ -964,6 +984,8 @@ function buildMetricRowsForResult(kind, resultEntry, baselineRows) {
       profile: MEASUREMENT_PROFILES[metric.profile]?.[viewport] ?? null,
       setOn: metric.setOn ?? null,
       provenance: metric.provenance ?? null,
+      /* 869f138r0. Which of the four sizes this is. Null for anything not measured in bytes. */
+      sizeUnit: metric.sizeUnit ?? null,
       actualMs,
       budgetMs,
       baselineMs,
@@ -1048,12 +1070,25 @@ export async function buildPerformanceBudgetReport(options = {}, env = process.e
         row.enforcement === ADVISORY_BUDGET_ENFORCEMENT,
     )
     .map(describeFailure);
-  const invalidMetricFailures = metricRows
-    .filter((row) => row.actualMs === null)
-    .map((row) => ({
-      metricId: row.id,
-      message: `${row.harness} ${row.viewport} ${row.area} ${row.metric}: missing or non-finite metric value`,
-    }));
+  const invalidMetricFailures = [
+    ...metricRows
+      .filter((row) => row.actualMs === null)
+      .map((row) => ({
+        metricId: row.id,
+        message: `${row.harness} ${row.viewport} ${row.area} ${row.metric}: missing or non-finite metric value`,
+      })),
+    /*
+     * 869f138r0. A byte row that does not say WHICH size it is. The same file has four, and the
+     * abilities catalogue differs eight-fold between two of them, so "1.6 MB" without a unit is not
+     * a wrong number - it is an unusable one, and two readers can argue from it and both be right.
+     * Joined to the invalid-metric failures because it is the same class of defect: a row that
+     * cannot be read, rather than a budget that was missed.
+     */
+    ...findUndeclaredSizeUnits(metricRows).map((finding) => ({
+      metricId: finding.metricKey,
+      message: `${finding.metricLabel || finding.metricKey}: ${finding.detail}`,
+    })),
+  ];
   const baselineDeltaWarnings = metricRows
     .filter((row) => row.baselineWarning)
     .map((row) => ({

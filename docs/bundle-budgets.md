@@ -226,6 +226,37 @@ store — that is the trend.
 Proven: grown to **9,010 bytes (75.1%)**, Angular's own budget reports **zero
 warnings** and this check names the file and its share.
 
+## Which size a number is — 869f138r0
+
+**Status:** recorded 2026-09-17 · [869f138r0](https://app.clickup.com/t/90121749478/869f138r0)
+
+The same file has four sizes, and a figure quoted without one of them is not wrong so
+much as **unusable** — two people can argue from it and both be right.
+
+| Unit | What it is |
+| --- | --- |
+| **`raw`** | The file as it exists, uncompressed. What `ls` reports and what a build log prints |
+| **`gzip`** | The same file compressed, as an *estimate* of what crosses the network. An estimate, because the host chooses its own encoding and level |
+| **`cached`** | What the service worker stores on the device. Equal to `raw` for every asset, and worth its own name anyway: a response is cached **decoded**, so host compression never shrinks what the device holds |
+| **`parsed`** | The cost in memory after parsing. Nothing measures this yet, and no row may claim it falsely |
+
+`optc-seed.sql` was the worked example: **25,534,782** raw, **25,534,782** over the
+wire as it was actually served (no encoding — the defect
+[869f138q7](https://app.clickup.com/t/90121749478/869f138q7) fixed), **2,179,760**
+compressed, and the raw bytes again in the cache. The abilities catalogue tells it
+worse: **1,674,521** raw against **206,920** gzipped is an **eight-fold** difference,
+so "1.6 MB" and "207 KB" describe the same file and neither speaker realises they
+agree.
+
+**Every byte row in the performance report declares which of the four it is**, and a
+row that does not **fails the report** — joined to the invalid-metric failures,
+because it is the same class of defect: a row that cannot be read, rather than a
+budget that was missed.
+
+`unit: 'bytes'` was already on all sixteen of those rows and said nothing useful,
+which is the failure this replaces: a field that looks like it answers the question
+while answering a different one.
+
 ## What a first visit downloads — 869f138qh
 
 **Status:** recorded 2026-09-16 · [869f138qh](https://app.clickup.com/t/90121749478/869f138qh)
