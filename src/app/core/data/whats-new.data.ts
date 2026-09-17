@@ -31,6 +31,40 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.54',
+    date: '2026-09-17',
+    userVisible: true,
+    headline: {
+      en: 'The first time you open the app, it is ready in a fraction of the time',
+      el: 'Την πρώτη φορά που ανοίγεις την εφαρμογή, είναι έτοιμη σε κλάσμα του χρόνου',
+    },
+    summaryEn:
+      'Opening the app for the first time used to mean waiting for a very large character file to download and then be read line by line — on a slow phone that was minutes, and the Characters screen sat there while it happened. That file now arrives compressed and ready to use, so a first visit on a slow connection goes from about 2 minutes 45 to about 35 seconds, and every start after that from about 2.3 seconds to about 0.8. The app also downloads far less: 8.7 MB instead of 35.2 MB the first time. And an update that brings no new characters no longer makes you download the character data again — until now almost every update did, even when nothing about the characters had changed.',
+    summaryEl:
+      'Το να ανοίξεις την εφαρμογή για πρώτη φορά σήμαινε να περιμένεις να κατέβει ένα πολύ μεγάλο αρχείο με τους χαρακτήρες και μετά να διαβαστεί γραμμή γραμμή — σε αργό κινητό αυτό ήταν λεπτά, και η οθόνη Χαρακτήρων καθόταν έτσι όσο γινόταν. Τώρα αυτό το αρχείο έρχεται συμπιεσμένο και έτοιμο για χρήση, οπότε η πρώτη επίσκεψη με αργή σύνδεση πέφτει από περίπου 2 λεπτά και 45 σε περίπου 35 δευτερόλεπτα, και κάθε επόμενο άνοιγμα από περίπου 2,3 σε περίπου 0,8 δευτερόλεπτα. Η εφαρμογή κατεβάζει και πολύ λιγότερα: 8,7 MB αντί για 35,2 MB την πρώτη φορά. Και μια ενημέρωση που δεν φέρνει νέους χαρακτήρες δεν σε βάζει πια να ξανακατεβάσεις τα δεδομένα των χαρακτήρων — μέχρι τώρα το έκαναν σχεδόν όλες, ακόμα κι όταν τίποτα στους χαρακτήρες δεν είχε αλλάξει.',
+    added: [],
+    improved: [
+      {
+        en: 'The **Characters** screen is usable far sooner on a first visit: about **35 seconds** on a slow connection instead of about **2 minutes 45**, because the character data now arrives as a ready-to-open file instead of being rebuilt on your phone.',
+        el: 'Η οθόνη **Χαρακτήρων** γίνεται χρησιμοποιήσιμη πολύ νωρίτερα στην πρώτη επίσκεψη: περίπου **35 δευτερόλεπτα** με αργή σύνδεση αντί για περίπου **2 λεπτά και 45**, γιατί τα δεδομένα των χαρακτήρων έρχονται πλέον έτοιμα για άνοιγμα αντί να ξαναχτίζονται στο κινητό σου.',
+      },
+      {
+        en: 'Every start after the first is about **0.8 seconds** instead of about **2.3**, so the screen you opened stops waiting on the character data.',
+        el: 'Κάθε άνοιγμα μετά το πρώτο είναι περίπου **0,8 δευτερόλεπτα** αντί για περίπου **2,3**, οπότε η οθόνη που άνοιξες σταματά να περιμένει τα δεδομένα των χαρακτήρων.',
+      },
+      {
+        en: 'A first visit downloads **8.7 MB** instead of **35.2 MB**, which also means far less of your storage is used to keep the app working offline.',
+        el: 'Η πρώτη επίσκεψη κατεβάζει **8,7 MB** αντί για **35,2 MB**, που σημαίνει επίσης ότι πολύ λιγότερος αποθηκευτικός χώρος πιάνεται για να δουλεύει η εφαρμογή offline.',
+      },
+    ],
+    fixed: [
+      {
+        en: 'An update that brings no new characters no longer re-downloads the character data. Almost every update used to, because the data was stamped with the time it was packaged even when nothing in it had changed.',
+        el: 'Μια ενημέρωση που δεν φέρνει νέους χαρακτήρες δεν ξανακατεβάζει πια τα δεδομένα των χαρακτήρων. Σχεδόν κάθε ενημέρωση το έκανε, γιατί τα δεδομένα σφραγίζονταν με την ώρα που πακεταρίστηκαν ακόμα κι όταν τίποτα μέσα τους δεν είχε αλλάξει.',
+      },
+    ],
+  },
+  {
     version: '0.4.53',
     date: '2026-09-16',
     userVisible: true,
