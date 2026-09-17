@@ -1368,6 +1368,9 @@ function isPerfPath(filePath) {
     filePath === 'scripts/perf-budget-report.spec.ts' ||
     filePath === 'scripts/perf-budget-history.mjs' ||
     filePath === 'scripts/perf-budget-history.spec.ts' ||
+    /* 869f138r0. The size-unit rule the report enforces, tested in the same lane. */
+    filePath === 'scripts/lib/size-units.mjs' ||
+    filePath === 'scripts/lib/size-units.spec.ts' ||
     filePath === 'scripts/perf-ability-filters.mjs' ||
     filePath === 'scripts/perf-explanation-compare.mjs' ||
     filePath === 'scripts/perf-saved-team-codecs.mjs' ||
