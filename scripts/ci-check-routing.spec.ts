@@ -81,6 +81,8 @@ describe('ci-check-routing', () => {
       'source-data',
       'overlay-register',
       'ability-catalogue',
+      /* 869f138r4. The ability definitions live in scripts/data/, which the pipeline census reads. */
+      'import-pipeline',
     ]);
   });
 
@@ -105,7 +107,8 @@ describe('ci-check-routing', () => {
      * exists and what would remove it, and the party-conflict overlay's two copies
      * must keep agreeing, which is exactly what editing one of them risks.
      */
-    expect(plan.scriptSuites).toEqual(['source-data', 'overlay-register']);
+    /* 869f138r4. Anything under scripts/data/ also moves the import pipeline census. */
+    expect(plan.scriptSuites).toEqual(['source-data', 'overlay-register', 'import-pipeline']);
   });
 
   it('routes saved-team codec fixtures and docs to the focused fuzz suite', () => {
@@ -371,6 +374,7 @@ describe('ci-check-routing', () => {
       'component-map',
       'worker-protocols',
       'packs-contract',
+      'import-pipeline',
     ]);
   });
 
@@ -506,6 +510,22 @@ describe('ci-check-routing', () => {
     const manifest = buildCheckPlan(['public/assets/data/optc-manifest.json']);
 
     expect(manifest.scriptSuites).toContain('packs-contract');
+  });
+
+  /* 869f138r4. The generator terminates; the importer and its data join without terminating. */
+  it('routes the import pipeline generator, the importer and the data it reads', () => {
+    const guard = buildCheckPlan([
+      'scripts/generate-import-pipeline.mjs',
+      'scripts/lib/import-pipeline.mjs',
+      'docs/import-pipeline.json',
+    ]);
+
+    expect(guard.fullPlan).toBe(false);
+    expect(guard.scriptSuites).toEqual(['import-pipeline']);
+
+    const importer = buildCheckPlan(['scripts/import-optc-data.mjs']);
+
+    expect(importer.scriptSuites).toContain('import-pipeline');
   });
 
   it('routes guide discoverability verifier changes to the focused suite', () => {
