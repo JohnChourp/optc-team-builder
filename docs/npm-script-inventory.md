@@ -164,6 +164,7 @@ and when a `test:` script is not a lane.
 | `seo:pages` | npm script · build:pages | `build:pages` |
 | `seo:public-assets` | npm script · test:public-asset-shadowing | `test:public-asset-shadowing` |
 | `server:drive-sync` | documented · README.md | a documented manual step |
+| `shared:picker-dismissal` | npm script · test:picker-dismissal | `test:picker-dismissal` |
 | `start` | script file · audit-i18n.mjs, auto-team-builder-ability-parser.mjs, benchmark-dataset.mjs, build-dataset-binary.mjs, check-component-inventory.mjs, check-docs-commands.spec.ts, check-docs-integrity.mjs, check-docs-integrity.spec.ts, check-github-ci-triggers.mjs, check-modal-dialog-labels.mjs, check-optc-upstream-monitor.mjs, check-style-panel-inventory.mjs, check-tag-picker-panel-scoping.spec.ts, generate-dataset-provenance.mjs, generate-dataset-provenance.spec.ts, generate-seo-pages.mjs, import-optc-data.spec.ts, captain-ability-coverage.mjs, captain-ability-coverage.spec.ts, dataset-binary.mjs, dataset-provenance.mjs, enemy-mechanic-vocabulary.mjs, optc-dataset.mjs, perf-ability-filters.mjs, perf-budget-report.mjs, perf-explanation-compare.mjs, perf-memory-pressure.mjs, perf-mobile-pickers.mjs | whatever audit-i18n.mjs, auto-team-builder-ability-parser.mjs, benchmark-dataset.mjs, build-dataset-binary.mjs, check-component-inventory.mjs, check-docs-commands.spec.ts, check-docs-integrity.mjs, check-docs-integrity.spec.ts, check-github-ci-triggers.mjs, check-modal-dialog-labels.mjs, check-optc-upstream-monitor.mjs, check-style-panel-inventory.mjs, check-tag-picker-panel-scoping.spec.ts, generate-dataset-provenance.mjs, generate-dataset-provenance.spec.ts, generate-seo-pages.mjs, import-optc-data.spec.ts, captain-ability-coverage.mjs, captain-ability-coverage.spec.ts, dataset-binary.mjs, dataset-provenance.mjs, enemy-mechanic-vocabulary.mjs, optc-dataset.mjs, perf-ability-filters.mjs, perf-budget-report.mjs, perf-explanation-compare.mjs, perf-memory-pressure.mjs, perf-mobile-pickers.mjs drives |
 | `storage:keys` | npm script · test:storage-keys | `test:storage-keys` |
 | `styles:component-budget` | npm script · test:component-style-budget | `test:component-style-budget` |
@@ -216,6 +217,7 @@ and when a `test:` script is not a lane.
 | `test:overlay-register` | lane · overlay-register | the `overlay-register` lane |
 | `test:page-doc-coverage` | lane · page-doc-coverage | the `page-doc-coverage` lane |
 | `test:perf-budget` | lane · perf-budget | the `perf-budget` lane |
+| `test:picker-dismissal` | lane · picker-dismissal | the `picker-dismissal` lane |
 | `test:post-merge-smoke` | documented · feature-coverage-map.md, maintainer-validation-guide.md, post-merge-smoke-pack.md | a documented manual step |
 | `test:public-asset-shadowing` | lane · public-asset-shadowing | the `public-asset-shadowing` lane |
 | `test:public-entry-synthetics` | lane · public-entry-synthetics | the `public-entry-synthetics` lane |

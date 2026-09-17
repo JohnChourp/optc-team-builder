@@ -347,6 +347,7 @@ describe('ci-check-routing', () => {
       'dataset-delivery',
       'ability-catalogue',
       'modal-labels',
+      'picker-dismissal',
     ]);
   });
 
@@ -406,6 +407,25 @@ describe('ci-check-routing', () => {
 
     expect(template.runAngular).toBe(true);
     expect(template.scriptSuites).toContain('modal-labels');
+  });
+
+  /* 869f138pv. The dismissal guard terminates; a shared template joins without terminating. */
+  it('routes the shared picker dismissal guard and the components it reads', () => {
+    const guard = buildCheckPlan([
+      'scripts/check-shared-picker-dismissal.mjs',
+      'scripts/lib/shared-picker-dismissal.mjs',
+    ]);
+
+    expect(guard.fullPlan).toBe(false);
+    expect(guard.runAngular).toBe(false);
+    expect(guard.scriptSuites).toEqual(['picker-dismissal']);
+
+    const picker = buildCheckPlan(['src/app/shared/ship-picker/ship-picker.component.html']);
+
+    expect(picker.runAngular).toBe(true);
+    expect(picker.scriptSuites).toContain('picker-dismissal');
+    /* The same file is a modal template, so both shared-component lanes join. */
+    expect(picker.scriptSuites).toContain('modal-labels');
   });
 
   it('routes guide discoverability verifier changes to the focused suite', () => {
