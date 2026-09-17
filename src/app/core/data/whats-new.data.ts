@@ -31,6 +31,40 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.4.56',
+    date: '2026-09-17',
+    userVisible: true,
+    headline: {
+      en: 'The app tells you what it is downloading, and where your pictures come from',
+      el: 'Η εφαρμογή σου λέει τι κατεβάζει, και από πού έρχονται οι εικόνες σου',
+    },
+    summaryEn:
+      'Three things the app used to do silently now say what they are doing. The first time you open it, the Characters screen shows how much of the character data has arrived instead of a spinner that could mean anything. When an update is waiting, the bar tells you how large it is before it starts, so you can decide on mobile data. And Settings has a new Offline images section that finally explains where character and ship pictures come from, how big each set is, and how many your device is keeping for offline use — none of which was written anywhere before. If you use a screen reader, every pop-up in the app now announces its own name instead of leaving you to guess which one opened.',
+    summaryEl:
+      'Τρία πράγματα που η εφαρμογή έκανε σιωπηλά, τώρα λένε τι κάνουν. Την πρώτη φορά που την ανοίγεις, η οθόνη Χαρακτήρων δείχνει πόσα από τα δεδομένα χαρακτήρων έχουν φτάσει, αντί για ένα spinner που μπορεί να σημαίνει οτιδήποτε. Όταν περιμένει ενημέρωση, η μπάρα σου λέει πόσο μεγάλη είναι πριν ξεκινήσει, ώστε να αποφασίσεις αν είσαι σε δεδομένα κινητού. Και οι Ρυθμίσεις έχουν νέα ενότητα Εικόνες offline που επιτέλους εξηγεί από πού έρχονται οι εικόνες χαρακτήρων και πλοίων, πόσο μεγάλο είναι το κάθε σετ, και πόσες κρατά η συσκευή σου για offline χρήση — τίποτα από αυτά δεν ήταν γραμμένο πουθενά πριν. Αν χρησιμοποιείς screen reader, κάθε αναδυόμενο παράθυρο ανακοινώνει πλέον το δικό του όνομα αντί να σε αφήνει να μαντέψεις ποιο άνοιξε.',
+    added: [
+      {
+        en: 'A new **Offline images** section in **Settings** says what the character and ship picture sets are, how big each one is, and how many pictures your device is currently keeping for offline use.',
+        el: 'Νέα ενότητα **Εικόνες offline** στις **Ρυθμίσεις** λέει ποια είναι τα σετ εικόνων χαρακτήρων και πλοίων, πόσο μεγάλο είναι το καθένα, και πόσες εικόνες κρατά αυτή τη στιγμή η συσκευή σου για offline χρήση.',
+      },
+    ],
+    improved: [
+      {
+        en: 'The **Characters** screen now shows how much of the character data has downloaded on a first visit, instead of a spinner that gives no sign of progress.',
+        el: 'Η οθόνη **Χαρακτήρων** δείχνει πλέον πόσα από τα δεδομένα χαρακτήρων έχουν κατέβει στην πρώτη επίσκεψη, αντί για ένα spinner που δεν δείχνει καμία πρόοδο.',
+      },
+      {
+        en: 'The **update bar** at the top of the app says how large a waiting update is before it downloads, so a big one is not a surprise on mobile data.',
+        el: 'Η **μπάρα ενημέρωσης** στην κορυφή της εφαρμογής λέει πόσο μεγάλη είναι μια ενημέρωση που περιμένει, πριν κατέβει, ώστε μια μεγάλη να μη σε αιφνιδιάσει σε δεδομένα κινητού.',
+      },
+      {
+        en: 'Every pop-up in the app now announces its own name to a screen reader. Ten of them — including all four on **Auto Team Builder**, the ship picker and **What\'s new** — previously announced nothing but a generic word, so you could not tell which one had opened.',
+        el: 'Κάθε αναδυόμενο παράθυρο ανακοινώνει πλέον το δικό του όνομα σε screen reader. Δέκα από αυτά — μεταξύ τους και τα τέσσερα στο **Auto Team Builder**, ο επιλογέας πλοίου και το **What\'s new** — ανακοίνωναν πριν μόνο μια γενική λέξη, οπότε δεν καταλάβαινες ποιο είχε ανοίξει.',
+      },
+    ],
+    fixed: [],
+  },
+  {
     version: '0.4.55',
     date: '2026-09-17',
     userVisible: true,
