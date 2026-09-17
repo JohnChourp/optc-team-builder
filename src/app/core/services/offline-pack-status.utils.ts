@@ -10,9 +10,11 @@ import type { OfflinePackSummary } from '../models/optc.models';
  *
  * - they are NOT prefetched. A first visit does not pay for them; each image is fetched the first
  *   time a screen shows it.
- * - `ngsw-config.json` keeps them in the `runtime-media` data group, `strategy: performance`,
- *   **`maxSize: 750`, `maxAge: 30d`**. So at most 750 of the 11,023 files - about **6.4%** - are
- *   held for offline use at any moment, and each of those expires after thirty days.
+ * - `ngsw-config.json` keeps them in the `runtime-media` data group, `strategy: performance`.
+ *   Until 2026-09-17 that was **`maxSize: 750`, `maxAge: 30d`** - at most 750 of the 11,023 files,
+ *   about **6.4%**, each expiring after thirty days, so whatever a reader had seen was dropped to
+ *   make room for what they looked at next. The owner raised both when that was measured; see
+ *   {@link RUNTIME_MEDIA_MAX_ENTRIES}.
  * - `installed: true` in the manifest means "these files exist on the server", not "this reader
  *   installed them". Nothing activates a pack and nothing can remove one.
  *
@@ -30,8 +32,17 @@ export const RUNTIME_MEDIA_CACHE_MARKER = 'runtime-media';
  *
  * Duplicated here on purpose rather than parsed: the screen has to state the number, the config is
  * not shipped to the browser, and a spec keeps the two equal so this copy cannot drift.
+ *
+ * **Raised from 750 on 2026-09-17, on the owner's decision**, together with `maxAge` from 30 days
+ * to a year. At 750 a reader could never keep even a seventh of one pack, and whatever they had
+ * seen was dropped to make room for what they looked at next - which is the opposite of what an
+ * offline pack is for. 12,000 clears the 11,072 files the runtime group can ever hold, so the cap
+ * stops being the binding constraint and what a reader keeps is simply what they have opened.
+ *
+ * The device's own storage quota is the real ceiling now, and it always was the honest one: the
+ * cache only ever fills with pictures somebody actually looked at.
  */
-export const RUNTIME_MEDIA_MAX_ENTRIES = 750;
+export const RUNTIME_MEDIA_MAX_ENTRIES = 12_000;
 
 export interface OfflinePackStatus {
   readonly id: string;
