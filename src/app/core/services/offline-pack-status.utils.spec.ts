@@ -139,6 +139,21 @@ describe('the cap this screen quotes', () => {
     expect(runtimeMedia?.cacheConfig.maxSize).toBe(RUNTIME_MEDIA_MAX_ENTRIES);
   });
 
+  it('keeps what a reader opened for a year, not a month', async () => {
+    const { readFile } = await import('node:fs/promises');
+    const config = JSON.parse(await readFile('ngsw-config.json', 'utf8')) as {
+      dataGroups: Array<{ name: string; cacheConfig: { maxAge: string } }>;
+    };
+    const runtimeMedia = config.dataGroups.find((group) => group.name === 'runtime-media');
+
+    /*
+     * Raised from 30d with the cap, on the owner's decision. A picture dropped after a month is a
+     * picture the reader has to download again to look at something they already looked at, which
+     * is the thing the cap was raised to stop.
+     */
+    expect(runtimeMedia?.cacheConfig.maxAge).toBe('365d');
+  });
+
   it('covers the offline packs, which is why the number is worth quoting', async () => {
     const { readFile } = await import('node:fs/promises');
     const config = JSON.parse(await readFile('ngsw-config.json', 'utf8')) as {

@@ -467,7 +467,7 @@
       "title": "Saved Teams"
     },
     "offlinePacks": {
-      "cap": "Your device keeps at most {{cap}} pictures for offline use, and drops the oldest after that. Browsing more pictures does not use more space than that limit.",
+      "cap": "Pictures you open stay available offline. The app keeps up to {{cap}} of them — more than every picture it has — so nothing you have already seen is dropped to make room for something new. Only pictures you actually open are stored.",
       "copy": "Character and ship pictures are downloaded as you browse, not up front. These are the picture sets the app can draw from, and how many of each your device is currently keeping for offline use.",
       "pack": "{{cached}} of {{total}} kept offline · {{size}} in total",
       "title": "Offline images"

@@ -69,8 +69,12 @@ returns nothing across **63** `<img>` sites, **57** of which bind `[src]`.
 So the placeholder is the fallback for *"no path was recorded"*, never for *"the
 path did not load"*. A manifest claiming a pack is installed against a device where
 the file is gone renders a **broken image**, not the placeholder. That is reachable
-in normal use: the `runtime-media` dataGroup caps at `maxSize: 750` against 11,023
-shipped PNGs, so eviction is routine.
+in normal use, though **less so since 2026-09-17**: the `runtime-media` dataGroup
+capped at `maxSize: 750` against 11,023 shipped PNGs, which made eviction routine.
+[869f138pr](https://app.clickup.com/t/90121749478/869f138pr) raised it to **12,000**
+with `maxAge` from 30 days to a year, on the owner's decision, so the cap no longer
+evicts anything a reader has opened. Eviction under the device's own storage
+pressure still happens, and the broken image is still what it renders.
 
 Recorded rather than fixed — adding `(error)` handling to 57 bindings is a real
 change with its own design question (per-image fallback, or a shared directive),
