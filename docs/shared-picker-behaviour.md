@@ -57,6 +57,14 @@ make the app worse on purpose:
 A confirm step exists where a selection is only meaningful once several fields
 agree. Where one tap is a whole decision, a confirm step is a button in the way.
 
+## Which pages host what
+
+`docs/shared-component-map.json` lists every shared component's hosts, inputs and outputs,
+**generated from the imports** ([869f138qz](https://app.clickup.com/t/90121749478/869f138qz)) - 17
+components and **69 host relationships**, so "does this change affect Crew Forge?" is a lookup
+rather than a grep. It also carries `hostConstraint`, the one thing a host must not do, which is
+`null` wherever none has been established rather than invented.
+
 ## What still has no guard
 
 Panel **styling** per host is covered separately by

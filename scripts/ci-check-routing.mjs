@@ -550,6 +550,16 @@ export const SCRIPT_SUITES = {
     label: 'Dataset schema document tests',
     command: 'npm run test:dataset-schema',
   },
+  /*
+   * 869f138qz. Proves docs/shared-component-map.json is still what the imports say. 17 components
+   * across up to six hosts each is 102 possible relationships; a hand-written table of them is
+   * wrong within a month, and the subtask's acceptance criterion is that a NEW host appears in the
+   * document without anyone editing it.
+   */
+  'component-map': {
+    label: 'Shared component host map tests',
+    command: 'npm run test:component-map',
+  },
 };
 
 export const SCRIPT_SUITE_ORDER = Object.keys(SCRIPT_SUITES);
@@ -936,6 +946,16 @@ function touchesDatasetDeliverySources(filePath) {
   );
 }
 
+/* 869f138qz. Terminating: the host map generator, its reader, and the document it writes. */
+function isComponentMapPath(filePath) {
+  return (
+    filePath === 'scripts/generate-shared-component-map.mjs' ||
+    filePath === 'scripts/generate-shared-component-map.spec.ts' ||
+    filePath === 'scripts/lib/shared-component-map.mjs' ||
+    filePath === 'docs/shared-component-map.json'
+  );
+}
+
 /* 869f138qt. Terminating: the schema generator, its reader, and the document it writes. */
 function isDatasetSchemaPath(filePath) {
   return (
@@ -994,6 +1014,18 @@ function touchesModalLabelSources(filePath) {
     filePath.endsWith('.html') ||
     filePath.endsWith('.page.ts') ||
     filePath.endsWith('.component.ts')
+  );
+}
+
+/*
+ * 869f138qz. Non-terminating: any app source can become - or stop being - a host, because the map
+ * is built from imports. A .html can host one too, through a component's own template.
+ */
+function touchesComponentMapSources(filePath) {
+  return (
+    filePath.startsWith('src/app/') &&
+    (filePath.endsWith('.ts') || filePath.endsWith('.html')) &&
+    !filePath.endsWith('.spec.ts')
   );
 }
 
@@ -1567,6 +1599,10 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
       addScriptSuite(scriptSuites, 'picker-dismissal');
     }
 
+    if (touchesComponentMapSources(filePath)) {
+      addScriptSuite(scriptSuites, 'component-map');
+    }
+
     if (touchesEnemyVocabularySources(filePath)) {
       addScriptSuite(scriptSuites, 'enemy-vocabulary');
     }
@@ -1678,6 +1714,11 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
 
     if (isDatasetSchemaPath(filePath)) {
       addScriptSuite(scriptSuites, 'dataset-schema');
+      continue;
+    }
+
+    if (isComponentMapPath(filePath)) {
+      addScriptSuite(scriptSuites, 'component-map');
       continue;
     }
 
