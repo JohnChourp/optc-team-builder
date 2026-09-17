@@ -103,7 +103,12 @@ const defaultSeo: RouteSeoData = {
             >
               <div class="app-update-banner__copy">
                 <strong>{{ 'appUpdate.title' | transloco }}</strong>
-                <p>{{ updateCopyKey() | transloco }}</p>
+                <!--
+                  869f138pt. The size, when there is one worth saying. The bar has always shown a
+                  fraction and never a scale, so a reader on mobile data could not tell a bundle
+                  change from the whole dataset until the bytes were already spent.
+                -->
+                <p>{{ updateCopyKey() | transloco: { size: updateSizeLabel() } }}</p>
               </div>
 
               @if (showUpdateProgress()) {
@@ -318,7 +323,14 @@ export class AppComponent {
     }
 
     if (this.appUpdateService.updatePhase() === 'downloading') {
-      return 'appUpdate.downloading';
+      /*
+       * 869f138pt. A separate key rather than an optional parameter on the same one: transloco
+       * renders a missing `{{size}}` as the literal braces, so a key that sometimes has the value
+       * and sometimes does not would show them to the reader on the "does not" path.
+       */
+      return this.appUpdateService.updateSizeLabel()
+        ? 'appUpdate.downloadingWithSize'
+        : 'appUpdate.downloading';
     }
 
     return 'appUpdate.copy';
@@ -333,6 +345,9 @@ export class AppComponent {
   public async openNativeReleasePage(): Promise<void> {
     await this.nativeUpdateService.openReleasePageManually();
   }
+
+  /** 869f138pt. Null unless the pending update is large enough that its size is worth saying. */
+  public readonly updateSizeLabel = computed(() => this.appUpdateService.updateSizeLabel());
 
   public readonly updateDownloading = computed(() =>
     this.nativeUpdateService.availableUpdate()

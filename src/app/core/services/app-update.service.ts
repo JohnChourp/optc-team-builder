@@ -4,6 +4,13 @@ import { SwUpdate } from '@angular/service-worker';
 import { type Subscription } from 'rxjs';
 
 import { SwDownloadProgressTracker, resolveCacheStorage } from './sw-download-progress.tracker';
+import {
+  UPDATE_SIZE_WORTH_SAYING_BYTES,
+  estimateUpdatePayload,
+  formatUpdateSize,
+  parseNgswManifest,
+  type NgswManifestSnapshot,
+} from './update-payload-size.utils';
 
 /** Lifecycle of the pending web (PWA) update, as the shell renders it. */
 export type AppUpdatePhase = 'idle' | 'downloading' | 'ready' | 'failed';
@@ -145,6 +152,7 @@ export const POLLED_READY_HASH = '__polled__';
 export class AppUpdateService {
   private readonly rawPhaseSignal = signal<AppUpdatePhase>('idle');
   private readonly downloadProgressSignal = signal(0);
+  private readonly updateSizeLabelSignal = signal<string | null>(null);
   private readonly measuredSignal = signal(false);
   private readonly stalledSignal = signal(false);
   private readonly snoozedSignal = signal(false);
@@ -168,6 +176,19 @@ export class AppUpdateService {
   /** True when {@link downloadProgress} reflects a real byte census. */
   public readonly measuredProgress: Signal<boolean> = this.measuredSignal.asReadonly();
 
+  /**
+   * 869f138pt. How large this update is, already formatted - or null when it is not worth saying.
+   *
+   * Null covers three different silences and deliberately does not distinguish them on screen: the
+   * app started after the new manifest was already being served and has nothing to compare, the
+   * manifests could not be read, or the update is smaller than
+   * {@link UPDATE_SIZE_WORTH_SAYING_BYTES}. In all three the banner reads exactly as it did before,
+   * because a size nobody can stand behind is worse than no size.
+   */
+  public readonly updateSizeLabel: Signal<string | null> = computed(() =>
+    this.snoozedSignal() ? null : this.updateSizeLabelSignal(),
+  );
+
   /** True when a download has run past {@link UPDATE_DOWNLOAD_STALL_MS}. */
   public readonly updateStalled: Signal<boolean> = computed(
     () => !this.snoozedSignal() && this.stalledSignal(),
@@ -187,6 +208,8 @@ export class AppUpdateService {
   );
 
   private readonly progressTracker: SwDownloadProgressTracker;
+  /** The manifest of the version this session started on, read once. */
+  private runningManifest: NgswManifestSnapshot | null = null;
 
   private started = false;
   private destroyed = false;
@@ -233,6 +256,15 @@ export class AppUpdateService {
     }
 
     this.started = true;
+
+    /*
+     * 869f138pt. The manifest of the version this session is running, kept for the diff at
+     * VERSION_DETECTED. Read once and not awaited: an update detected before it lands simply has no
+     * size to report, which is the same silence as any other unknown.
+     */
+    void this.readNgswManifest().then((manifest) => {
+      this.runningManifest ??= manifest;
+    });
 
     // ngsw runs its own update check once the app stabilizes and emits
     // VERSION_DETECTED then VERSION_READY for a build that was already newer at
@@ -433,6 +465,8 @@ export class AppUpdateService {
     this.measuredSignal.set(false);
     this.stalledSignal.set(false);
     this.downloadProgressSignal.set(0);
+    /* 869f138pt. A size belongs to one download; carrying it into the next would be a guess. */
+    this.updateSizeLabelSignal.set(null);
   }
 
   /** Returns the banner to idle and forgets the in-flight download. */
@@ -509,6 +543,54 @@ export class AppUpdateService {
     if (this.rawPhaseSignal() === 'downloading' && this.trackedHash === hash) {
       this.measurabilityPending = false;
       this.setMeasured(measurable);
+    }
+
+    await this.estimateUpdateSize(hash);
+  }
+
+  /**
+   * 869f138pt. Reads `ngsw.json` again - now the incoming version's - and diffs it against the one
+   * this session started on, so the banner can say how much is coming.
+   *
+   * Runs after `begin()` on purpose: the sizes it needs are the outgoing version's cached
+   * `content-length`s, which `begin()` is what collects.
+   */
+  private async estimateUpdateSize(hash: string): Promise<void> {
+    const next = await this.readNgswManifest();
+    const estimate = estimateUpdatePayload({
+      previous: this.runningManifest,
+      next,
+      byteSizeByUrl: this.progressTracker.outgoingByteSizes,
+    });
+
+    // A newer version can be detected while the fetch above is pending; labelling THIS one then
+    // would put the wrong size under the wrong download.
+    if (this.trackedHash !== hash) {
+      return;
+    }
+
+    this.updateSizeLabelSignal.set(
+      estimate && estimate.bytes >= UPDATE_SIZE_WORTH_SAYING_BYTES
+        ? formatUpdateSize(estimate.bytes)
+        : null,
+    );
+  }
+
+  /**
+   * The manifest as the origin serves it now.
+   *
+   * `ngsw.json` is the one file the worker never serves from its own caches, so this is always the
+   * deployed version rather than the running one - which is exactly the property the diff rests on.
+   * `cache: 'no-store'` because an HTTP-cached copy would answer the same question twice.
+   */
+  private async readNgswManifest(): Promise<NgswManifestSnapshot | null> {
+    try {
+      const response = await this.document.defaultView?.fetch('ngsw.json', { cache: 'no-store' });
+
+      return response?.ok ? parseNgswManifest(await response.json()) : null;
+    } catch {
+      /* Offline, blocked, or not a service-worker build. The banner simply says no size. */
+      return null;
     }
   }
 

@@ -115,6 +115,16 @@ export class SwDownloadProgressTracker {
   }
 
   /**
+   * 869f138pt. The outgoing version's per-asset sizes, for the update-size estimate.
+   *
+   * Read-only on purpose: this map is the denominator of every later sample, and a caller that
+   * mutated it would move the bar without downloading anything.
+   */
+  public get outgoingByteSizes(): ReadonlyMap<string, number> {
+    return this.byteSizeByUrl;
+  }
+
+  /**
    * Prepares measurement for the version identified by `hash` (the
    * `VERSION_DETECTED` payload's `version.hash`).
    *
