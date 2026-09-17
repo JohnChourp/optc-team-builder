@@ -42,6 +42,7 @@ let appUpdateStub: {
   downloadProgress: ReturnType<typeof signal>;
   updateStalled: ReturnType<typeof signal>;
   updateActivatable: ReturnType<typeof signal>;
+  updateSizeLabel: ReturnType<typeof signal<string | null>>;
   init: ReturnType<typeof vi.fn>;
   applyUpdate: ReturnType<typeof vi.fn>;
   snooze: ReturnType<typeof vi.fn>;
@@ -180,6 +181,7 @@ describe('AppComponent', () => {
       downloadProgress: signal(0),
       updateStalled: signal(false),
       updateActivatable: signal(false),
+      updateSizeLabel: signal<string | null>(null),
       init: vi.fn(),
       applyUpdate: vi.fn().mockResolvedValue(undefined),
       snooze: vi.fn(),
@@ -567,6 +569,32 @@ describe('AppComponent', () => {
     expect(component.updateCopyKey()).toBe('appUpdate.downloading');
     expect(component.updateDownloading()).toBe(true);
 
+    appUpdateStub.updateStalled.set(true);
+    expect(component.updateCopyKey()).toBe('appUpdate.downloadStalled');
+
+    appUpdateStub.updateStalled.set(false);
+    appUpdateStub.updatePhase.set('ready');
+    expect(component.updateCopyKey()).toBe('appUpdate.copy');
+  });
+
+  /*
+   * 869f138pt. The size is a separate copy key rather than a parameter on the same one, because
+   * transloco renders a missing `{{size}}` as the literal braces - so the key that asks for it must
+   * only be chosen when there is one.
+   */
+  it('says how large the update is only while there is a size to say', async () => {
+    const { AppComponent } = await import('./app.component');
+    const component = new AppComponent();
+
+    appUpdateStub.updatePhase.set('downloading');
+    expect(component.updateCopyKey()).toBe('appUpdate.downloading');
+    expect(component.updateSizeLabel()).toBeNull();
+
+    appUpdateStub.updateSizeLabel.set('2.3 MB');
+    expect(component.updateCopyKey()).toBe('appUpdate.downloadingWithSize');
+    expect(component.updateSizeLabel()).toBe('2.3 MB');
+
+    /* A stall is still a stall: the size never takes precedence over what went wrong. */
     appUpdateStub.updateStalled.set(true);
     expect(component.updateCopyKey()).toBe('appUpdate.downloadStalled');
 

@@ -240,6 +240,7 @@
     "downloadStalled": "This is taking longer than usual. The download is still running.",
     "downloadedNative": "The new version has downloaded. Confirm the install to finish.",
     "downloading": "Downloading the new version…",
+    "downloadingWithSize": "Downloading the new version — about {{size}}.",
     "later": "Later",
     "openReleasePage": "Release page",
     "progressLabel": "Update download progress",
