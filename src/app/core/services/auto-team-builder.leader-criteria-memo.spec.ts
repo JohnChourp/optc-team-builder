@@ -1,5 +1,5 @@
 import '@angular/compiler';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { type CharacterDetailRecord } from '../models/optc.models';
 import { AutoTeamBuilderService } from './auto-team-builder.service';
@@ -10,24 +10,13 @@ import { AutoTeamBuilderService } from './auto-team-builder.service';
  * Captain's text. On the real dataset that was 186 s of a 186 s build (issue #523's request with no
  * Captain pinned); with one memo per leader pair it is 3.6 s, for the same team.
  *
- * This test holds that shape: it counts how often a Captain's text is resolved against a member
- * during a search that has to look at many teams. Without the memo the count grows with the teams
- * visited; with it, it grows with the members. Proven red by disabling the memo.
+ * This test holds that shape: it counts how often a Captain's text is read during a search that has
+ * to look at many teams. Without the memo the count grows with the teams visited; with it, it grows
+ * with the members. Proven red by disabling the memo.
+ *
+ * The count is taken on the record itself, not by mocking `captain-coverage.utils`: the Angular
+ * unit-test builder bundles the app and refuses `vi.mock` of a relative import.
  */
-
-const resolveCaptainCoverageCalls = vi.hoisted(() => ({ count: 0 }));
-
-vi.mock('./captain-coverage.utils', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('./captain-coverage.utils')>();
-
-  return {
-    ...actual,
-    resolveCaptainCoverage: (...args: Parameters<typeof actual.resolveCaptainCoverage>) => {
-      resolveCaptainCoverageCalls.count += 1;
-      return actual.resolveCaptainCoverage(...args);
-    },
-  };
-});
 
 function character(id: number, type: string, captainAbility: string | null, specialText: string | null): CharacterDetailRecord {
   return {
@@ -79,14 +68,36 @@ function character(id: number, type: string, captainAbility: string | null, spec
   } as unknown as CharacterDetailRecord;
 }
 
+/** Every read of this Captain's text, wherever it comes from, adds one to `reads.count`. */
+function countingCaptainTextReads(record: CharacterDetailRecord, reads: { count: number }): CharacterDetailRecord {
+  const text = record.detail.captainAbility;
+
+  Object.defineProperty(record.detail, 'captainAbility', {
+    enumerable: true,
+    get: () => {
+      reads.count += 1;
+      return text;
+    },
+  });
+
+  return record;
+}
+
 describe('leader-criteria memo (869f333ey, D7)', () => {
-  it('resolves each member against a leader pair a bounded number of times, not once per team visited', async () => {
+  it('reads each Captain text a bounded number of times, not once per team visited', async () => {
     const special = 'Boosts ATK of all characters by 2x for 1 turn.';
+    const reads = { count: 0 };
     // Two Captains that each boost one type and fourteen members: the exact search fails and the
     // fallbacks visit many teams before one is kept, and every team asks about all six members.
     const records = [
-      character(1, 'DEX', 'Boosts ATK of [DEX] characters by 3x and their HP by 1.2x.', special),
-      character(2, 'STR', 'Boosts ATK of [STR] characters by 3x and their HP by 1.2x.', special),
+      countingCaptainTextReads(
+        character(1, 'DEX', 'Boosts ATK of [DEX] characters by 3x and their HP by 1.2x.', special),
+        reads,
+      ),
+      countingCaptainTextReads(
+        character(2, 'STR', 'Boosts ATK of [STR] characters by 3x and their HP by 1.2x.', special),
+        reads,
+      ),
       ...Array.from({ length: 14 }, (_, index) => character(10 + index, index < 6 ? 'DEX' : 'STR', null, special)),
     ];
     const service = new AutoTeamBuilderService({
@@ -94,14 +105,13 @@ describe('leader-criteria memo (869f333ey, D7)', () => {
       getShips: async () => [],
     } as never);
 
-    resolveCaptainCoverageCalls.count = 0;
     const result = await service.buildTeam(['Striker'], ['DEX', 'STR'], {}, { workerCount: 1 });
 
     expect(result).not.toBeNull();
-    /* Without the memo every team visited asks again about all six members. */
-    expect(resolveCaptainCoverageCalls.count).toBeLessThan(MEMOISED_CALL_CEILING);
+    /* Without the memo every team visited reads both texts again, for all six members. */
+    expect(reads.count).toBeLessThan(MEMOISED_READ_CEILING);
   });
 });
 
-/* Measured 2026-09-18: 96 calls with the memo, 498 with it disabled (same team). */
-const MEMOISED_CALL_CEILING = 200;
+/* Measured 2026-09-18 under `ng test`: 208 reads with the memo, 1,012 with it disabled (same team). */
+const MEMOISED_READ_CEILING = 400;

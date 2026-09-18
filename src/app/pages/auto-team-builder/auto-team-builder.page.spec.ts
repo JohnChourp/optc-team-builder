@@ -11820,17 +11820,19 @@ describe('AutoTeamBuilderPage debug report', () => {
     const template = readTemplate();
     const coverageActions = template.slice(template.indexOf('<div class="coverage-actions">'));
     const errorCard = template.slice(template.indexOf('@if (!building() && errorMessage())'));
+    // The whole failed-build card, however many actions it grows (869f333ey added one).
+    const failureCard = errorCard.slice(0, errorCard.indexOf('</section>'));
     const feedback = template.slice(template.indexOf('<ng-template #debugReportFeedbackBlock>'));
 
     expect(coverageActions.slice(0, 1400)).toContain('(click)="copyDebugReport()"');
     expect(coverageActions.slice(0, 1400)).toContain(
       '<ng-container *ngTemplateOutlet="debugReportFeedbackBlock"></ng-container>',
     );
-    expect(errorCard.slice(0, 1600)).toContain('@if (canCopyDebugReport())');
-    expect(errorCard.slice(0, 1600)).toContain('(click)="copyDebugReport()"');
+    expect(failureCard).toContain('@if (canCopyDebugReport())');
+    expect(failureCard).toContain('(click)="copyDebugReport()"');
     // The report gets a full row of its own in the failed-build card, so the card's columns
     // cannot squeeze the button, the status line or the textarea (review, 869exmkdp).
-    expect(errorCard.slice(0, 1600)).toMatch(
+    expect(failureCard).toMatch(
       /<div class="build-failure-card__report">\s*<ng-container \*ngTemplateOutlet="debugReportFeedbackBlock"><\/ng-container>\s*<\/div>/u,
     );
     expect(errorCard.slice(0, 400)).toContain(

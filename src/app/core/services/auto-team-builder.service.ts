@@ -166,14 +166,15 @@ interface PooledWorkerState {
   retiring: boolean;
 }
 
-/** 869f333ey. What the alternative-Captain pass found, including when it found nothing. */
+/** 869f333ey. What the alternative-Captain proof found, including when it found nothing. */
 interface AutoTeamBuildAlternativeCaptainOutcome {
   /** Null when no Captain was pinned. */
   pinnedCaptainId: number | null;
   /** Empty when the pinned Captain passed the proof - the pass then does nothing at all. */
   impossibility: AutoBuildPinnedCaptainImpossibility[];
+  /** The Captains proven able instead, in preference order. Empty when there is nothing to try. */
   alternativeCaptainIds: number[];
-  result: AutoBuildResult | null;
+  manualFriendCaptainId: number | null;
 }
 
 interface AutoTeamBuildScopedAutoFillCharacterIds {
@@ -633,20 +634,34 @@ export class AutoTeamBuilderService {
       typeof this.repository.getShips === 'function'
         ? this.repository.getShips()
         : Promise.resolve([]);
-    const alternativeCaptain = await this.resolveAlternativeCaptainOutcome({
+    const alternativeCaptain = this.resolveAlternativeCaptainOutcome({
       records,
       requestedInput,
       captainCoveredRecords,
       allowedCharacterIds,
-      friendCaptainRecords,
-      legacyAutoFillCharacterIds,
-      executionOptions,
+      signal: executionOptions.signal,
     });
+    /*
+     * Awaited only when there is a Captain to try. Without one - no Captain pinned, or one the proof
+     * found able - the search starts on the same microtask it always did; the pooled-worker specs
+     * pin that timing to the tick.
+     */
+    const replacedCaptainResult = alternativeCaptain.alternativeCaptainIds.length
+      ? await this.runReplacementCaptains({
+          records,
+          requestedInput,
+          allowedCharacterIds,
+          friendCaptainRecords,
+          legacyAutoFillCharacterIds,
+          executionOptions,
+          alternativeCaptain,
+        })
+      : null;
 
-    if (alternativeCaptain.result) {
+    if (replacedCaptainResult) {
       return {
-        ...alternativeCaptain.result,
-        shipSelection: resolveAutoBuildShipSelection(alternativeCaptain.result, await shipsPromise),
+        ...replacedCaptainResult,
+        shipSelection: resolveAutoBuildShipSelection(replacedCaptainResult, await shipsPromise),
       };
     }
 
@@ -755,26 +770,29 @@ export class AutoTeamBuilderService {
    *   scopes the alternatives' proofs exactly as it scoped the original.
    * - D4: the team comes back as a relaxation (`replacedCaptain`), with the reader's own request.
    */
-  private async resolveAlternativeCaptainOutcome(context: {
+  private resolveAlternativeCaptainOutcome(context: {
     records: CharacterDetailRecord[];
     requestedInput: AutoBuildInput;
     captainCoveredRecords: CharacterDetailRecord[];
     allowedCharacterIds: number[] | undefined;
-    friendCaptainRecords: CharacterDetailRecord[] | undefined;
-    legacyAutoFillCharacterIds: number[] | undefined;
-    executionOptions: AutoTeamBuildExecutionOptions;
-  }): Promise<AutoTeamBuildAlternativeCaptainOutcome> {
-    const { records, requestedInput, executionOptions } = context;
+    signal?: AbortSignal;
+  }): AutoTeamBuildAlternativeCaptainOutcome {
+    const { records, requestedInput } = context;
     const pinnedCaptainId = requestedInput.captainCharacterId;
     const captainSlot = requestedInput.manualSlots.find((slot) => slot.role === 'captain');
-
-    if (pinnedCaptainId === null || !captainSlot?.characterIds.length) {
-      return { pinnedCaptainId: null, impossibility: [], alternativeCaptainIds: [], result: null };
-    }
-
     const manualFriendCaptainId =
       requestedInput.manualSlots.find((slot) => slot.role === 'friendCaptain')?.characterIds[0] ??
       null;
+
+    if (pinnedCaptainId === null || !captainSlot?.characterIds.length) {
+      return {
+        pinnedCaptainId: null,
+        impossibility: [],
+        alternativeCaptainIds: [],
+        manualFriendCaptainId,
+      };
+    }
+
     const pinnedLeaderIdsFor = (captainId: number): number[] =>
       [captainId, manualFriendCaptainId].filter((id): id is number => id !== null);
     const proofInput = {
@@ -793,7 +811,7 @@ export class AutoTeamBuilderService {
     });
 
     if (!impossibility.length) {
-      return { pinnedCaptainId, impossibility, alternativeCaptainIds: [], result: null };
+      return { pinnedCaptainId, impossibility, alternativeCaptainIds: [], manualFriendCaptainId };
     }
 
     const alternativeCaptainIds = this.resolveAlternativeCaptainIds({
@@ -804,36 +822,42 @@ export class AutoTeamBuilderService {
       allowedCharacterIds: context.allowedCharacterIds,
       prove: createPinnedCaptainProver({ ...proofInput, records }),
       pinnedLeaderIdsFor,
-      signal: executionOptions.signal,
+      signal: context.signal,
     });
 
-    if (!alternativeCaptainIds.length) {
-      return { pinnedCaptainId, impossibility, alternativeCaptainIds, result: null };
-    }
+    return { pinnedCaptainId, impossibility, alternativeCaptainIds, manualFriendCaptainId };
+  }
 
+  /** Runs the alternatives the proof found, and returns their team as the relaxation it is. */
+  private async runReplacementCaptains(context: {
+    records: CharacterDetailRecord[];
+    requestedInput: AutoBuildInput;
+    allowedCharacterIds: number[] | undefined;
+    friendCaptainRecords: CharacterDetailRecord[] | undefined;
+    legacyAutoFillCharacterIds: number[] | undefined;
+    executionOptions: AutoTeamBuildExecutionOptions;
+    alternativeCaptain: AutoTeamBuildAlternativeCaptainOutcome;
+  }): Promise<AutoBuildResult | null> {
+    const { records, requestedInput, alternativeCaptain } = context;
+    const pinnedCaptainId = alternativeCaptain.pinnedCaptainId;
     const found = await this.runAlternativeCaptainAttempt({
       ...context,
-      alternativeCaptainIds,
-      manualFriendCaptainId,
+      alternativeCaptainIds: alternativeCaptain.alternativeCaptainIds,
+      manualFriendCaptainId: alternativeCaptain.manualFriendCaptainId,
     });
     const captainSlotResult = found?.slots.find((slot) => slot.role === 'captain');
 
-    if (!found || !captainSlotResult?.character) {
-      return { pinnedCaptainId, impossibility, alternativeCaptainIds, result: null };
+    if (pinnedCaptainId === null || !found || !captainSlotResult?.character) {
+      return null;
     }
 
-    return {
-      pinnedCaptainId,
-      impossibility,
-      alternativeCaptainIds,
-      result: applyReplacedCaptainRelaxation(found, requestedInput, {
-        fromCharacterId: pinnedCaptainId,
-        fromName:
-          records.find((record) => record.id === pinnedCaptainId)?.name ?? String(pinnedCaptainId),
-        toCharacterId: captainSlotResult.character.id,
-        toName: captainSlotResult.character.name,
-      }),
-    };
+    return applyReplacedCaptainRelaxation(found, requestedInput, {
+      fromCharacterId: pinnedCaptainId,
+      fromName:
+        records.find((record) => record.id === pinnedCaptainId)?.name ?? String(pinnedCaptainId),
+      toCharacterId: captainSlotResult.character.id,
+      toName: captainSlotResult.character.name,
+    });
   }
 
   /** Up to eight Captains from the same pool, preference order, each proven able on the same terms. */

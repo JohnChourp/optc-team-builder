@@ -167,6 +167,60 @@ const leaderIds = (result: AutoBuildResult | null) => ({
   friendCaptain: result?.slots.find((slot) => slot.role === 'friendCaptain')?.character.id,
 });
 
+/**
+ * A worker that runs the real engine on the main thread and records every request it was sent, so a
+ * test can see exactly what the service asked for.
+ */
+function stubEngineWorker(): {
+  requests: AutoTeamBuilderWorkerRequest[];
+  workers: { terminated: boolean }[];
+} {
+  const requests: AutoTeamBuilderWorkerRequest[] = [];
+  const workers: FakeEngineWorker[] = [];
+
+  class FakeEngineWorker extends EventTarget {
+    public terminated = false;
+    private records: CharacterDetailRecord[] = [];
+
+    public constructor() {
+      super();
+      workers.push(this);
+    }
+
+    public postMessage(request: AutoTeamBuilderWorkerRequest): void {
+      requests.push(request);
+      queueMicrotask(() => {
+        if (request.type === 'init') {
+          this.records = request.records;
+          this.dispatchEvent(new MessageEvent('message', { data: { type: 'ready' } }));
+        } else if (request.type === 'runAttempt') {
+          const result = runAutoTeamBuildAttempt(
+            this.records,
+            request.input,
+            request.requestedInput,
+            request.requireLeadersWithoutSuperEffects,
+            request.friendCaptainRecords,
+            request.autoFillCharacterIds,
+            request.leaderAutoFillCharacterIds,
+            request.subAutoFillCharacterIds,
+          );
+          this.dispatchEvent(
+            new MessageEvent('message', { data: { type: 'result', runId: request.runId, result } }),
+          );
+        }
+      });
+    }
+
+    public terminate(): void {
+      this.terminated = true;
+    }
+  }
+
+  vi.stubGlobal('Worker', FakeEngineWorker);
+
+  return { requests, workers };
+}
+
 afterEach(() => {
   vi.unstubAllGlobals();
 });
@@ -233,15 +287,30 @@ describe('alternative Captain (869f333ey, issue #523)', () => {
     expect(leaderIds(result).captain).toBe(DEX_CAPTAIN);
   });
 
-  /* D9: only the Captain changes; a Friend Captain the reader pinned keeps its seat. */
-  it('keeps a pinned Friend Captain in its seat', async () => {
+  /*
+   * D9: only the Captain changes; a Friend Captain the reader pinned keeps its seat.
+   *
+   * The seat alone cannot prove it here: the engine tries a pinned leader before any auto-filled
+   * one, and on this small pool that first try always succeeds - the test stayed green with the fix
+   * removed. On the real dataset it did not: some alternatives could not finish a team with the
+   * reader's Ripley, and the engine moved on to an auto-filled Friend Captain for the same Captain.
+   * So the attempt itself is checked too: the pinned Friend Captain goes in as required.
+   */
+  it('keeps a pinned Friend Captain in its seat, held as required', async () => {
+    const { requests } = stubEngineWorker();
     const result = await build({
       manualSlots: [captainSlot(QCK_CAPTAIN), { role: 'friendCaptain', characterIds: [ALL_CAPTAIN] }],
     });
+    const attempt = requests.find((request) => request.type === 'runAttempt');
+    const friendCaptainSlot =
+      attempt?.type === 'runAttempt'
+        ? attempt.input.manualSlots.find((slot) => slot.role === 'friendCaptain')
+        : undefined;
 
     expect(leaderIds(result).friendCaptain).toBe(ALL_CAPTAIN);
     expect(leaderIds(result).captain).not.toBe(QCK_CAPTAIN);
     expect(result!.relaxation.replacedCaptain?.fromCharacterId).toBe(QCK_CAPTAIN);
+    expect(friendCaptainSlot?.requiredCharacterId).toBe(ALL_CAPTAIN);
   });
 
   /* D6: when no Captain can, the failure says why - and that the others were tried. */
@@ -274,48 +343,7 @@ describe('alternative Captain (869f333ey, issue #523)', () => {
    */
   it('runs the attempt in a worker when there is one, with the same result', async () => {
     const mainThread = await build();
-    const requests: AutoTeamBuilderWorkerRequest[] = [];
-    const workers: FakeEngineWorker[] = [];
-
-    class FakeEngineWorker extends EventTarget {
-      public terminated = false;
-      private records: CharacterDetailRecord[] = [];
-
-      public constructor() {
-        super();
-        workers.push(this);
-      }
-
-      public postMessage(request: AutoTeamBuilderWorkerRequest): void {
-        requests.push(request);
-        queueMicrotask(() => {
-          if (request.type === 'init') {
-            this.records = request.records;
-            this.dispatchEvent(new MessageEvent('message', { data: { type: 'ready' } }));
-          } else if (request.type === 'runAttempt') {
-            const result = runAutoTeamBuildAttempt(
-              this.records,
-              request.input,
-              request.requestedInput,
-              request.requireLeadersWithoutSuperEffects,
-              request.friendCaptainRecords,
-              request.autoFillCharacterIds,
-              request.leaderAutoFillCharacterIds,
-              request.subAutoFillCharacterIds,
-            );
-            this.dispatchEvent(
-              new MessageEvent('message', { data: { type: 'result', runId: request.runId, result } }),
-            );
-          }
-        });
-      }
-
-      public terminate(): void {
-        this.terminated = true;
-      }
-    }
-
-    vi.stubGlobal('Worker', FakeEngineWorker);
+    const { requests, workers } = stubEngineWorker();
     const inWorker = await build();
     const attempt = requests.find((request) => request.type === 'runAttempt');
 
