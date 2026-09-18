@@ -1012,9 +1012,14 @@ export class AutoTeamBuilderService {
     const worker = this.createWorker();
     let result: AutoBuildResult | null;
 
+    // Where it ran goes into the debug report like every other search's, or a build this pass
+    // answered carries no executionPath at all.
     if (!worker) {
+      executionOptions.onExecutionPath?.('mainThread');
       result = runOnMainThread();
     } else {
+      executionOptions.onExecutionPath?.('worker');
+
       try {
         await this.initializeWorker(
           worker,
@@ -1040,6 +1045,7 @@ export class AutoTeamBuilderService {
         }
 
         reportWorkerFallback('auto-team-builder', 'worker-failed', error);
+        executionOptions.onExecutionPath?.('mainThreadAfterWorkerFailure');
         result = runOnMainThread();
       } finally {
         worker.terminate();

@@ -355,4 +355,53 @@ describe('alternative Captain (869f333ey, issue #523)', () => {
     );
     expect(workers[0]!.terminated).toBe(true);
   });
+
+  /*
+   * The debug report's `dataQuality.executionPath` comes from `onExecutionPath`, and the page clears
+   * it before every build. A build this pass answered used to report nothing at all - found by the
+   * FAQ #5 adversarial check (869f138rf), after app#549 shipped.
+   */
+  it('reports where the replacement attempt ran, like every other search', async () => {
+    const buildRecordingPaths = async (): Promise<string[]> => {
+      const paths: string[] = [];
+      const service = new AutoTeamBuilderService(new Repository(pool()) as never);
+      const result = await service.buildTeam(['Striker'], ['DEX', 'STR'], constraints(), {
+        workerCount: 1,
+        onExecutionPath: (path) => paths.push(path),
+      });
+
+      expect(result!.relaxation.replacedCaptain?.fromCharacterId).toBe(QCK_CAPTAIN);
+      return paths;
+    };
+
+    // jsdom has no Worker, so the attempt runs on the main thread.
+    expect(await buildRecordingPaths()).toEqual(['mainThread']);
+
+    stubEngineWorker();
+    expect(await buildRecordingPaths()).toEqual(['worker']);
+
+    // A worker that starts and then fails: the main thread answers, and the path says both.
+    vi.stubGlobal(
+      'Worker',
+      class FailingWorker extends EventTarget {
+        public postMessage(request: AutoTeamBuilderWorkerRequest): void {
+          queueMicrotask(() =>
+            this.dispatchEvent(
+              new MessageEvent('message', {
+                data:
+                  request.type === 'init'
+                    ? { type: 'ready' }
+                    : { type: 'error', runId: 'runId' in request ? request.runId : '', errorMessage: 'worker crashed' },
+              }),
+            ),
+          );
+        }
+
+        public terminate(): void {}
+      },
+    );
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    expect(await buildRecordingPaths()).toEqual(['worker', 'mainThreadAfterWorkerFailure']);
+    warn.mockRestore();
+  });
 });
