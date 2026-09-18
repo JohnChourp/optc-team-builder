@@ -156,6 +156,20 @@ export const AUTO_TEAM_BUILDER_AXES: readonly AutoTeamBuilderAxis[] = [
     family: 'leaderScope',
     reportRowKey: 'leaderSuperScope',
   },
+  /*
+   * 869f333ey (D4). The Captain the reader pinned. Conceded only when that Captain provably cannot
+   * lead the crew asked for (`resolvePinnedCaptainImpossibility`), and then only for another Captain
+   * from the same pool that keeps every filter and the coverage - issue #523.
+   */
+  {
+    axis: 12,
+    id: 'pinnedCaptain',
+    inputField: 'manualSlots',
+    relaxationFields: ['replacedCaptain'],
+    relaxable: true,
+    family: 'leaderScope',
+    reportRowKey: 'captain',
+  },
 ] as const;
 
 /**

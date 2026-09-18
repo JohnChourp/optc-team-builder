@@ -98,6 +98,61 @@ describe('Auto Team Builder debug report (869exmkdp)', () => {
     expect(formatAutoTeamDebugReportMarkdown(report)).toContain('- Result: no team found\n');
   });
 
+  /*
+   * 869f333ey (D6). The pinned Captain that could not lead the crew travels as ids, keys and counts:
+   * the name stays out, and so does the battle title the reader typed.
+   */
+  it('carries why the pinned Captain could not lead the crew, in ids and keys only', () => {
+    const report = buildAutoTeamDebugReport({
+      ...createInput(),
+      result: null,
+      failure: 'noTeam',
+      infeasibility: {
+        reasons: [],
+        poolSize: 12,
+        pinnedCaptain: {
+          characterId: 4629,
+          name: 'Loki - Sun God who Brings the World to an End',
+          impossibility: [
+            { kind: 'selectedTypeOutsideCaptainScope', types: ['DEX', 'STR'] },
+            {
+              kind: 'requirementOutsideCaptainScope',
+              subject: {
+                id: 'battle:b1:g1',
+                abilities: [{ abilityKey: 'remove_atk_down', minTurns: 2, slotTokens: [], requiredCharacterCount: 1 }],
+                battleTitle: 'A title the reader typed',
+                battleIndex: 0,
+              },
+              coveredMatchCount: 0,
+              requiredCharacterCount: 1,
+            },
+            { kind: 'tooFewCoveredCandidates', coveredCandidateCount: 0 },
+          ],
+          alternativeCaptainIds: [4635],
+        },
+      },
+    });
+
+    expect(report.outcome.pinnedCaptain).toEqual({
+      characterId: 4629,
+      impossibility: [
+        { kind: 'selectedTypeOutsideCaptainScope', types: ['DEX', 'STR'] },
+        {
+          kind: 'requirementOutsideCaptainScope',
+          abilities: [{ key: 'remove_atk_down', minTurns: 2 }],
+          battleIndex: 0,
+          coveredMatchCount: 0,
+          requiredCharacterCount: 1,
+        },
+        { kind: 'tooFewCoveredCandidates', coveredCandidateCount: 0 },
+      ],
+      alternativeCaptainIds: [4635],
+    });
+    const json = JSON.stringify(report);
+    expect(json).not.toContain('A title the reader typed');
+    expect(json).not.toContain('Sun God');
+  });
+
   it('says a relaxed team and a failure apart from an exact one', () => {
     const input = createInput();
     const relaxed = {

@@ -150,6 +150,20 @@ describe('resolveFinalReportRemedy - activation criteria', () => {
 });
 
 describe('resolveFinalReportRemedy - rules it does not speak for', () => {
+  /* 869f333ey. The pinned Captain could not lead the crew; asking for it again restores nothing. */
+  it('offers to pin the replacement Captain, or to change the crew for the original', () => {
+    expect(
+      resolveFinalReportRemedy({
+        ruleKey: 'captain',
+        replacedCaptain: { fromName: 'Loki', toName: 'Ripley' },
+      }),
+    ).toEqual({ kind: 'pinReplacementCaptain', fromName: 'Loki', toName: 'Ripley' });
+  });
+
+  it('declines for the Captain row when no replacement was recorded', () => {
+    expect(resolveFinalReportRemedy({ ruleKey: 'captain' })).toBeNull();
+  });
+
   it('declines for an unknown rule key instead of guessing', () => {
     expect(
       resolveFinalReportRemedy({ ruleKey: 'somethingAddedLater', droppedValues: ['x'] }),

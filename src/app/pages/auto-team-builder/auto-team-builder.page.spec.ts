@@ -11898,3 +11898,151 @@ describe('Build button glow', () => {
     expect(rule).toMatch(/--border-radius:\s*18px;\s*\n\s*border-radius:\s*18px;/u);
   });
 });
+
+/*
+ * 869f333ey - issue #523. A pinned Captain that provably could not lead the crew was replaced by the
+ * search: the report says so in its own row with a way back (D4), guided mode names the Captain that
+ * works and offers it in one click (D5), and when no Captain works the failure says why (D6).
+ */
+describe('AutoTeamBuilderPage replaced Captain (869f333ey)', () => {
+  const replacedCaptain = {
+    fromCharacterId: 999,
+    fromName: 'Loki',
+    toCharacterId: 101,
+    toName: 'Ripley',
+  };
+
+  function resultWithReplacedCaptain(): AutoBuildResult {
+    const result = createAutoBuildResult();
+
+    return {
+      ...result,
+      requestedInput: { ...result.requestedInput, manualSlots: createManualSlots({ captain: [999] }) },
+      relaxation: { ...result.relaxation, usedFallback: true, replacedCaptain },
+    };
+  }
+
+  it('reports the replacement as a relaxed Captain row, with a way to restore it', async () => {
+    const { page } = await createPage();
+
+    page.result.set(resultWithReplacedCaptain());
+    const row = page.finalReportRows().find((entry) => entry.key === 'captain');
+
+    expect(row).toMatchObject({ state: 'relaxed', title: 'Captain' });
+    expect(row?.detail).toContain('Loki');
+    expect(row?.detail).toContain('Ripley');
+    expect(row?.remedy).toContain('Pin Ripley as your Captain');
+  });
+
+  it('reports a pinned Captain that leads the team as kept', async () => {
+    const { page } = await createPage();
+    const result = createAutoBuildResult();
+
+    page.result.set({
+      ...result,
+      requestedInput: { ...result.requestedInput, manualSlots: createManualSlots({ captain: [101] }) },
+    });
+
+    expect(page.finalReportRows().find((entry) => entry.key === 'captain')).toMatchObject({
+      state: 'passed',
+      remedy: null,
+    });
+  });
+
+  it('has nothing to report when no Captain was pinned', async () => {
+    const { page } = await createPage();
+    const result = createAutoBuildResult();
+
+    page.result.set({
+      ...result,
+      requestedInput: { ...result.requestedInput, manualSlots: createManualSlots() },
+    });
+
+    expect(page.finalReportRows().find((entry) => entry.key === 'captain')).toMatchObject({
+      state: 'notApplicable',
+    });
+  });
+
+  it('explains the change on the slot as a fallback reason', async () => {
+    const { page } = await createPage();
+    const format = (
+      page as unknown as {
+        formatSlotExplanationReason(reason: { code: string; params?: Record<string, string> }): string;
+      }
+    ).formatSlotExplanationReason.bind(page);
+
+    expect(format({ code: 'fallbackReplacedCaptain', params: { from: 'Loki', to: 'Ripley' } })).toBe(
+      'Captain changed: Loki could not boost this crew, so Ripley leads it.',
+    );
+  });
+
+  it('in guided mode, rejects the team but names the Captain and puts it in the slot on request', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    await page.ngOnInit();
+    page.setGuidedAutoBuildEnabled(true);
+    page.manualSlots.set(createManualSlots({ captain: [999] }));
+    autoTeamBuilder.buildTeam.mockResolvedValue(resultWithReplacedCaptain());
+    await page.buildTeam();
+
+    expect(page.lastBuildFailure()).toBe('guidedRelaxedOnly');
+    expect(page.errorMessage()).toContain('Use Ripley as Captain');
+    expect(page.proposedCaptain()).toEqual(replacedCaptain);
+
+    page.useProposedCaptain();
+
+    expect(page.manualSlots().find((slot) => slot.role === 'captain')?.characterIds).toEqual([101]);
+    expect(page.errorMessage()).toBe('');
+    expect(page.proposedCaptain()).toBeNull();
+  });
+
+  it('offers no Captain after any other kind of failure', async () => {
+    const { page, autoTeamBuilder } = await createPage();
+
+    await page.ngOnInit();
+    page.setGuidedAutoBuildEnabled(true);
+    const result = createAutoBuildResult();
+    autoTeamBuilder.buildTeam.mockResolvedValue({
+      ...result,
+      relaxation: { ...result.relaxation, usedFallback: true, ignoredCaptainAbilityCoverage: true },
+    });
+    await page.buildTeam();
+
+    expect(page.lastBuildFailure()).toBe('guidedRelaxedOnly');
+    expect(page.proposedCaptain()).toBeNull();
+  });
+
+  it('says why the pinned Captain could not lead the crew, and that the others were tried', async () => {
+    const { page } = await createPage();
+    const message = () =>
+      (page as unknown as { resolveInfeasibilityMessage(): string | null }).resolveInfeasibilityMessage();
+
+    page.lastBuildInfeasibility.set({
+      reasons: [],
+      poolSize: 12,
+      pinnedCaptain: {
+        characterId: 999,
+        name: 'Loki',
+        impossibility: [{ kind: 'selectedTypeOutsideCaptainScope', types: ['DEX', 'STR'] }],
+        alternativeCaptainIds: [101, 102],
+      },
+    });
+
+    expect(message()).toContain('Loki does not boost any');
+    expect(message()).toContain('tried 2 other Captain(s)');
+
+    page.lastBuildInfeasibility.set({
+      reasons: [],
+      poolSize: 3,
+      pinnedCaptain: {
+        characterId: 999,
+        name: 'Loki',
+        impossibility: [{ kind: 'tooFewCoveredCandidates', coveredCandidateCount: 1 }],
+        alternativeCaptainIds: [],
+      },
+    });
+
+    expect(message()).toContain('Loki boosts only 1 character(s)');
+    expect(message()).toContain('No other Captain among the same characters');
+  });
+});

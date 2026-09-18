@@ -790,7 +790,35 @@ function buildFallbackExplanationReasons(
     reasons.push({ code: 'fallbackDowngradedCaptainAbilityCoverage' });
   }
 
+  if (relaxation.replacedCaptain) {
+    reasons.push({
+      code: 'fallbackReplacedCaptain',
+      params: { from: relaxation.replacedCaptain.fromName, to: relaxation.replacedCaptain.toName },
+    });
+  }
+
   return reasons;
+}
+
+/**
+ * 869f333ey (D4). A team found under another Captain than the one the reader pinned.
+ *
+ * The attempt that found it ran as if no Captain had been pinned, so its own `requestedInput` and
+ * `relaxation` describe that attempt, not the reader's request. This puts the reader's request back
+ * and records the replacement as the relaxation it is, then rebuilds every slot's fallback reasons
+ * from it - the same path every other relaxation takes - so the report, the explanations and the
+ * debug report all say the same thing.
+ */
+export function applyReplacedCaptainRelaxation(
+  result: AutoBuildResult,
+  requestedInput: AutoBuildInput,
+  replacedCaptain: NonNullable<AutoBuildResult['relaxation']['replacedCaptain']>,
+): AutoBuildResult {
+  return appendFallbackExplanationReasons({
+    ...result,
+    requestedInput,
+    relaxation: { ...result.relaxation, usedFallback: true, replacedCaptain },
+  });
 }
 
 function cloneExplanationReason(

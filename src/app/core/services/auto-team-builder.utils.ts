@@ -5337,6 +5337,47 @@ function resolveAutomaticCaptainBranchMode(
   return resolveBestCaptainBranchMode(captain, candidates, coverageMode);
 }
 
+/*
+ * 869f333ey (D7, second half). A VS Captain's branch is chosen at every search leaf by counting,
+ * per branch, how many team members that branch covers - and each count re-parsed the Captain's
+ * text once per member. Profiled on the real dataset (Loki pinned, Ripley pinned as Friend Captain,
+ * so the alternatives were the VS pairs Luffy & Zoro and Ace & Little Oars Jr.): 177.5 s of a
+ * 195 s build was this function. Same shape as the leader-criteria memo above - a pure answer,
+ * asked again and again - so the same fix: one memo per Captain record, keyed by coverage mode,
+ * branch and member id. The team tag clauses stay excluded, so no team member can change it.
+ */
+const captainBranchCoverageMemo = new WeakMap<CharacterDetailRecord, Map<string, boolean>>();
+
+function captainBranchCoversCandidate(
+  captain: CharacterDetailRecord,
+  candidate: AutoBuildCandidate,
+  coverageMode: AutoBuildCaptainAbilityCoverageMode,
+  branchMode: AutoBuildCaptainBranchMode,
+): boolean {
+  let memo = captainBranchCoverageMemo.get(captain);
+
+  if (!memo) {
+    memo = new Map();
+    captainBranchCoverageMemo.set(captain, memo);
+  }
+
+  const key = `${coverageMode}|${branchMode}|${candidate.character.id}`;
+  const remembered = memo.get(key);
+
+  if (remembered !== undefined) {
+    return remembered;
+  }
+
+  const matches = resolveCaptainCoverage(captain, candidate.character, {
+    coverageMode,
+    branchMode,
+    targetCharacterTags: candidate.character.detail.characterTags ?? [],
+    includeTeamTagClauses: false,
+  }).matches;
+  memo.set(key, matches);
+  return matches;
+}
+
 function resolveBestCaptainBranchMode(
   captain: CharacterDetailRecord,
   candidates: readonly AutoBuildCandidate[],
@@ -5346,14 +5387,8 @@ function resolveBestCaptainBranchMode(
   const scoredBranches = branchOptions.map((branch, index) => ({
     mode: branch.mode,
     index,
-    matchedSlots: candidates.filter(
-      (candidate) =>
-        resolveCaptainCoverage(captain, candidate.character, {
-          coverageMode,
-          branchMode: branch.mode,
-          targetCharacterTags: candidate.character.detail.characterTags ?? [],
-          includeTeamTagClauses: false,
-        }).matches,
+    matchedSlots: candidates.filter((candidate) =>
+      captainBranchCoversCandidate(captain, candidate, coverageMode, branch.mode),
     ).length,
   }));
 
@@ -5617,7 +5652,45 @@ function summarizeLeaderCriteria(
   };
 }
 
+/*
+ * 869f333ey (D7). The answer below is a pure function of the leader pair and the candidate: it reads
+ * the two leaders' captain text, the pair's coverage mode and branch modes, and the candidate's own
+ * type, classes and character tags - team tag clauses are excluded (`includeTeamTagClauses: false`)
+ * precisely so that no team member can change it. Yet the sub search asks it at every leaf, for the
+ * same pair and the same few hundred candidates, and every ask re-normalises the captain HTML and
+ * re-parses its scope.
+ *
+ * Measured on the real dataset with the #523 request and no pinned Captain: 186 s, almost all of it
+ * here. One memo per `ActiveLeaderCriteria` - which `buildAutoTeamResultFromPreparedContext` creates
+ * once per leader pair - keyed by character id. A WeakMap, so a pair's answers die with the pair and
+ * nothing is shared across attempts, searches or records that might carry different data.
+ */
+const leaderCriteriaMatchMemo = new WeakMap<ActiveLeaderCriteria, Map<number, boolean>>();
+
 function matchesActiveLeaderCriteria(
+  candidate: AutoBuildCandidate,
+  leaderCriteria: ActiveLeaderCriteria,
+): boolean {
+  let memo = leaderCriteriaMatchMemo.get(leaderCriteria);
+
+  if (!memo) {
+    memo = new Map();
+    leaderCriteriaMatchMemo.set(leaderCriteria, memo);
+  }
+
+  const characterId = candidate.character.id;
+  const remembered = memo.get(characterId);
+
+  if (remembered !== undefined) {
+    return remembered;
+  }
+
+  const matches = matchesActiveLeaderCriteriaUncached(candidate, leaderCriteria);
+  memo.set(characterId, matches);
+  return matches;
+}
+
+function matchesActiveLeaderCriteriaUncached(
   candidate: AutoBuildCandidate,
   leaderCriteria: ActiveLeaderCriteria,
 ): boolean {

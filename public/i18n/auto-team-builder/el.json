@@ -643,7 +643,8 @@
     "subPool": "{{count}} sub candidates μετά τα permanent filters",
     "workEstimate": "Προσεγγιστικό upper-bound scheduled candidate visits: {{attempts}} x {{count}} = ~{{total}} visits",
     "workEstimateGrowing": "Προσεγγιστικό upper-bound scheduled candidate visits so far: {{attempts}} x {{count}} = ~{{total}} visits",
-    "worstCaseEta": "Εκτιμώμενος χρόνος για να ελεγχθούν τα υπόλοιπα fallbacks: {{duration}}"
+    "worstCaseEta": "Εκτιμώμενος χρόνος για να ελεγχθούν τα υπόλοιπα fallbacks: {{duration}}",
+    "alternativeCaptain": "Ο Captain σου δεν δίνει boost σε αυτό το crew - δοκιμάζονται {{count}} άλλοι Captain από τους ίδιους χαρακτήρες"
   },
   "fallback": {
     "copy": "Τα πάνω filters έμειναν όπως τα διάλεξες. Η ομάδα χτίστηκε αφού αγνοήθηκαν μόνο τα παρακάτω requirements.",
@@ -666,7 +667,8 @@
       "deselectValues": "Αφαίρεσε {{values}} από την επιλογή σου, ή διάλεξε χαρακτήρες που το έχουν.",
       "allowAnyFriendCaptain": "Ενεργοποίησε το Allow any Friend Captain, ώστε η αναζήτηση να ανοίξει το ζευγάρι των leader.",
       "coverCaptainAbilitySlots": "Διάλεξε Captain ή Friend Captain που η ability του καλύπτει τα {{count}} κενά που αναφέρονται πιο πάνω.",
-      "meetActivationCriteria": "Κάλυψε τα κριτήρια ενεργοποίησης για {{names}}, ή αφαίρεσέ τους από την επιλογή σου."
+      "meetActivationCriteria": "Κάλυψε τα κριτήρια ενεργοποίησης για {{names}}, ή αφαίρεσέ τους από την επιλογή σου.",
+      "pinReplacementCaptain": "Κλείδωσε τον {{to}} ως Captain για να κρατήσεις αυτή την ομάδα ως δική σου επιλογή, ή άλλαξε τους τύπους και τις απαιτήσεις ώστε ο {{from}} να δίνει boost στο crew."
     },
     "rules": {
       "captainAbility": {
@@ -717,6 +719,12 @@
         "passed": "Η ομάδα ακολουθεί το selected type coverage: {{value}}.",
         "relaxed": "Η ομάδα δεν ακολουθεί πλήρως το selected type coverage. Ζητήθηκε: {{requested}}. Effective: {{effective}}. Relaxed: {{relaxed}}.",
         "title": "Selected type coverage"
+      },
+      "captain": {
+        "notApplicable": "Δεν κλειδώθηκε Captain· τον διάλεξε η αναζήτηση.",
+        "passed": "Ο Captain σου {{captain}} οδηγεί την ομάδα.",
+        "relaxed": "Ο {{from}} δεν δίνει boost σε αυτό το crew σε όλα τα tiers του captain ability του, οπότε την ομάδα την οδηγεί ο {{to}}.",
+        "title": "Captain"
       }
     },
     "states": {
@@ -987,7 +995,8 @@
         "fallbackIgnoredSuperSpecialCriteria": "Το fallback χαλάρωσε Super Special activation criteria: {{values}}.",
         "fallbackIgnoredSuperTandemCriteria": "Το fallback χαλάρωσε Super Tandem activation criteria: {{values}}.",
         "fallbackIgnoredCaptainAbilityCoverage": "Το fallback χαλάρωσε full Captain Ability tier coverage.",
-        "fallbackDowngradedCaptainAbilityCoverage": "Το fallback γύρισε το Captain Ability coverage σε simple scope matching."
+        "fallbackDowngradedCaptainAbilityCoverage": "Το fallback γύρισε το Captain Ability coverage σε simple scope matching.",
+        "fallbackReplacedCaptain": "Άλλαξε ο Captain: ο {{from}} δεν έδινε boost σε αυτό το crew, οπότε την ομάδα την οδηγεί ο {{to}}."
       },
       "rejectedSummary": "{{count}} υποψήφιοι δεν επιλέχθηκαν για αυτή τη θέση. Διάλεξε έναν λόγο για να δεις μόνο αυτούς.",
       "rejectedReasons": {
@@ -1076,6 +1085,11 @@
     "buildFailed": "Το auto build απέτυχε απρόσμενα. Δοκίμασε ξανά.",
     "impossible": {
       "battle": " στη {{battle}}",
+      "captainAlternativesFailed": "Η αναζήτηση δοκίμασε και {{count}} άλλον/ους Captain από τους ίδιους χαρακτήρες που θα μπορούσαν να δώσουν boost σε αυτό το crew, και κανένας τους δεν οδήγησε ομάδα.",
+      "captainNoAlternative": "Κανένας άλλος Captain από τους ίδιους χαρακτήρες δεν δίνει boost σε αυτό το crew.",
+      "captainRequirement": "Ο {{captain}} δεν δίνει boost σε κανέναν σε αυτή την αναζήτηση που κάνει {{requirement}}{{battle}}.",
+      "captainTooFew": "Ο {{captain}} δίνει boost μόνο σε {{count}} χαρακτήρα/ες σε αυτή την αναζήτηση εκτός από τους leaders, και μια ομάδα χρειάζεται τέσσερα subs.",
+      "captainTypes": "Ο {{captain}} δεν δίνει boost σε κανέναν χαρακτήρα {{types}} σε όλα τα tiers του captain ability του, και η ομάδα σου πρέπει να περιέχει αυτούς τους τύπους.",
       "noCandidate": "Κανένας χαρακτήρας σε αυτή την αναζήτηση δεν κάνει {{requirement}}{{battle}}. {{poolSize}} χαρακτήρες πέρασαν τα φίλτρα τύπου και κλάσης και κανένας τους δεν το έχει, οπότε καμία ομάδα δεν μπορούσε να το καλύψει. Άλλαξε αυτή την απαίτηση, ή άνοιξε τους τύπους και τις κλάσεις.",
       "notEnough": "Ζήτησες {{requiredCount}} χαρακτήρες που κάνουν {{requirement}}{{battle}}, και μόνο {{matchCount}} σε αυτή την αναζήτηση μπορούν.",
       "outsideLeaderScope": "{{matchCount}} χαρακτήρας/ες σε αυτή την αναζήτηση κάνουν {{requirement}}{{battle}}, αλλά ο {{leader}} δεν δίνει boost σε κανέναν τους - και ζήτησες και οι δύο leaders να καλύπτουν όλη την ομάδα. Διάλεξε Captain που τους δίνει boost, ή κλείσε την πλήρη κάλυψη Captain ability.",
@@ -1083,7 +1097,9 @@
     },
     "guided": {
       "fallbackOnly": "Το Καθοδηγούμενο auto build κλειδώνει slot μόνο από ομάδα που βρέθηκε στην πρώτη, ακριβή αναζήτηση, και αυτή η ομάδα βρέθηκε σε επόμενη. Κλείσε το Καθοδηγούμενο auto build για να τη δεις.",
-      "relaxedOnly": "Το Καθοδηγούμενο auto build κλειδώνει slot μόνο από ομάδα που κρατά όλα τα φίλτρα. Η πιο κοντινή ομάδα που βρήκε χαλαρώνει: {{relaxed}}. Χαλάρωσέ τα ή κλείσε το Καθοδηγούμενο auto build για να δεις αυτή την ομάδα."
+      "relaxedOnly": "Το Καθοδηγούμενο auto build κλειδώνει slot μόνο από ομάδα που κρατά όλα τα φίλτρα. Η πιο κοντινή ομάδα που βρήκε χαλαρώνει: {{relaxed}}. Χαλάρωσέ τα ή κλείσε το Καθοδηγούμενο auto build για να δεις αυτή την ομάδα.",
+      "replacedCaptain": "Ο {{from}} δεν δίνει boost σε αυτό το crew σε όλα τα tiers του captain ability του, οπότε καμία ομάδα δεν τον κρατά ως Captain. Ο {{to}} δίνει, και οδηγεί ομάδα που κρατά όλες τις άλλες ρυθμίσεις. Βάλε τον {{to}} ως Captain και κάνε ξανά build.",
+      "useProposedCaptain": "Βάλε τον {{name}} ως Captain"
     },
     "searchTooLarge": "Η αναζήτηση είναι πολύ μεγάλη για αυτό το browser session. Δοκίμασε λιγότερα types/classes ή βάλε manual slots και τρέξ' το ξανά.",
     "uniqueNames": {

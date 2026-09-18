@@ -31,7 +31,8 @@ export type FinalReportRemedy =
    * the move is a leader - which is what the count is worded around.
    */
   | { kind: 'coverCaptainAbilitySlots'; missingCount: number }
-  | { kind: 'meetActivationCriteria'; characterNames: string[] };
+  | { kind: 'meetActivationCriteria'; characterNames: string[] }
+  | { kind: 'pinReplacementCaptain'; fromName: string; toName: string };
 
 export interface FinalReportRemedyContext {
   /** The report row's own key, e.g. `types`, `captainAbility`. */
@@ -56,6 +57,8 @@ export interface FinalReportRemedyContext {
   criteriaCharacterNames?: readonly string[];
   /** True when the reader has NOT already allowed any Friend Captain. */
   canAllowAnyFriendCaptain?: boolean;
+  /** 869f333ey. The pinned Captain and the one that replaced it, when the search had to. */
+  replacedCaptain?: { fromName: string; toName: string };
 }
 
 /** The report keys whose relaxation is "we dropped some of what you selected". */
@@ -110,6 +113,21 @@ export function resolveFinalReportRemedy(
     // than left short. There is no slot to point at, so it declines.
     return missing.length
       ? { kind: 'coverCaptainAbilitySlots', missingCount: missing.length }
+      : null;
+  }
+
+  if (context.ruleKey === 'captain') {
+    /*
+     * 869f333ey (D4). The pinned Captain provably could not lead this crew, so the row cannot be
+     * restored by asking that Captain again. Two things restore it: making the replacement the
+     * reader's own choice, or changing the crew so the original can boost it.
+     */
+    return context.replacedCaptain
+      ? {
+          kind: 'pinReplacementCaptain',
+          fromName: context.replacedCaptain.fromName,
+          toName: context.replacedCaptain.toName,
+        }
       : null;
   }
 

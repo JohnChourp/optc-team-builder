@@ -64,6 +64,7 @@ import {
   type AutoBuildProgressExclusionCounts,
   type AutoBuildProgressSnapshot,
   type AutoBuildRejectedCandidateReason,
+  type AutoBuildReplacedCaptain,
   type AutoBuildResult,
   type AutoBuildSlotExplanationReason,
   type AutoBuildCostRange,
@@ -1177,6 +1178,18 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
    * requirements it was given. Null until a search fails, and null again the moment an input moves.
    */
   public readonly lastBuildInfeasibility = signal<AutoBuildInfeasibilityDiagnosis | null>(null);
+  /*
+   * 869f333ey (D5). The Captain the search found when the pinned one provably could not lead the
+   * crew. Guided mode rejects that team like any relaxed one - but it knows exactly what to offer,
+   * so the failure card offers it: one click puts this Captain in the slot, and the next build
+   * keeps every other setting the reader chose.
+   */
+  private readonly unappliedReplacedCaptain = signal<AutoBuildReplacedCaptain | null>(null);
+  public readonly proposedCaptain = computed(() =>
+    this.lastBuildFailure() === 'guidedRelaxedOnly' && this.errorMessage()
+      ? this.unappliedReplacedCaptain()
+      : null,
+  );
   /**
    * 869f138r7. The characters in this result whose data the dataset marks as incomplete.
    *
@@ -3496,6 +3509,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         return this.t('results.explanations.reasons.fallbackIgnoredCaptainAbilityCoverage');
       case 'fallbackDowngradedCaptainAbilityCoverage':
         return this.t('results.explanations.reasons.fallbackDowngradedCaptainAbilityCoverage');
+      case 'fallbackReplacedCaptain':
+        return this.t('results.explanations.reasons.fallbackReplacedCaptain', {
+          from: String(reason.params?.['from'] ?? ''),
+          to: String(reason.params?.['to'] ?? ''),
+        });
       default:
         return this.t('results.explanations.unknown');
     }
@@ -7190,6 +7208,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.lastBuildRequest = null;
     this.lastBuildContext = null;
     this.unappliedGuidedResult = null;
+    this.unappliedReplacedCaptain.set(null);
     this.lastExecutionPath = null;
     this.lastBuildStats.set(null);
   }
@@ -7200,8 +7219,50 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     unappliedResult: AutoBuildResult | null = null,
   ): void {
     this.unappliedGuidedResult = unappliedResult;
+    this.unappliedReplacedCaptain.set(unappliedResult?.relaxation.replacedCaptain ?? null);
     this.lastBuildFailure.set(code);
     this.errorMessage.set(message);
+  }
+
+  /** 869f333ey (D5). Puts the Captain the rejected team was led by into the Captain slot. */
+  public useProposedCaptain(): void {
+    const proposal = this.proposedCaptain();
+    const resultSlot = this.unappliedGuidedResult?.slots.find((slot) => slot.role === 'captain');
+
+    if (this.building() || !proposal || !resultSlot || resultSlot.character.id !== proposal.toCharacterId) {
+      return;
+    }
+
+    this.cacheCharacterRecord(resultSlot.character);
+    this.manualSlots.update((currentSlots) =>
+      currentSlots.map((slot) => {
+        if (slot.role !== 'captain') {
+          return slot;
+        }
+
+        const characterIds = [resultSlot.character.id];
+        const branchSelections = this.resolveNextManualSlotBranchSelections(
+          { ...slot, characterIds },
+          resultSlot.character.id,
+          resultSlot.captainBranchSelection?.mode ?? null,
+        );
+
+        return {
+          ...slot,
+          characterIds,
+          // A Captain the reader had locked stays locked - it is now this one.
+          requiredCharacterId: slot.requiredCharacterId ? resultSlot.character.id : null,
+          ...(branchSelections ? { branchSelections } : { branchSelections: undefined }),
+        };
+      }),
+    );
+    this.unappliedGuidedResult = null;
+    this.unappliedReplacedCaptain.set(null);
+    this.lastBuildFailure.set(null);
+    this.errorMessage.set('');
+    this.activeManualSlotRole.set('captain');
+    this.currentTeamId.set(null);
+    this.resetSaveFeedbackState();
   }
 
   private buildDebugReportContext(): AutoTeamDebugReportContext {
@@ -7873,6 +7934,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
    * below - which restate the request - are then still the best available answer.
    */
   private resolveInfeasibilityMessage(): string | null {
+    const pinnedCaptainMessage = this.resolvePinnedCaptainInfeasibilityMessage();
+
+    if (pinnedCaptainMessage) {
+      return pinnedCaptainMessage;
+    }
+
     const reason = this.lastBuildInfeasibility()?.reasons[0];
 
     if (!reason) {
@@ -7909,6 +7976,51 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       matchCount: reason.poolMatchCount,
       requiredCount: reason.requiredCharacterCount,
     });
+  }
+
+  /*
+   * 869f333ey (D6). When the pinned Captain provably could not lead the crew, that is the cause worth
+   * naming - and the search already tried the other Captains that could, so say how that went too.
+   */
+  private resolvePinnedCaptainInfeasibilityMessage(): string | null {
+    const pinned = this.lastBuildInfeasibility()?.pinnedCaptain;
+    const reason = pinned?.impossibility[0];
+
+    if (!pinned || !reason) {
+      return null;
+    }
+
+    let cause: string;
+
+    if (reason.kind === 'selectedTypeOutsideCaptainScope') {
+      cause = this.t('errors.impossible.captainTypes', {
+        captain: pinned.name,
+        types: this.formatSelectedValues(reason.types),
+      });
+    } else if (reason.kind === 'requirementOutsideCaptainScope') {
+      cause = this.t('errors.impossible.captainRequirement', {
+        captain: pinned.name,
+        requirement: reason.subject.abilities
+          .map((ability) => this.formatAbilityRequirement(ability))
+          .join(this.t('errors.impossible.separator')),
+        battle: reason.subject.battleTitle
+          ? this.t('errors.impossible.battle', { battle: reason.subject.battleTitle })
+          : '',
+      });
+    } else {
+      cause = this.t('errors.impossible.captainTooFew', {
+        captain: pinned.name,
+        count: reason.coveredCandidateCount,
+      });
+    }
+
+    const alternatives = pinned.alternativeCaptainIds.length
+      ? this.t('errors.impossible.captainAlternativesFailed', {
+          count: pinned.alternativeCaptainIds.length,
+        })
+      : this.t('errors.impossible.captainNoAlternative');
+
+    return cause + ' ' + alternatives;
   }
 
   private resolveBuildFailureMessage(): string {
@@ -8065,6 +8177,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
    * gets a message that admits a team was found.
    */
   private resolveGuidedRelaxedOnlyMessage(result: AutoBuildResult): string {
+    const replaced = result.relaxation.replacedCaptain;
+
+    if (replaced) {
+      // 869f333ey (D5). Name the Captain that works; the card beside this offers to set it.
+      return this.t('errors.guided.replacedCaptain', { from: replaced.fromName, to: replaced.toName });
+    }
+
     const droppedByRule: Record<string, readonly string[]> = {
       types: result.relaxation.droppedTypes,
       classes: result.relaxation.droppedClasses,
@@ -9787,6 +9906,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         (result.requestedInput.selectedCharacterNames ?? []).length > 0,
         teamSlotCount,
       ),
+      this.buildCaptainReportRow(result),
       this.buildLeaderSuperScopeReportRow(result),
       this.buildCaptainAbilityReportRow(result),
       this.buildSuperSpecialReportRow(result),
@@ -9901,6 +10021,39 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       'leaderSuperScope',
       'notApplicable',
       this.t('report.rules.leaderSuperScope.notApplicable'),
+    );
+  }
+
+  /* 869f333ey (D4). Whether the Captain the reader pinned is the one leading the team. */
+  private buildCaptainReportRow(result: AutoBuildResult): AutoBuildFinalReportRow {
+    const replaced = result.relaxation.replacedCaptain;
+
+    if (replaced) {
+      return this.buildFinalReportRow(
+        'captain',
+        'relaxed',
+        this.t('report.rules.captain.relaxed', { from: replaced.fromName, to: replaced.toName }),
+        { replacedCaptain: { fromName: replaced.fromName, toName: replaced.toName } },
+      );
+    }
+
+    const pinnedCaptain = result.requestedInput.manualSlots.some(
+      (slot) => slot.role === 'captain' && slot.characterIds.length > 0,
+    );
+    const captain = result.slots.find((slot) => slot.role === 'captain')?.character;
+
+    if (pinnedCaptain && captain) {
+      return this.buildFinalReportRow(
+        'captain',
+        'passed',
+        this.t('report.rules.captain.passed', { captain: captain.name }),
+      );
+    }
+
+    return this.buildFinalReportRow(
+      'captain',
+      'notApplicable',
+      this.t('report.rules.captain.notApplicable'),
     );
   }
 
@@ -10049,6 +10202,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       case 'meetActivationCriteria':
         return this.t('report.remedies.meetActivationCriteria', {
           names: this.formatResultValues(remedy.characterNames),
+        });
+      case 'pinReplacementCaptain':
+        return this.t('report.remedies.pinReplacementCaptain', {
+          from: remedy.fromName,
+          to: remedy.toName,
         });
       default:
         return null;

@@ -178,6 +178,24 @@ export interface AutoTeamDebugReport {
       requiredCharacterCount?: number;
       leaderCharacterId?: number;
     }>;
+    /*
+     * 869f333ey (D6). The pinned Captain that provably could not lead the crew: why, and which other
+     * Captains passed the same proof and were tried. Ids, keys and counts only - no names, no battle
+     * titles - like the rest of this report.
+     */
+    pinnedCaptain?: {
+      characterId: number;
+      impossibility: Array<{
+        kind: string;
+        types?: string[];
+        abilities?: Array<{ key: string; minTurns: number | null }>;
+        battleIndex?: number | null;
+        coveredMatchCount?: number;
+        requiredCharacterCount?: number;
+        coveredCandidateCount?: number;
+      }>;
+      alternativeCaptainIds: number[];
+    };
     candidateCount?: number;
     teamKey?: string;
     ship?: { id: number; source: 'manual' | 'recommended' } | null;
@@ -275,6 +293,30 @@ export function buildAutoTeamDebugReport(input: AutoTeamDebugReportInput): AutoT
                 ? { leaderCharacterId: reason.leader.characterId }
                 : {}),
             })),
+          }
+        : {}),
+      ...(input.infeasibility?.pinnedCaptain
+        ? {
+            pinnedCaptain: {
+              characterId: input.infeasibility.pinnedCaptain.characterId,
+              impossibility: input.infeasibility.pinnedCaptain.impossibility.map((reason) =>
+                reason.kind === 'selectedTypeOutsideCaptainScope'
+                  ? { kind: reason.kind, types: [...reason.types] }
+                  : reason.kind === 'requirementOutsideCaptainScope'
+                    ? {
+                        kind: reason.kind,
+                        abilities: reason.subject.abilities.map((ability) => ({
+                          key: ability.abilityKey,
+                          minTurns: ability.minTurns,
+                        })),
+                        battleIndex: reason.subject.battleIndex,
+                        coveredMatchCount: reason.coveredMatchCount,
+                        requiredCharacterCount: reason.requiredCharacterCount,
+                      }
+                    : { kind: reason.kind, coveredCandidateCount: reason.coveredCandidateCount },
+              ),
+              alternativeCaptainIds: [...input.infeasibility.pinnedCaptain.alternativeCaptainIds],
+            },
           }
         : {}),
     },
