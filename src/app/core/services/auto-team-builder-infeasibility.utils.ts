@@ -6,6 +6,7 @@ import type {
 import type { CharacterDetailRecord } from '../models/optc.models';
 
 import { matchesAbilityRequirement } from './auto-team-builder-ability-match.utils';
+import type { AutoBuildPinnedCaptainImpossibility } from './auto-team-builder-captain-feasibility.utils';
 
 /**
  * Issue #523. After a failed search, which requirement was impossible - not which ones were asked for.
@@ -74,6 +75,21 @@ export type AutoBuildInfeasibilityReason =
 export interface AutoBuildInfeasibilityDiagnosis {
   reasons: AutoBuildInfeasibilityReason[];
   poolSize: number;
+  /**
+   * 869f333ey (D6). Present when the reader pinned a Captain that provably could not lead the crew:
+   * why not, and how many other Captains from the same pool were tried and also found nothing. It
+   * outranks `reasons` in the message, because it is the one thing the reader can change in one
+   * click - and the search already tried the obvious alternative for them.
+   */
+  pinnedCaptain?: AutoBuildPinnedCaptainDiagnosis;
+}
+
+export interface AutoBuildPinnedCaptainDiagnosis {
+  characterId: number;
+  name: string;
+  impossibility: AutoBuildPinnedCaptainImpossibility[];
+  /** Other Captains from the same pool that passed the same proof and still found no team. */
+  alternativeCaptainIds: number[];
 }
 
 /** Empty `types`, `classes` and `characterTags` on a tier means it names nobody in particular. */

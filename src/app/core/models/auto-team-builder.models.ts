@@ -341,7 +341,8 @@ export type AutoBuildSlotExplanationReasonCode =
   | 'fallbackIgnoredSuperSpecialCriteria'
   | 'fallbackIgnoredSuperTandemCriteria'
   | 'fallbackIgnoredCaptainAbilityCoverage'
-  | 'fallbackDowngradedCaptainAbilityCoverage';
+  | 'fallbackDowngradedCaptainAbilityCoverage'
+  | 'fallbackReplacedCaptain';
 
 export interface AutoBuildSlotExplanationReason {
   code: AutoBuildSlotExplanationReasonCode;
@@ -560,6 +561,20 @@ interface AutoBuildRelaxationSummary {
   ignoredSuperTandemCriteriaCharacterNames?: string[];
   ignoredCaptainAbilityCoverage?: boolean;
   downgradedCaptainAbilityCoverageToSimple?: boolean;
+  /**
+   * 869f333ey (D1, D4). The pinned Captain provably could not lead the crew that was asked for, and
+   * the team is led by another Captain from the same candidate pool instead. A relaxation like any
+   * other - the reader's own choice was not kept - so it sets `usedFallback` and guided mode
+   * rejects it, naming the Captain it found.
+   */
+  replacedCaptain?: AutoBuildReplacedCaptain;
+}
+
+export interface AutoBuildReplacedCaptain {
+  fromCharacterId: number;
+  fromName: string;
+  toCharacterId: number;
+  toName: string;
 }
 
 type AutoBuildProgressStage =

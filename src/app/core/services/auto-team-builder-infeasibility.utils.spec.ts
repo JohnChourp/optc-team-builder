@@ -312,6 +312,12 @@ describe('failure copy', () => {
     notEnough: ['requiredCount', 'requirement', 'battle', 'matchCount'],
     outsideLeaderScope: ['matchCount', 'requirement', 'battle', 'leader'],
     separator: [],
+    // 869f333ey (D6): supplied by the page's `resolvePinnedCaptainInfeasibilityMessage`.
+    captainTypes: ['captain', 'types'],
+    captainRequirement: ['captain', 'requirement', 'battle'],
+    captainTooFew: ['captain', 'count'],
+    captainAlternativesFailed: ['count'],
+    captainNoAlternative: [],
   };
 
   for (const language of ['en', 'el']) {

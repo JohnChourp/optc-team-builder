@@ -51,6 +51,8 @@ import {
   normalizeSelectedTypes,
   recordAutoTeamBuildFallbackTiming,
   resolveExactAttemptRequiresNoSuperLeaders,
+  applyReplacedCaptainRelaxation,
+  runAutoTeamBuildAttempt,
   runAutoTeamBuildSearch,
   satisfiesRequestedAutoTeamBuildCoverage,
   type AutoTeamBuildFallbackAttemptCategory,
@@ -60,6 +62,11 @@ import {
   type AutoTeamBuildTimingState,
 } from './auto-team-builder.engine';
 import { resolveAutoBuildShipSelection } from './auto-team-builder-ship.utils';
+import {
+  createPinnedCaptainProver,
+  resolvePinnedCaptainImpossibility,
+  type AutoBuildPinnedCaptainImpossibility,
+} from './auto-team-builder-captain-feasibility.utils';
 import { normalizeEnemyMechanicRequirements } from './enemy-mechanic-draft.utils';
 import {
   collectPinnedLeaderScopes,
@@ -77,7 +84,12 @@ import {
   buildAutoTeamResult,
   resolveAutoBuildTeamPowerPreferenceScore,
 } from './auto-team-builder.utils';
-import { hasSelfOnlyCaptainCoverageText, resolveCaptainCoverage } from './captain-coverage.utils';
+import {
+  createCaptainBoostScopeCache,
+  hasSelfOnlyCaptainCoverageText,
+  resolveCaptainCoverage,
+  type CaptainBoostScopeCache,
+} from './captain-coverage.utils';
 import { matchesAbilityRequirement } from './auto-team-builder-ability-match.utils';
 import { normalizeHtmlToText } from './html-text.utils';
 import {
@@ -154,6 +166,17 @@ interface PooledWorkerState {
   retiring: boolean;
 }
 
+/** 869f333ey. What the alternative-Captain proof found, including when it found nothing. */
+interface AutoTeamBuildAlternativeCaptainOutcome {
+  /** Null when no Captain was pinned. */
+  pinnedCaptainId: number | null;
+  /** Empty when the pinned Captain passed the proof - the pass then does nothing at all. */
+  impossibility: AutoBuildPinnedCaptainImpossibility[];
+  /** The Captains proven able instead, in preference order. Empty when there is nothing to try. */
+  alternativeCaptainIds: number[];
+  manualFriendCaptainId: number | null;
+}
+
 interface AutoTeamBuildScopedAutoFillCharacterIds {
   leaderAutoFillCharacterIds?: number[];
   subAutoFillCharacterIds?: number[];
@@ -190,10 +213,25 @@ export class AutoTeamBuilderService {
     records: CharacterDetailRecord[],
     options: AutoTeamBuildCaptainCoverageScopeOptions,
   ): CharacterDetailRecord[] {
+    const covers = this.createCaptainCoveragePredicate(records, options);
+
+    return covers ? records.filter(covers) : records;
+  }
+
+  /*
+   * 869f333ey. The per-character half of `resolveCaptainCoveredCandidateRecords`, split out so the
+   * alternative-Captain proof asks exactly the question the real search scopes with. Null when no
+   * leader is pinned, which means every candidate is in scope.
+   */
+  private createCaptainCoveragePredicate(
+    records: CharacterDetailRecord[],
+    options: AutoTeamBuildCaptainCoverageScopeOptions,
+    scopeCache?: CaptainBoostScopeCache,
+  ): ((record: CharacterDetailRecord) => boolean) | null {
     const leaderEntries = this.resolveCaptainCoverageLeaderEntries(records, options);
 
     if (!leaderEntries.length || !records.length) {
-      return records;
+      return null;
     }
     const retainedLeaderIds = new Set(leaderEntries.map((leader) => leader.character.id));
     const coverageMode =
@@ -202,7 +240,7 @@ export class AutoTeamBuilderService {
         ? 'fullAbilityCoverage'
         : 'simpleBoostScope';
 
-    return records.filter((record) => {
+    return (record) => {
       if (retainedLeaderIds.has(record.id)) {
         return true;
       }
@@ -213,13 +251,14 @@ export class AutoTeamBuilderService {
           branchMode: leader.branchMode,
           targetCharacterTags: record.detail.characterTags ?? [],
           includeTeamTagClauses: false,
+          scopeCache,
         });
 
         return coverage.targetableClauseCount === 0 && coverageMode === 'simpleBoostScope'
           ? !hasSelfOnlyCaptainCoverageText(leader.character, { branchMode: leader.branchMode })
           : coverage.matches;
       });
-    });
+    };
   }
 
   private resolveCaptainCoverageLeaderEntries(
@@ -595,6 +634,37 @@ export class AutoTeamBuilderService {
       typeof this.repository.getShips === 'function'
         ? this.repository.getShips()
         : Promise.resolve([]);
+    const alternativeCaptain = this.resolveAlternativeCaptainOutcome({
+      records,
+      requestedInput,
+      captainCoveredRecords,
+      allowedCharacterIds,
+      signal: executionOptions.signal,
+    });
+    /*
+     * Awaited only when there is a Captain to try. Without one - no Captain pinned, or one the proof
+     * found able - the search starts on the same microtask it always did; the pooled-worker specs
+     * pin that timing to the tick.
+     */
+    const replacedCaptainResult = alternativeCaptain.alternativeCaptainIds.length
+      ? await this.runReplacementCaptains({
+          records,
+          requestedInput,
+          allowedCharacterIds,
+          friendCaptainRecords,
+          legacyAutoFillCharacterIds,
+          executionOptions,
+          alternativeCaptain,
+        })
+      : null;
+
+    if (replacedCaptainResult) {
+      return {
+        ...replacedCaptainResult,
+        shipSelection: resolveAutoBuildShipSelection(replacedCaptainResult, await shipsPromise),
+      };
+    }
+
     const [result, ships] = await Promise.all([
       this.executeSearch(
         records,
@@ -608,7 +678,7 @@ export class AutoTeamBuilderService {
     ]);
 
     if (!result) {
-      this.reportInfeasibility(records, requestedInput, executionOptions);
+      this.reportInfeasibility(records, requestedInput, executionOptions, alternativeCaptain);
 
       return null;
     }
@@ -631,6 +701,7 @@ export class AutoTeamBuilderService {
     records: CharacterDetailRecord[],
     requestedInput: AutoBuildInput,
     executionOptions: AutoTeamBuildExecutionOptions,
+    alternativeCaptain?: AutoTeamBuildAlternativeCaptainOutcome,
   ): void {
     if (!executionOptions.onInfeasibility) {
       return;
@@ -653,11 +724,329 @@ export class AutoTeamBuilderService {
             requestedInput.requireBothLeadersFullCaptainAbilityCoverage,
         }),
       });
+      const pinnedCaptainId = alternativeCaptain?.pinnedCaptainId ?? null;
 
-      executionOptions.onInfeasibility(diagnosis);
+      executionOptions.onInfeasibility(
+        pinnedCaptainId !== null && alternativeCaptain?.impossibility.length
+          ? {
+              ...diagnosis,
+              pinnedCaptain: {
+                characterId: pinnedCaptainId,
+                name:
+                  records.find((record) => record.id === pinnedCaptainId)?.name ??
+                  String(pinnedCaptainId),
+                impossibility: alternativeCaptain.impossibility,
+                alternativeCaptainIds: alternativeCaptain.alternativeCaptainIds,
+              },
+            }
+          : diagnosis,
+      );
     } catch {
       /* A failed diagnosis is one missing sentence, never a failed build. */
     }
+  }
+
+  /*
+   * 869f333ey (D1-D3, D8, D9) - issue #523. When the pinned Captain provably cannot lead the crew
+   * that was asked for, try the Captains that can, before anything is relaxed.
+   *
+   * The report pinned Loki over DEX/STR/PSY Strikers with full coverage on. Loki covers none of
+   * them, so every attempt that keeps Loki AND keeps the coverage was already lost, and the only
+   * team the search could still return dropped the coverage - which guided mode then rejected. The
+   * owner's words for what should happen instead: find the team "or with another leader", as long
+   * as the crew is boosted by both leaders across every tier.
+   *
+   * - D2: only on a proof (`resolvePinnedCaptainImpossibility`), never on a failed search. A Captain
+   *   that can lead the crew never reaches this, so nothing changes for it.
+   * - D3: the attempts this skips are exactly the ones the proof has already lost - every attempt
+   *   that keeps the Captain and keeps the coverage - so running the alternatives now is the order
+   *   the owner asked for: after those, before anything that relaxes coverage or drops a filter.
+   *   If no alternative works, the original search runs untouched, relaxations and all.
+   * - D8: up to eight alternatives, from the same candidate pool, in the existing leader preference
+   *   order, each one proven able on the same terms first. They run as ONE exact attempt with no
+   *   Captain pinned and the leader auto-fill limited to them, so the same list feeds the auto-fill
+   *   Friend Captain - which is how the search already treats leaders nobody pinned.
+   * - D9: only the Captain changes. A Friend Captain the reader pinned stays in its slot, and it
+   *   scopes the alternatives' proofs exactly as it scoped the original.
+   * - D4: the team comes back as a relaxation (`replacedCaptain`), with the reader's own request.
+   */
+  private resolveAlternativeCaptainOutcome(context: {
+    records: CharacterDetailRecord[];
+    requestedInput: AutoBuildInput;
+    captainCoveredRecords: CharacterDetailRecord[];
+    allowedCharacterIds: number[] | undefined;
+    signal?: AbortSignal;
+  }): AutoTeamBuildAlternativeCaptainOutcome {
+    const { records, requestedInput } = context;
+    const pinnedCaptainId = requestedInput.captainCharacterId;
+    const captainSlot = requestedInput.manualSlots.find((slot) => slot.role === 'captain');
+    const manualFriendCaptainId =
+      requestedInput.manualSlots.find((slot) => slot.role === 'friendCaptain')?.characterIds[0] ??
+      null;
+
+    if (pinnedCaptainId === null || !captainSlot?.characterIds.length) {
+      return {
+        pinnedCaptainId: null,
+        impossibility: [],
+        alternativeCaptainIds: [],
+        manualFriendCaptainId,
+      };
+    }
+
+    const pinnedLeaderIdsFor = (captainId: number): number[] =>
+      [captainId, manualFriendCaptainId].filter((id): id is number => id !== null);
+    const proofInput = {
+      types: requestedInput.types,
+      requireEveryType:
+        Boolean(requestedInput.requireAllSelectedTypesInTeam) &&
+        !this.shouldTreatSelectedTypesAsNeutral(requestedInput),
+      requiredAbilities: requestedInput.requiredAbilities,
+      requiredCharacterGroups: requestedInput.requiredCharacterGroups,
+      battleRequirements: requestedInput.battleRequirements,
+    };
+    const impossibility = resolvePinnedCaptainImpossibility({
+      ...proofInput,
+      coveredRecords: context.captainCoveredRecords,
+      pinnedLeaderIds: pinnedLeaderIdsFor(pinnedCaptainId),
+    });
+
+    if (!impossibility.length) {
+      return { pinnedCaptainId, impossibility, alternativeCaptainIds: [], manualFriendCaptainId };
+    }
+
+    const alternativeCaptainIds = this.resolveAlternativeCaptainIds({
+      records,
+      requestedInput,
+      pinnedCaptainId,
+      manualFriendCaptainId,
+      allowedCharacterIds: context.allowedCharacterIds,
+      prove: createPinnedCaptainProver({ ...proofInput, records }),
+      pinnedLeaderIdsFor,
+      signal: context.signal,
+    });
+
+    return { pinnedCaptainId, impossibility, alternativeCaptainIds, manualFriendCaptainId };
+  }
+
+  /** Runs the alternatives the proof found, and returns their team as the relaxation it is. */
+  private async runReplacementCaptains(context: {
+    records: CharacterDetailRecord[];
+    requestedInput: AutoBuildInput;
+    allowedCharacterIds: number[] | undefined;
+    friendCaptainRecords: CharacterDetailRecord[] | undefined;
+    legacyAutoFillCharacterIds: number[] | undefined;
+    executionOptions: AutoTeamBuildExecutionOptions;
+    alternativeCaptain: AutoTeamBuildAlternativeCaptainOutcome;
+  }): Promise<AutoBuildResult | null> {
+    const { records, requestedInput, alternativeCaptain } = context;
+    const pinnedCaptainId = alternativeCaptain.pinnedCaptainId;
+    const found = await this.runAlternativeCaptainAttempt({
+      ...context,
+      alternativeCaptainIds: alternativeCaptain.alternativeCaptainIds,
+      manualFriendCaptainId: alternativeCaptain.manualFriendCaptainId,
+    });
+    const captainSlotResult = found?.slots.find((slot) => slot.role === 'captain');
+
+    if (pinnedCaptainId === null || !found || !captainSlotResult?.character) {
+      return null;
+    }
+
+    return applyReplacedCaptainRelaxation(found, requestedInput, {
+      fromCharacterId: pinnedCaptainId,
+      fromName:
+        records.find((record) => record.id === pinnedCaptainId)?.name ?? String(pinnedCaptainId),
+      toCharacterId: captainSlotResult.character.id,
+      toName: captainSlotResult.character.name,
+    });
+  }
+
+  /** Up to eight Captains from the same pool, preference order, each proven able on the same terms. */
+  private resolveAlternativeCaptainIds(context: {
+    records: CharacterDetailRecord[];
+    requestedInput: AutoBuildInput;
+    pinnedCaptainId: number;
+    manualFriendCaptainId: number | null;
+    allowedCharacterIds: number[] | undefined;
+    prove: (covers: (record: CharacterDetailRecord) => boolean, pinnedLeaderIds: readonly number[]) => boolean;
+    pinnedLeaderIdsFor: (captainId: number) => number[];
+    signal?: AbortSignal;
+  }): number[] {
+    const { records, requestedInput } = context;
+    const allowed = context.allowedCharacterIds ? new Set(context.allowedCharacterIds) : null;
+    const locked = new Set(requestedInput.lockedCharacterIds);
+    const candidates = records
+      .filter(
+        (record) =>
+          record.id !== context.pinnedCaptainId &&
+          // Already placed somewhere in the team by the reader.
+          !locked.has(record.id) &&
+          (!allowed || allowed.has(record.id)) &&
+          this.characterHasReadableCaptainAbility(record) &&
+          this.characterMatchesCostRange(record, requestedInput.leaderCostRange) &&
+          this.characterMatchesLeaderBoostRanges(record, requestedInput.leaderBoostRanges),
+      )
+      .sort((left, right) => this.comparePreferredLeaderAutoFillRecords(left, right, requestedInput));
+    const alternatives: number[] = [];
+    /*
+     * One Captain resolved against many targets is exactly what this cache is for (see its note in
+     * captain-coverage.utils.ts). Created per pass, so nothing outlives the search.
+     */
+    const scopeCache = createCaptainBoostScopeCache();
+
+    for (const candidate of candidates) {
+      this.throwIfCancelled(context.signal);
+
+      const covers = this.createCaptainCoveragePredicate(records, {
+        captainCharacterId: candidate.id,
+        friendCaptainCharacterId: context.manualFriendCaptainId ?? candidate.id,
+        requireFullCaptainAbilityCoverage: requestedInput.requireFullCaptainAbilityCoverage,
+        requireBothLeadersFullCaptainAbilityCoverage:
+          requestedInput.requireBothLeadersFullCaptainAbilityCoverage,
+        manualSlots: requestedInput.manualSlots.map((slot) =>
+          slot.role === 'captain'
+            ? { role: slot.role, characterIds: [candidate.id], requiredCharacterId: candidate.id }
+            : slot,
+        ),
+      }, scopeCache);
+
+      if (covers && context.prove(covers, context.pinnedLeaderIdsFor(candidate.id))) {
+        alternatives.push(candidate.id);
+
+        if (alternatives.length >= PREFERRED_LEADER_AUTO_FILL_LIMIT) {
+          break;
+        }
+      }
+    }
+
+    return alternatives;
+  }
+
+  /**
+   * One exact attempt with no Captain pinned and the leader auto-fill limited to the alternatives:
+   * every filter and the coverage kept, nothing relaxed. In a worker when there is one, so the
+   * page stays responsive; on the main thread otherwise, like every other search here.
+   */
+  private async runAlternativeCaptainAttempt(context: {
+    records: CharacterDetailRecord[];
+    requestedInput: AutoBuildInput;
+    allowedCharacterIds: number[] | undefined;
+    friendCaptainRecords: CharacterDetailRecord[] | undefined;
+    legacyAutoFillCharacterIds: number[] | undefined;
+    executionOptions: AutoTeamBuildExecutionOptions;
+    alternativeCaptainIds: number[];
+    manualFriendCaptainId: number | null;
+  }): Promise<AutoBuildResult | null> {
+    const { records, requestedInput, executionOptions } = context;
+    /*
+     * D9, and the harness caught the first draft breaking it: a pinned Friend Captain that is not
+     * `required` is only a preference to the engine, and with the leader auto-fill open to eight
+     * alternatives it swapped the reader's Ripley for a Luffy & Zoro pair - in 137 s, having tried
+     * every alternative against every one of them. Only the Captain may change, so a single pinned
+     * Friend Captain is held as required here. Several candidates in that slot keep the engine's own
+     * meaning for them.
+     */
+    const manualSlots = requestedInput.manualSlots.map((slot) => {
+      if (slot.role === 'captain') {
+        return { role: slot.role, characterIds: [], requiredCharacterId: null };
+      }
+
+      return slot.role === 'friendCaptain' && slot.characterIds.length === 1
+        ? { ...slot, requiredCharacterId: slot.characterIds[0]! }
+        : slot;
+    });
+    const derived = this.deriveLegacyManualSelectionFromManualSlots(manualSlots);
+    const attemptInput: AutoBuildInput = {
+      ...requestedInput,
+      manualSlots,
+      lockedCharacterIds: derived.lockedCharacterIds,
+      captainCharacterId: null,
+      friendCaptainCharacterId: derived.friendCaptainCharacterId,
+    };
+    const subScope = this.resolveCaptainCoveredCandidateRecords(records, {
+      captainCharacterId: null,
+      friendCaptainCharacterId: context.manualFriendCaptainId,
+      requireFullCaptainAbilityCoverage: requestedInput.requireFullCaptainAbilityCoverage,
+      requireBothLeadersFullCaptainAbilityCoverage:
+        requestedInput.requireBothLeadersFullCaptainAbilityCoverage,
+      manualSlots,
+    });
+    const scopedAutoFillCharacterIds: AutoTeamBuildScopedAutoFillCharacterIds = {
+      leaderAutoFillCharacterIds: context.alternativeCaptainIds,
+      subAutoFillCharacterIds: this.resolveAutoFillCharacterIds(
+        subScope,
+        context.allowedCharacterIds,
+        requestedInput.subCostRange,
+      ),
+    };
+    const requireLeadersWithoutSuperEffects = resolveExactAttemptRequiresNoSuperLeaders(attemptInput);
+
+    this.emitProgress(executionOptions, {
+      stage: 'exactAttempt',
+      candidateCount: records.length,
+      completedAttempts: 0,
+      totalAttempts: 1,
+      attemptCountFinal: false,
+      elapsedMs: 0,
+      estimatedRemainingMs: null,
+      averageFallbackAttemptMs: null,
+      completedFallbackAttempts: 0,
+      currentDroppedTypes: [],
+      currentDroppedClasses: [],
+      currentAllowedLeadersWithSuperEffects: false,
+      currentIgnoredLeaderSuperSpecialCriteria: false,
+      messageKey: 'progress.alternativeCaptain',
+      messageParams: { count: context.alternativeCaptainIds.length },
+    });
+
+    const runOnMainThread = (): AutoBuildResult | null =>
+      runAutoTeamBuildAttempt(
+        records,
+        attemptInput,
+        attemptInput,
+        requireLeadersWithoutSuperEffects,
+        context.friendCaptainRecords,
+        context.legacyAutoFillCharacterIds,
+        scopedAutoFillCharacterIds.leaderAutoFillCharacterIds,
+        scopedAutoFillCharacterIds.subAutoFillCharacterIds,
+      );
+    const worker = this.createWorker();
+    let result: AutoBuildResult | null;
+
+    if (!worker) {
+      result = runOnMainThread();
+    } else {
+      try {
+        await this.initializeWorker(
+          worker,
+          records,
+          executionOptions.signal,
+          context.friendCaptainRecords,
+          scopedAutoFillCharacterIds,
+          context.legacyAutoFillCharacterIds,
+        );
+        result = await this.runAttemptInInitializedWorker(
+          worker,
+          attemptInput,
+          attemptInput,
+          requireLeadersWithoutSuperEffects,
+          executionOptions.signal,
+          context.friendCaptainRecords,
+          scopedAutoFillCharacterIds,
+          context.legacyAutoFillCharacterIds,
+        );
+      } catch (error) {
+        if (isAutoTeamBuildCancelledError(error)) {
+          throw error;
+        }
+
+        reportWorkerFallback('auto-team-builder', 'worker-failed', error);
+        result = runOnMainThread();
+      } finally {
+        worker.terminate();
+      }
+    }
+
+    return result && satisfiesRequestedAutoTeamBuildCoverage(result) ? result : null;
   }
 
   public async buildRankedTeamsFromRoster(

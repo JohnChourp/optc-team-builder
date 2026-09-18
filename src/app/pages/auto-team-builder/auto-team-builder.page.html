@@ -2984,6 +2984,20 @@
               data-testid="auto-build-failure-card"
             >
               <span class="build-failure-card__message">{{ errorMessage() }}</span>
+              <!-- 869f333ey (D5): the rejected team's Captain, one click away. -->
+              @if (proposedCaptain(); as proposal) {
+                <div class="loading-card__actions">
+                  <ion-button
+                    fill="solid"
+                    color="warning"
+                    class="loading-card__action"
+                    data-testid="auto-build-use-proposed-captain"
+                    (click)="useProposedCaptain()"
+                  >
+                    {{ t('errors.guided.useProposedCaptain', { name: proposal.toName }) }}
+                  </ion-button>
+                </div>
+              }
               @if (canCopyDebugReport()) {
                 <div class="loading-card__actions">
                   <ion-button
