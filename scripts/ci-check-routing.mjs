@@ -587,6 +587,18 @@ export const SCRIPT_SUITES = {
     label: 'Import pipeline document tests',
     command: 'npm run test:import-pipeline',
   },
+  /*
+   * 869f33bru. No value shaped like a credential - real or fake - in any tracked file. GitHub secret
+   * scanning alert #1 was a fake Google API key in a test fixture, published because push
+   * protection never blocks that type. The same scanner runs in the pre-commit and pre-push hooks
+   * and against both builds; this lane proves the tree a change proposes. It is routed from its own
+   * files only, not from every path: verify:local runs every lane on every change, and the hooks
+   * scan every commit, so routing it everywhere would only rewrite thirty exact plan assertions.
+   */
+  secrets: {
+    label: 'Secret-shaped value scan and hook tests',
+    command: 'npm run test:secrets',
+  },
 };
 
 export const SCRIPT_SUITE_ORDER = Object.keys(SCRIPT_SUITES);
@@ -1126,6 +1138,26 @@ function isSecurityConfigPath(filePath) {
     filePath === 'public/app-config.example.js' ||
     filePath.startsWith('scripts/fixtures/app-config/')
   );
+}
+
+/* 869f33bru. Terminating: the scanner, its rules, its runtime fixtures, the hooks and their installer. */
+function isSecretsPath(filePath) {
+  return (
+    filePath === 'scripts/check-secrets.mjs' ||
+    filePath === 'scripts/check-secrets.spec.ts' ||
+    filePath === 'scripts/lib/secret-scan.mjs' ||
+    filePath === 'scripts/lib/secret-fixture.mjs' ||
+    filePath === 'scripts/install-git-hooks.mjs' ||
+    filePath.startsWith('.githooks/')
+  );
+}
+
+/*
+ * 869f33bru. Non-terminating: the release script and .gitignore are layers the lane asserts are still
+ * wired, and both route elsewhere too.
+ */
+function touchesSecretsSources(filePath) {
+  return filePath === 'scripts/release-and-tag.sh' || filePath === '.gitignore';
 }
 
 /* Non-terminating: index.html carries the policy and is also the app shell. */
@@ -1709,6 +1741,10 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
       addScriptSuite(scriptSuites, 'field-naming');
     }
 
+    if (touchesSecretsSources(filePath)) {
+      addScriptSuite(scriptSuites, 'secrets');
+    }
+
     if (touchesSecurityConfigSources(filePath)) {
       addScriptSuite(scriptSuites, 'security-config');
     }
@@ -1798,6 +1834,15 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
 
     if (isModalLabelPath(filePath)) {
       addScriptSuite(scriptSuites, 'modal-labels');
+      continue;
+    }
+
+    if (isSecretsPath(filePath)) {
+      addScriptSuite(scriptSuites, 'secrets');
+      if (filePath === 'scripts/lib/secret-fixture.mjs') {
+        /* The app-config spec builds its secret-shaped values from the same fixtures. */
+        addScriptSuite(scriptSuites, 'security-config');
+      }
       continue;
     }
 

@@ -375,7 +375,32 @@ describe('ci-check-routing', () => {
       'worker-protocols',
       'packs-contract',
       'import-pipeline',
+      'secrets',
     ]);
+  });
+
+  /*
+   * 869f33bru. The guard's own files terminate at `secrets`; the shared fixtures also reach the
+   * app-config spec that builds its values from them. The release script and .gitignore keep
+   * their full plan and carry `secrets` inside it.
+   */
+  it('routes the secret scanner, its fixtures and its hooks', () => {
+    for (const file of [
+      'scripts/check-secrets.mjs',
+      'scripts/check-secrets.spec.ts',
+      'scripts/lib/secret-scan.mjs',
+      'scripts/install-git-hooks.mjs',
+      '.githooks/pre-commit',
+      '.githooks/pre-push',
+    ]) {
+      const plan = buildCheckPlan([file]);
+
+      expect(plan.fullPlan, file).toBe(false);
+      expect(plan.scriptSuites, file).toEqual(['secrets']);
+    }
+
+    expect(buildCheckPlan(['scripts/lib/secret-fixture.mjs']).scriptSuites).toEqual(['security-config', 'secrets']);
+    expect(buildCheckPlan(['scripts/release-and-tag.sh']).scriptSuites).toContain('secrets');
   });
 
   it('routes the dataset delivery guard and the database it checks to the delivery suite', () => {

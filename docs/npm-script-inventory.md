@@ -151,6 +151,7 @@ and when a `test:` script is not a lane.
 | `perf:saved-team-codecs` | workflow · performance-budgets.yml | the performance-budgets.yml workflow |
 | `platforms:support-ladder` | npm script · test:support-ladder | `test:support-ladder` |
 | `pr:traceability` | workflow · pr-traceability.yml | the pr-traceability.yml workflow |
+| `prepare` | lifecycle · npm | 869f33bru. npm runs it after every `npm ci` and `npm install`. It points git at .githooks/, so every commit and push on a developer machine is scanned for secret-shaped values without a setup step anyone has to remember. Nothing in the repository calls it, and nothing should. |
 | `pwa:ngsw:pages` | npm script · build:pages | `build:pages` |
 | `release:decision-history` | workflow · check-optc-db-release.yml | the check-optc-db-release.yml workflow |
 | `release:detector-status` | workflow · check-optc-db-release.yml | the check-optc-db-release.yml workflow |
@@ -160,7 +161,8 @@ and when a `test:` script is not a lane.
 | `routes:sitemap-coverage` | npm script · test:route-sitemap-coverage | `test:route-sitemap-coverage` |
 | `scripts:inventory` | npm script · test:scripts-inventory | `test:scripts-inventory` |
 | `scripts:references` | npm script · test:scripts-references | `test:scripts-references` |
-| `security:app-config` | npm script · test:security-config | `test:security-config` |
+| `secrets:scan` | npm script · test:secrets | `test:secrets` |
+| `security:app-config` | npm script · build:pages, test:security-config | `build:pages`, `test:security-config` |
 | `security:csp` | script file · check-csp-policy.spec.ts, ci-check-routing.mjs | whatever check-csp-policy.spec.ts, ci-check-routing.mjs drives |
 | `seo:audit` | npm script · build:pages | `build:pages` |
 | `seo:indexnow` | workflow · deploy-pages.yml | the deploy-pages.yml workflow |
@@ -169,7 +171,7 @@ and when a `test:` script is not a lane.
 | `server:drive-sync` | documented · README.md | a documented manual step |
 | `shared:component-map` | npm script · test:component-map | `test:component-map` |
 | `shared:picker-dismissal` | npm script · test:picker-dismissal | `test:picker-dismissal` |
-| `start` | script file · audit-i18n.mjs, auto-team-builder-ability-parser.mjs, benchmark-dataset.mjs, build-dataset-binary.mjs, check-component-inventory.mjs, check-docs-commands.spec.ts, check-docs-integrity.mjs, check-docs-integrity.spec.ts, check-github-ci-triggers.mjs, check-modal-dialog-labels.mjs, check-optc-upstream-monitor.mjs, check-style-panel-inventory.mjs, check-tag-picker-panel-scoping.spec.ts, generate-dataset-provenance.mjs, generate-dataset-provenance.spec.ts, generate-seo-pages.mjs, import-optc-data.spec.ts, captain-ability-coverage.mjs, captain-ability-coverage.spec.ts, dataset-binary.mjs, dataset-provenance.mjs, enemy-mechanic-vocabulary.mjs, import-pipeline.mjs, optc-dataset.mjs, perf-ability-filters.mjs, perf-budget-report.mjs, perf-explanation-compare.mjs, perf-memory-pressure.mjs, perf-mobile-pickers.mjs | whatever audit-i18n.mjs, auto-team-builder-ability-parser.mjs, benchmark-dataset.mjs, build-dataset-binary.mjs, check-component-inventory.mjs, check-docs-commands.spec.ts, check-docs-integrity.mjs, check-docs-integrity.spec.ts, check-github-ci-triggers.mjs, check-modal-dialog-labels.mjs, check-optc-upstream-monitor.mjs, check-style-panel-inventory.mjs, check-tag-picker-panel-scoping.spec.ts, generate-dataset-provenance.mjs, generate-dataset-provenance.spec.ts, generate-seo-pages.mjs, import-optc-data.spec.ts, captain-ability-coverage.mjs, captain-ability-coverage.spec.ts, dataset-binary.mjs, dataset-provenance.mjs, enemy-mechanic-vocabulary.mjs, import-pipeline.mjs, optc-dataset.mjs, perf-ability-filters.mjs, perf-budget-report.mjs, perf-explanation-compare.mjs, perf-memory-pressure.mjs, perf-mobile-pickers.mjs drives |
+| `start` | script file · audit-i18n.mjs, auto-team-builder-ability-parser.mjs, benchmark-dataset.mjs, build-dataset-binary.mjs, check-component-inventory.mjs, check-docs-commands.spec.ts, check-docs-integrity.mjs, check-docs-integrity.spec.ts, check-github-ci-triggers.mjs, check-modal-dialog-labels.mjs, check-optc-upstream-monitor.mjs, check-secrets.mjs, check-style-panel-inventory.mjs, check-tag-picker-panel-scoping.spec.ts, generate-dataset-provenance.mjs, generate-dataset-provenance.spec.ts, generate-seo-pages.mjs, import-optc-data.spec.ts, captain-ability-coverage.mjs, captain-ability-coverage.spec.ts, dataset-binary.mjs, dataset-provenance.mjs, enemy-mechanic-vocabulary.mjs, import-pipeline.mjs, optc-dataset.mjs, perf-ability-filters.mjs, perf-budget-report.mjs, perf-explanation-compare.mjs, perf-memory-pressure.mjs, perf-mobile-pickers.mjs | whatever audit-i18n.mjs, auto-team-builder-ability-parser.mjs, benchmark-dataset.mjs, build-dataset-binary.mjs, check-component-inventory.mjs, check-docs-commands.spec.ts, check-docs-integrity.mjs, check-docs-integrity.spec.ts, check-github-ci-triggers.mjs, check-modal-dialog-labels.mjs, check-optc-upstream-monitor.mjs, check-secrets.mjs, check-style-panel-inventory.mjs, check-tag-picker-panel-scoping.spec.ts, generate-dataset-provenance.mjs, generate-dataset-provenance.spec.ts, generate-seo-pages.mjs, import-optc-data.spec.ts, captain-ability-coverage.mjs, captain-ability-coverage.spec.ts, dataset-binary.mjs, dataset-provenance.mjs, enemy-mechanic-vocabulary.mjs, import-pipeline.mjs, optc-dataset.mjs, perf-ability-filters.mjs, perf-budget-report.mjs, perf-explanation-compare.mjs, perf-memory-pressure.mjs, perf-mobile-pickers.mjs drives |
 | `storage:keys` | npm script · test:storage-keys | `test:storage-keys` |
 | `styles:component-budget` | npm script · test:component-style-budget | `test:component-style-budget` |
 | `styles:panel-inventory` | npm script · test:style-panels | `test:style-panels` |
@@ -239,6 +241,7 @@ and when a `test:` script is not a lane.
 | `test:saved-team-codecs` | lane · saved-team-codecs | the `saved-team-codecs` lane |
 | `test:scripts-inventory` | lane · scripts-inventory | the `scripts-inventory` lane |
 | `test:scripts-references` | lane · scripts-references | the `scripts-references` lane |
+| `test:secrets` | lane · secrets | the `secrets` lane |
 | `test:security-config` | lane · security-config | the `security-config` lane |
 | `test:storage-keys` | lane · storage-keys | the `storage-keys` lane |
 | `test:style-panels` | lane · style-panels | the `style-panels` lane |

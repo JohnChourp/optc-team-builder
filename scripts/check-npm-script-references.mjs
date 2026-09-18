@@ -49,6 +49,24 @@ const INTERPOLATED_RUN = /npm run ([a-z0-9:_-]*)\$\{/gu;
 const MIN_REASON_LENGTH = 20;
 
 /**
+ * 869f33bru. The names npm itself runs during install, pack, publish and version. A `lifecycle`
+ * registry entry is legitimate for one of these and for nothing else.
+ */
+export const NPM_LIFECYCLE_SCRIPTS = Object.freeze([
+  'preinstall',
+  'install',
+  'postinstall',
+  'prepare',
+  'prepack',
+  'postpack',
+  'prepublishOnly',
+  'preversion',
+  'version',
+  'postversion',
+  'dependencies',
+]);
+
+/**
  * Files that name scripts without calling them, so counting them as references
  * would make this check contradict itself.
  *
@@ -178,6 +196,12 @@ export function checkNpmScriptReferences({ scripts, sources, registry = NPM_SCRI
     /* E. An entry with no reason is an entry that explains nothing. */
     if (!entry.reason || entry.reason.trim().length < MIN_REASON_LENGTH) {
       errors.push(`${entry.script} needs a substantive reason in npm-script-registry.mjs.`);
+    }
+
+    if (entry.class === 'lifecycle' && !NPM_LIFECYCLE_SCRIPTS.includes(entry.script)) {
+      errors.push(
+        `${entry.script} is registered as lifecycle, but npm never runs a script by that name. Only npm's own lifecycle names qualify.`,
+      );
     }
 
     if (entry.class === 'unwired' && !entry.owner) {
@@ -329,7 +353,7 @@ function main() {
   const registered = NPM_SCRIPT_REGISTRY.length;
 
   console.log(
-    `npm script reference check passed: ${Object.keys(scripts).length} scripts, ${registered} registered (${countClass('interpolated')} interpolated, ${countClass('manual')} manual, ${countClass('unwired')} unwired).`,
+    `npm script reference check passed: ${Object.keys(scripts).length} scripts, ${registered} registered (${countClass('interpolated')} interpolated, ${countClass('manual')} manual, ${countClass('unwired')} unwired, ${countClass('lifecycle')} lifecycle).`,
   );
 }
 

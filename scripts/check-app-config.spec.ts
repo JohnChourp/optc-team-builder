@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { ALLOWED_APP_CONFIG_KEYS, checkAppConfigSource } from './check-app-config.mjs';
+import { SECRET_FIXTURES } from './lib/secret-fixture.mjs';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const read = (relativePath: string): string => readFileSync(resolve(ROOT, relativePath), 'utf8');
@@ -48,8 +49,14 @@ describe('checkAppConfigSource', () => {
     expect(errors[0]).toContain('driveServiceAccount');
   });
 
+  /*
+   * 869f33bru. The value is assembled at runtime rather than kept in a fixture file: a fixture of
+   * this shape is itself a secret-shaped literal in the repository, which is what GitHub secret
+   * scanning alert #1 was.
+   */
   it('refuses a secret smuggled inside an allowlisted key', () => {
-    const errors = checkAppConfigSource(read('scripts/fixtures/app-config/secret-shaped-value.js'));
+    const source = `window.__appConfig = { "ga4MeasurementId": "G-TEST123", "googleDriveFolderName": "${SECRET_FIXTURES['google-oauth-client-secret']()}" };`;
+    const errors = checkAppConfigSource(source);
 
     expect(errors.join(' ')).toContain('google-oauth-client-secret');
   });
@@ -60,11 +67,12 @@ describe('checkAppConfigSource', () => {
     );
   });
 
-  it.each([
-    ['AIzaSyAbCdEfGhIjKlMnOpQrStUvWxYz0123456', 'google-api-key'],
-    ['ghp_abcdefghijklmnopqrstuvwxyz0123456789', 'github-token'],
-    ['AKIAIOSFODNN7EXAMPLE', 'aws-access-key-id'],
-  ])('refuses %s as %s', (value, patternId) => {
+  /*
+   * 869f33bru. These three used to be literals, and the first of them - a fake Google API key - is
+   * GitHub secret scanning alert #1. They are assembled at runtime now, so no file carries one.
+   */
+  it.each(['google-api-key', 'github-token', 'aws-access-key-id'] as const)('refuses a %s', (patternId) => {
+    const value = SECRET_FIXTURES[patternId]();
     const source = `window.__appConfig = { "googleDriveFolderName": "${value}" };`;
 
     expect(checkAppConfigSource(source).join(' ')).toContain(patternId);

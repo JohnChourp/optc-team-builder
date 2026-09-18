@@ -33,6 +33,21 @@ reach:
 - **The character dataset is public information** regenerated from upstream OPTC
   data, and it is read-only.
 
+## Secrets in this repository
+
+This repository and everything it publishes — the site and the APK — must
+contain **no value shaped like a credential**: not a real key, and not a fake
+one in a test. If you find anything that looks like an API key, token, password
+or private key, **report it privately as below**, even if it looks like a
+placeholder. Do not paste the value into an issue.
+
+Five checks refuse such a value: a pre-commit hook, a pre-push hook, the
+`secrets` lane of `npm run verify:local`, and a scan of each build before it
+ships (`build:pages` for the site, `scripts/release-and-tag.sh` for the APK).
+They share one list of rules in `scripts/lib/secret-scan.mjs`. The two
+public-by-design identifiers the site carries — a Google Analytics measurement
+id and a Google OAuth *client* id — are not secrets and are allowed.
+
 ## Reporting a vulnerability
 
 Report privately through GitHub:

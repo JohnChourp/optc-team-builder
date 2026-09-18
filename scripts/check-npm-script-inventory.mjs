@@ -168,6 +168,17 @@ export function readAll(files, root = projectRoot) {
  * the one kind where "what breaks" is a human following a doc.
  */
 export function classify({ name, scripts, sources, lanes, registered }) {
+  /*
+   * 869f33bru. npm itself runs a lifecycle script, which is a stronger answer than any file that
+   * merely mentions the word: `prepare` appears in the hook installer's comment and in the spec that
+   * asserts it is wired, and neither of those RUNS it. `check-npm-script-references.mjs` accepts
+   * this class only for npm's own lifecycle names, so it cannot be used to hide an ordinary script.
+   */
+  if (registered.get(name)?.class === 'lifecycle') {
+    const entry = registered.get(name);
+    return { kind: 'lifecycle', detail: 'npm', breaks: entry.reason };
+  }
+
   const lane = lanes.find(([, suite]) => extractInvokedScriptNames(suite.command).includes(name));
 
   if (lane) {

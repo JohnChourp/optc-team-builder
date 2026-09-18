@@ -321,5 +321,27 @@ describe('npm script inventory', () => {
 
       expect(result.kind).toBe('lane');
     });
+
+    /*
+     * 869f33bru. npm runs `prepare` itself. The files that merely mention the word - the hook
+     * installer's comment, the spec asserting it is wired - must not be reported as what drives it.
+     */
+    it('puts a registered lifecycle script ahead of every file that mentions it', () => {
+      const sources = new Map(SOURCES);
+
+      sources.set('scripts/install-git-hooks.mjs', '// Runs as the `prepare` lifecycle script.');
+
+      const result = classify({
+        name: 'prepare',
+        scripts: { ...SCRIPTS, prepare: 'node ./scripts/install-git-hooks.mjs' },
+        sources,
+        lanes: Object.entries(SUITES),
+        registered: new Map([
+          ['prepare', { script: 'prepare', class: 'lifecycle', reason: 'npm runs it after npm ci and npm install.' }],
+        ]),
+      });
+
+      expect(result).toEqual({ kind: 'lifecycle', detail: 'npm', breaks: 'npm runs it after npm ci and npm install.' });
+    });
   });
 });

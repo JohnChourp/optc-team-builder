@@ -24,9 +24,13 @@
  *                  saying so here is what stops the next sweep re-raising it.
  *   unwired      - it should run and does not. A real finding, kept visible with
  *                  the task that owns it rather than silenced.
+ *   lifecycle    - npm itself runs it by name (`prepare` after `npm ci` and
+ *                  `npm install`). 869f33bru. Accepted only for npm's own
+ *                  lifecycle names, so it cannot be used to hide an ordinary
+ *                  script as "something runs it".
  */
 
-/** @typedef {'interpolated' | 'manual' | 'unwired'} ScriptClass */
+/** @typedef {'interpolated' | 'manual' | 'unwired' | 'lifecycle'} ScriptClass */
 
 /**
  * @type {ReadonlyArray<{
@@ -38,6 +42,12 @@
  * }>}
  */
 export const NPM_SCRIPT_REGISTRY = [
+  {
+    script: 'prepare',
+    class: 'lifecycle',
+    reason:
+      '869f33bru. npm runs it after every `npm ci` and `npm install`. It points git at .githooks/, so every commit and push on a developer machine is scanned for secret-shaped values without a setup step anyone has to remember. Nothing in the repository calls it, and nothing should.',
+  },
   {
     script: 'test:e2e:firefox',
     class: 'interpolated',

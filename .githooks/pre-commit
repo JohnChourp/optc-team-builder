@@ -1,0 +1,10 @@
+#!/bin/sh
+# 869f33bru. Refuses a commit that would add a value shaped like a secret - real or fake.
+# Installed by `npm ci` / `npm install` (scripts/install-git-hooks.mjs sets core.hooksPath).
+# The rules: scripts/lib/secret-scan.mjs. There is no allowlist, by design.
+if ! command -v node >/dev/null 2>&1; then
+  echo "[secrets] node is not on PATH, so this commit cannot be scanned. Refusing." >&2
+  echo "[secrets] Put node on PATH, then commit again." >&2
+  exit 1
+fi
+exec node "$(git rev-parse --show-toplevel)/scripts/check-secrets.mjs" --staged
