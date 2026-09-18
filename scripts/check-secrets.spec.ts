@@ -5,7 +5,7 @@ import { join, resolve } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { prePushRanges, scanCommits, scanDirectory, scanStaged } from './check-secrets.mjs';
+import { prePushRanges, scanCommits, scanDirectory, scanHistory, scanStaged } from './check-secrets.mjs';
 import { installGitHooks } from './install-git-hooks.mjs';
 import { SECRET_FIXTURES, fill } from './lib/secret-fixture.mjs';
 import { SECRET_RULES, formatFinding, isProbablyBinary, scanText, scanUnifiedDiff } from './lib/secret-scan.mjs';
@@ -191,6 +191,32 @@ describe('git layers, against a real temporary repository', () => {
     const { findings } = scanCommits([`${base}..HEAD`], { cwd: repo });
 
     expect(findings).toEqual([expect.objectContaining({ path: 'keys.ts', ruleId: 'anthropic-api-key' })]);
+  });
+
+  /*
+   * The audit mode. Read through `git cat-file --batch` in size-bounded chunks; a chunk of one byte
+   * forces one object per batch, so the parser is proven at every boundary, not only in the middle.
+   */
+  it('history: finds a secret in any blob ever committed, whatever the chunk size', () => {
+    const repo = tempRepo();
+    writeFileSync(join(repo, 'a.txt'), 'plain\n');
+    writeFileSync(join(repo, 'b.bin'), Buffer.from([0x00, 0x01, 0x02]));
+    git(repo, 'add', '.');
+    git(repo, 'commit', '-q', '--no-verify', '-m', 'one');
+    writeFileSync(join(repo, 'c.txt'), `key=${SECRET_FIXTURES['clickup-token']()}\n`);
+    git(repo, 'add', '.');
+    git(repo, 'commit', '-q', '--no-verify', '-m', 'two');
+    git(repo, 'rm', '-q', 'c.txt');
+    git(repo, 'commit', '-q', '--no-verify', '-m', 'three');
+
+    for (const chunkBytes of [1, 1024 * 1024]) {
+      const { scanned, findings } = scanHistory({ cwd: repo, chunkBytes });
+
+      expect(scanned, String(chunkBytes)).toBe(3);
+      expect(findings, String(chunkBytes)).toEqual([
+        expect.objectContaining({ path: 'c.txt', line: 1, ruleId: 'clickup-token' }),
+      ]);
+    }
   });
 
   it('installs the hooks path once, and never overwrites someone else’s', () => {

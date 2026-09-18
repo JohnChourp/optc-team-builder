@@ -36,7 +36,8 @@ const ZERO_SHA = /^0+$/u;
 function git(args, { input, cwd = ROOT_DIR, encoding = 'utf8' } = {}) {
   const result = spawnSync('git', args, {
     cwd,
-    input,
+    // A string input is always UTF-8; `encoding` only describes the output.
+    input: typeof input === 'string' ? Buffer.from(input, 'utf8') : input,
     encoding,
     maxBuffer: 1024 * 1024 * 1024,
   });
@@ -155,7 +156,7 @@ export function scanDirectory(directory) {
   return { scanned, findings };
 }
 
-export function scanHistory({ cwd = ROOT_DIR } = {}) {
+export function scanHistory({ cwd = ROOT_DIR, chunkBytes = 256 * 1024 * 1024 } = {}) {
   const objects = git(['rev-list', '--objects', '--all'], { cwd }).split('\n').filter(Boolean);
   const pathsByBlob = new Map();
 
@@ -175,13 +176,49 @@ export function scanHistory({ cwd = ROOT_DIR } = {}) {
     .filter(([, type, size]) => type === 'blob' && Number(size) <= MAX_FILE_BYTES);
   const findings = [];
 
-  for (const [sha] of blobs) {
-    const content = git(['cat-file', 'blob', sha], { cwd, encoding: 'buffer' });
-    for (const finding of scanBuffer(content, pathsByBlob.get(sha))) {
-      findings.push({ ...finding, commit: sha });
+  /*
+   * One `git cat-file --batch` per ~256 MB rather than one process per blob: spawning 25,000
+   * processes took over ten minutes on Windows for the brain alone. The batch output is
+   * `<sha> <type> <size>\n<content>\n` per object, read back by size.
+   */
+  let chunk = [];
+  let pending = 0;
+
+  const flush = () => {
+    if (!chunk.length) {
+      return;
     }
+
+    const output = git(['cat-file', '--batch'], { cwd, input: chunk.join('\n'), encoding: 'buffer' });
+    let offset = 0;
+
+    while (offset < output.length) {
+      const headerEnd = output.indexOf(10, offset);
+      const [sha, , size] = output.subarray(offset, headerEnd).toString('utf8').split(' ');
+      const start = headerEnd + 1;
+      const end = start + Number(size);
+
+      for (const finding of scanBuffer(output.subarray(start, end), pathsByBlob.get(sha))) {
+        findings.push({ ...finding, commit: sha });
+      }
+
+      offset = end + 1;
+    }
+
+    chunk = [];
+    pending = 0;
+  };
+
+  for (const [sha, , size] of blobs) {
+    if (chunk.length && pending + Number(size) > chunkBytes) {
+      flush();
+    }
+
+    chunk.push(sha);
+    pending += Number(size);
   }
 
+  flush();
   return { scanned: blobs.length, findings };
 }
 
