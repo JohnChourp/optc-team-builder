@@ -18,6 +18,7 @@
     "pirate-rumble"
   ],
   "scripts": {
+    "prepare": "node ./scripts/install-git-hooks.mjs",
     "branch:cleanup-report": "node ./scripts/branch-cleanup-report.mjs",
     "config:app": "node ./scripts/write-app-config.mjs",
     "config:app:web-strict": "node ./scripts/write-app-config.mjs --require-google-web-client-id",
@@ -29,7 +30,7 @@
     "server:drive-sync": "node ./server/drive-sync-server.mjs",
     "start": "npm run config:app && npm run dataset:binary && ng serve",
     "build": "npm run config:app && npm run dataset:binary && ng build",
-    "build:pages": "npm run config:app:web-strict && npm run dataset:binary && ng build --configuration production --base-href / && npm run seo:pages && npm run pwa:ngsw:pages && npm run seo:audit",
+    "build:pages": "npm run config:app:web-strict && npm run security:app-config && npm run dataset:binary && ng build --configuration production --base-href / && npm run seo:pages && npm run pwa:ngsw:pages && npm run seo:audit && node ./scripts/check-secrets.mjs --dir dist/optc-team-builder/browser",
     "seo:pages": "node ./scripts/generate-seo-pages.mjs",
     "seo:audit": "node ./scripts/audit-seo-pages.mjs",
     "routes:sitemap-coverage": "node ./scripts/check-route-sitemap-coverage.mjs",
@@ -120,6 +121,8 @@
     "test:component-map": "vitest run scripts/generate-shared-component-map.spec.ts && npm run shared:component-map -- --check",
     "test:picker-dismissal": "vitest run scripts/check-shared-picker-dismissal.spec.ts && npm run shared:picker-dismissal",
     "test:modal-labels": "vitest run scripts/check-modal-dialog-labels.spec.ts && npm run a11y:modal-labels",
+    "secrets:scan": "node ./scripts/check-secrets.mjs",
+    "test:secrets": "vitest run scripts/check-secrets.spec.ts && npm run secrets:scan",
     "test:ability-catalogue": "vitest run scripts/check-ability-catalogue.spec.ts && npm run abilities:catalogue-check",
     "test:dataset-delivery": "vitest run scripts/build-dataset-binary.spec.ts scripts/check-dataset-delivery.spec.ts scripts/lib/prefetch-payload.spec.ts && npm run build && npm run dataset-delivery:check",
     "perf:ability-filters": "node ./scripts/perf-ability-filters.mjs",

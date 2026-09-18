@@ -256,6 +256,31 @@ describe('npm script reference check', () => {
     expect(errors.some((error) => error.includes('needs a substantive reason'))).toBe(true);
   });
 
+  /* 869f33bru. npm runs `prepare` itself, so nothing in the tree ever names it as a caller. */
+  it('accepts a lifecycle entry for a name npm really runs', () => {
+    const errors = run({
+      scripts: { ...CLEAN_SCRIPTS, prepare: 'node ./scripts/install-git-hooks.mjs' },
+      registry: [
+        ...CLEAN_REGISTRY,
+        { script: 'prepare', class: 'lifecycle' as const, reason: 'npm runs it after npm ci and npm install.' },
+      ],
+    }).errors;
+
+    expect(errors).toEqual([]);
+  });
+
+  it('refuses a lifecycle entry for a name npm never runs', () => {
+    const errors = run({
+      scripts: { ...CLEAN_SCRIPTS, 'hooks:install': 'node ./scripts/install-git-hooks.mjs' },
+      registry: [
+        ...CLEAN_REGISTRY,
+        { script: 'hooks:install', class: 'lifecycle' as const, reason: 'Claims npm runs it, which is false.' },
+      ],
+    }).errors;
+
+    expect(errors.join(' ')).toContain('npm never runs a script by that name');
+  });
+
   it('fails on an unwired entry with no owning task', () => {
     const registry = [
       {

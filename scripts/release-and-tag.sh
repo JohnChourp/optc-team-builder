@@ -344,6 +344,12 @@ mkdir -p "${BUILD_ARTIFACTS_DIR}/${RELEASE_TAG}"
 bash -lc "${BUILD_MOBILE_COMMAND}"
 prune_android_ds_store
 
+# 869f33bru. The web assets packed into the APK are files anyone can unzip from a public GitHub
+# Release. Refuse to build one that carries a value shaped like a secret. Deliberately FATAL,
+# unlike the What's New step above: a dead release is a red run somebody re-runs, while a key in
+# a published APK cannot be taken back.
+node "${PROJECT_ROOT}/scripts/check-secrets.mjs" --dir "${PROJECT_ROOT}/dist/optc-team-builder/browser"
+
 (
     cd "${PROJECT_ROOT}/android"
     ./gradlew clean assembleRelease

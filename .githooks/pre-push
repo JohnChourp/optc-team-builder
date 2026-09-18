@@ -1,0 +1,10 @@
+#!/bin/sh
+# 869f33bru. Refuses a push whose commits add a value shaped like a secret, including a commit
+# made with --no-verify or on a machine without the hooks. git passes the refs on stdin and the
+# remote name as $1.
+if ! command -v node >/dev/null 2>&1; then
+  echo "[secrets] node is not on PATH, so this push cannot be scanned. Refusing." >&2
+  echo "[secrets] Put node on PATH, then push again." >&2
+  exit 1
+fi
+exec node "$(git rev-parse --show-toplevel)/scripts/check-secrets.mjs" --pre-push "${1:-origin}"
