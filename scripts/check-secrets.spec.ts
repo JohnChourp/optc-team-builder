@@ -231,6 +231,28 @@ describe('git layers, against a real temporary repository', () => {
     expect(git(repo, 'config', '--local', '--get', 'core.hooksPath')).toBe('.husky');
   });
 
+  /* A global hooksPath is somebody's setup as well; a local override would switch it off here. */
+  it('reports a hooksPath set outside the repository instead of overriding it', () => {
+    const repo = tempRepo();
+    const globalConfig = join(repo, '..', `${repo.split(/[\\/]/u).pop()}-global.gitconfig`);
+    temporaryDirectories.push(globalConfig);
+    writeFileSync(globalConfig, '[core]\n\thooksPath = /opt/team-hooks\n');
+
+    const previous = process.env.GIT_CONFIG_GLOBAL;
+    process.env.GIT_CONFIG_GLOBAL = globalConfig;
+
+    try {
+      expect(installGitHooks({ cwd: repo, env: {} }).status).toBe('conflict');
+      expect(spawnSync('git', ['config', '--local', '--get', 'core.hooksPath'], { cwd: repo }).status).toBe(1);
+    } finally {
+      if (previous === undefined) {
+        delete process.env.GIT_CONFIG_GLOBAL;
+      } else {
+        process.env.GIT_CONFIG_GLOBAL = previous;
+      }
+    }
+  });
+
   it('does not touch git config in CI', () => {
     const repo = tempRepo();
 

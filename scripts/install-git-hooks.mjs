@@ -35,7 +35,11 @@ export function installGitHooks({ cwd = ROOT_DIR, env = process.env } = {}) {
     return { status: 'skipped', reason: 'not a git work tree' };
   }
 
-  const current = git(['config', '--local', '--get', 'core.hooksPath'], cwd).stdout.trim();
+  /*
+   * The EFFECTIVE value, not only this repository's: a hooksPath set globally or system-wide is
+   * somebody's setup too, and a local override would silently switch it off for this checkout.
+   */
+  const current = git(['config', '--get', 'core.hooksPath'], cwd).stdout.trim();
 
   if (current === HOOKS_PATH) {
     return { status: 'already-installed' };
