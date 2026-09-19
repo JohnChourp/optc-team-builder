@@ -50,22 +50,32 @@ that private detail.
 
 ## Standard Handoff Flow
 
+The full closeout order, and the check that enforces each step, is written once
+in the brain: `../optc-team-builder-brain/CLOSEOUT.md`. In short:
+
 1. Classify the task before editing: runtime feature, docs/tooling, release
    automation, release evidence, performance, data import, or ClickUp cleanup.
 2. For ClickUp-backed work that will produce GitHub evidence, start from the
    GitHub-linked task template so rationale, links, verification, and residual
    risk are captured before closeout.
 3. Pick the smallest validation path from the maintainer validation guide.
-4. If live UI evidence is explicitly requested, keep captures under
-   `../optc-team-builder-brain/live-artifacts/<task-id>/` and summarize only
+4. When live UI verification is genuinely needed - rendering, layout, a gesture,
+   something a unit test cannot prove - run it through the brain's
+   `optc-live-fix-loop` skill in Claude's built-in browser, keep captures under
+   `../optc-team-builder-brain/live-artifacts/<task-id>/`, and summarize only
    the useful result in a tracked audit.
 5. Fill PR traceability with the ClickUp task, durable evidence, and concrete
-   verification commands before requesting review.
-6. After merge, monitor the default branch checks for the repos that changed,
-   then run the post-merge smoke pack when the merge carried release-critical
-   web or release-adjacent risk. For Android release dispatches, keep the
-   post-dispatch production smoke artifact with the release run.
-7. Close ClickUp only after the merged state, validation, and evidence links are
+   verification commands, then run `npm run pr:traceability -- --pr <number>`
+   yourself: no workflow runs on pull requests, so the PR shows no checks by
+   design.
+6. Run `npm run verify:local` before merging; it is the gate. The merge itself
+   publishes the site (`deploy-pages` on push to `main`), which then dispatches
+   Public Entry Synthetics - confirm both succeeded, then run the post-merge
+   smoke pack when the merge carried release-critical web or release-adjacent
+   risk. For Android release dispatches, keep the post-dispatch production smoke
+   artifact with the release run.
+7. Record the audit and its evidence-index entry in the brain, then close
+   ClickUp only after the merged state, validation, and evidence links are
    recorded.
 
 ## Release Version Rule
