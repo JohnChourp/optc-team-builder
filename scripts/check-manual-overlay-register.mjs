@@ -52,7 +52,9 @@ import { fileURLToPath } from 'node:url';
  *
  *   E. a character-image override names an id the shipped dataset does not carry
  *      and is not on the register's declared `stagedIds` list;
- *   F. an image the SEO home page hardcodes as a hero is missing from disk.
+ *   F. an image the SEO home page hardcodes as a hero is missing from disk;
+ *   G. `public/assets/exact-character-images/` and the override map disagree - an
+ *      image with no entry, or an entry whose image is gone.
  *
  * 869f135u6. E and F are one finding. Measured 2026-09-16: **30 of the 44**
  * character-image overrides name ids the seed does not have (5490, 5491, and
@@ -237,6 +239,41 @@ export function findMissingHeroImages(generatorSource, fileExists) {
     .filter((source) => !fileExists(source));
 }
 
+/**
+ * The file name `materializeExactImageSources` (import-optc-data.mjs) writes for
+ * one override: the character id, with the manual source's own extension or
+ * `.png`. An `upstream` entry names its source by `relativePath`, not by `file`,
+ * so the name on disk is never read from the entry.
+ */
+export function exactImageFilename(characterId, entry) {
+  const extension = entry?.source === 'manual' ? path.extname(entry.file ?? '') || '.png' : '.png';
+
+  return `${characterId}${extension}`;
+}
+
+/**
+ * G. The image folder and the override map, file for file.
+ *
+ * 869f13c6h. `materializeExactImageSources` writes the folder from the map and
+ * clears it first, so right after a full import the two always match. Between
+ * imports nothing compared them: an image dropped in by hand ships in every build
+ * until the next import wipes it, and an entry whose image is gone points the
+ * dataset at a file that is not there. The brief behind this rule counted 44
+ * images "that nothing references"; 869f135u6 had already found the reader of
+ * every one of them - what was missing was the check, not the reason.
+ */
+export function findImageFolderDrift(overrides, files) {
+  const mapped = new Set(
+    Object.entries(overrides).map(([characterId, entry]) => exactImageFilename(characterId, entry)),
+  );
+  const present = new Set(files);
+
+  return {
+    unmapped: [...present].filter((file) => !mapped.has(file)).sort(),
+    missing: [...mapped].filter((file) => !present.has(file)).sort(),
+  };
+}
+
 export function collectOverlayFiles(dataDir = DATA_DIR) {
   return readdirSync(dataDir, { withFileTypes: true })
     .filter((entry) => entry.isFile() && entry.name.endsWith('.json'))
@@ -409,6 +446,31 @@ function main() {
         `removing an override silently replaces the front page's artwork with a broken image.\n` +
         missingHeroes.map((source) => `  ${source}`).join('\n'),
     );
+  }
+
+  /* G. */
+  if (imageOverlay && present.includes(imageOverlay.file)) {
+    const imageDir = path.join(REPO_ROOT, 'public', 'assets', 'exact-character-images');
+    const drift = findImageFolderDrift(
+      JSON.parse(readFileSync(path.join(DATA_DIR, imageOverlay.file), 'utf8')),
+      existsSync(imageDir)
+        ? readdirSync(imageDir, { withFileTypes: true })
+            .filter((entry) => entry.isFile())
+            .map((entry) => entry.name)
+        : [],
+    );
+
+    if (drift.unmapped.length + drift.missing.length > 0) {
+      problems.push(
+        `public/assets/exact-character-images/ and ${imageOverlay.file} disagree. The import writes the\n` +
+          `folder from the map and clears it first, so an image with no entry ships only until the next\n` +
+          `full import, and an entry with no image points the dataset at a missing file.\n` +
+          [
+            ...drift.unmapped.map((file) => `  on disk, no entry: ${file}`),
+            ...drift.missing.map((file) => `  entry, no image on disk: ${file}`),
+          ].join('\n'),
+      );
+    }
   }
 
   const twinDivergence = findTwinDivergence(

@@ -7,6 +7,9 @@ import {
   formatPublicAssetShadowingResult,
   GENERATOR_OWNED_OUTPUTS,
   inspectPublicAssetShadowing,
+  inspectPublicDirectories,
+  listPublicDirectories,
+  PUBLIC_DIRECTORIES,
   readGeneratorConstants,
 } from './check-public-asset-shadowing.mjs';
 
@@ -147,5 +150,54 @@ describe('public asset shadowing', () => {
     });
 
     expect(result.errors.join('\n')).toContain('no longer declares its site base URL');
+  });
+});
+
+describe('public folder census', () => {
+  /*
+   * 869f13c6h. Angular copies public/ into every build, so a folder nothing reads
+   * ships forever unless something asks what reads it. Every folder is declared
+   * with its consumer; these are the ways the declaration could stop being true.
+   */
+  const realFolders = listPublicDirectories(publicDir);
+
+  it('declares every folder public/ holds today, each with a consumer or a stated reason', () => {
+    expect(realFolders).toEqual([...PUBLIC_DIRECTORIES.map((entry) => entry.path)].sort());
+    expect(inspectPublicDirectories({ directories: realFolders }).errors).toEqual([]);
+  });
+
+  it('fails a folder nobody declared', () => {
+    const result = inspectPublicDirectories({ directories: [...realFolders, 'assets/foo'] });
+
+    expect(result.errors.join('\n')).toContain('public/assets/foo/ is not in PUBLIC_DIRECTORIES');
+  });
+
+  it('fails a declared folder that is gone', () => {
+    const result = inspectPublicDirectories({
+      directories: realFolders.filter((folder) => folder !== 'assets/placeholders'),
+    });
+
+    expect(result.errors.join('\n')).toContain('declares public/assets/placeholders/, which no longer exists');
+  });
+
+  it('accepts a folder with no reader only when it says why, and counts it', () => {
+    const declared = PUBLIC_DIRECTORIES.map((entry) =>
+      entry.path === 'assets/animations' ? { ...entry, reason: 'n/a' } : entry,
+    );
+
+    expect(inspectPublicDirectories({ directories: realFolders, declared }).errors.join('\n')).toContain(
+      'entry "assets/animations" needs a real reason',
+    );
+    expect(inspectPublicDirectories({ directories: realFolders }).unread).toBe(1);
+  });
+
+  it('requires every entry to name its consumer, or null', () => {
+    const declared = PUBLIC_DIRECTORIES.map((entry) =>
+      entry.path === 'i18n' ? { path: entry.path, reason: entry.reason } : entry,
+    );
+
+    expect(inspectPublicDirectories({ directories: realFolders, declared }).errors.join('\n')).toContain(
+      'entry "i18n" must name its consumer',
+    );
   });
 });

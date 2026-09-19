@@ -24,7 +24,9 @@ picture" question has somewhere to start.
 List rows call it at `optc-repository.service.ts:1753`, detail rows at
 `:1788-1789`. The difference is deliberate: a locally corrected **exact** portrait
 is the large image, so it wins where the card is large and loses in a list of
-thumbnails.
+thumbnails. That is the intent; in practice step 1 of the list order is empty for
+every character, so lists show the large portrait too - see
+[the list rows show the large portraits](#the-list-rows-show-the-large-portraits).
 
 ## 3 — the reader's own override, which outranks all of it
 
@@ -53,6 +55,34 @@ Note what it does **not** do: it ignores installedness entirely, because nothing
 installed on a build machine. So the generated page's `og:image` can name a pack
 image that a given reader's device does not have — which is correct, since the
 crawler fetches it from the site rather than from the device.
+
+## The 44 exact images, and what reads each — 869f13c6h
+
+`public/assets/exact-character-images/` holds **44** files, and none of them is
+named anywhere in `src/` - which a 2026-09-12 brief read as "44 images nothing
+references". Every one has a reader; [869f135u6](https://app.clickup.com/t/90121749478/869f135u6)
+found them, and they are written down here:
+
+| Ids | Files | Read by |
+| --- | ---: | --- |
+| 4202–4215 (`source: manual`) | 14 | the seed's `exactLocal`: list and detail images in the app, and each character page's `og:image`; 4208 and 4209 are also home-page heroes |
+| 5601 (`source: upstream`) | 1 | the home-page hero that `generate-seo-pages.mjs` hardcodes - 5601 is not in the dataset |
+| 5490, 5491, 5574–5600 (`source: upstream`) | 29 | nothing yet: staged for characters not released, declared in `stagedIds` |
+
+Two checks keep it that way. `npm run data:overlay-register` rule **G** fails on an
+image with no override entry and on an entry whose image is gone - the file name is
+the character id, exactly as `materializeExactImageSources` writes it. And
+`npm run seo:public-assets` declares every folder under `public/` with its reader,
+so the next folder nothing reads fails a check instead of waiting to be found.
+
+### The list rows show the large portraits
+
+Step 2 of the list order above is `exactLocal`, and `thumbnailLocal` is `null` for
+every shipped character, so a character with an exact image shows it in lists as
+well. Four of those images are 1820×2048 PNGs of 5.0–5.3 MB - 4202, 4211, 4212 and
+4213, 20.6 MB together, 93% of the folder. Recorded, not fixed here: the cure, a
+downscaled list copy or `exactLocal` on detail rows only, changes what players see
+and is follow-up work of its own.
 
 ## The packs themselves, as data — 869f138qw
 
