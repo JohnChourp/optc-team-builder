@@ -118,7 +118,12 @@ export const PUBLIC_GUIDE_CASES = [
     path: 'guides/how-to-build-an-optc-team',
     seoTitle: 'How to Build an OPTC Team | One Piece Treasure Cruise Guide',
     heading: 'How to Build an OPTC Team',
-    contentFragments: ['Start with the captain', 'Map the mechanics', 'Lock and search'],
+    contentFragments: [
+      'Start with the captain',
+      'Map the mechanics',
+      'Lock and search',
+      'When your team keeps losing',
+    ],
     helpSources: [
       {
         file: 'README.md',

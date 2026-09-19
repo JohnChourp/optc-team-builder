@@ -22,7 +22,8 @@
       "three": "Press Auto Team Build, then read the Final team report to see which rules your team kept and which it relaxed.",
       "two": "Add what the stage needs: Captain ability requirements and Required characters for each battle. Opening a saved enemy from Saved Enemies fills these in for you."
     },
-    "title": "How this page works"
+    "title": "How this page works",
+    "guideLink": "New to OPTC team building? Read the team-building guide."
   },
   "quickStart": {
     "captain": {

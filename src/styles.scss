@@ -136,6 +136,21 @@ ion-content {
   outline-offset: 2px;
 }
 
+/* 869f13c5b. An in-app link to a public guide, the same look as the compare card's guide link. */
+.guide-link {
+  width: fit-content;
+  color: var(--ion-color-secondary);
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.35;
+  text-decoration: none;
+}
+
+.guide-link:hover,
+.guide-link:focus-visible {
+  text-decoration: underline;
+}
+
 /* Quick start on both builders (869exmkam): three shortcuts into flows that already exist. */
 .builder-quick-start {
   display: grid;
