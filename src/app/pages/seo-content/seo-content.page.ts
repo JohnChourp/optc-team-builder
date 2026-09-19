@@ -63,6 +63,13 @@ const defaultPage: SeoContentPageData = {
   ],
   templateUrl: './seo-content.page.html',
   styleUrl: './seo-content.page.scss',
+  /*
+   * 869f13c6b. The four tool pages and three guides are English by decision (869dwcbb8): their text
+   * is written in the route data, not translated. With Greek selected the app sets <html lang="el">,
+   * so without this the English copy was announced as Greek and a screen reader read it with Greek
+   * pronunciation. Translate the page and this has to change with it.
+   */
+  host: { lang: 'en' },
 })
 export class SeoContentPage {
   private readonly route = inject(ActivatedRoute);

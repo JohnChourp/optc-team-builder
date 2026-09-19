@@ -44,6 +44,14 @@ export interface PublicRouteRecord {
   readonly description: string;
   /** Extra paths the generator emits for the same page, e.g. `tabs/privacy`. */
   readonly aliases?: readonly string[];
+  /**
+   * 869f13c6b. The page's language; `en` when absent, which is every page today. A page in
+   * another language must also name `alternates`, or `routes:sitemap-coverage` fails - see
+   * `scripts/lib/public-page-language.mjs`.
+   */
+  readonly language?: string;
+  /** The canonical path of this page in each other language, e.g. `{ el: 'el/faq' }`. Reciprocal. */
+  readonly alternates?: Readonly<Record<string, string>>;
 }
 
 export const PUBLIC_ROUTES: readonly PublicRouteRecord[] = [

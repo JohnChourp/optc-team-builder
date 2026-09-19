@@ -31,6 +31,25 @@ function readStringProperty(objectLiteral, name) {
     : null;
 }
 
+/** 869f13c6b. `{ el: 'el/faq' }` -> `{ el: 'el/faq' }`; null when the record has no such property. */
+function readStringMapProperty(objectLiteral, name) {
+  const property = objectLiteral.properties.find(
+    (candidate) =>
+      ts.isPropertyAssignment(candidate) &&
+      candidate.name.getText().replace(/['"]/gu, '') === name,
+  );
+
+  if (!property || !ts.isObjectLiteralExpression(property.initializer)) {
+    return null;
+  }
+
+  return Object.fromEntries(
+    property.initializer.properties
+      .filter((entry) => ts.isPropertyAssignment(entry) && ts.isStringLiteralLike(entry.initializer))
+      .map((entry) => [entry.name.getText().replace(/['"]/gu, ''), entry.initializer.text]),
+  );
+}
+
 export function parsePublicRoutes(source, fileName = DEFAULT_REGISTRY_PATH) {
   const sourceFile = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true);
   const records = [];
@@ -68,6 +87,8 @@ export function parsePublicRoutes(source, fileName = DEFAULT_REGISTRY_PATH) {
                     .filter((alias) => ts.isStringLiteralLike(alias))
                     .map((alias) => alias.text)
                 : [],
+            language: readStringProperty(element, 'language'),
+            alternates: readStringMapProperty(element, 'alternates'),
           });
         }
       }
