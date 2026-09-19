@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -65,6 +65,104 @@ export const GENERATOR_OWNED_OUTPUTS = [
       'Four lines built from one constant, so a committed copy is a working plain-build fallback rather than a second truth.',
   },
 ];
+
+/**
+ * Every folder under `public/` and `public/assets/`, and what reads it.
+ *
+ * 869f13c6h. Angular copies `public/` verbatim into every build, so a folder
+ * nothing reads still ships, in every build and every APK, and nothing noticed:
+ * waves of audits found such artifacts by accident - a preview file prefetched for
+ * nobody, a 0-byte database, 44 images whose reader nobody had written down. With
+ * every folder declared here, the next one is a failed check instead of a
+ * discovery: an undeclared folder fails, and so does a declared one that is gone.
+ *
+ * `consumer: null` is allowed, and it is the honest entry for a folder that ships
+ * with no reader today; its `reason` must then say why it stays.
+ */
+export const PUBLIC_DIRECTORIES = [
+  {
+    path: 'assets',
+    consumer: 'the folders below',
+    reason: 'A container only; nothing reads it directly.',
+  },
+  {
+    path: 'assets/animations',
+    consumer: null,
+    reason:
+      'save-team-loading.json (41 KB, Lottie) has had no reader since b2f898b0 (2026-04-24) removed the last <ng-lottie>. ngsw-config.json caches the folder only on request, so no visitor downloads it; it still ships in every build and APK, with lottie-web and ngx-lottie behind it. Kept until the owner decides what to stop (869f13c92).',
+  },
+  {
+    path: 'assets/data',
+    consumer: 'the dataset: optc-repository.service.ts loads it and ngsw-config.json prefetches it',
+    reason: 'check-dataset-delivery.mjs proves it ships only what the app reads.',
+  },
+  {
+    path: 'assets/exact-character-images',
+    consumer:
+      'character images the seed points at (exactLocal) and the home page heroes of generate-seo-pages.mjs; written by import-optc-data.mjs from the character-image override map',
+    reason: 'check-manual-overlay-register.mjs rules E, F and G account for every file.',
+  },
+  {
+    path: 'assets/offline-packs',
+    consumer: 'the offline image packs Settings downloads (offline-pack-status.utils.ts, optc-repository.service.ts)',
+    reason: 'docs/offline-pack-contract.json describes what each pack holds.',
+  },
+  {
+    path: 'assets/placeholders',
+    consumer: 'optc-repository.service.ts and the team builder templates, when a character has no image',
+    reason: 'One SVG, the image every missing picture falls back to.',
+  },
+  {
+    path: 'brand',
+    consumer: 'manifest.webmanifest, src/index.html and the icons and share images of generate-seo-pages.mjs',
+    reason: 'Icons and logos; the manifest and every generated page name them.',
+  },
+  {
+    path: 'i18n',
+    consumer: 'TranslocoHttpLoader (src/app/core/i18n/transloco-loader.ts) loads i18n/<scope>/<lang>.json at runtime',
+    reason: 'The English and Greek translations, one file per scope and language.',
+  },
+];
+
+/** Folders directly under `public/` and directly under `public/assets/`, as `public/`-relative paths. */
+export function listPublicDirectories(publicDir) {
+  const foldersIn = (dir, prefix) =>
+    existsSync(dir)
+      ? readdirSync(dir, { withFileTypes: true })
+          .filter((entry) => entry.isDirectory())
+          .map((entry) => `${prefix}${entry.name}`)
+      : [];
+
+  return [...foldersIn(publicDir, ''), ...foldersIn(path.join(publicDir, 'assets'), 'assets/')].sort();
+}
+
+export function inspectPublicDirectories({ directories, declared = PUBLIC_DIRECTORIES }) {
+  const errors = [];
+  const declaredPaths = new Set(declared.map((entry) => entry.path));
+
+  for (const directory of directories) {
+    if (!declaredPaths.has(directory)) {
+      errors.push(
+        `public/${directory}/ is not in PUBLIC_DIRECTORIES. Angular copies public/ into every build, so an ` +
+          'undeclared folder ships whether or not anything reads it: declare it with its consumer, or remove it.',
+      );
+    }
+  }
+
+  for (const entry of declared) {
+    if (!directories.includes(entry.path)) {
+      errors.push(`PUBLIC_DIRECTORIES declares public/${entry.path}/, which no longer exists. Remove the entry.`);
+    }
+    if (entry.consumer === undefined) {
+      errors.push(`PUBLIC_DIRECTORIES entry "${entry.path}" must name its consumer, or null when nothing reads it.`);
+    }
+    if (typeof entry.reason !== 'string' || entry.reason.trim().length < 12) {
+      errors.push(`PUBLIC_DIRECTORIES entry "${entry.path}" needs a real reason.`);
+    }
+  }
+
+  return { checked: declared.length, unread: declared.filter((entry) => entry.consumer === null).length, errors };
+}
 
 function normalize(value) {
   return String(value ?? '').replace(/\r\n/gu, '\n').trim();
@@ -201,16 +299,26 @@ function main() {
     publicFileExists: (relativePath) => existsSync(path.join(publicDir, relativePath)),
     readPublicFile: (relativePath) => readFileSync(path.join(publicDir, relativePath), 'utf8'),
   });
+  const folders = inspectPublicDirectories({ directories: listPublicDirectories(publicDir) });
   const output = formatPublicAssetShadowingResult(result);
 
-  if (result.errors.length > 0) {
-    console.error(output);
+  if (result.errors.length > 0 || folders.errors.length > 0) {
+    if (result.errors.length > 0) {
+      console.error(output);
+    }
+    for (const error of folders.errors) {
+      console.error(`[seo:public-assets] ${error}`);
+    }
     process.exitCode = 1;
 
     return;
   }
 
   console.log(output);
+  console.log(
+    `[seo:public-assets] ${folders.checked} public folder(s) declared, each with its consumer; ` +
+      `${folders.unread} with none today, each with its reason.`,
+  );
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

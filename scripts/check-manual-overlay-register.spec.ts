@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
@@ -8,6 +8,8 @@ import {
   collectOverlayFiles,
   compareWithRegister,
   countEntries,
+  exactImageFilename,
+  findImageFolderDrift,
   findMissingHeroImages,
   findSupersededShipOverrides,
   findTwinDivergence,
@@ -233,6 +235,45 @@ describe('findUnstagedAbsentIds', () => {
 
       expect(entry.source, `character ${id}`).toBe(isAbsent ? 'upstream' : 'manual');
     }
+  });
+});
+
+describe('findImageFolderDrift', () => {
+  /*
+   * 869f13c6h. Rule G. The import rebuilds the folder from the map, so the two
+   * match right after it - and nothing compared them in between.
+   */
+  const overrides = {
+    '4202': { source: 'manual', file: '4202.png' },
+    '5601': { source: 'upstream', packKey: 'thumbnailsJapan', relativePath: '4/100/4121-1.png' },
+  };
+
+  it('stays quiet while the folder and the map match file for file', () => {
+    expect(findImageFolderDrift(overrides, ['4202.png', '5601.png'])).toEqual({ unmapped: [], missing: [] });
+  });
+
+  it('names each image the way the importer writes it: the character id, not the source path', () => {
+    expect(exactImageFilename('5601', overrides['5601'])).toBe('5601.png');
+    expect(exactImageFilename('4203', { source: 'manual', file: 'portrait.webp' })).toBe('4203.webp');
+    expect(exactImageFilename('4204', { source: 'manual', file: 'no-extension' })).toBe('4204.png');
+  });
+
+  it('reports an image dropped into the folder with no entry', () => {
+    expect(findImageFolderDrift(overrides, ['4202.png', '5601.png', '9999.png']).unmapped).toEqual(['9999.png']);
+  });
+
+  it('reports an entry whose image is gone', () => {
+    expect(findImageFolderDrift(overrides, ['5601.png']).missing).toEqual(['4202.png']);
+  });
+
+  it('holds for the real folder and the real map', () => {
+    const realOverrides = JSON.parse(
+      readFileSync(path.join(REPO_ROOT, 'scripts/data/character-image-overrides.json'), 'utf8'),
+    );
+    const files = readdirSync(path.join(REPO_ROOT, 'public/assets/exact-character-images'));
+
+    expect(files).toHaveLength(44);
+    expect(findImageFolderDrift(realOverrides, files)).toEqual({ unmapped: [], missing: [] });
   });
 });
 
