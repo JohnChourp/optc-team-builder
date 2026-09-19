@@ -243,6 +243,7 @@ and when a `test:` script is not a lane.
 | `test:scripts-references` | lane · scripts-references | the `scripts-references` lane |
 | `test:secrets` | lane · secrets | the `secrets` lane |
 | `test:security-config` | lane · security-config | the `security-config` lane |
+| `test:seo-pages` | lane · seo-pages | the `seo-pages` lane |
 | `test:storage-keys` | lane · storage-keys | the `storage-keys` lane |
 | `test:style-panels` | lane · style-panels | the `style-panels` lane |
 | `test:support-claims` | lane · support-claims | the `support-claims` lane |
