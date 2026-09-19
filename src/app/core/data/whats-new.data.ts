@@ -31,6 +31,27 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.5.3',
+    date: '2026-09-19',
+    userVisible: true,
+    headline: {
+      en: 'Character pages say how many of your saved teams use that character',
+      el: 'Οι σελίδες χαρακτήρων λένε σε πόσες από τις αποθηκευμένες ομάδες σου είναι ο χαρακτήρας',
+    },
+    summaryEn:
+      'Every character page now tells you how many of your own saved teams use that character, just under its summary: "In 2 of your saved teams". It counts teams, so a character you picked as both Captain and Friend Captain counts once, and it says nothing when the character is in none of them. It reads only the teams saved on your device, and it changes no list or result anywhere in the app.',
+    summaryEl:
+      'Κάθε σελίδα χαρακτήρα σού λέει πλέον σε πόσες από τις δικές σου αποθηκευμένες ομάδες είναι ο χαρακτήρας, ακριβώς κάτω από τη σύνοψή του: «Σε 2 από τις αποθηκευμένες ομάδες σου». Μετρά ομάδες, οπότε ένας χαρακτήρας που έβαλες και Captain και Friend Captain μετρά μία φορά, και δεν λέει τίποτα όταν ο χαρακτήρας δεν είναι σε καμία. Διαβάζει μόνο τις ομάδες που είναι αποθηκευμένες στη συσκευή σου, και δεν αλλάζει καμία λίστα ή κανένα αποτέλεσμα στην εφαρμογή.',
+    added: [
+      {
+        en: 'On every **character page**, a line under the summary says how many of your **Saved Teams** use that character, for example **In 2 of your saved teams**. It is hidden when the answer is none.',
+        el: 'Σε κάθε **σελίδα χαρακτήρα**, μια γραμμή κάτω από τη σύνοψη λέει σε πόσες από τις **Αποθηκευμένες ομάδες** σου είναι ο χαρακτήρας, για παράδειγμα **Σε 2 από τις αποθηκευμένες ομάδες σου**. Δεν εμφανίζεται όταν δεν είναι σε καμία.',
+      },
+    ],
+    improved: [],
+    fixed: [],
+  },
+  {
     version: '0.5.2',
     date: '2026-09-19',
     userVisible: true,
