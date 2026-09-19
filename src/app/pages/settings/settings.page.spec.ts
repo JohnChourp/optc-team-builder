@@ -1636,6 +1636,7 @@ function createPage() {
   };
   const analyticsConsentService = {
     consent: analyticsConsent,
+    available: true,
     accept: vi.fn().mockImplementation(async () => {
       analyticsConsent.set('accepted');
     }),

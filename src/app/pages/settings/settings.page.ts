@@ -196,6 +196,8 @@ export class SettingsPage implements OnInit {
   public readonly autoTeamBuilderWorkerRuntime;
   public readonly autoTeamBuilderAvailableWorkerCounts;
   public readonly analyticsConsent;
+  /** 869f13c5m. False where analytics cannot run (no GA4 id, or native): no choice is offered. */
+  public readonly analyticsAvailable: boolean;
   public readonly analyticsConsentStatusKey;
   public readonly driveRemoteBackup;
   public readonly driveManualSyncPrompt;
@@ -309,7 +311,10 @@ export class SettingsPage implements OnInit {
       ),
     );
     this.analyticsConsent = this.analyticsConsentService.consent;
-    this.analyticsConsentStatusKey = computed(() => `analytics.status.${this.analyticsConsent()}`);
+    this.analyticsAvailable = this.analyticsConsentService.available;
+    this.analyticsConsentStatusKey = computed(
+      () => `analytics.status.${this.analyticsAvailable ? this.analyticsConsent() : 'unavailable'}`,
+    );
     this.driveRemoteBackup = this.driveBackup.remoteBackup;
     this.driveManualSyncPrompt = this.driveBackup.manualSyncPrompt;
     this.driveSyncMetadata = this.driveBackup.metadata;

@@ -7,7 +7,8 @@
     "status": {
       "accepted": "Analytics cookies accepted",
       "rejected": "Analytics cookies rejected",
-      "unknown": "No analytics choice saved yet"
+      "unknown": "No analytics choice saved yet",
+      "unavailable": "Analytics does not run in this app or build, so there is nothing to choose."
     },
     "accept": "Allow analytics",
     "reject": "Reject analytics"
@@ -28,13 +29,13 @@
     },
     "analytics": {
       "title": "Optional analytics cookies",
-      "copy": "The site loads a Google Tag Manager container on every page, with analytics storage denied by default until you choose. If you accept analytics, it loads Google Analytics 4 and may create analytics cookies such as _ga and _ga_<id> to distinguish visits and measure aggregate usage.",
+      "copy": "Nothing measures you before you choose. If you accept analytics, the site loads a Google Tag Manager container and Google Analytics 4, which may create analytics cookies such as _ga and _ga_<id> to distinguish visits and measure aggregate usage.",
       "items": {
-        "container": "The Google Tag Manager container itself loads on every page so those tags can be managed. Analytics storage is set to denied before it loads and is only granted if you accept.",
+        "container": "The Google Tag Manager container loads only after you accept, so the tags it manages load only after you accept too.",
         "cookies": "These analytics identifiers are optional and are not loaded until you grant consent.",
         "purpose": "They are used only to measure traffic and understand which pages or screens are useful.",
         "noAds": "The site does not use this analytics setup to turn on advertising or personalized ads.",
-        "clarity": "Microsoft Clarity measures how pages are actually used, and is delivered by that container rather than loaded directly by the app.",
+        "clarity": "Microsoft Clarity measures how pages are actually used. It is delivered by that container, so it too loads only after you accept.",
         "cloudflare": "Cloudflare Web Analytics measures page-level traffic without cookies. It is added by the network in front of the site, so it is present whatever you choose here."
       }
     },
@@ -49,7 +50,7 @@
     },
     "manageConsent": {
       "title": "How to manage consent",
-      "copy": "You can accept or reject optional analytics below, from the first banner shown by the site, or later through the Settings page. Rejecting analytics keeps optional analytics cookies disabled."
+      "copy": "You can accept or reject optional analytics below, from the banner the site shows once you move between screens, or later on the Settings page. Rejecting analytics loads nothing and changes nothing in the app."
     },
     "browserControls": {
       "title": "Browser controls",

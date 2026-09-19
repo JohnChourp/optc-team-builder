@@ -30,12 +30,15 @@ import { ToolbarBackButtonComponent } from "../../shared/toolbar-back-button/too
 })
 export class CookiePolicyPage {
   public readonly analyticsConsent;
+  /** 869f13c5m. False where analytics cannot run (no GA4 id, or native): no choice is offered. */
+  public readonly analyticsAvailable: boolean;
   public readonly analyticsConsentStatusKey;
 
   public constructor(private readonly analyticsConsentService: AnalyticsConsentService) {
     this.analyticsConsent = this.analyticsConsentService.consent;
+    this.analyticsAvailable = this.analyticsConsentService.available;
     this.analyticsConsentStatusKey = computed(
-      () => `consent.status.${this.analyticsConsent()}`,
+      () => `consent.status.${this.analyticsAvailable ? this.analyticsConsent() : 'unavailable'}`,
     );
   }
 

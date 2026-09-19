@@ -7,7 +7,8 @@
     "status": {
       "accepted": "Έγινε αποδοχή analytics cookies",
       "rejected": "Έγινε απόρριψη analytics cookies",
-      "unknown": "Δεν έχει αποθηκευτεί ακόμη επιλογή analytics"
+      "unknown": "Δεν έχει αποθηκευτεί ακόμη επιλογή analytics",
+      "unavailable": "Το analytics δεν τρέχει σε αυτή την εφαρμογή ή έκδοση, οπότε δεν υπάρχει κάτι να επιλέξεις."
     },
     "accept": "Αποδοχή analytics",
     "reject": "Απόρριψη analytics"
@@ -28,13 +29,13 @@
     },
     "analytics": {
       "title": "Προαιρετικά analytics cookies",
-      "copy": "Το site φορτώνει ένα container του Google Tag Manager σε κάθε σελίδα, με το analytics storage απενεργοποιημένο από προεπιλογή μέχρι να επιλέξεις. Αν αποδεχτείς analytics, φορτώνει Google Analytics 4 και μπορεί να δημιουργήσει analytics cookies όπως _ga και _ga_<id> για να ξεχωρίζει επισκέψεις και να μετρά συγκεντρωτική χρήση.",
+      "copy": "Τίποτα δεν σε μετρά πριν επιλέξεις. Αν αποδεχτείς analytics, το site φορτώνει ένα container του Google Tag Manager και το Google Analytics 4, που μπορεί να δημιουργήσουν analytics cookies όπως _ga και _ga_<id> για να ξεχωρίζουν επισκέψεις και να μετρούν συγκεντρωτική χρήση.",
       "items": {
-        "container": "Το ίδιο το container του Google Tag Manager φορτώνει σε κάθε σελίδα ώστε να διαχειρίζεται αυτά τα tags. Το analytics storage ορίζεται ως denied πριν φορτώσει και γίνεται granted μόνο αν αποδεχτείς.",
+        "container": "Το container του Google Tag Manager φορτώνει μόνο αφού αποδεχτείς, οπότε και τα tags που διαχειρίζεται φορτώνουν μόνο τότε.",
         "cookies": "Αυτά τα analytics identifiers είναι προαιρετικά και δεν φορτώνονται μέχρι να δώσεις consent.",
         "purpose": "Χρησιμοποιούνται μόνο για να μετρούν κίνηση και να καταλαβαίνουν ποιες σελίδες ή οθόνες είναι χρήσιμες.",
         "noAds": "Το site δεν χρησιμοποιεί αυτό το analytics setup για ενεργοποίηση advertising ή personalized ads.",
-        "clarity": "Το Microsoft Clarity μετρά πώς χρησιμοποιούνται στην πράξη οι σελίδες, και παραδίδεται από εκείνο το container αντί να φορτώνεται απευθείας από την εφαρμογή.",
+        "clarity": "Το Microsoft Clarity μετρά πώς χρησιμοποιούνται στην πράξη οι σελίδες. Παραδίδεται από εκείνο το container, οπότε κι αυτό φορτώνει μόνο αφού αποδεχτείς.",
         "cloudflare": "Το Cloudflare Web Analytics μετρά κίνηση σε επίπεδο σελίδας χωρίς cookies. Προστίθεται από το δίκτυο μπροστά από το site, οπότε υπάρχει ανεξάρτητα από την επιλογή σου εδώ."
       }
     },
@@ -49,7 +50,7 @@
     },
     "manageConsent": {
       "title": "Πώς διαχειρίζεσαι το consent",
-      "copy": "Μπορείς να αποδεχτείς ή να απορρίψεις το προαιρετικό analytics παρακάτω, από το πρώτο banner του site ή αργότερα μέσω της σελίδας Ρυθμίσεων. Η απόρριψη κρατά απενεργοποιημένα τα προαιρετικά analytics cookies."
+      "copy": "Μπορείς να αποδεχτείς ή να απορρίψεις τα προαιρετικά analytics παρακάτω, από το banner που εμφανίζει το site μόλις μετακινηθείς ανάμεσα σε οθόνες, ή αργότερα από τη σελίδα Ρυθμίσεων. Η απόρριψη δεν φορτώνει τίποτα και δεν αλλάζει τίποτα στην εφαρμογή."
     },
     "browserControls": {
       "title": "Controls του browser",

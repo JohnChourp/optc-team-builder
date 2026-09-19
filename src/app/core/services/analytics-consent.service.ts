@@ -15,11 +15,18 @@ export class AnalyticsConsentService {
   public readonly consent = this.consentState.asReadonly();
   public readonly hasAnsweredConsent = computed(() => this.consentState() !== "unknown");
   public readonly canTrack = computed(() => this.consentState() === "accepted");
+  /**
+   * 869f13c5m. False when analytics cannot run here at all (no GA4 id, or native). The banner then
+   * never asks, and Settings and the Cookie page say analytics is not available instead of offering
+   * a choice that changes nothing.
+   */
+  public readonly available: boolean;
 
   public constructor(
     private readonly analytics: GoogleAnalyticsService,
     private readonly preferences: PreferencesAdapterService,
   ) {
+    this.available = this.analytics.isAvailable();
     this.readyPromise = this.hydrate();
   }
 

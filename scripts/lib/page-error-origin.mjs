@@ -6,7 +6,8 @@
  * `Cannot read properties of null (reading 'sequence')` - after fourteen clean runs. The check kept
  * only `error.message`, so the report could not say whose code threw. The only `.sequence` read in
  * the shipped app is in the Auto Team Builder, which neither checked page loads; the Google Tag
- * Manager container that `index.html` loads on every page reads `a.D.sequence` on a timer, and a
+ * Manager container that `index.html` then loaded on every page (since 869f13c5m it loads only
+ * after a reader accepts analytics) reads `a.D.sequence` on a timer, and a
  * faster app navigates through those pages sooner.
  *
  * The same run showed the other half: a console error with no URL in its text - "Failed to load

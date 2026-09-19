@@ -1,22 +1,12 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <!-- Google Tag Manager consent bootstrap -->
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    window.gtag = window.gtag || function() { window.dataLayer.push(arguments); };
-    window.gtag("consent", "default", {
-      analytics_storage: "denied",
-      wait_for_update: 500,
-    });
-  </script>
-  <!-- Google Tag Manager -->
-  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-  })(window,document,'script','dataLayer','GTM-TBW6L4T');</script>
-  <!-- End Google Tag Manager -->
+  <!--
+    869f13c5m. No analytics code loads with this page. The Google Tag Manager container (and
+    Microsoft Clarity, which it delivers) and GA4's gtag.js used to load here on every visit,
+    before anyone was asked; they now load from GoogleAnalyticsService.enable(), which only
+    runs after the reader accepts analytics. Do not add a tag back to this file.
+  -->
   <meta charset="utf-8">
   <!--
     869f13285. The site served zero security headers and carried no policy at all until 2026-09-15.
@@ -29,9 +19,9 @@
       - X-Frame-Options  (header only)
       - X-Content-Type-Options / Permissions-Policy (header only)
 
-    'unsafe-inline' in script-src is load-bearing and not laziness: index.html carries five inline
-    bootstrap scripts and Google Tag Manager injects more at runtime, so a hash or nonce list
-    cannot hold. What the policy still buys is the part that matters most for a client-side app
+    'unsafe-inline' in script-src is load-bearing and not laziness: Google Tag Manager, once a
+    reader accepts analytics, injects inline scripts at runtime, so a hash or nonce list cannot
+    hold. (index.html itself carries two inline bootstrap scripts since 869f13c5m, down from five.) What the policy still buys is the part that matters most for a client-side app
     with no backend - an injected script cannot reach an origin that is not listed in connect-src,
     cannot set a <base>, and cannot post a form off-site.
 
@@ -40,8 +30,11 @@
     TWO script sources are injected at runtime and appear nowhere in this repository. Both were
     blocked by earlier versions of this policy, and each cost a round trip to find:
 
-      - Microsoft Clarity (clarity.ms, c.bing.com), injected by the Google Tag Manager container
-        GTM-TBW6L4T. Found by `npm run security:csp`, which blocked it on all four routes.
+      - Microsoft Clarity (clarity.ms, c.bing.com), injected by the site's Google Tag Manager
+        container. Found by `npm run security:csp`, which blocked it on all four routes - when
+        the container still loaded before consent. Since 869f13c5m it loads only after a reader
+        accepts, which a local serve with no GA4 id never offers, so the origin list in
+        scripts/check-csp-policy.mjs is what keeps these origins asserted.
       - Cloudflare Web Analytics (static.cloudflareinsights.com, cloudflareinsights.com), injected
         by CLOUDFLARE ITSELF at the edge. `npm run security:csp` CANNOT find this one: it serves
         the build from a local HTTP server, and there is no CDN in front of that to inject
@@ -121,41 +114,6 @@
     };
   </script>
   <script src="app-config.js"></script>
-  <script>
-    (function bootstrapGoogleAnalytics() {
-      var measurementId = String(window.__appConfig?.ga4MeasurementId || "").trim().toUpperCase();
-
-      if (!/^G-[A-Z0-9]+$/i.test(measurementId)) {
-        return;
-      }
-
-      window.dataLayer = window.dataLayer || [];
-      window.gtag = window.gtag || function() { window.dataLayer.push(arguments); };
-      window["ga-disable-" + measurementId] = true;
-
-      window.gtag("consent", "default", {
-        analytics_storage: "denied",
-        wait_for_update: 500,
-      });
-      window.gtag("js", new Date());
-      window.gtag("config", measurementId, {
-        send_page_view: false,
-      });
-
-      if (!document.getElementById("app-google-analytics")) {
-        var script = document.createElement("script");
-        script.id = "app-google-analytics";
-        script.async = true;
-        script.src = "https://www.googletagmanager.com/gtag/js?id=" + encodeURIComponent(measurementId);
-        document.head.appendChild(script);
-      }
-
-      window.__googleAnalyticsBootstrap = {
-        initialized: true,
-        measurementId: measurementId,
-      };
-    })();
-  </script>
   <script>
     (function restoreGithubPagesRoute() {
       var searchParams = new URLSearchParams(window.location.search);
@@ -271,10 +229,6 @@
   </noscript>
 </head>
 <body>
-  <!-- Google Tag Manager (noscript) -->
-  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TBW6L4T"
-  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-  <!-- End Google Tag Manager (noscript) -->
   <div class="app-bootstrap-loader" role="status" aria-live="polite">
     <p class="app-bootstrap-loader__title">OPTC Team Builder</p>
     <div class="app-bootstrap-loader__spinner" aria-hidden="true"></div>

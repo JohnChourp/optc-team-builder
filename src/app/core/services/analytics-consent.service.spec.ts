@@ -72,6 +72,7 @@ function createService(storedConsent: string | null) {
   const analytics = {
     enable: vi.fn(),
     disable: vi.fn(),
+    isAvailable: vi.fn(() => true),
   };
 
   const preferences = {

@@ -27,13 +27,14 @@
   },
   "analytics": {
     "title": "Analytics & cookies",
-    "copy": "Google Analytics stays off until you allow optional analytics cookies for this browser.",
+    "copy": "Google Analytics and Microsoft Clarity load only after you allow optional analytics for this browser. Declining changes nothing in the app.",
     "helper": "You can change this choice at any time. Rejecting keeps optional analytics cookies disabled.",
     "statusLabel": "Current choice",
     "status": {
       "accepted": "Analytics cookies accepted",
       "rejected": "Analytics cookies rejected",
-      "unknown": "No choice saved yet"
+      "unknown": "No choice saved yet",
+      "unavailable": "Analytics does not run in this app or build, so there is nothing to choose."
     },
     "actions": {
       "accept": "Allow analytics",

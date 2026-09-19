@@ -217,7 +217,7 @@
   "analyticsConsent": {
     "banner": {
       "title": "Να επιτραπούν analytics cookies;",
-      "copy": "Ενεργοποίησε προαιρετικά Google Analytics cookies για να μετριούνται οι πιο χρήσιμες οθόνες. Η εφαρμογή κρατά το analytics κλειστό μέχρι να αποφασίσεις.",
+      "copy": "Το Google Analytics και το Microsoft Clarity θα μας βοηθούσαν να δούμε ποιες οθόνες είναι χρήσιμες. Τίποτα δεν φορτώνει μέχρι να επιλέξεις, και η απόρριψη δεν αλλάζει τίποτα στην εφαρμογή.",
       "privacyLink": "Πολιτική Απορρήτου",
       "cookiesLink": "Πολιτική Cookies",
       "accept": "Αποδοχή analytics",

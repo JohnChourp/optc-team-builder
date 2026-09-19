@@ -18,7 +18,7 @@
       "copy": "Ανάλογα με το πώς χρησιμοποιείς το site και αν αποδεχτείς analytics cookies, το web app μπορεί να επεξεργαστεί ή να αποθηκεύσει τις παρακάτω κατηγορίες πληροφοριών:",
       "items": {
         "identifiers": "Τεχνικά αναγνωριστικά όπως πληροφορίες δικτύου που σχετίζονται με IP, metadata browser/device και page URLs που χρησιμοποιούνται για να φορτώσει το site.",
-        "analytics": "Συγκεντρωτικά συμβάντα χρήσης και analytics identifiers που παράγει το Google Analytics αφού δοθεί consent, καθώς και μέτρηση χρήσης που παραδίδεται μέσω του container του Google Tag Manager, συμπεριλαμβανομένου του Microsoft Clarity. Το Cloudflare Web Analytics καταγράφει επιπλέον κίνηση σε επίπεδο σελίδας χωρίς cookies.",
+        "analytics": "Συγκεντρωτικά συμβάντα χρήσης και analytics identifiers που παράγει το Google Analytics, καθώς και μέτρηση χρήσης που παραδίδεται μέσω του container του Google Tag Manager, συμπεριλαμβανομένου του Microsoft Clarity - όλα μόνο αφού δοθεί consent. Το Cloudflare Web Analytics καταγράφει επιπλέον κίνηση σε επίπεδο σελίδας χωρίς cookies.",
         "preferences": "Local browser ή device storage για γλώσσα, cookie consent, worker preferences, favorites, saved teams, saved enemies, character boxes, character overrides και άλλες τοπικές ρυθμίσεις της συσκευής.",
         "content": "Δεδομένα που δημιουργείς ρητά μέσα στο app, όπως saved teams, saved enemies, favorites, notes, manual character overrides και imported/exported backups.",
         "googleDrive": "Αν επιλέξεις Google Drive sync, τα στοιχεία Google account που χρειάζονται για sign-in και το backup αρχείο της εφαρμογής που αποθηκεύεται στον Google Drive φάκελό σου."
@@ -48,8 +48,8 @@
       "copy": "Σχετικά δεδομένα μπορεί να γίνονται αντικείμενο χειρισμού από τις παρακάτω κατηγορίες αποδεκτών ή processors:",
       "items": {
         "hosting": "GitHub Pages και σχετική GitHub υποδομή που χρησιμοποιείται για τη δημοσίευση του static site.",
-        "google": "Η Google όταν χρησιμοποιείς προαιρετική σύνδεση με λογαριασμό Google, backups στο Google Drive, προαιρετικά cookies του Google Analytics, ή το container του Google Tag Manager που φορτώνει το site για να παραδίδει τα measurement tags του.",
-        "microsoft": "Η Microsoft, ως πάροχος της μέτρησης χρήσης Clarity, η οποία παραδίδεται μέσω του container του Google Tag Manager και δεν φορτώνεται απευθείας από την εφαρμογή.",
+        "google": "Η Google όταν χρησιμοποιείς προαιρετική σύνδεση με λογαριασμό Google, backups στο Google Drive, προαιρετικά cookies του Google Analytics, ή, αφού αποδεχτείς analytics, το container του Google Tag Manager που παραδίδει τα measurement tags του site.",
+        "microsoft": "Η Microsoft, ως πάροχος της μέτρησης χρήσης Clarity, η οποία παραδίδεται μέσω του container του Google Tag Manager και δεν φορτώνεται απευθείας από την εφαρμογή, και μόνο αφού αποδεχτείς analytics.",
         "cloudflare": "Η Cloudflare, ως το δίκτυο μπροστά από το site και πάροχος του Cloudflare Web Analytics, μιας μέτρησης σε επίπεδο σελίδας χωρίς cookies που προστίθεται στο edge και όχι από την εφαρμογή.",
         "processors": "Τεχνικούς παρόχους που είναι αναγκαίοι για hosting, ασφάλεια και παράδοση του site."
       }

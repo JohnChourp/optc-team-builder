@@ -20,6 +20,7 @@ import { closeOutline, cloudDownloadOutline, refreshOutline } from 'ionicons/ico
 import packageJson from '../../package.json';
 import { PreferencesAdapterService } from './core/services/preferences-adapter.service';
 import { AnalyticsConsentService } from './core/services/analytics-consent.service';
+import { shouldAskForAnalyticsConsent } from './core/services/analytics-consent-prompt.utils';
 import { AppI18nService } from './core/services/app-i18n.service';
 import { NetworkStatusService } from './core/services/network-status.service';
 import { FAILURE_I18N_SCOPE } from './core/services/failure-message.utils';
@@ -204,10 +205,11 @@ const defaultSeo: RouteSeoData = {
                 </div>
               </div>
 
+              <!-- 869f13c5m. Equal weight: declining must look as easy as accepting. -->
               <div class="analytics-consent-banner__actions">
                 <ion-button
-                  fill="solid"
-                  color="warning"
+                  fill="outline"
+                  color="light"
                   size="small"
                   (click)="acceptAnalyticsConsent()"
                 >
@@ -398,8 +400,19 @@ export class AppComponent {
   public readonly installBannerDismissedForever = signal(false);
   public readonly appInstalled = signal(false);
   public readonly standaloneMode = signal(false);
-  public readonly showAnalyticsConsentBanner = computed(
-    () => this.analyticsConsent() === 'unknown',
+  /** 869f13c5m. NavigationEnd events seen; the first is the page the visitor arrived on. */
+  private readonly navigationEndCount = signal(this.router.navigated ? 1 : 0);
+  /**
+   * 869f13c5m. See `shouldAskForAnalyticsConsent`. Nothing loads before the reader answers either
+   * way: the tag manager and GA4 load from `GoogleAnalyticsService.enable()`, which only Accept
+   * (or an earlier Accept, on start) reaches.
+   */
+  public readonly showAnalyticsConsentBanner = computed(() =>
+    shouldAskForAnalyticsConsent({
+      available: this.analyticsConsentService.available,
+      consent: this.analyticsConsent(),
+      navigationCount: this.navigationEndCount(),
+    }),
   );
   public readonly showInstallBanner = computed(
     () =>
@@ -453,6 +466,7 @@ export class AppComponent {
       }
 
       this.routeLoading.set(false);
+      this.navigationEndCount.update((count) => count + 1);
       this.currentUrl.set(event.urlAfterRedirects);
       this.toolbarBackNavigation.recordNavigation(event.urlAfterRedirects);
       this.updateRouteMetadata(event.urlAfterRedirects);

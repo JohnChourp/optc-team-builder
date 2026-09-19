@@ -152,24 +152,27 @@
           <span>{{ t(analyticsConsentStatusKey()) }}</span>
         </div>
 
-        <div class="transfer-actions">
-          <ion-button
-            fill="outline"
-            color="warning"
-            [disabled]="analyticsConsent() === 'accepted'"
-            (click)="acceptAnalyticsConsent()"
-          >
-            {{ t('analytics.actions.accept') }}
-          </ion-button>
-          <ion-button
-            fill="outline"
-            color="light"
-            [disabled]="analyticsConsent() === 'rejected'"
-            (click)="rejectAnalyticsConsent()"
-          >
-            {{ t('analytics.actions.reject') }}
-          </ion-button>
-        </div>
+        <!-- 869f13c5m. No choice where analytics cannot run: the status above says so instead. -->
+        @if (analyticsAvailable) {
+          <div class="transfer-actions">
+            <ion-button
+              fill="outline"
+              color="warning"
+              [disabled]="analyticsConsent() === 'accepted'"
+              (click)="acceptAnalyticsConsent()"
+            >
+              {{ t('analytics.actions.accept') }}
+            </ion-button>
+            <ion-button
+              fill="outline"
+              color="light"
+              [disabled]="analyticsConsent() === 'rejected'"
+              (click)="rejectAnalyticsConsent()"
+            >
+              {{ t('analytics.actions.reject') }}
+            </ion-button>
+          </div>
+        }
 
         <div class="policy-links">
           <a class="policy-link" [routerLink]="['/tabs/privacy']">{{
@@ -180,7 +183,9 @@
           }}</a>
         </div>
 
-        <p>{{ t('analytics.helper') }}</p>
+        @if (analyticsAvailable) {
+          <p>{{ t('analytics.helper') }}</p>
+        }
       </section>
 
       <section class="glass-card data-card">
