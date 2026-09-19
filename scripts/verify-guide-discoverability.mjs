@@ -24,7 +24,13 @@ export const GUIDE_DISCOVERABILITY_INVENTORY = [
       { file: SEO_CONTENT_DATA_PATH, text: 'guides/how-to-build-an-optc-team' },
       { file: 'docs/feature-coverage-map.md', text: 'Public team-building guides in `README.md`' },
     ],
-    appHelpHints: [],
+    // 869f13c5b. Its in-app entry point: the "How this page works" card in Auto Team Builder.
+    appHelpHints: [
+      {
+        file: 'src/app/pages/auto-team-builder/auto-team-builder.page.html',
+        text: '/guides/how-to-build-an-optc-team',
+      },
+    ],
   },
   {
     id: 'guided-compare-sharing-guide',
@@ -62,7 +68,13 @@ export const GUIDE_DISCOVERABILITY_INVENTORY = [
       },
       { file: 'docs/feature-coverage-map.md', text: 'Pirate Rumble character ranking' },
     ],
-    appHelpHints: [],
+    // 869f13c5b. Its in-app entry point: the Auto Team Rumble Builder's hero card.
+    appHelpHints: [
+      {
+        file: 'src/app/pages/auto-team-builder-rumble/auto-team-builder-rumble.page.html',
+        text: '/guides/optc-pirate-rumble-team-building',
+      },
+    ],
   },
 ];
 

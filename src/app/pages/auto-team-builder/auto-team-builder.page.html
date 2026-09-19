@@ -73,6 +73,10 @@
                 <li>{{ t('intro.steps.two') }}</li>
                 <li>{{ t('intro.steps.three') }}</li>
               </ol>
+              <!-- 869f13c5b. The how-to-build guide's in-app entry point, for the readers this card is for. -->
+              <a class="guide-link" [routerLink]="['/guides/how-to-build-an-optc-team']">
+                {{ t('intro.guideLink') }}
+              </a>
             }
           </section>
         }

@@ -159,6 +159,11 @@ export const SEO_CONTENT_PAGES: Readonly<Record<string, SeoContentPageData>> = {
         title: 'Lock and search',
         copy: 'Place known units in manual slots, then use ability filters and generated candidates to fill missing utility and damage roles.',
       },
+      {
+        // 869f13c5b. Only checks the app can actually run - no difficulty claims, no tier list.
+        title: 'When your team keeps losing',
+        copy: 'Check four things before rebuilding from scratch. Does your Captain boost the characters you brought? Captain Coverage shows it for your own box. Can your box field the content at all? What this box can field, on Character Boxes, answers that for well-known content. Does the team answer what the stage does, such as Delay or Bind? Add them as ability requirements in Auto Team Builder. And where do you farm the character you are missing? Each character page lists where it drops.',
+      },
     ],
     links: [
       { label: 'Open Auto Team Builder', route: '/tabs/auto-team-builder' },

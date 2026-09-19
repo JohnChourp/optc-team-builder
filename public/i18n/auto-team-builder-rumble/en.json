@@ -3,7 +3,8 @@
   "hero": {
     "eyebrow": "Pirate Rumble",
     "title": "Build the strongest local Rumble team.",
-    "copy": "Scores every rumble-capable unit from stats, cooldowns, effects, role coverage, and team synergy, then fills five active slots and three bench slots."
+    "copy": "Scores every rumble-capable unit from stats, cooldowns, effects, role coverage, and team synergy, then fills five active slots and three bench slots.",
+    "guideLink": "New to Pirate Rumble? Read the Pirate Rumble guide."
   },
   "actions": {
     "rebuild": "Build team",

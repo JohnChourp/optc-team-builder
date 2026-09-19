@@ -3,7 +3,8 @@
   "hero": {
     "eyebrow": "Pirate Rumble",
     "title": "Χτίσε την πιο δυνατή τοπική Rumble ομάδα.",
-    "copy": "Βαθμολογεί κάθε unit με Rumble data από stats, cooldowns, effects, role coverage και team synergy, μετά γεμίζει πέντε active slots και τρία bench slots."
+    "copy": "Βαθμολογεί κάθε unit με Rumble data από stats, cooldowns, effects, role coverage και team synergy, μετά γεμίζει πέντε active slots και τρία bench slots.",
+    "guideLink": "Πρώτη φορά στο Pirate Rumble; Διάβασε τον οδηγό για το Pirate Rumble (στα αγγλικά)."
   },
   "actions": {
     "rebuild": "Χτίσε ομάδα",
