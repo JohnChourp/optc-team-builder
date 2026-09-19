@@ -6,8 +6,10 @@
     "exportJson": "Εξαγωγή JSON",
     "favorited": "Στα favorites",
     "importJson": "Εισαγωγή JSON",
+    "localTools": "Τοπικές αλλαγές",
     "openTeamBuilder": "Άνοιγμα Auto Team Builder",
     "resetOverride": "Επαναφορά τοπικών αλλαγών",
+    "seeCaptainBoosts": "Δες ποιους ενισχύει αυτός ο Captain",
     "summary": "Κόστος {{cost}} • {{stars}}★ unit"
   },
   "fields": {

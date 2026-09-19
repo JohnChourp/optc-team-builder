@@ -16,7 +16,6 @@ const read = (file: string) => readFileSync(resolve(process.cwd(), file), 'utf8'
  *
  * The tool screens under `tabs/` are the tools themselves and the policy pages have no action to
  * make primary, so the pages below are every public page that asks a visitor to go somewhere.
- * Character pages get theirs in 869f13c5c.
  */
 describe('one primary action per public page', () => {
   it('Home keeps exactly one solid action', () => {
@@ -64,6 +63,13 @@ describe('one primary action per public page', () => {
     );
 
     expect(primaries).toEqual(['whereToStart:/tabs/auto-team-builder']);
+  });
+
+  it('a character page keeps exactly one solid action: its bridge into a tool (869f13c5c)', () => {
+    const template = read('src/app/pages/character-detail/character-detail.page.html');
+
+    expect(template.match(/fill="solid"/gu)).toHaveLength(1);
+    expect(template).toMatch(/fill="solid"\s+color="warning"\s+data-test="character-bridge"/u);
   });
 
   it('the FAQ renders a primary link solid and every other link outlined', () => {

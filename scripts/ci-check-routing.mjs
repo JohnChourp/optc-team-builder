@@ -93,6 +93,15 @@ export const SCRIPT_SUITES = {
     command: 'npm run test:discoverability',
   },
   /*
+   * 869f13c5c. The SEO generator run for real over one character per shape the dataset holds, then
+   * the audit `build:pages` runs over that output. Until this lane the generator ran only on the
+   * production path, so a change to 4,622 character pages was first checked by a deploy.
+   */
+  'seo-pages': {
+    label: 'SEO page generator tests (one character page per shape)',
+    command: 'npm run test:seo-pages',
+  },
+  /*
    * 869f12x4k. `/faq` was a top-level public route for three releases and
    * reached 0 of the 4,637 generated sitemap URLs, because the sitemap's route
    * list is a second hand-written copy of the router's. The lane routes on both
@@ -803,6 +812,11 @@ function isDiscoverabilityPath(filePath) {
     filePath === 'scripts/verify-guide-discoverability.mjs' ||
     filePath === 'scripts/verify-guide-discoverability.spec.ts'
   );
+}
+
+/* 869f13c5c. The generator and audit themselves already route to the full plan. */
+function isSeoPagesSpecPath(filePath) {
+  return filePath === 'scripts/generate-seo-pages.spec.ts';
 }
 
 function isRouteSitemapCoveragePath(filePath) {
@@ -2004,6 +2018,12 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
     if (isDiscoverabilityPath(filePath)) {
       categories.add('guide-discoverability');
       addScriptSuite(scriptSuites, 'discoverability');
+      continue;
+    }
+
+    if (isSeoPagesSpecPath(filePath)) {
+      categories.add('seo-pages');
+      addScriptSuite(scriptSuites, 'seo-pages');
       continue;
     }
 

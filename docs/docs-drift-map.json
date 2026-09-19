@@ -431,6 +431,7 @@
         "scripts/lib/seo-content.mjs",
         "scripts/lib/seo-content.spec.ts",
         "scripts/generate-seo-pages.mjs",
+        "scripts/generate-seo-pages.spec.ts",
         "scripts/audit-seo-pages.mjs",
         "scripts/verify-guide-discoverability.mjs",
         "scripts/verify-guide-discoverability.spec.ts",

@@ -62,3 +62,8 @@
   flex-wrap: wrap;
   gap: 10px;
 }
+
+/* 869f13c5c. The native "Local edits" toggle would otherwise stretch to the row's full height. */
+.hero-actions > .section-details-toggle {
+  align-self: center;
+}

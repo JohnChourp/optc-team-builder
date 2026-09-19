@@ -196,7 +196,7 @@ async function auditGeneratedPages(urls) {
     }
 
     if (/^characters\/[1-9]\d*$/u.test(routePath)) {
-      auditCharacterFallbackHtml(html, htmlPath);
+      auditCharacterFallbackHtml(html, htmlPath, Number(routePath.split('/')[1]));
     }
   }
 }
@@ -231,7 +231,7 @@ function auditRootFallbackHtml(html, htmlPath) {
   }
 }
 
-function auditCharacterFallbackHtml(html, htmlPath) {
+function auditCharacterFallbackHtml(html, htmlPath, characterId) {
   for (const expectedText of [
     'OPTC Team Builder character tools',
     'Browse OPTC characters',
@@ -240,6 +240,39 @@ function auditCharacterFallbackHtml(html, htmlPath) {
   ]) {
     if (!html.includes(expectedText)) {
       errors.push(`${relative(htmlPath)} character fallback must include "${expectedText}".`);
+    }
+  }
+
+  /*
+   * 869f13c5c. The tool links' first entry is the page's primary action: Captain Coverage with this
+   * character as Captain when it has a Captain Ability, Auto Team Builder otherwise. No destination
+   * appears twice, and two lines that used to misreport Rumble data stay gone.
+   */
+  const toolLinks = [
+    ...(html.match(/<nav aria-label="OPTC Team Builder character tools">([\s\S]*?)<\/nav>/u)?.[1] ?? '').matchAll(
+      /<a href="([^"]*)">([^<]*)<\/a>/gu,
+    ),
+  ].map((match) => ({ href: match[1], label: match[2] }));
+  const expectedFirst = html.includes('<p>Captain ability: ')
+    ? {
+        href: `${buildAbsoluteUrl('tabs/captain-coverage')}?captain=${characterId}`,
+        label: 'See who this Captain boosts',
+      }
+    : { href: buildAbsoluteUrl('tabs/auto-team-builder'), label: 'Open Auto Team Builder' };
+
+  if (toolLinks[0]?.href !== expectedFirst.href || toolLinks[0]?.label !== expectedFirst.label) {
+    errors.push(
+      `${relative(htmlPath)} character fallback must lead with "${expectedFirst.label}" (${expectedFirst.href}).`,
+    );
+  }
+
+  if (new Set(toolLinks.map((link) => link.href)).size !== toolLinks.length) {
+    errors.push(`${relative(htmlPath)} character fallback must not link the same destination twice.`);
+  }
+
+  for (const misreport of ['Pirate Rumble passive: Rumble type', 'Pirate Rumble special: Cooldown']) {
+    if (html.includes(misreport)) {
+      errors.push(`${relative(htmlPath)} character fallback must not print "${misreport}".`);
     }
   }
 }

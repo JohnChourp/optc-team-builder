@@ -299,6 +299,14 @@ describe('ci-check-routing', () => {
     );
   });
 
+  it('routes a change to the SEO generator spec to its own lane (869f13c5c)', () => {
+    const plan = buildCheckPlan(['scripts/generate-seo-pages.spec.ts']);
+
+    expect(plan.fullPlan).toBe(false);
+    expect(plan.runAngular).toBe(false);
+    expect(plan.scriptSuites).toEqual(['seo-pages']);
+  });
+
   it('fails closed for dependency, workflow, and router changes', () => {
     const plan = buildCheckPlan(['package-lock.json', '.github/workflows/test.yml']);
 
@@ -324,6 +332,7 @@ describe('ci-check-routing', () => {
       'docs-commands',
       'docs-drift',
       'discoverability',
+      'seo-pages',
       'route-sitemap-coverage',
       'page-doc-coverage',
       'public-asset-shadowing',

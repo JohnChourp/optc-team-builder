@@ -940,6 +940,7 @@ export class CaptainCoveragePage implements OnInit {
         ),
       );
       this.clearMissingSelectedCharacterBox();
+      await this.applyCaptainFromRoute();
       await this.applySavedTeamFromRoute();
       this.restoreTeamDraft();
       // Again, after the restore: a parked box id can name a box deleted since, and filtering
@@ -965,6 +966,7 @@ export class CaptainCoveragePage implements OnInit {
     }
 
     this.clearMissingSelectedCharacterBox();
+    await this.applyCaptainFromRoute();
     await this.applySavedTeamFromRoute();
     await this.runResultPass(null);
   }
@@ -1896,6 +1898,45 @@ export class CaptainCoveragePage implements OnInit {
     const favoriteIdSet = new Set(this.favoriteIds());
 
     return box.characterIds.filter((characterId) => favoriteIdSet.has(characterId)).length;
+  }
+
+  /**
+   * 869f13c5c. `?captain=<id>` is "See who this Captain boosts" on a character page: it starts a
+   * fresh team with that character as Captain, the way `?teamId=` opens a saved one. It runs first,
+   * so when both arrive the saved team loads over it - `?teamId=` always wins. An id that is not a
+   * character with a Captain Ability is dropped, leaving whatever the reader had on screen.
+   */
+  private async applyCaptainFromRoute(): Promise<void> {
+    const rawCaptainId = this.route.snapshot.queryParamMap.get('captain')?.trim() ?? '';
+
+    if (!rawCaptainId.length) {
+      return;
+    }
+
+    const captainId = /^\d+$/u.test(rawCaptainId) ? Number(rawCaptainId) : Number.NaN;
+    const captain = this.allCaptains().find((record) => record.id === captainId) ?? null;
+
+    if (captain) {
+      this.selectedTeamSlots.set(
+        Array.from({ length: CAPTAIN_COVERAGE_TEAM_SLOT_COUNT }, (_value, index) =>
+          index === 0 ? captain : null,
+        ),
+      );
+      this.teamName.set(this.i18n.translate('common.defaults.newCrew'));
+      this.persistTeamDraft();
+      this.currentTeamId.set(null);
+      this.saveFeedbackError.set('');
+      this.saveUiLocked.set(false);
+      this.searchTerm.set('');
+      this.selectedCaptainDetail.set(captain);
+    }
+
+    await this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { captain: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 
   private async applySavedTeamFromRoute(): Promise<void> {

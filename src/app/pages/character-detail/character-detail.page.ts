@@ -44,6 +44,7 @@ import {
 import { CharacterAbilityGroupsComponent } from '../../shared/character-ability-groups/character-ability-groups.component';
 import { ToolbarBackButtonComponent } from '../../shared/toolbar-back-button/toolbar-back-button.component';
 import { CharacterDetailStylePanelsComponent } from './character-detail-style-panels.component';
+import { resolveCharacterBridge } from './character-detail-bridge.utils';
 
 /**
  * A transfer failure the reader is allowed to see, named by translation key.
@@ -117,6 +118,18 @@ export class CharacterDetailPage implements OnInit {
 
     return currentCharacter ? this.characterOverrides.hasOverride(currentCharacter.id) : false;
   });
+  /** 869f13c5c. The page's one primary action - see `character-detail-bridge.utils.ts`. */
+  public readonly bridge = computed(() => {
+    const currentCharacter = this.character();
+
+    return currentCharacter ? resolveCharacterBridge(currentCharacter) : null;
+  });
+  /**
+   * 869f13c5c. Edit, export, import and reset are for a reader keeping their own copy of the data,
+   * not for a visitor deciding what to do with this character, so they wait behind a toggle - unless
+   * this character already has local changes, when they stay out and "Reset" is never hidden.
+   */
+  public readonly localToolsOpen = signal(false);
   public readonly viewModel = computed(() => {
     const currentCharacter = this.character();
 
@@ -166,6 +179,10 @@ export class CharacterDetailPage implements OnInit {
 
   public async toggleFavorite(characterId: number): Promise<void> {
     await this.userState.toggleFavorite(characterId);
+  }
+
+  public toggleLocalTools(): void {
+    this.localToolsOpen.update((open) => !open);
   }
 
   public isFavorite(characterId: number): boolean {

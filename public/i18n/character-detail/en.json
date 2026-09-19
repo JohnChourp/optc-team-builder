@@ -6,8 +6,10 @@
     "exportJson": "Export JSON",
     "favorited": "Favorited",
     "importJson": "Import JSON",
+    "localTools": "Local edits",
     "openTeamBuilder": "Open Auto Team Builder",
     "resetOverride": "Reset local changes",
+    "seeCaptainBoosts": "See who this Captain boosts",
     "summary": "Cost {{cost}} • {{stars}}★ unit"
   },
   "fields": {

@@ -771,19 +771,27 @@ function buildCharacterFallbackHtml(character, description) {
   const specialText = normalizeDetailText(character.detail?.specialText);
   const supportSummary = buildSupportSummary(character.detail?.supportData);
   const rumblePassive = buildRumbleSummary(character.detail?.rumbleData, 'ability');
+  const rumbleStats = buildRumbleStats(character.detail?.rumbleData);
   const rumbleSpecial = buildRumbleSummary(character.detail?.rumbleData, 'special');
   const relatedCharacters = findRelatedCharacters(character);
+  /*
+   * 869f13c5c. The first link is the page's one primary action, the same bridge the app page makes
+   * solid (`character-detail-bridge.utils.ts`): a character with a Captain Ability opens Captain
+   * Coverage with itself as Captain, any other opens Auto Team Builder. The page used to add up to
+   * three "Browse <type/class> characters" links, which all opened the same unfiltered catalogue.
+   */
   const appLinks = [
-    { label: 'Browse OPTC characters', path: 'tabs/characters' },
-    { label: 'Open Auto Team Builder', path: 'tabs/auto-team-builder' },
-    { label: 'Rank Rumble characters', path: 'tabs/rumble-characters' },
-    ...(character.type
-      ? [{ label: `Browse ${character.type} characters`, path: 'tabs/characters' }]
+    ...(captainAbility
+      ? [
+          {
+            label: 'See who this Captain boosts',
+            href: `${buildAbsoluteUrl('tabs/captain-coverage')}?captain=${character.id}`,
+          },
+        ]
       : []),
-    ...character.classes.slice(0, 2).map((characterClass) => ({
-      label: `Browse ${characterClass} characters`,
-      path: 'tabs/characters',
-    })),
+    { label: 'Open Auto Team Builder', path: 'tabs/auto-team-builder' },
+    { label: 'Browse OPTC characters', path: 'tabs/characters' },
+    { label: 'Rank Rumble characters', path: 'tabs/rumble-characters' },
   ];
   const detailParagraphs = [
     captainAbility ? `Captain ability: ${truncateForMeta(captainAbility, 320)}` : null,
@@ -792,6 +800,7 @@ function buildCharacterFallbackHtml(character, description) {
       : null,
     supportSummary ? `Support: ${truncateForMeta(supportSummary, 260)}` : null,
     rumblePassive ? `Pirate Rumble passive: ${truncateForMeta(rumblePassive, 260)}` : null,
+    rumbleStats ? `Pirate Rumble stats: ${truncateForMeta(rumbleStats, 260)}` : null,
     rumbleSpecial ? `Pirate Rumble special: ${truncateForMeta(rumbleSpecial, 260)}` : null,
   ].filter(Boolean);
   const relatedLinks = relatedCharacters.length
@@ -821,7 +830,7 @@ ${detailParagraphs.map((paragraph) => `      <p>${escapeHtml(paragraph)}</p>`).j
 ${appLinks
   .map(
     (link) =>
-      `          <li><a href="${escapeHtmlAttribute(buildPublicLinkUrl(link.path))}">${escapeHtml(
+      `          <li><a href="${escapeHtmlAttribute(link.href ?? buildPublicLinkUrl(link.path))}">${escapeHtml(
         link.label,
       )}</a></li>`,
   )
@@ -861,29 +870,32 @@ function buildRumbleSummary(rumbleData, key) {
   }
 
   const entries = Array.isArray(rumbleData[key]) ? rumbleData[key] : [];
-  const entry = entries.at(-1);
-  const effect = normalizeRumbleLevelEntry(entry);
 
-  if (effect) {
-    return effect;
+  return normalizeRumbleLevelEntry(entries.at(-1));
+}
+
+/*
+ * 869f13c5c. These are stats, and are labelled as stats. They used to stand in for a missing passive
+ * and print as "Pirate Rumble passive: Rumble type BAL, DEF 50, SPD 100" - on 4,145 pages, which is
+ * every character whose Rumble data holds no text the generator can read.
+ */
+function buildRumbleStats(rumbleData) {
+  if (!rumbleData || typeof rumbleData !== 'object' || Array.isArray(rumbleData)) {
+    return '';
   }
 
-  if (key === 'ability') {
-    const stats = rumbleData.stats && typeof rumbleData.stats === 'object' ? rumbleData.stats : {};
-    const rumbleType = normalizeDetailText(stats.rumbleType);
-    const def = normalizeDetailText(stats.def);
-    const spd = normalizeDetailText(stats.spd);
+  const stats = rumbleData.stats && typeof rumbleData.stats === 'object' ? rumbleData.stats : {};
+  // DEF and SPD are numbers in the dataset, which `normalizeDetailText` drops - so until 869f13c5c this
+  // line only ever printed the Rumble type.
+  const statText = (value) =>
+    typeof value === 'number' && Number.isFinite(value) ? String(value) : normalizeDetailText(value);
+  const rumbleType = statText(stats.rumbleType);
+  const def = statText(stats.def);
+  const spd = statText(stats.spd);
 
-    return [
-      rumbleType ? `Rumble type ${rumbleType}` : '',
-      def ? `DEF ${def}` : '',
-      spd ? `SPD ${spd}` : '',
-    ]
-      .filter(Boolean)
-      .join(', ');
-  }
-
-  return '';
+  return [rumbleType ? `Rumble type ${rumbleType}` : '', def ? `DEF ${def}` : '', spd ? `SPD ${spd}` : '']
+    .filter(Boolean)
+    .join(', ');
 }
 
 function normalizeRumbleLevelEntry(entry) {
@@ -899,6 +911,11 @@ function normalizeRumbleLevelEntry(entry) {
     return normalizeDetailText(entry);
   }
 
+  /*
+   * 869f13c5c. `cooldown` is left out of the fallback: a Rumble special stores its effects in an
+   * array this does not read, so the fallback used to print the cooldown alone - "Pirate Rumble
+   * special: Cooldown: 23" on 1,289 pages. A special with nothing readable now prints nothing.
+   */
   const candidate =
     entry.description ??
     entry.effect ??
@@ -906,7 +923,9 @@ function normalizeRumbleLevelEntry(entry) {
     entry.details ??
     entry.summary ??
     Object.entries(entry)
-      .filter(([, value]) => typeof value === 'string' || typeof value === 'number')
+      .filter(
+        ([key, value]) => key !== 'cooldown' && (typeof value === 'string' || typeof value === 'number'),
+      )
       .map(([key, value]) => `${humanizeSlug(key)}: ${value}`)
       .join(', ');
 
