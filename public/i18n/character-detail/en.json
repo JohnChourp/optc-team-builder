@@ -9,6 +9,7 @@
     "localTools": "Local edits",
     "openTeamBuilder": "Open Auto Team Builder",
     "resetOverride": "Reset local changes",
+    "savedTeamCount": "In {{count}} of your saved teams",
     "seeCaptainBoosts": "See who this Captain boosts",
     "summary": "Cost {{cost}} • {{stars}}★ unit"
   },

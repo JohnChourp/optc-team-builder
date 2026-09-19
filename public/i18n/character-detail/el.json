@@ -9,6 +9,7 @@
     "localTools": "Τοπικές αλλαγές",
     "openTeamBuilder": "Άνοιγμα Auto Team Builder",
     "resetOverride": "Επαναφορά τοπικών αλλαγών",
+    "savedTeamCount": "Σε {{count}} από τις αποθηκευμένες ομάδες σου",
     "seeCaptainBoosts": "Δες ποιους ενισχύει αυτός ο Captain",
     "summary": "Κόστος {{cost}} • {{stars}}★ unit"
   },
