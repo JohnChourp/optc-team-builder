@@ -50,6 +50,7 @@ describe("CookiePolicyPage", () => {
     const analyticsConsent = signal<"accepted" | "rejected" | "unknown">("unknown");
     const analyticsConsentService = {
       consent: analyticsConsent,
+      available: true,
       accept: vi.fn().mockImplementation(async () => {
         analyticsConsent.set("accepted");
       }),

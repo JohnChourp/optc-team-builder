@@ -217,7 +217,7 @@
   "analyticsConsent": {
     "banner": {
       "title": "Allow analytics cookies?",
-      "copy": "Enable optional Google Analytics cookies to help measure which screens are useful. The app keeps analytics off until you choose.",
+      "copy": "Google Analytics and Microsoft Clarity would help us see which screens are useful. Nothing loads until you choose, and declining changes nothing in the app.",
       "privacyLink": "Privacy Policy",
       "cookiesLink": "Cookie Policy",
       "accept": "Allow analytics",

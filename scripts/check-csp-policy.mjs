@@ -56,7 +56,9 @@ const META_UNSUPPORTED_DIRECTIVES = ['frame-ancestors', 'report-uri', 'sandbox']
  * This list exists because the browser half of this check structurally cannot find them all. It
  * serves the build from a local HTTP server, so:
  *
- *   - Google Tag Manager tags DO load locally, which is how Microsoft Clarity was caught here;
+ *   - Google Tag Manager tags loaded locally until 869f13c5m, which is how Microsoft Clarity was
+ *     caught here. They now load only after a reader accepts analytics, which a local serve with
+ *     no GA4 id never offers - so the browser half no longer sees them at all;
  *   - Cloudflare Web Analytics does NOT, because it is injected by Cloudflare at the edge and
  *     there is no CDN in front of a local server. It was blocked in production by v0.4.43 and
  *     caught by the public-entry synthetics, not by this script.
@@ -65,8 +67,8 @@ const META_UNSUPPORTED_DIRECTIVES = ['frame-ancestors', 'report-uri', 'sandbox']
  * entry here must be a deliberate act with the tag actually removed at its source.
  */
 const REQUIRED_INJECTED_ORIGINS = [
-  { directive: 'script-src', origin: 'https://www.googletagmanager.com', injectedBy: 'the site itself, in index.html' },
-  { directive: 'script-src', origin: 'https://www.clarity.ms', injectedBy: 'the GTM container GTM-TBW6L4T' },
+  { directive: 'script-src', origin: 'https://www.googletagmanager.com', injectedBy: 'the app, from GoogleAnalyticsService once a reader accepts analytics' },
+  { directive: 'script-src', origin: 'https://www.clarity.ms', injectedBy: 'the GTM container GTM-TBW6L4T, once a reader accepts analytics' },
   { directive: 'script-src', origin: 'https://static.cloudflareinsights.com', injectedBy: 'Cloudflare at the edge - invisible to a local serve' },
   { directive: 'connect-src', origin: 'https://cloudflareinsights.com', injectedBy: 'Cloudflare Web Analytics beacon' },
 ];
@@ -89,10 +91,11 @@ const REQUIRED_INJECTED_ORIGINS = [
  * resolve to a vendor the privacy and cookie pages name, in both languages.
  *
  * Two things the copy had to get right, because they are easy to state falsely:
- * the GTM container loads on EVERY page regardless of consent (what consent gates
- * is `analytics_storage`, defaulted to `denied` before the container loads), and
- * Cloudflare Web Analytics is added at the edge, so it is present whatever the
- * reader chooses here.
+ * when the GTM container loads, and that Cloudflare Web Analytics is added at the
+ * edge, so it is present whatever the reader chooses here. Until 869f13c5m the
+ * container loaded on EVERY page regardless of consent, with only
+ * `analytics_storage` defaulted to `denied`; since then it loads only after the
+ * reader accepts, and the copy says so.
  *
  * The check fails on any origin that is neither disclosed nor declared with a
  * reason - which is the part that was missing entirely: a fifth vendor could have

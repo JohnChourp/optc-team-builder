@@ -31,7 +31,9 @@ describe('GoogleAnalyticsService', () => {
     expect(service.enable()).toBe(true);
     expect(service.enable()).toBe(true);
 
-    expect(document.querySelectorAll('script[src*="googletagmanager"]').length).toBe(1);
+    // 869f13c5m. One gtag.js and, since the tag manager moved behind consent, one container.
+    expect(document.querySelectorAll('script[src*="googletagmanager.com/gtag/js"]').length).toBe(1);
+    expect(document.querySelectorAll('script[src*="googletagmanager.com/gtm.js"]').length).toBe(1);
     expect(document.defaultView?.dataLayer).toEqual(
       expect.arrayContaining([
         ['js', expect.any(Date)],

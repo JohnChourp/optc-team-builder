@@ -636,17 +636,22 @@ describe('AppComponent', () => {
     expect(appUpdateStub.applyUpdate).not.toHaveBeenCalled();
   });
 
-  it('shows the banner while consent is unknown and hides it after acceptance', async () => {
+  it('asks once the reader has moved inside the app, and hides the banner after acceptance', async () => {
     const { AppComponent } = await import('./app.component');
     const component = new AppComponent();
 
+    // 869f13c5m. Not on the page the visitor arrived on - only after their first navigation.
+    expect(component.showAnalyticsConsentBanner()).toBe(false);
+    routerStub.events.next(new NavigationEnd(1, '/tabs/characters', '/tabs/characters'));
+    expect(component.showAnalyticsConsentBanner()).toBe(false);
+    routerStub.events.next(new NavigationEnd(2, '/tabs/settings', '/tabs/settings'));
     expect(component.showAnalyticsConsentBanner()).toBe(true);
 
     await component.acceptAnalyticsConsent();
 
     expect(component.showAnalyticsConsentBanner()).toBe(false);
     expect(analyticsConsentStub.accept).toHaveBeenCalledOnce();
-    expect(analyticsStub.trackPageView).toHaveBeenCalledWith('/tabs/characters');
+    expect(analyticsStub.trackPageView).toHaveBeenCalledWith('/tabs/settings');
   });
 
   it('tracks navigation events only when consent is accepted', async () => {
@@ -893,6 +898,7 @@ function createAnalyticsConsentStub(initialConsent: AnalyticsConsentState) {
 
   return {
     consent,
+    available: true,
     accept: vi.fn().mockImplementation(async () => {
       consent.set('accepted');
     }),

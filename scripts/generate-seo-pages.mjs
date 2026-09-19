@@ -20,26 +20,11 @@ const siteDescription =
   'Plan OPTC crews with character search, Rumble rankings, captain coverage, auto team building, Crew Forge, saved teams, enemies, boxes, Drive sync, and offline tools.';
 const defaultImageUrl = `${siteBaseUrl}/brand/favicon-master-v2-optimized.png`;
 const indexNowKey = '0e9b739514c64e9a9a762120955f79dc';
-const googleTagManagerHeadHtml = `  <!-- Google Tag Manager consent bootstrap -->
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    window.gtag = window.gtag || function() { window.dataLayer.push(arguments); };
-    window.gtag("consent", "default", {
-      analytics_storage: "denied",
-      wait_for_update: 500,
-    });
-  </script>
-  <!-- Google Tag Manager -->
-  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-  })(window,document,'script','dataLayer','GTM-TBW6L4T');</script>
-  <!-- End Google Tag Manager -->`;
-const googleTagManagerBodyHtml = `  <!-- Google Tag Manager (noscript) -->
-  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TBW6L4T"
-  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-  <!-- End Google Tag Manager (noscript) -->`;
+/*
+ * 869f13c5m. No analytics tag is written into any generated page. They take the app shell, which has
+ * none since 869f13c5m, and `sitemap.html` carried its own copy of the tag manager snippet, removed
+ * with it: the tag manager loads only after a reader accepts analytics, inside the app.
+ */
 const homeFallbackHeroCharacters = [
   {
     alt: 'Kozuki Hiyori - Graveside Prayer character artwork',
@@ -438,7 +423,6 @@ ${group.characters
   const sitemapHtml = `<!doctype html>
 <html lang="${SITE_LANGUAGE}">
 <head>
-${googleTagManagerHeadHtml}
   <meta charset="utf-8">
   <title>Sitemap | OPTC Team Builder</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -457,7 +441,6 @@ ${googleTagManagerHeadHtml}
   </style>
 </head>
 <body>
-${googleTagManagerBodyHtml}
   <main>
     <h1>OPTC Team Builder Sitemap</h1>
     <p>Links to the main public pages for browsing OPTC characters, building teams with Auto Team Builder, importing Crew Forge screenshots, reading OPTC guides, and opening representative generated character pages.</p>

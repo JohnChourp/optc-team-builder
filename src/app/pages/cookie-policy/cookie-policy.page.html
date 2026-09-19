@@ -61,24 +61,27 @@
           <span>{{ t(analyticsConsentStatusKey()) }}</span>
         </div>
 
-        <div class="policy-actions">
-          <ion-button
-            fill="outline"
-            color="warning"
-            [disabled]="analyticsConsent() === 'accepted'"
-            (click)="acceptAnalyticsConsent()"
-          >
-            {{ t("consent.accept") }}
-          </ion-button>
-          <ion-button
-            fill="outline"
-            color="light"
-            [disabled]="analyticsConsent() === 'rejected'"
-            (click)="rejectAnalyticsConsent()"
-          >
-            {{ t("consent.reject") }}
-          </ion-button>
-        </div>
+        <!-- 869f13c5m. No choice where analytics cannot run: the status above says so instead. -->
+        @if (analyticsAvailable) {
+          <div class="policy-actions">
+            <ion-button
+              fill="outline"
+              color="warning"
+              [disabled]="analyticsConsent() === 'accepted'"
+              (click)="acceptAnalyticsConsent()"
+            >
+              {{ t("consent.accept") }}
+            </ion-button>
+            <ion-button
+              fill="outline"
+              color="light"
+              [disabled]="analyticsConsent() === 'rejected'"
+              (click)="rejectAnalyticsConsent()"
+            >
+              {{ t("consent.reject") }}
+            </ion-button>
+          </div>
+        }
       </section>
 
       <section class="glass-card legal-card">

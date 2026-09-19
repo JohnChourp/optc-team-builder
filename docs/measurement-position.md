@@ -23,10 +23,18 @@ repository would guess:
 
 | Surface | Injected by | What it sends |
 | --- | --- | --- |
-| **GA4** (`gtag.js`) | `src/index.html` directly | `page_view` only, consent-gated, refused on native |
-| **Google Tag Manager** `GTM-TBW6L4T` | `src/index.html`, `public/404.html`, and `scripts/generate-seo-pages.mjs` — so every generated SEO page too | a container; whatever it is configured to load |
-| **Microsoft Clarity** | the GTM container, not this repository | session behaviour |
-| **Cloudflare Web Analytics** | Cloudflare at the edge — not in this repository at all | page-level beacon |
+| **GA4** (`gtag.js`) | `GoogleAnalyticsService.enable()`, only after the reader accepts | `page_view` only, refused on native |
+| **Google Tag Manager** `GTM-TBW6L4T` | the same `enable()`, only after the reader accepts — no longer any page's HTML (869f13c5m) | a container; whatever it is configured to load |
+| **Microsoft Clarity** | the GTM container, not this repository — so also only after the reader accepts | session behaviour |
+| **Cloudflare Web Analytics** | Cloudflare at the edge — not in this repository at all | page-level beacon, cookieless, present whatever the reader chooses |
+
+**Nothing but the edge beacon loads before the reader accepts** — owner decision,
+2026-09-18, applied by 869f13c5m. The tag manager and `gtag.js` used to load from
+`src/index.html`, `public/404.html` and every generated page on every visit, with only
+`analytics_storage` defaulted to `denied`. The banner now asks only where the answer
+changes something (a GA4 id is configured and the platform is web) and only after the
+reader's first navigation, with Accept and Reject weighted equally, and says that
+declining changes nothing in the app.
 
 Only the first is in the app's own code as an analytics call. The other three are
 *containers and edges*: two of them cannot be found by reading `src/`, which is why
@@ -48,10 +56,11 @@ section, in English and Greek.
 Two things that copy had to get right, because both are easy to state falsely and
 a privacy page is the worst place to be loosely worded:
 
-- **The GTM container loads on every page regardless of consent.** What consent
-  gates is `analytics_storage`, which is defaulted to `denied` *before* the
-  container loads and granted only on acceptance. "Nothing loads until you
-  consent" would have been untrue of the container.
+- **When the GTM container loads.** On 2026-09-16 it loaded on every page
+  regardless of consent, and what consent gated was `analytics_storage`, so
+  "nothing loads until you consent" would have been untrue of it. Since 869f13c5m
+  it IS true: the container loads only after the reader accepts, and the copy was
+  rewritten to say so, in English and Greek.
 - **Cloudflare Web Analytics is added at the edge**, not by the app, so it is
   present whatever the reader chooses on the cookie page. It is cookieless, which
   is why that is defensible — but it still had to be said.

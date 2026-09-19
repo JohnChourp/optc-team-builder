@@ -27,13 +27,14 @@
   },
   "analytics": {
     "title": "Analytics και cookies",
-    "copy": "Το Google Analytics μένει κλειστό μέχρι να επιτρέψεις τα προαιρετικά analytics cookies για αυτόν τον browser.",
+    "copy": "Το Google Analytics και το Microsoft Clarity φορτώνουν μόνο αφού επιτρέψεις τα προαιρετικά analytics για αυτόν τον browser. Η απόρριψη δεν αλλάζει τίποτα στην εφαρμογή.",
     "helper": "Μπορείς να αλλάξεις αυτή την επιλογή οποιαδήποτε στιγμή. Η απόρριψη κρατά απενεργοποιημένα τα προαιρετικά analytics cookies.",
     "statusLabel": "Τρέχουσα επιλογή",
     "status": {
       "accepted": "Έγινε αποδοχή analytics cookies",
       "rejected": "Έγινε απόρριψη analytics cookies",
-      "unknown": "Δεν έχει αποθηκευτεί ακόμη επιλογή"
+      "unknown": "Δεν έχει αποθηκευτεί ακόμη επιλογή",
+      "unavailable": "Το analytics δεν τρέχει σε αυτή την εφαρμογή ή έκδοση, οπότε δεν υπάρχει κάτι να επιλέξεις."
     },
     "actions": {
       "accept": "Αποδοχή analytics",
