@@ -117,15 +117,17 @@ describe('public entry visual baselines', () => {
    * pixels are right, but it proves the files a Linux run would compare are
    * still here and still contain an image.
    */
-  it('keeps all six committed baselines, non-empty and readable as PNGs', () => {
+  it('keeps all eight committed baselines, non-empty and readable as PNGs', () => {
     const files = readdirSync(dir)
       .filter((name) => name.endsWith('.png'))
       .sort();
 
     expect(files).toEqual([
+      'desktop-auto-builder-tool.png',
       'desktop-guided-share-guide.png',
       'desktop-manual-share-link.png',
       'desktop-team-building-guide.png',
+      'mobile-auto-builder-tool.png',
       'mobile-guided-share-guide.png',
       'mobile-manual-share-link.png',
       'mobile-team-building-guide.png',

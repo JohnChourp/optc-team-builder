@@ -15,6 +15,11 @@
  * The records ship with the lazy seo-content chunk, not the entry script: while they sat in the eager
  * route table they cost the entry bundle about 7 KB.
  *
+ * 869f13c5p. The FIRST link of each page is its primary action - the one thing a reader of that page
+ * came to do - and the page renders it as the one solid button, the rest as outlines. The generator's
+ * crawlable copy keeps the same order. So reordering `links` changes what the page asks a visitor to
+ * do; `src/app/pages/public-primary-action.spec.ts` pins each page's primary.
+ *
  * English by decision (869dwcbb8): the page host declares `lang="en"`.
  */
 
@@ -58,8 +63,8 @@ export const SEO_CONTENT_PAGES: Readonly<Record<string, SeoContentPageData>> = {
       },
     ],
     links: [
-      { label: 'Browse OPTC characters', route: '/tabs/characters' },
       { label: 'Open Auto Team Builder', route: '/tabs/auto-team-builder' },
+      { label: 'Browse OPTC characters', route: '/tabs/characters' },
     ],
   },
   'tools/optc-auto-team-builder': {
@@ -84,6 +89,7 @@ export const SEO_CONTENT_PAGES: Readonly<Record<string, SeoContentPageData>> = {
     links: [
       { label: 'Open Auto Team Builder', route: '/tabs/auto-team-builder' },
       { label: 'Check captain coverage', route: '/tabs/captain-coverage' },
+      { label: 'Read the team-building guide', route: '/guides/how-to-build-an-optc-team' },
     ],
   },
   'tools/optc-rumble-team-builder': {
@@ -108,6 +114,7 @@ export const SEO_CONTENT_PAGES: Readonly<Record<string, SeoContentPageData>> = {
     links: [
       { label: 'Build a Rumble team', route: '/tabs/auto-team-builder-rumble' },
       { label: 'Rank Rumble characters', route: '/tabs/rumble-characters' },
+      { label: 'Read the Pirate Rumble guide', route: '/guides/optc-pirate-rumble-team-building' },
     ],
   },
   'tools/optc-character-database': {
@@ -154,8 +161,8 @@ export const SEO_CONTENT_PAGES: Readonly<Record<string, SeoContentPageData>> = {
       },
     ],
     links: [
-      { label: 'Check captain coverage', route: '/tabs/captain-coverage' },
       { label: 'Open Auto Team Builder', route: '/tabs/auto-team-builder' },
+      { label: 'Check captain coverage', route: '/tabs/captain-coverage' },
     ],
   },
   'guides/guided-build-compare-team-sharing': {
@@ -188,6 +195,7 @@ export const SEO_CONTENT_PAGES: Readonly<Record<string, SeoContentPageData>> = {
     links: [
       { label: 'Open Auto Team Builder', route: '/tabs/auto-team-builder' },
       { label: 'Open Saved Teams', route: '/tabs/saved-teams' },
+      { label: 'Read the team-building guide', route: '/guides/how-to-build-an-optc-team' },
     ],
   },
   'guides/optc-pirate-rumble-team-building': {
@@ -210,8 +218,8 @@ export const SEO_CONTENT_PAGES: Readonly<Record<string, SeoContentPageData>> = {
       },
     ],
     links: [
-      { label: 'Rank Rumble characters', route: '/tabs/rumble-characters' },
       { label: 'Build a Rumble team', route: '/tabs/auto-team-builder-rumble' },
+      { label: 'Rank Rumble characters', route: '/tabs/rumble-characters' },
     ],
   },
 };

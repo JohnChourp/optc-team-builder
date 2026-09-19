@@ -2,7 +2,7 @@ name: Refresh Visual Baselines
 
 # Manual only by policy, and deliberately does not commit anything.
 #
-# The six visual baselines under `e2e/public-entry-visual.spec.ts-snapshots/`
+# The eight visual baselines under `e2e/public-entry-visual.spec.ts-snapshots/`
 # are compared on Linux only, to match CI rendering - `public-entry-visual.spec.ts`
 # skips itself on any other platform. So they cannot be regenerated on a
 # maintainer's Mac: a macOS capture would differ from what CI compares against
