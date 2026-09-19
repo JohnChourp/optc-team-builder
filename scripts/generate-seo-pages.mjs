@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { SITE_LANGUAGE, hreflangLinks, languageOf } from './lib/public-page-language.mjs';
 import { loadPublicRoutes } from './lib/public-routes.mjs';
 
 const projectRoot = path.resolve(import.meta.dirname, '..');
@@ -351,6 +352,9 @@ const publicRoutes = publicRouteRecords.map((record) => {
     title: record.title,
     description: record.description,
     ...(record.aliases.length > 0 ? { aliases: record.aliases } : {}),
+    // 869f13c6b. `en` and no alternates for every page today, so nothing below changes a byte.
+    language: languageOf(record),
+    alternateLinks: hreflangLinks(record, buildAbsoluteUrl),
   };
 });
 
@@ -430,16 +434,25 @@ async function writeRoutePage(routePath, seo) {
 
 async function writeSitemap(routePaths) {
   const uniquePaths = [...new Set(routePaths)];
+  const alternatesByPath = new Map(publicRoutes.map((route) => [route.path, route.alternateLinks]));
+  const hasAlternates = [...alternatesByPath.values()].some((links) => links.length > 0);
   const urls = uniquePaths
     .map(
       (routePath) => `  <url>
     <loc>${escapeXml(buildAbsoluteUrl(routePath))}</loc>
-    <lastmod>${generatedAt}</lastmod>
+    <lastmod>${generatedAt}</lastmod>${(alternatesByPath.get(routePath) ?? [])
+      .map(
+        (link) => `
+    <xhtml:link rel="alternate" hreflang="${escapeXml(link.hreflang)}" href="${escapeXml(link.href)}"/>`,
+      )
+      .join('')}
   </url>`,
     )
     .join('\n');
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"${
+    hasAlternates ? ' xmlns:xhtml="http://www.w3.org/1999/xhtml"' : ''
+  }>
 ${urls}
 </urlset>
 `;
@@ -493,7 +506,7 @@ ${group.characters
     .join('\n');
   const canonicalUrl = `${siteBaseUrl}/sitemap.html`;
   const sitemapHtml = `<!doctype html>
-<html lang="en">
+<html lang="${SITE_LANGUAGE}">
 <head>
 ${googleTagManagerHeadHtml}
   <meta charset="utf-8">
@@ -546,6 +559,8 @@ function buildStaticPageSeo(route) {
     description: route.description,
     canonicalUrl,
     imageUrl: defaultImageUrl,
+    language: route.language,
+    alternateLinks: route.alternateLinks,
     fallbackHtml: route.path === '' ? buildHomeFallbackHtml(route) : buildStaticFallbackHtml(route),
     jsonLd: buildJsonLd(
       {
@@ -555,7 +570,7 @@ function buildStaticPageSeo(route) {
         name: route.title,
         description: route.description,
         isPartOf: { '@id': `${buildAbsoluteUrl('')}#website` },
-        inLanguage: 'en',
+        inLanguage: route.language,
         ...(defaultImageUrl ? { image: defaultImageUrl } : {}),
       },
       [buildBreadcrumbNode(canonicalUrl, route.heading ?? route.title, canonicalPath), ...extraGraphNodes],
@@ -582,7 +597,7 @@ function buildCharacterPageSeo(character) {
         name: `#${character.id} ${character.name}`,
         description,
         isPartOf: { '@id': `${buildAbsoluteUrl('')}#website` },
-        inLanguage: 'en',
+        inLanguage: SITE_LANGUAGE,
         about: {
           '@type': 'Thing',
           name: character.name,
@@ -610,7 +625,7 @@ function buildJsonLd(pageNode, extraGraphNodes = []) {
         alternateName: 'One Piece Treasure Cruise Team Builder',
         url: buildAbsoluteUrl(''),
         description: siteDescription,
-        inLanguage: 'en',
+        inLanguage: SITE_LANGUAGE,
         potentialAction: {
           '@type': 'SearchAction',
           target: `${buildAbsoluteUrl('tabs/characters')}?q={search_term_string}`,
@@ -676,10 +691,10 @@ function injectSeo(html, seo) {
     throw new Error('Failed to inject SEO metadata because no <title> tag was found.');
   }
 
-  const withSeo = removeExistingSeo(html).replace(
-    titlePattern,
-    `<title>${escapeHtml(seo.title)}</title>\n${buildSeoTags(seo)}`,
-  );
+  const withSeo = removeExistingSeo(html)
+    .replace(titlePattern, `<title>${escapeHtml(seo.title)}</title>\n${buildSeoTags(seo)}`)
+    // 869f13c6b. Every page is English today, so this rewrites `lang="en"` with itself.
+    .replace(/<html lang="[^"]*"/u, `<html lang="${seo.language ?? SITE_LANGUAGE}"`);
 
   return injectAppRootFallback(withSeo, seo.fallbackHtml);
 }
@@ -691,9 +706,16 @@ function buildSeoTags(seo) {
   <meta name="twitter:image" content="${escapeHtmlAttribute(seo.imageUrl)}">`
     : '';
 
+  const alternateTags = (seo.alternateLinks ?? [])
+    .map(
+      (link) =>
+        `\n  <link rel="alternate" hreflang="${escapeHtmlAttribute(link.hreflang)}" href="${escapeHtmlAttribute(link.href)}">`,
+    )
+    .join('');
+
   return `  <meta name="description" content="${escapeHtmlAttribute(seo.description)}">
   <meta name="robots" content="index,follow">
-  <link rel="canonical" href="${escapeHtmlAttribute(seo.canonicalUrl)}">
+  <link rel="canonical" href="${escapeHtmlAttribute(seo.canonicalUrl)}">${alternateTags}
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="${escapeHtmlAttribute(siteName)}">
   <meta property="og:title" content="${escapeHtmlAttribute(seo.title)}">
@@ -712,6 +734,7 @@ function removeExistingSeo(html) {
     .replace(/\s*<meta\s+name=["']description["'][^>]*>\n?/gi, '\n')
     .replace(/\s*<meta\s+name=["']robots["'][^>]*>\n?/gi, '\n')
     .replace(/\s*<link\s+rel=["']canonical["'][^>]*>\n?/gi, '\n')
+    .replace(/\s*<link\s+rel=["']alternate["'][^>]*\bhreflang=[^>]*>\n?/gi, '\n')
     .replace(/\s*<meta\s+property=["']og:[^"']+["'][^>]*>\n?/gi, '\n')
     .replace(/\s*<meta\s+name=["']twitter:[^"']+["'][^>]*>\n?/gi, '\n')
     .replace(/\s*<script\s+type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>\n?/gi, '\n');

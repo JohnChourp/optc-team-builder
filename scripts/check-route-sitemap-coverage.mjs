@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 import ts from 'typescript';
 
+import { findUnmaintainedRuntimeAlternates, validateLanguageDeclarations } from './lib/public-page-language.mjs';
 import { loadPublicRoutes } from './lib/public-routes.mjs';
 
 /**
@@ -31,7 +32,13 @@ import { loadPublicRoutes } from './lib/public-routes.mjs';
  *   E. an exclusion naming a route that no longer exists fails, so the registry
  *      cannot rot into ghosts that silently permit;
  *   F. a route both registered and excluded fails, because the two answers
- *      disagree and neither can be trusted.
+ *      disagree and neither can be trusted;
+ *   G. a page in another language - or under a language-scoped path - that
+ *      names no alternates fails, and so do alternates that are not reciprocal,
+ *      point at nothing, or disagree about the language; and the first page to
+ *      name an alternate fails while `app.component.ts` still leaves alternate
+ *      links alone across client-side navigation (869f13c6b,
+ *      `scripts/lib/public-page-language.mjs`).
  *
  * Both sides are read from source rather than imported: `app.routes.ts` is
  * Angular config full of lazy `loadComponent` calls, and the registry is
@@ -224,6 +231,7 @@ export function inspectRouteSitemapCoverage({
   routesSource,
   publicRoutes = loadPublicRoutes(),
   exclusions = ROUTE_SITEMAP_EXCLUSIONS,
+  appComponentSource,
 }) {
   const routes = readAppRoutes(routesSource);
   const routePaths = new Set(routes.map((route) => route.path));
@@ -313,6 +321,13 @@ export function inspectRouteSitemapCoverage({
     }
   }
 
+  /* G. */
+  errors.push(...validateLanguageDeclarations(publicRoutes));
+
+  if (appComponentSource !== undefined) {
+    errors.push(...findUnmaintainedRuntimeAlternates(publicRoutes, appComponentSource));
+  }
+
   return {
     routeCount: routePaths.size,
     registeredCount: publicRoutes.length,
@@ -337,6 +352,7 @@ function main() {
   const result = inspectRouteSitemapCoverage({
     routesSource: readFileSync(path.join(projectRoot, 'src', 'app', 'app.routes.ts'), 'utf8'),
     publicRoutes: loadPublicRoutes(projectRoot),
+    appComponentSource: readFileSync(path.join(projectRoot, 'src', 'app', 'app.component.ts'), 'utf8'),
   });
   const output = formatRouteSitemapCoverageResult(result);
 
