@@ -29,6 +29,9 @@ export default defineConfig({
 
   use: {
     baseURL,
+    // 869f13c59. A first visit starts in the browser's language, and these specs locate English
+    // labels, so every context is English whatever the machine running them is set to.
+    locale: 'en-US',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',

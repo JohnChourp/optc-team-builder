@@ -10,6 +10,7 @@ import {
   DEFAULT_APP_LANGUAGE,
   type SupportedLanguage,
 } from "../i18n/app-i18n.types";
+import { resolveFirstVisitLanguage } from "../i18n/first-visit-language";
 import { PreferencesAdapterService } from "./preferences-adapter.service";
 
 type TranslationParams = Record<string, string | number | boolean | null | undefined>;
@@ -83,13 +84,32 @@ export class AppI18nService {
 
   private async hydrate(): Promise<void> {
     const { value } = await this.preferences.get({ key: APP_LANGUAGE_PREFERENCE_KEY });
-    await this.setLanguage(this.resolveSupportedLanguage(value));
+    /*
+     * 869f13c59. A stored choice always wins. Only a device with none yet asks the browser,
+     * and `setLanguage` stores the answer, so that happens on the first visit alone.
+     */
+    await this.setLanguage(
+      this.isSupportedLanguage(value) ? value : resolveFirstVisitLanguage(this.browserLanguages()),
+    );
+  }
+
+  /** The browser's languages in the reader's order; none where there is no window to ask. */
+  private browserLanguages(): readonly string[] {
+    const navigator = this.document.defaultView?.navigator;
+
+    if (navigator?.languages?.length) {
+      return navigator.languages;
+    }
+
+    return navigator?.language ? [navigator.language] : [];
+  }
+
+  private isSupportedLanguage(value: string | null | undefined): value is SupportedLanguage {
+    return this.availableLanguages.some((language) => language.id === value);
   }
 
   private resolveSupportedLanguage(value: string | null | undefined): SupportedLanguage {
-    return this.availableLanguages.some((language) => language.id === value)
-      ? (value as SupportedLanguage)
-      : DEFAULT_APP_LANGUAGE;
+    return this.isSupportedLanguage(value) ? value : DEFAULT_APP_LANGUAGE;
   }
 
   private async ensureLoaded(language: SupportedLanguage, scope?: string): Promise<void> {
