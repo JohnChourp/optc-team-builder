@@ -89,7 +89,7 @@ export const SEO_CONTENT_PAGES: Readonly<Record<string, SeoContentPageData>> = {
     links: [
       { label: 'Open Auto Team Builder', route: '/tabs/auto-team-builder' },
       { label: 'Check captain coverage', route: '/tabs/captain-coverage' },
-      { label: 'Read how to build an OPTC team', route: '/guides/how-to-build-an-optc-team' },
+      { label: 'Read the team-building guide', route: '/guides/how-to-build-an-optc-team' },
     ],
   },
   'tools/optc-rumble-team-builder': {
