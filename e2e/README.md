@@ -32,6 +32,11 @@ Regression tests seed only browser-local Capacitor Preferences keys:
 - `CapacitorStorage.analyticsConsent`
 - `CapacitorStorage.savedTeams`
 
+Every context runs in the `en-US` locale (`playwright.config.ts`). When nothing is
+stored, a first visit starts in the browser's language (869f13c59), and specs
+that do not seed `appLanguage` locate English labels - without the pin, a machine
+set to Greek would run them in Greek.
+
 Keep new scenarios deterministic. Prefer stable seeded teams and `data-testid`
 hooks over incidental Ionic popover structure, visual pixels, network timing, or
 generated class names. CI always uploads the generated Playwright failure
