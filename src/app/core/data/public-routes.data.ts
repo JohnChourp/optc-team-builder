@@ -24,10 +24,16 @@
  * the canonical path it is published at, and the `<title>` and meta description
  * both the app and the generated page must agree on. The generator's long-form
  * page content - headings, paragraphs, in-page links, schema type - stays in
- * `scripts/generate-seo-pages.mjs`, because it exists in exactly one place
- * already and pulling it here would add ~20 KB of prose to the app bundle that
- * no screen reads. `scripts/check-route-sitemap-coverage.mjs` fails if the
- * generator ever grows an entry this registry does not name, or the reverse.
+ * `scripts/generate-seo-pages.mjs`, because pulling it here would add ~20 KB of
+ * prose to the app bundle that no screen reads. The generator itself refuses to
+ * run if it holds an entry this registry does not name, or the reverse.
+ *
+ * 869f13c5t. "Exactly one place" was true for thirteen pages and false for the
+ * four tools and three guides, whose text the app also rendered - from
+ * `app.routes.ts`, in sentences the generator's copy never shared. Those seven
+ * now keep their text once, in `src/app/pages/seo-content/seo-content.data.ts`,
+ * which the page renders and the generator reads; it ships with the lazy page,
+ * so it adds nothing to the entry script either.
  *
  * A route in the router with no record here is not published: it has no
  * `data.seo`, so `AppComponent` falls back to `defaultSeo` and marks it

@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { SITE_LANGUAGE, hreflangLinks, languageOf } from './lib/public-page-language.mjs';
 import { loadPublicRoutes } from './lib/public-routes.mjs';
+import { loadSeoContentPages } from './lib/seo-content.mjs';
 
 const projectRoot = path.resolve(import.meta.dirname, '..');
 const defaultOutputDir = path.join(projectRoot, 'dist', 'optc-team-builder', 'browser');
@@ -181,115 +182,6 @@ const publicRouteContent = [
     ],
   },
   {
-    path: 'tools/optc-team-builder',
-    heading: 'OPTC Team Builder Tool',
-    schemaType: 'SoftwareApplication',
-    paragraphs: [
-      'OPTC Team Builder is a fan-made One Piece Treasure Cruise crew planner for finding characters, comparing abilities, checking captain coverage, and moving quickly from unit search to team planning.',
-      'The tool connects a searchable OPTC character database with Manual Team Builder, Auto Team Builder, Pirate Rumble tools, Crew Forge screenshot imports, saved teams, saved enemies, character boxes, and Drive sync.',
-      'Use it when you need a practical OPTC team builder rather than a static list of characters or a general game guide.',
-    ],
-    links: [
-      { label: 'Browse OPTC characters', path: 'tabs/characters' },
-      { label: 'Open Manual Team Builder', path: 'tabs/manual-team-builder' },
-      { label: 'Open Auto Team Builder', path: 'tabs/auto-team-builder' },
-      { label: 'Check captain coverage', path: 'tabs/captain-coverage' },
-    ],
-  },
-  {
-    path: 'tools/optc-auto-team-builder',
-    heading: 'OPTC Auto Team Builder',
-    schemaType: 'SoftwareApplication',
-    paragraphs: [
-      'The OPTC Auto Team Builder helps players search for One Piece Treasure Cruise crew candidates by enemy mechanics, ability requirements, type filters, class filters, and manually locked slots.',
-      'Start with known captains or key subs, then describe the bind, despair, paralysis, barriers, damage reduction, orb issues, interrupts, and other coverage the team needs.',
-      'Generated teams and candidate fallbacks stay connected to the local character catalog so you can inspect the units behind each suggestion.',
-    ],
-    links: [
-      { label: 'Open Auto Team Builder', path: 'tabs/auto-team-builder' },
-      { label: 'Read how to build an OPTC team', path: 'guides/how-to-build-an-optc-team' },
-      { label: 'Browse OPTC characters', path: 'tabs/characters' },
-    ],
-  },
-  {
-    path: 'tools/optc-rumble-team-builder',
-    heading: 'OPTC Pirate Rumble Team Builder',
-    schemaType: 'SoftwareApplication',
-    paragraphs: [
-      'The OPTC Pirate Rumble Team Builder focuses on Rumble-specific data instead of regular quest-only abilities. It compares passive effects, special effects, stats, roles, type focus, and synergy.',
-      'Use the builder to fill active and bench slots, inspect suggested combinations, and compare how different units contribute to a Pirate Rumble setup.',
-      'The Rumble Characters ranking page supports tier-list research before you commit a team to saved Rumble results.',
-    ],
-    links: [
-      { label: 'Build a Pirate Rumble team', path: 'tabs/auto-team-builder-rumble' },
-      { label: 'Rank Rumble characters', path: 'tabs/rumble-characters' },
-      { label: 'Read the Pirate Rumble guide', path: 'guides/optc-pirate-rumble-team-building' },
-    ],
-  },
-  {
-    path: 'tools/optc-character-database',
-    heading: 'OPTC Character Database',
-    schemaType: 'CollectionPage',
-    paragraphs: [
-      'The OPTC character database gives One Piece Treasure Cruise players a searchable catalog of character ids, names, types, classes, stats, captain abilities, specials, support effects, and Pirate Rumble information.',
-      'Generated character detail pages make individual units easier to find from search engines while keeping links back into the live app tools.',
-      'Use this page as the entry point when you know the unit you need but still want connected team-building, captain coverage, or Rumble planning.',
-    ],
-    links: [
-      { label: 'Open Characters', path: 'tabs/characters' },
-      { label: 'Open Rumble Characters', path: 'tabs/rumble-characters' },
-      { label: 'Open Auto Team Builder', path: 'tabs/auto-team-builder' },
-    ],
-  },
-  {
-    path: 'guides/how-to-build-an-optc-team',
-    heading: 'How to Build an OPTC Team',
-    schemaType: 'WebPage',
-    paragraphs: [
-      'A strong One Piece Treasure Cruise team starts with the content you are trying to clear. Pick captains that cover the important characters, then list the enemy mechanics the crew must answer.',
-      'After the captain choice, cover bind, despair, paralysis, barriers, damage reduction, orb problems, interrupts, and other utility requirements before filling pure damage slots.',
-      'In OPTC Team Builder, you can lock known units in manual slots and let Auto Team Builder search for candidates that cover the remaining mechanics and ability requirements.',
-    ],
-    links: [
-      { label: 'Check captain coverage', path: 'tabs/captain-coverage' },
-      { label: 'Open Auto Team Builder', path: 'tabs/auto-team-builder' },
-      { label: 'Browse OPTC characters', path: 'tabs/characters' },
-    ],
-  },
-  {
-    path: 'guides/guided-build-compare-team-sharing',
-    heading: 'Guided Build, Compare Mode, and Team Sharing',
-    schemaType: 'WebPage',
-    paragraphs: [
-      'Guided auto build is for players who want Auto Team Builder to fill one crew slot at a time. Enable it before building, then the app fills and locks the next empty manual slot, starting from Captain and continuing through the sub slots.',
-      'Compare mode helps review two team sources side by side. You can compare the current generated team, a saved team on this device, or an imported payload, then review slot changes, filled slots, ability counts, Captain Ability tier coverage, and ship differences.',
-      'Saved Teams transfer supports schema v1 saved-teams JSON, saved-team share links, and raw saved-team share codes. Stable-id v1 team records can be repaired when optional fields are missing or stale, while unsupported schemas and malformed share codes are rejected.',
-      'A common flow is to build with guided mode, save the result, share it from Saved Teams, and open the share link on another device. The link preloads Manual Team Builder as an unsaved draft, and saving from there creates a normal local saved team.',
-      'When a browser blocks native share or clipboard access, Saved Teams keeps the share link or share code visible for manual copy. JSON copy actions stay download-first in blocked clipboard contexts so large exports do not have to be selected from the page.',
-      'Saved teams remain local to the current browser or app install unless you export, share, import, or sync them. Corrupted local saved-team storage is repaired in place when possible, and unrecoverable records are removed with a warning instead of breaking the page.',
-    ],
-    links: [
-      { label: 'Open Auto Team Builder', path: 'tabs/auto-team-builder' },
-      { label: 'Open Saved Teams', path: 'tabs/saved-teams' },
-      { label: 'Read the team-building guide', path: 'guides/how-to-build-an-optc-team' },
-    ],
-  },
-  {
-    path: 'guides/optc-pirate-rumble-team-building',
-    heading: 'OPTC Pirate Rumble Team Building',
-    schemaType: 'WebPage',
-    paragraphs: [
-      'Pirate Rumble team building in OPTC depends on Rumble-specific passives, specials, cooldowns, defense, speed, roles, and type synergy rather than only regular quest abilities.',
-      'Start by comparing Rumble units, then shape active and bench slots around damage, survivability, control, and support effects.',
-      'Use Rumble Characters for unit ranking and Auto Team Rumble Builder to test combinations before saving useful teams.',
-    ],
-    links: [
-      { label: 'Rank Rumble characters', path: 'tabs/rumble-characters' },
-      { label: 'Build a Pirate Rumble team', path: 'tabs/auto-team-builder-rumble' },
-      { label: 'Open the OPTC team builder tool', path: 'tools/optc-team-builder' },
-    ],
-  },
-  {
     path: 'faq',
     heading: 'OPTC Team Builder FAQ',
     paragraphs: [
@@ -328,6 +220,43 @@ const publicRouteContent = [
 ];
 
 /*
+ * 869f13c5t. The four tool pages and the three guides are not written here. Their words live once,
+ * in the app's `src/app/pages/seo-content/seo-content.data.ts`, which the page renders after
+ * hydration; this builds their static fallback from the same records. Until then each page had a
+ * second, different body here, sharing no sentence with the one a visitor reads, so a search snippet
+ * could quote a line nobody could find on the page. The schema type is the one fact only crawlers
+ * need, so it stays here.
+ */
+const seoContentSchemaTypes = {
+  'tools/optc-team-builder': 'SoftwareApplication',
+  'tools/optc-auto-team-builder': 'SoftwareApplication',
+  'tools/optc-rumble-team-builder': 'SoftwareApplication',
+  'tools/optc-character-database': 'CollectionPage',
+  'guides/how-to-build-an-optc-team': 'WebPage',
+  'guides/guided-build-compare-team-sharing': 'WebPage',
+  'guides/optc-pirate-rumble-team-building': 'WebPage',
+};
+
+for (const [pagePath, page] of Object.entries(loadSeoContentPages(projectRoot))) {
+  const schemaType = seoContentSchemaTypes[pagePath];
+
+  if (!schemaType) {
+    throw new Error(
+      `seo-content.data.ts has a page "${pagePath}" with no schema type in seoContentSchemaTypes.`,
+    );
+  }
+
+  publicRouteContent.push({
+    path: pagePath,
+    heading: page.title,
+    schemaType,
+    paragraphs: [page.summary],
+    sections: page.sections,
+    links: page.links.map((link) => ({ label: link.label, path: link.route.replace(/^\//u, '') })),
+  });
+}
+
+/*
  * 869f12x57. The list above holds only what the generator alone renders -
  * headings, paragraphs, in-page links, schema type. Every route's path,
  * `<title>`, meta description and aliases now come from the app's own registry,
@@ -341,7 +270,8 @@ const publicRoutes = publicRouteRecords.map((record) => {
 
   if (!content) {
     throw new Error(
-      `No page content for public route "${record.canonicalPath}". Add it to publicRouteContent, ` +
+      `No page content for public route "${record.canonicalPath}". Add it to publicRouteContent ` +
+        '(a tool or guide page: to src/app/pages/seo-content/seo-content.data.ts), ' +
         'or remove the record from src/app/core/data/public-routes.data.ts.',
     );
   }
@@ -773,9 +703,17 @@ ${route.links
       </nav>`
     : '';
 
+  // 869f13c5t. The tool and guide pages carry the same sections a visitor reads after hydration.
+  const sections = (route.sections ?? [])
+    .map(
+      (section) =>
+        `\n      <h2>${escapeHtml(section.title)}</h2>\n      <p>${escapeHtml(section.copy)}</p>`,
+    )
+    .join('');
+
   return `    <main class="seo-fallback seo-page-fallback">
       <h1>${escapeHtml(route.heading ?? route.title)}</h1>
-${paragraphs.map((paragraph) => `      <p>${escapeHtml(paragraph)}</p>`).join('\n')}${links}
+${paragraphs.map((paragraph) => `      <p>${escapeHtml(paragraph)}</p>`).join('\n')}${sections}${links}
     </main>`;
 }
 

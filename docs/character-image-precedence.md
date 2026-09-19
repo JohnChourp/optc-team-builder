@@ -48,7 +48,7 @@ there is no image at all.
 
 ## 5 — build time, for `og:image`
 
-`resolveCharacterImageUrl` in `scripts/generate-seo-pages.mjs:1029-1038`:
+`resolveCharacterImageUrl` in `scripts/generate-seo-pages.mjs`:
 `exactLocal` → `thumbnailLocal` → `glo` → `jap` → `null`.
 
 Note what it does **not** do: it ignores installedness entirely, because nothing is

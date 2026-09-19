@@ -55,7 +55,7 @@
     "test:actions-pins": "vitest run scripts/check-github-actions-pins.spec.ts",
     "test:workflow-budgets": "vitest run scripts/check-github-workflow-budgets.spec.ts",
     "test:ci-triggers": "vitest run scripts/check-github-ci-triggers.spec.ts",
-    "test:discoverability": "vitest run scripts/verify-guide-discoverability.spec.ts",
+    "test:discoverability": "vitest run scripts/lib/seo-content.spec.ts scripts/verify-guide-discoverability.spec.ts",
     "test:route-sitemap-coverage": "vitest run scripts/lib/public-routes.spec.ts scripts/lib/public-page-language.spec.ts scripts/check-route-sitemap-coverage.spec.ts && npm run routes:sitemap-coverage",
     "test:page-doc-coverage": "vitest run scripts/check-page-doc-coverage.spec.ts && npm run pages:doc-coverage",
     "test:public-asset-shadowing": "vitest run scripts/check-public-asset-shadowing.spec.ts && npm run seo:public-assets",

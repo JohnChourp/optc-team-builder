@@ -56,24 +56,21 @@ function buildTranslationFiles({
 function buildGuideFiles({ includeHelpSource = true } = {}) {
   return {
     /*
-     * 869f12x57. Three files, because a guide's facts now live in three places
-     * that each own a different one: the router declares the route, the registry
-     * owns its canonical path and `<title>`, and the generator owns the page's
-     * heading and prose. They used to be two files holding overlapping copies.
+     * 869f12x57, 869f13c5t. Three files, because a guide's facts live in three
+     * places that each own a different one: the router declares the route, the
+     * registry owns its canonical path and `<title>`, and `seo-content.data.ts`
+     * owns the page's heading and prose, which the generator reads rather than
+     * repeats. The generator is deliberately absent from this fixture.
      */
-    'src/app/app.routes.ts': [
-      "path: 'guides/example'",
-      "title: 'Example Guide'",
-      'Important app route help text',
-    ].join('\n'),
+    'src/app/app.routes.ts': "path: 'guides/example'",
     'src/app/core/data/public-routes.data.ts': [
       "canonicalPath: 'guides/example'",
       "title: 'Example Guide | OPTC Team Builder'",
     ].join('\n'),
-    'scripts/generate-seo-pages.mjs': [
-      "path: 'guides/example'",
-      "heading: 'Example Guide'",
-      'Important generated guide text',
+    'src/app/pages/seo-content/seo-content.data.ts': [
+      "'guides/example': {",
+      "title: 'Example Guide'",
+      "copy: 'Important guide text'",
     ].join('\n'),
     'src/app/pages/example/example.page.html': includeHelpSource ? '/guides/example' : '',
     'README.md': includeHelpSource ? 'https://example.test/guides/example/' : '',
@@ -93,8 +90,7 @@ const publicGuideCases = [
     path: 'guides/example',
     seoTitle: 'Example Guide | OPTC Team Builder',
     heading: 'Example Guide',
-    appRouteFragments: ['Important app route help text'],
-    seoGeneratorFragments: ['Important generated guide text'],
+    contentFragments: ['Important guide text'],
     helpSources: [
       {
         file: 'src/app/pages/example/example.page.html',
@@ -158,7 +154,7 @@ describe('i18n regression check', () => {
     const appRoot = await makeFixture({
       ...buildTranslationFiles(),
       ...buildGuideFiles({ includeHelpSource: false }),
-      'scripts/generate-seo-pages.mjs': "path: 'guides/example'",
+      'src/app/pages/seo-content/seo-content.data.ts': "'guides/example': {",
     });
 
     const result = checkI18nRegression({ appRoot, translationCases, publicGuideCases });
@@ -166,23 +162,54 @@ describe('i18n regression check', () => {
     expect(result.status).toBe('failed');
     expect(result.errors).toEqual(
       expect.arrayContaining([
-        // The heading is the generator's own; its `<title>` is the registry's.
-        expect.stringContaining('example-guide: scripts/generate-seo-pages.mjs must include "Example Guide"'),
+        // The heading and prose are the page's own; its `<title>` is the registry's.
+        expect.stringContaining(
+          'example-guide: src/app/pages/seo-content/seo-content.data.ts must include "Example Guide"',
+        ),
+        expect.stringContaining(
+          'example-guide: src/app/pages/seo-content/seo-content.data.ts must include "Important guide text"',
+        ),
         expect.stringContaining('example-guide: src/app/pages/example/example.page.html must include "/guides/example"'),
         expect.stringContaining('example-guide: README.md must include "https://example.test/guides/example/"'),
       ]),
     );
   });
 
+  it('rejects a guide the page text file does not key by its path', async () => {
+    const appRoot = await makeFixture({
+      ...buildTranslationFiles(),
+      ...buildGuideFiles(),
+      'src/app/pages/seo-content/seo-content.data.ts': [
+        "'guides/example-renamed': {",
+        "title: 'Example Guide'",
+        "copy: 'Important guide text'",
+      ].join('\n'),
+    });
+
+    const result = checkI18nRegression({ appRoot, translationCases, publicGuideCases });
+
+    expect(result.errors).toEqual([
+      'example-guide: src/app/pages/seo-content/seo-content.data.ts must include "\'guides/example\': {".',
+    ]);
+  });
+
+  it('asks nothing of the generator, which holds no copy of the page text', async () => {
+    const appRoot = await makeFixture({
+      ...buildTranslationFiles(),
+      ...buildGuideFiles(),
+    });
+
+    const result = checkI18nRegression({ appRoot, translationCases, publicGuideCases });
+
+    expect(existsSync(path.join(appRoot, 'scripts', 'generate-seo-pages.mjs'))).toBe(false);
+    expect(result.errors).toEqual([]);
+  });
+
   it('rejects broken app route registration even when canonical guide strings remain', async () => {
     const appRoot = await makeFixture({
       ...buildTranslationFiles(),
       ...buildGuideFiles(),
-      'src/app/app.routes.ts': [
-        "path: 'guides/example-broken'",
-        "title: 'Example Guide'",
-        'Important app route help text',
-      ].join('\n'),
+      'src/app/app.routes.ts': "path: 'guides/example-broken'",
     });
 
     const result = checkI18nRegression({ appRoot, translationCases, publicGuideCases });

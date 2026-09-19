@@ -85,9 +85,11 @@ Examples: use Greek labels for source/state words such as `Πηγή`, `Κενό`
 - Do not mix `Saved Teams`, `saved teams`, and Greek equivalents in adjacent
   help text unless the distinction is intentional: product surface versus plain
   saved-team records.
-- Do not update public guide SEO route copy without also checking
-  `scripts/generate-seo-pages.mjs` when the generated page repeats the same
-  wording.
+- Do not write a tool or guide page's text anywhere but
+  `src/app/pages/seo-content/seo-content.data.ts`: the page renders it, and
+  `scripts/generate-seo-pages.mjs` builds the crawlable copy from it rather than
+  repeating it (869f13c5t). The other public pages' crawlable prose is the
+  generator's own, so check it when the screen it describes changes what it says.
 - Do not add critical runtime help/error text for Saved Teams, Auto Team Builder,
   or Manual Team Builder without deciding whether the key belongs in
   `scripts/i18n-regression-check.mjs`. The same applies to root-scope shell copy

@@ -3,6 +3,7 @@ import { type Route } from '@angular/router';
 import { describe, expect, it } from 'vitest';
 
 import { PUBLIC_ROUTES, publicRouteSeo } from './core/data/public-routes.data';
+import { SEO_CONTENT_PAGES } from './pages/seo-content/seo-content.data';
 import { routes } from './app.routes';
 
 describe('app routes', () => {
@@ -231,11 +232,21 @@ describe('app routes', () => {
 
     for (const routePath of contentPaths) {
       const route = findRouteByPath(routes, routePath);
-      const content = route?.data?.['content'] as Record<string, unknown> | undefined;
 
       expect(route?.loadComponent).toBeTypeOf('function');
-      expect(content?.['title'], `${routePath} has in-page content`).toBeTypeOf('string');
+      expect(SEO_CONTENT_PAGES[routePath]?.title, `${routePath} has in-page content`).toBeTypeOf(
+        'string',
+      );
+      /*
+       * 869f13c5t. The text lives in `seo-content.data.ts`, which ships with the lazy page chunk.
+       * Written back into the route table it would be a second copy again, and would cost the
+       * entry script the ~7 KB the move took out of it.
+       */
+      expect(route?.data?.['content'], `${routePath} carries no text in the route table`).toBeUndefined();
     }
+
+    // Both directions: a record no route serves would be text nobody can reach.
+    expect(Object.keys(SEO_CONTENT_PAGES).sort()).toEqual([...contentPaths].sort());
   });
 
   it('does not register the removed standalone team-builder route', () => {

@@ -4,6 +4,9 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
+import { DEFAULT_REGISTRY_PATH, parsePublicRoutes } from './lib/public-routes.mjs';
+import { SEO_CONTENT_DATA_PATH, parseSeoContentPages } from './lib/seo-content.mjs';
+
 const projectRoot = path.resolve(import.meta.dirname, '..');
 const defaultOutputDir = path.join(projectRoot, 'dist', 'optc-team-builder', 'browser');
 const siteBaseUrl = normalizeSiteBaseUrl(
@@ -18,7 +21,7 @@ export const GUIDE_DISCOVERABILITY_INVENTORY = [
     heading: 'How to Build an OPTC Team',
     sourceHints: [
       { file: 'README.md', text: 'https://optcteambuilder.com/guides/how-to-build-an-optc-team/' },
-      { file: 'scripts/generate-seo-pages.mjs', text: 'guides/how-to-build-an-optc-team' },
+      { file: SEO_CONTENT_DATA_PATH, text: 'guides/how-to-build-an-optc-team' },
       { file: 'docs/feature-coverage-map.md', text: 'Public team-building guides in `README.md`' },
     ],
     appHelpHints: [],
@@ -33,7 +36,7 @@ export const GUIDE_DISCOVERABILITY_INVENTORY = [
         file: 'README.md',
         text: 'https://optcteambuilder.com/guides/guided-build-compare-team-sharing/',
       },
-      { file: 'scripts/generate-seo-pages.mjs', text: 'guides/guided-build-compare-team-sharing' },
+      { file: SEO_CONTENT_DATA_PATH, text: 'guides/guided-build-compare-team-sharing' },
       { file: 'docs/post-merge-smoke-pack.md', text: 'guided-build-compare-team-sharing' },
     ],
     appHelpHints: [
@@ -54,7 +57,7 @@ export const GUIDE_DISCOVERABILITY_INVENTORY = [
     heading: 'OPTC Pirate Rumble Team Building',
     sourceHints: [
       {
-        file: 'scripts/generate-seo-pages.mjs',
+        file: SEO_CONTENT_DATA_PATH,
         text: 'guides/optc-pirate-rumble-team-building',
       },
       { file: 'docs/feature-coverage-map.md', text: 'Pirate Rumble character ranking' },
@@ -77,6 +80,18 @@ export async function verifyGuideDiscoverability({
   const sitemapXml = await readRequiredTextFile(path.join(outputDir, 'sitemap.xml'), errors);
   const sitemapHtml = await readRequiredTextFile(path.join(outputDir, 'sitemap.html'), errors);
   const appRoutes = await readRequiredTextFile(path.join(appRoot, 'src', 'app', 'app.routes.ts'), errors);
+  const publicRoutes = parseOrReport(
+    await readRequiredTextFile(path.join(appRoot, ...DEFAULT_REGISTRY_PATH.split('/')), errors),
+    (source) => parsePublicRoutes(source),
+    [],
+    errors,
+  );
+  const seoContentPages = parseOrReport(
+    await readRequiredTextFile(path.join(appRoot, ...SEO_CONTENT_DATA_PATH.split('/')), errors),
+    (source) => parseSeoContentPages(source),
+    {},
+    errors,
+  );
   const sitemapUrls = extractSitemapUrls(sitemapXml);
 
   for (const guide of GUIDE_DISCOVERABILITY_INVENTORY) {
@@ -89,7 +104,7 @@ export async function verifyGuideDiscoverability({
     expectText(sitemapHtml, canonicalUrl, guideErrors, `${guide.id}: sitemap.html`);
     expectText(sitemapHtml, guide.heading, guideErrors, `${guide.id}: sitemap.html`);
     auditGeneratedGuidePage({ guide, html, canonicalUrl, htmlPath, guideErrors });
-    auditAppRouteRegistration({ guide, appRoutes, guideErrors });
+    auditAppRouteRegistration({ guide, appRoutes, publicRoutes, seoContentPages, guideErrors });
     await auditSourceHints({ appRoot, guide, guideErrors });
 
     for (const error of guideErrors) {
@@ -177,15 +192,42 @@ function auditGeneratedGuidePage({ guide, html, canonicalUrl, htmlPath, guideErr
   auditJsonLd({ guide, jsonLd, canonicalUrl, relativeHtmlPath, guideErrors });
 }
 
-function auditAppRouteRegistration({ guide, appRoutes, guideErrors }) {
+/*
+ * 869f13c5t. Each fact about a guide is checked where it lives: the route in `app.routes.ts`, the
+ * canonical path and `<title>` in the public route registry, and the page's words in
+ * `seo-content.data.ts`. 869f12x57 moved the first two facts into the registry on 2026-09-14 and this
+ * check kept looking for them in `app.routes.ts`, so its weekly run failed from then on, while its
+ * spec, whose fixture still wrote the old layout, stayed green.
+ */
+function auditAppRouteRegistration({ guide, appRoutes, publicRoutes, seoContentPages, guideErrors }) {
   expectText(appRoutes, `path: '${guide.path}'`, guideErrors, `${guide.id}: src/app/app.routes.ts`);
-  expectText(
-    appRoutes,
-    `canonicalPath: '${guide.path}'`,
-    guideErrors,
-    `${guide.id}: src/app/app.routes.ts`,
-  );
-  expectText(appRoutes, `title: '${guide.title}'`, guideErrors, `${guide.id}: src/app/app.routes.ts`);
+
+  const record = publicRoutes.find((candidate) => candidate.canonicalPath === guide.path);
+
+  if (!record) {
+    guideErrors.push(`${guide.id}: ${DEFAULT_REGISTRY_PATH} must register canonicalPath ${guide.path}.`);
+  } else if (record.title !== guide.title) {
+    guideErrors.push(`${guide.id}: ${DEFAULT_REGISTRY_PATH} must title ${guide.path} "${guide.title}".`);
+  }
+
+  if (seoContentPages[guide.path]?.title !== guide.heading) {
+    guideErrors.push(
+      `${guide.id}: ${SEO_CONTENT_DATA_PATH} must hold the page ${guide.path}, headed "${guide.heading}".`,
+    );
+  }
+}
+
+function parseOrReport(source, parse, fallback, errors) {
+  if (!source) {
+    return fallback;
+  }
+
+  try {
+    return parse(source);
+  } catch (error) {
+    errors.push(error instanceof Error ? error.message : String(error));
+    return fallback;
+  }
 }
 
 async function auditSourceHints({ appRoot, guide, guideErrors }) {
