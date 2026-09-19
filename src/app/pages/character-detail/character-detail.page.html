@@ -53,6 +53,12 @@
                     })
                   }}
                 </p>
+                <!-- 869f13c8r. How many of this reader's saved teams use this character; hidden at 0. -->
+                @if (savedTeamCount() > 0) {
+                  <p class="section-copy" data-test="character-saved-team-count">
+                    {{ t('hero.savedTeamCount', { count: savedTeamCount() }) }}
+                  </p>
+                }
 
                 <div class="hero-meta-grid">
                   @for (meta of view.heroMeta; track $index) {

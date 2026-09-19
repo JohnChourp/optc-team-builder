@@ -45,6 +45,7 @@ import { CharacterAbilityGroupsComponent } from '../../shared/character-ability-
 import { ToolbarBackButtonComponent } from '../../shared/toolbar-back-button/toolbar-back-button.component';
 import { CharacterDetailStylePanelsComponent } from './character-detail-style-panels.component';
 import { resolveCharacterBridge } from './character-detail-bridge.utils';
+import { countSavedTeamsWithCharacter } from './character-detail-saved-teams.utils';
 
 /**
  * A transfer failure the reader is allowed to see, named by translation key.
@@ -130,6 +131,14 @@ export class CharacterDetailPage implements OnInit {
    * this character already has local changes, when they stay out and "Reset" is never hidden.
    */
   public readonly localToolsOpen = signal(false);
+  /** 869f13c8r. How many of this reader's saved teams use this character; the line hides at 0. */
+  public readonly savedTeamCount = computed(() => {
+    const currentCharacter = this.character();
+
+    return currentCharacter
+      ? countSavedTeamsWithCharacter(this.userState.savedTeams(), currentCharacter.id)
+      : 0;
+  });
   public readonly viewModel = computed(() => {
     const currentCharacter = this.character();
 
@@ -164,6 +173,9 @@ export class CharacterDetailPage implements OnInit {
       return;
     }
 
+    // Not awaited: the saved-team count is a footnote, so the character never waits for it, and a
+    // storage failure leaves the count at 0 instead of failing the page.
+    void this.userState.readySavedTeams().catch(() => undefined);
     await Promise.all([
       this.userState.readyFavoriteCharacterIds(),
       this.userState.readyGameRegionPreference(),
