@@ -31,6 +31,69 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.5.2',
+    date: '2026-09-19',
+    userVisible: true,
+    headline: {
+      en: 'Every character page now opens the right tool, and analytics waits for your yes',
+      el: 'Κάθε σελίδα χαρακτήρα ανοίγει πλέον το σωστό εργαλείο, και τα analytics περιμένουν το ναι σου',
+    },
+    summaryEn:
+      'Every character page now has one main button that takes you somewhere useful. For a character with a Captain Ability it is See who this Captain boosts, which opens Captain Coverage with that character already set as your Captain; any other character opens Auto Team Builder. The editing tools moved behind a Local edits button. Analytics now waits for you: nothing that measures visitors loads until you choose Allow analytics, the question appears only after your first move in the app, and both answers look the same. Where analytics cannot run at all, such as the Android app, you are no longer asked, and Settings and the Cookie Policy say so. Each tool and guide page now has one main button for what you came to do. The guide How to Build an OPTC Team has a new section for when your team keeps losing, and Auto Team Builder and the Auto Team Rumble Builder now link to their guides. If your browser or phone is set to Greek, the app opens in Greek on your first visit.',
+    summaryEl:
+      'Κάθε σελίδα χαρακτήρα έχει πλέον ένα κύριο κουμπί που σε πάει κάπου χρήσιμο. Για χαρακτήρα με Captain Ability είναι το Δες ποιους ενισχύει αυτός ο Captain, που ανοίγει το Captain Coverage με αυτόν τον χαρακτήρα ήδη ως Captain σου· κάθε άλλος χαρακτήρας ανοίγει το Auto Team Builder. Τα εργαλεία επεξεργασίας μπήκαν πίσω από το κουμπί Τοπικές αλλαγές. Τα analytics περιμένουν πλέον εσένα: τίποτα που μετρά τους επισκέπτες δεν φορτώνει μέχρι να επιλέξεις Αποδοχή analytics, η ερώτηση εμφανίζεται μόνο μετά την πρώτη σου κίνηση μέσα στην εφαρμογή, και οι δύο απαντήσεις φαίνονται ίδιες. Όπου τα analytics δεν μπορούν να τρέξουν καθόλου, όπως στην εφαρμογή Android, δεν σε ρωτάμε πια, και το λένε οι Ρυθμίσεις και η Πολιτική Cookies. Κάθε σελίδα εργαλείου και οδηγού έχει πλέον ένα κύριο κουμπί γι\' αυτό που ήρθες να κάνεις. Ο οδηγός How to Build an OPTC Team έχει νέα ενότητα για όταν η ομάδα σου χάνει συνέχεια, και το Auto Team Builder και το Auto Team Rumble Builder οδηγούν πλέον στους οδηγούς τους. Αν ο browser ή το κινητό σου είναι ρυθμισμένα στα ελληνικά, η εφαρμογή ανοίγει στα ελληνικά από την πρώτη σου επίσκεψη.',
+    added: [
+      {
+        en: 'On every **character page**, the main button now opens a tool: **See who this Captain boosts** opens **Captain Coverage** with that character already set as your Captain, and a character without a Captain Ability gets **Open Auto Team Builder**.',
+        el: 'Σε κάθε **σελίδα χαρακτήρα**, το κύριο κουμπί ανοίγει πλέον ένα εργαλείο: το **Δες ποιους ενισχύει αυτός ο Captain** ανοίγει το **Captain Coverage** με αυτόν τον χαρακτήρα ήδη ως Captain σου, και ένας χαρακτήρας χωρίς Captain Ability έχει το **Άνοιγμα Auto Team Builder**.',
+      },
+      {
+        en: 'The guide **How to Build an OPTC Team** has a new section, **When your team keeps losing**: four things to check in the app before you rebuild from scratch.',
+        el: 'Ο οδηγός **How to Build an OPTC Team** έχει νέα ενότητα, **When your team keeps losing**: τέσσερα πράγματα να ελέγξεις μέσα στην εφαρμογή πριν ξαναχτίσεις από την αρχή.',
+      },
+      {
+        en: 'The **How this page works** card on **Auto Team Builder** now links to the team-building guide, and the top of the **Auto Team Rumble Builder** links to the Pirate Rumble guide.',
+        el: 'Η κάρτα **Πώς δουλεύει αυτή η σελίδα** στο **Auto Team Builder** οδηγεί πλέον στον οδηγό για το team building, και το πάνω μέρος του **Auto Team Rumble Builder** στον οδηγό για το Pirate Rumble.',
+      },
+      {
+        en: 'If your browser or phone is set to Greek, the app now opens in Greek on your first visit. You can still change the language from the flags in the **side menu**.',
+        el: 'Αν ο browser ή το κινητό σου είναι ρυθμισμένα στα ελληνικά, η εφαρμογή ανοίγει πλέον στα ελληνικά από την πρώτη σου επίσκεψη. Μπορείς πάντα να αλλάξεις γλώσσα από τις σημαίες στο **πλαϊνό μενού**.',
+      },
+    ],
+    improved: [
+      {
+        en: 'Each **tool and guide page** now has one main button, in yellow, for the thing you came to do, and three of them show a button to their guide again.',
+        el: 'Κάθε **σελίδα εργαλείου και οδηγού** έχει πλέον ένα κύριο κουμπί, κίτρινο, γι\' αυτό που ήρθες να κάνεις, και τρεις από αυτές δείχνουν ξανά κουμπί προς τον οδηγό τους.',
+      },
+      {
+        en: 'In the **FAQ**, the answer to **Where do I start, and what do I set first?** now leads with **Auto Team Builder** as its one main button.',
+        el: 'Στις **Συχνές ερωτήσεις**, η απάντηση στο **Από πού ξεκινάω, και τι ορίζω πρώτο;** έχει πλέον το **Auto Team Builder** ως το ένα κύριο κουμπί της.',
+      },
+      {
+        en: 'On a **character page**, **Edit locally**, **Export JSON**, **Import JSON** and **Reset local changes** moved behind a **Local edits** button, which stays open while the character has local changes.',
+        el: 'Σε μια **σελίδα χαρακτήρα**, τα **Τοπική επεξεργασία**, **Εξαγωγή JSON**, **Εισαγωγή JSON** και **Επαναφορά τοπικών αλλαγών** μπήκαν πίσω από το κουμπί **Τοπικές αλλαγές**, που μένει ανοιχτό όσο ο χαρακτήρας έχει τοπικές αλλαγές.',
+      },
+      {
+        en: 'The **analytics question** at the bottom of the screen now appears only after your first move in the app, and **Allow analytics** and **Reject analytics** look the same.',
+        el: 'Η **ερώτηση για τα analytics** στο κάτω μέρος της οθόνης εμφανίζεται πλέον μόνο μετά την πρώτη σου κίνηση μέσα στην εφαρμογή, και τα **Αποδοχή analytics** και **Απόρριψη analytics** φαίνονται ίδια.',
+      },
+      {
+        en: 'With the app set to Greek, a screen reader now reads the English game text on a **character page** - Captain Abilities, specials and notes - as English.',
+        el: 'Όταν η εφαρμογή είναι στα ελληνικά, ο αναγνώστης οθόνης διαβάζει πλέον ως αγγλικό το αγγλικό κείμενο του παιχνιδιού σε μια **σελίδα χαρακτήρα** - Captain Abilities, specials και σημειώσεις.',
+      },
+    ],
+    fixed: [
+      {
+        en: 'Nothing that measures visitors - Google Analytics, Google Tag Manager or Microsoft Clarity - loads on any page of the site any more before you choose **Allow analytics**. Before, they loaded on every page, although the **Cookie Policy** said they would wait.',
+        el: 'Τίποτα που μετρά τους επισκέπτες - Google Analytics, Google Tag Manager ή Microsoft Clarity - δεν φορτώνει πια σε καμία σελίδα του site πριν επιλέξεις **Αποδοχή analytics**. Πριν, φόρτωναν σε κάθε σελίδα, παρόλο που η **Πολιτική Cookies** έλεγε ότι θα περίμεναν.',
+      },
+      {
+        en: 'Where analytics cannot run, such as the **Android app**, you are no longer asked about it: **Settings → Analytics & cookies** and the **Cookie Policy** say it is unavailable.',
+        el: 'Όπου τα analytics δεν μπορούν να τρέξουν, όπως στην **εφαρμογή Android**, δεν σε ρωτάμε πια: οι **Ρυθμίσεις → Analytics και cookies** και η **Πολιτική Cookies** λένε ότι δεν είναι διαθέσιμα.',
+      },
+    ],
+  },
+  {
     version: '0.5.1',
     date: '2026-09-19',
     userVisible: true,
