@@ -471,14 +471,14 @@
   },
   {
     "key": "reduce_switch_effect_use",
-    "label": "Reduce Switch Effect Use",
+    "label": "Reduce Switch Effect (Super Switch Effect Requirement)",
     "groupLabel": "Reduction",
     "groupOrder": 9,
     "effectOrder": 2
   },
   {
     "key": "reduce_vs_effect_gauge",
-    "label": "Reduce VS Effect Gauge",
+    "label": "Reduce VS Gauge (VS Effect Gauge)",
     "groupLabel": "Reduction",
     "groupOrder": 9,
     "effectOrder": 3

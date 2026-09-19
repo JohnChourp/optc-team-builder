@@ -820,8 +820,19 @@ const SPECIAL_ABILITY_MATCHERS = [
     // requiring "damage received" to abut "reduces" — a 100% THRESHOLD cut is
     // Threshold DR, which the corpus lists as a distinct buff. The gap forbids a
     // second "damage" so a later clause's "by 100%" cannot be claimed.
+    //
+    // It also forbids an effect verb — the same list CLAUSE_DURATION_STOP_PATTERN
+    // treats as the start of the next clause — because forbidding "damage" alone let
+    // the gap cross a comma into a clause about something else: Nico Robin #4617
+    // "reduces damage received by 70% for 3 turns, reduces the defense of all enemies
+    // by 100% for 1 turn" is a 70% cut plus DEF Down, and was tagged a nullifier
+    // carrying the DEF clause's 1 turn. The typed list the gap exists for
+    // ("from [STR], [QCK] and [INT] enemies") contains no verb, so no genuine
+    // nullifier is lost (captain 6 -> 6, all sources 37 -> 36).
     'nullify_damage',
-    [/\breduces?\s+damage\s+(?:received|recieved)\b(?:(?!\bdamage\b)[^.;]){0,60}?\bby\s+100%/i],
+    [
+      /\breduces?\s+damage\s+(?:received|recieved)\b(?:(?!\b(?:damage|boosts?|reduces?|removes?|changes?|makes?|locks?|randomizes?|recovers?|deals?|inflicts?|adds?|increases?|sets?|applies|swaps?|consumes?|switches|transforms?)\b)[^.;]){0,60}?\bby\s+100%/i,
+    ],
   ],
   [
     'lock_slots',
@@ -880,7 +891,25 @@ const SPECIAL_ABILITY_MATCHERS = [
     // "reduces/lowers chances of getting <orb> orbs" (self-inflicted captain tradeoffs,
     // enemy debuffs) is deliberately excluded, matching the original beneficial intent.
     // Crew-side only (enemies have no orbs), so no enemy-ownership hazard. 0 -> 227.
-    [/\b(?:boosts?|increases?)\s+(?:the\s+)?chances?\s+of\s+getting\b[^.]{0,40}\borbs?\b/i],
+    //
+    // OPTC-DB writes the same effect two more ways, both missed by the anchor above
+    // (869f13c62, captain 177 -> 183). A character scope INSIDE the phrase: "boosts
+    // chances of Fighter and Shooter characters getting Matching orbs" (S-Shark #4132),
+    // "Slightly boosts chances Powerhouse characters of getting Matching orbs" (Fukaboshi
+    // #1725). And "rate of": "Increase the rate of [PSY] orbs" (Vinsmoke Judge #1831,
+    // #1832, #2138), "increase the rate of Matching orbs" (Luffy #2870), and Judge's
+    // special "slightly boosts the rate of [PSY] orbs", which the game itself words
+    // "boosts chance of landing on [PSY] slots"; OPTC-DB names the buff "Orb Rate Up".
+    // The scope gap is bounded and may not hold a comma, a period, another effect verb
+    // or a second chance word, so it cannot run on into a neighbouring "reduces chances
+    // of getting" drawback. Both keep the boosts or increases verb gate, so the "Orb Rate
+    // Down" direction stays out. Commentary stays above this array on purpose: the
+    // ability tag catalogue reads every slash-delimited span inside it as a pattern.
+    [
+      /\b(?:boosts?|increases?)\s+(?:the\s+)?chances?\s+of\s+getting\b[^.]{0,40}\borbs?\b/i,
+      /\b(?:boosts?|increases?)\s+(?:the\s+)?chances?\b(?:(?!\b(?:boosts?|increases?|reduces?|lowers?|makes?|changes?|chances?)\b)[^.,]){1,50}?\bgetting\b[^.]{0,40}\borbs?\b/i,
+      /\b(?:boosts?|increases?)\s+(?:the\s+)?rate\s+of\b[^.]{0,40}\borbs?\b/i,
+    ],
   ],
   [
     // Position-only orb movement ("Slot Swap" on the wiki — explicitly NOT a
@@ -1100,22 +1129,42 @@ const SPECIAL_ABILITY_MATCHERS = [
     // matched nothing while its 16 real characters were silently absorbed by the
     // crew-facing `reduce_special_charge` (same Remove-SFX-vs-Blindness failure:
     // a key spelled the way players say it, not the way OPTC-DB writes it).
-    [/\breduces?\s+(?:the\s+)?special cooldown\s+of\s+ship\b/i],
+    //
+    // "Advances Special Cooldown of Ship to MAX at the start of the fight" is the
+    // same effect at its largest amount, not a different mechanic: the official
+    // Japanese text words both with one verb (船の必殺ターンを2短縮 / 船の必殺ターンを
+    // MAXまで短縮), and OPTC-DB's own "Special Cooldown Charge" filter matches
+    // (?:reduces|advances) with "to (MAX)" as one of its amounts. Five captains carry
+    // only the MAX form (#4152/#4153 Shanks, #4293 Whitebeard & Ace, #4333 Kalifa,
+    // #4422 Bonney Pirates) and matched no key at all (869f13c62). The crew-side
+    // split into restore_advance_special_charge does not carry over: the ship has no
+    // rewind-restore population, and both ship forms are start-of-fight head starts.
+    [/\b(?:reduces?|advances?)\s+(?:the\s+)?special cooldown\s+of\s+ship\b/i],
   ],
-  // Reduces the "Switch Effect" cooldown of a VS unit so it can switch forms sooner.
-  // OPTC-DB wording is "reduces [the] Switch Effect of <scope> by N turns" — the old
-  // matcher additionally required the token "use" (…switch effect…use), which never
-  // follows the phrase, so it matched 0 of 4588 (a dead key). superSpecialText is on
-  // the per-key allowlist for the 1 super-only granter (#4333). All "Switch Effect"
-  // mentions in special/captain/super text are reductions (the support-side reference
-  // "supported character's Switch Effect" lives in supportData, not read here). 0 -> 89.
-  ['reduce_switch_effect_use', [/\breduces?\b[^.]{0,60}\bswitch effect\b/i]],
-  // Reduces the "VS Gauge" of a VS unit. OPTC-DB wording is "reduces … VS Gauge of
-  // <scope> by N" (often "reduces Switch Effect and VS Gauge of all characters by N");
-  // the old matcher required "VS effect gauge", an extra "effect" token that never
-  // appears, so it matched 0 (a dead key). superSpecialText allowlist covers the 1
-  // super-only granter (#4333). 0 -> 48.
-  ['reduce_vs_effect_gauge', [/\breduces?\b[^.]{0,60}\bVS Gauge\b/i]],
+  // Reduces the "Switch Effect" counter of a DUAL unit: what is left before its Super
+  // Switch Effect can fire (swapData.superTurns, 3-9 on 99 units; #3507/#3508 cut
+  // their own 8 by 8). VS units have no switch - their counter is the VS Gauge below.
+  // OPTC-DB wording is "reduces [the] Switch Effect of <scope> by N [turns]"; stage
+  // boons call the same thing "Super Switch Effect requirement reduction". The old
+  // matcher also demanded a trailing "use" that never occurs, so it matched 0 (a dead
+  // key). The bridge is 80, not 60: Queen #4647 writes the Japanese-derived "Reduces
+  // crew's Special charge time by 1 turn and VS Effect gauge and Switch Effect by 1",
+  // 62 characters from verb to object (869f13c62). Every "Switch Effect" mention in
+  // captain/special/super text is a reduction grant, so the width is inert beyond
+  // that: 80, 100, 120 and 200 each add exactly #4647. superSpecialText is on the
+  // per-key allowlist for the 1 super-only granter (#4333); the support-side
+  // "supported character's Switch Effect" lives in supportData, not read here.
+  ['reduce_switch_effect_use', [/\breduces?\b[^.]{0,80}\bswitch effect\b/i]],
+  // Reduces the "VS Gauge" of a VS unit - what is left to fill before its VS effect
+  // can be activated. OPTC-DB's canonical wording is "reduces … VS Gauge of <scope>
+  // by N" (often "reduces Switch Effect and VS Gauge of all characters by N"). The
+  // first matcher accepted ONLY "VS effect gauge", which no unit used at the time, so
+  // it matched 0; the 2026-07-22 fix swapped it for "VS Gauge" alone. Both spellings
+  // are real: "VS Effect gauge" is the Japanese-derived name (VS効果ゲージ) that stage
+  // boons use ("VS Effect gauge reduction: 15") and that Queen #4647's captain ability
+  // carries, first imported in v0.5.0 (869f13c62). superSpecialText allowlist covers
+  // the 1 super-only granter (#4333).
+  ['reduce_vs_effect_gauge', [/\breduces?\b[^.]{0,60}\bVS (?:Effect )?Gauge\b/i]],
   [
     'reduce_special_charge',
     // Require "reduces" to directly govern "special cooldown" — the canonical

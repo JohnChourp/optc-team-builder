@@ -321,7 +321,10 @@ matcher keyed on a wording OPTC-DB never uses — and hardened two more:
   (`remove_enemy_increased_defense`, a duration reduction).
 - **Boost Orb Chance** (`change_slot_chance`, 0 → 227) raises the probability of specific orb
   colours: `boosts/increases [the] chance(s) of getting <orb> orbs` (chance→orb; the old matcher
-  required orb→chance). The "lowers/reduces chances" drawback direction is excluded.
+  required orb→chance). The "lowers/reduces chances" drawback direction is excluded. Since
+  869f13c62 it also reads the two spellings that missed 6 captains: the scoped `boosts chances of
+  <class> characters getting <orb> orbs` (through a short gap that may not cross a comma or another
+  effect verb) and `boosts/increases [the] rate of <orb> orbs`.
 - **Critical Hit Rate / Damage** (`critical_hit_chance_boost` 0 → 10, `critical_damage_boost`
   0 → 15) are the special/captain grants of the Critical Hit buffs — OPTC-DB names them "Critical
   Hit Rate" and "Critical Hit Damage", not the bare "Chance"/"Damage" the old matchers used.
@@ -329,7 +332,12 @@ matcher keyed on a wording OPTC-DB never uses — and hardened two more:
 - **VS switch reductions** (`reduce_switch_effect_use` 0 → 89, `reduce_vs_effect_gauge` 0 → 48)
   let a VS/dual unit switch forms sooner: `reduces [the] Switch Effect of <scope> by N turns` and
   `reduces ... VS Gauge of <scope> by N` (often the shared clause "Reduces Switch Effect and VS
-  Gauge of all characters by N").
+  Gauge of all characters by N"). Since 869f13c62 the switch window is 80 characters and the gauge
+  also reads `VS Effect gauge`, the spelling the first Japanese-derived unit (#4647) uses.
+- **Ship Special Cooldown** (`reduce_ship_special_charge`) reads `reduces` **and** `advances ...
+  Special Cooldown of Ship` since 869f13c62: five captains charge the ship's special to MAX, and no
+  other key found them. **Nullify Damage** (`nullify_damage`) stops at another effect verb, so a
+  70% cut followed by "reduces the defense of all enemies by 100%" is no longer read as a nullifier.
 
 `apply_set_target` (26 → 28) and `class_change` (10 → 19) additionally gained **superSpecialText**
 sourcing via the per-key allowlist, for units that carry the effect only in their super special.
