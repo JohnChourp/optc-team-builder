@@ -167,7 +167,7 @@ checkout.
 
 ## Refreshing the visual baselines
 
-The six baselines under `e2e/public-entry-visual.spec.ts-snapshots/` are compared
+The eight baselines under `e2e/public-entry-visual.spec.ts-snapshots/` are compared
 on Linux only, so `public-entry-visual.spec.ts` skips itself everywhere else.
 That means they cannot be regenerated on a maintainer's Mac: a macOS capture
 differs from what CI compares against, and every run would then fail.

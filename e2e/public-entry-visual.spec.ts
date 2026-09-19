@@ -12,7 +12,7 @@ const VISUAL_VIEWPORTS = [
   { id: 'mobile', width: 390, height: 844 },
 ] as const;
 
-const GUIDE_STATES = [
+const CONTENT_PAGE_STATES = [
   {
     id: 'team-building-guide',
     path: '/guides/how-to-build-an-optc-team',
@@ -22,6 +22,13 @@ const GUIDE_STATES = [
     id: 'guided-share-guide',
     path: '/guides/guided-build-compare-team-sharing',
     heading: 'Guided Build, Compare Mode, and Team Sharing',
+  },
+  {
+    // 869f13c5p. The first tool page with a baseline: it holds the one-solid-button layout that
+    // every tool and guide page now shares, where the two guides above hold two and three buttons.
+    id: 'auto-builder-tool',
+    path: '/tools/optc-auto-team-builder',
+    heading: 'OPTC Auto Team Builder',
   },
 ] as const;
 
@@ -34,7 +41,7 @@ test.describe('public entry visual baselines @public-entry-visual', () => {
   test.skip(({ browserName }) => browserName !== 'chromium', 'Visual baselines are maintained for Chromium only.');
   /*
    * Linux-only, and worth being blunt about what that costs: on macOS or
-   * Windows this suite compares NONE of the six committed baselines, so
+   * Windows this suite compares NONE of the eight committed baselines, so
    * `verify:local:full` is green there without having looked at a single pixel.
    *
    * The alternative is per-platform baselines, which needs `{platform}` in
@@ -42,13 +49,13 @@ test.describe('public entry visual baselines @public-entry-visual', () => {
    * captured on a real run. That is a deliberate decision about what to
    * maintain, not an oversight to patch here.
    *
-   * What IS checked everywhere is that the six baselines still exist and are
+   * What IS checked everywhere is that the eight baselines still exist and are
    * non-empty - see `scripts/public-entry-synthetics.spec.ts`. Without that, a
    * deleted baseline was invisible on any non-Linux machine.
    */
   test.skip(
     process.platform !== 'linux',
-    `Visual baselines are compared on Linux to match CI rendering; on ${process.platform} none of the six baselines are compared.`,
+    `Visual baselines are compared on Linux to match CI rendering; on ${process.platform} none of the eight baselines are compared.`,
   );
 
   for (const viewport of VISUAL_VIEWPORTS) {
@@ -60,7 +67,7 @@ test.describe('public entry visual baselines @public-entry-visual', () => {
         locale: 'en-US',
       });
 
-      for (const state of GUIDE_STATES) {
+      for (const state of CONTENT_PAGE_STATES) {
         test(`${state.id} matches the ${viewport.id} baseline`, async ({ page }) => {
           await seedBrowserState(page);
           await page.goto(state.path, { waitUntil: 'domcontentloaded' });

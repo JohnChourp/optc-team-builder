@@ -20,8 +20,14 @@
       </div>
 
       <div class="seo-content-actions">
-        @for (link of page.links; track link.route) {
-          <ion-button color="warning" fill="solid" [routerLink]="[link.route]" routerDirection="root">
+        <!-- 869f13c5p. One primary action per page: the first link, solid; the rest outlined, as on Home. -->
+        @for (link of page.links; track link.route; let first = $first) {
+          <ion-button
+            [color]="first ? 'warning' : 'light'"
+            [fill]="first ? 'solid' : 'outline'"
+            [routerLink]="[link.route]"
+            routerDirection="root"
+          >
             {{ link.label }}
           </ion-button>
         }

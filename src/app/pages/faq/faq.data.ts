@@ -13,6 +13,11 @@ export interface FaqLink {
   readonly key: string;
   /** In-app route the link opens. */
   readonly route: string;
+  /**
+   * 869f13c5p. The page's one primary action, rendered solid; every other link is an outline.
+   * `src/app/pages/public-primary-action.spec.ts` holds the FAQ to exactly one.
+   */
+  readonly primary?: true;
 }
 
 /**
@@ -64,7 +69,7 @@ export const FAQ_SECTIONS: readonly FaqSection[] = [
         id: 'whereToStart',
         bullets: ['auto', 'manual', 'coverage', 'order'],
         links: [
-          { key: 'autoTeamBuilder', route: '/tabs/auto-team-builder' },
+          { key: 'autoTeamBuilder', route: '/tabs/auto-team-builder', primary: true },
           { key: 'manualTeamBuilder', route: '/tabs/manual-team-builder' },
           { key: 'captainCoverage', route: '/tabs/captain-coverage' },
         ],

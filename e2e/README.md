@@ -22,8 +22,9 @@ The Playwright suite has two layers:
   one control run failed a single test and hid two others, and a second control
   run passed all four. Keep new, independent screens in the independent block.
 - `public-entry-visual.spec.ts` keeps Chromium desktop and mobile visual
-  baselines for the public team-building guide, guided/compare/share guide, and
-  deterministic Manual Team Builder share-link landing.
+  baselines for the public team-building guide, guided/compare/share guide,
+  Auto Team Builder tool page, and deterministic Manual Team Builder share-link
+  landing.
 
 Regression tests seed only browser-local Capacitor Preferences keys:
 
@@ -63,6 +64,8 @@ The protected states are:
 
 - `/guides/how-to-build-an-optc-team`
 - `/guides/guided-build-compare-team-sharing`
+- `/tools/optc-auto-team-builder`, which holds the one-solid-button layout every
+  tool and guide page shares (869f13c5p)
 - deterministic `/tabs/manual-team-builder?teamShare=...` generated from the
   shared saved-team regression fixture
 

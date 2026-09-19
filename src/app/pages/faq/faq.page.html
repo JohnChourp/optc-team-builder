@@ -45,7 +45,7 @@
                       @for (link of entry.links; track link.route) {
                         <ion-button
                           size="small"
-                          fill="outline"
+                          [fill]="link.primary ? 'solid' : 'outline'"
                           color="warning"
                           [routerLink]="[link.route]"
                           routerDirection="root"
