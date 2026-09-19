@@ -31,6 +31,48 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.5.1',
+    date: '2026-09-19',
+    userVisible: true,
+    headline: {
+      en: 'The ability filters find twelve Captains they used to miss',
+      el: 'Τα φίλτρα ικανοτήτων βρίσκουν δώδεκα Captain που έχαναν',
+    },
+    summaryEn:
+      'The ability filters on Captain Coverage and Auto Team Builder now find twelve Captains they used to miss, because the game words the same effect in more than one way. Boost Orb Chance adds six Captains whose ability says "increases the rate of … orbs" or "boosts chances of <class> characters getting … orbs": Fukaboshi, S-Shark, three Vinsmoke Judge cards and Monkey D. Luffy - Dawn of Adventure. Reduce Ship Special Cooldown adds five Captains that charge the ship\'s special all the way to MAX, among them both new-era Shanks cards and Whitebeard & Ace. Queen the Plague - Impeding Lead Performer now appears under Reduce Switch Effect and Reduce VS Gauge, and Nullify Damage no longer lists Nico Robin - Wearing the New Outfit, whose special cuts damage by 70%, not 100%. When the app is set to Greek, a screen reader now reads the English text of the tool and guide pages as English.',
+    summaryEl:
+      'Τα φίλτρα ικανοτήτων στο Captain Coverage και στο Auto Team Builder βρίσκουν πλέον δώδεκα Captain που έχαναν, επειδή το παιχνίδι γράφει το ίδιο εφέ με περισσότερους από έναν τρόπους. Το Boost Orb Chance προσθέτει έξι Captain που το ability τους λέει «increases the rate of … orbs» ή «boosts chances of <class> characters getting … orbs»: τον Fukaboshi, τον S-Shark, τρεις κάρτες του Vinsmoke Judge και τον Monkey D. Luffy - Dawn of Adventure. Το Reduce Ship Special Cooldown προσθέτει πέντε Captain που γεμίζουν το special του πλοίου μέχρι το MAX, ανάμεσά τους και οι δύο κάρτες Shanks της νέας εποχής και οι Whitebeard & Ace. Η Queen the Plague - Impeding Lead Performer εμφανίζεται πλέον στα Reduce Switch Effect και Reduce VS Gauge, και το Nullify Damage δεν δείχνει πια τη Nico Robin - Wearing the New Outfit, που το special της μειώνει τη ζημιά κατά 70%, όχι κατά 100%. Όταν η εφαρμογή είναι στα ελληνικά, ο αναγνώστης οθόνης διαβάζει πλέον ως αγγλικό το αγγλικό κείμενο των σελίδων εργαλείων και οδηγών.',
+    added: [],
+    improved: [
+      {
+        en: 'The **ability filters** on **Captain Coverage** and **Auto Team Builder** now name two effects the way the game describes them: **Reduce Switch Effect (Super Switch Effect Requirement)** and **Reduce VS Gauge (VS Effect Gauge)**.',
+        el: 'Τα **φίλτρα ικανοτήτων** στο **Captain Coverage** και στο **Auto Team Builder** ονομάζουν πλέον δύο εφέ όπως τα περιγράφει το παιχνίδι: **Reduce Switch Effect (Super Switch Effect Requirement)** και **Reduce VS Gauge (VS Effect Gauge)**.',
+      },
+      {
+        en: 'On the **tool and guide pages**, a screen reader now reads the English text as English when the app is set to Greek.',
+        el: 'Στις **σελίδες εργαλείων και οδηγών**, ο αναγνώστης οθόνης διαβάζει πλέον το αγγλικό κείμενο ως αγγλικό όταν η εφαρμογή είναι στα ελληνικά.',
+      },
+    ],
+    fixed: [
+      {
+        en: 'The **Boost Orb Chance** filter on **Captain Coverage** and **Auto Team Builder** now finds six Captains whose ability says "increases the rate of … orbs" or "boosts chances of <class> characters getting … orbs": **Fukaboshi - Three Strongest Royal Soldiers**, **S-Shark**, three **Vinsmoke Judge** cards and **Monkey D. Luffy - Dawn of Adventure**.',
+        el: 'Το φίλτρο **Boost Orb Chance** στο **Captain Coverage** και στο **Auto Team Builder** βρίσκει πλέον έξι Captain που το ability τους λέει «increases the rate of … orbs» ή «boosts chances of <class> characters getting … orbs»: τον **Fukaboshi - Three Strongest Royal Soldiers**, τον **S-Shark**, τρεις κάρτες του **Vinsmoke Judge** και τον **Monkey D. Luffy - Dawn of Adventure**.',
+      },
+      {
+        en: 'The **Reduce Ship Special Cooldown** filter now finds five Captains that charge the ship\'s special to MAX: both new-era **Shanks** cards, **Whitebeard & Ace - Bond of Father and Son**, **Kalifa - CP0 Abducting the Princess** and **Bonney Pirates**.',
+        el: 'Το φίλτρο **Reduce Ship Special Cooldown** βρίσκει πλέον πέντε Captain που γεμίζουν το special του πλοίου μέχρι το MAX: τις δύο κάρτες **Shanks** της νέας εποχής, τους **Whitebeard & Ace - Bond of Father and Son**, την **Kalifa - CP0 Abducting the Princess** και τους **Bonney Pirates**.',
+      },
+      {
+        en: '**Queen the Plague - Impeding Lead Performer** now appears under the **Reduce Switch Effect** and **Reduce VS Gauge** filters on **Captain Coverage** and **Auto Team Builder**.',
+        el: 'Η **Queen the Plague - Impeding Lead Performer** εμφανίζεται πλέον στα φίλτρα **Reduce Switch Effect** και **Reduce VS Gauge** στο **Captain Coverage** και στο **Auto Team Builder**.',
+      },
+      {
+        en: 'The **Nullify Damage** filter on **Captain Coverage** and **Auto Team Builder** no longer lists **Nico Robin - Wearing the New Outfit**: her special cuts damage by 70%, and the 100% belonged to its DEF Down.',
+        el: 'Το φίλτρο **Nullify Damage** στο **Captain Coverage** και στο **Auto Team Builder** δεν δείχνει πια τη **Nico Robin - Wearing the New Outfit**: το special της μειώνει τη ζημιά κατά 70%, και το 100% ανήκε στο DEF Down του.',
+      },
+    ],
+  },
+  {
     version: '0.5.0',
     date: '2026-09-18',
     userVisible: true,
