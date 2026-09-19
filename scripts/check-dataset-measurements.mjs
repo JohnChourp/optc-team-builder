@@ -25,7 +25,7 @@ import {
   readMeasurementsFile,
 } from './lib/dataset-measurements.mjs';
 
-/** `4618 [@dataset characterRows]` - the number first, so the prose still reads as prose. */
+/** `4622 [@dataset characterRows]` - the number first, so the prose still reads as prose. */
 export const MEASUREMENT_MARKER_PATTERN = /(\d[\d,]*)\s*\[@dataset ([A-Za-z][\w.]*)\]/gu;
 
 export function listSourceFiles(root) {
