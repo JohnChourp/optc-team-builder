@@ -70,7 +70,7 @@ drifts and when a component is reachable by neither a route nor a template.
 | `SavedEnemiesPage` | page | route | yes | yes |
 | `SavedRumbleTeamsPage` | page | route | yes | - |
 | `SavedTeamsPage` | page | route | yes | yes |
-| `SeoContentPage` | page | route | **no** | - |
+| `SeoContentPage` | page | route | yes | - |
 | `SettingsPage` | page | route | yes | - |
 | `SupportedPage` | page | route | **no** | - |
 | `TermsOfServicePage` | page | route | yes | - |
