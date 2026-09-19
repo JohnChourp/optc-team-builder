@@ -81,3 +81,52 @@ it.
 
 It deliberately says nothing about `localeCompare`, because "unbound" is the
 correct state there and a guard demanding otherwise would be wrong.
+
+## The language a first visit starts in
+
+**869f13c59.** Until then every first visit started in English, and the only way
+to Greek was the switch in the side menu. Now, when the device has **no stored
+choice**, `AppI18nService` walks the browser's `navigator.languages` in the
+reader's order and takes the first language the app is translated into —
+`resolveFirstVisitLanguage` in `src/app/core/i18n/first-visit-language.ts`:
+
+| Browser languages | First visit |
+| --- | --- |
+| `el-GR, en-US` | Greek |
+| `en-US, el` | English |
+| `de-DE, el` | Greek |
+| `fr-FR` | English |
+
+A stored choice always wins, and every visit stores the language it applied, so
+this decides the **first** visit only. Readers who came before this change keep
+the English that was stored for them then: a stored `en` cannot tell a choice
+from the old default, so it is left alone.
+
+Nothing public changes. The prerendered documents still ship `lang="en"`
+([first-paint.md](first-paint.md)), crawlers ask in English, and no URL moves.
+
+What it does change is any browser a test opens: a fresh context now starts in
+its own locale's language. `playwright.config.ts` sets the e2e suite to `en-US`,
+because its locators name English labels. The perf, synthetics and PWA-shell
+scripts stay unpinned on purpose. Measured, they locate only text that reads the
+same in both languages: guide headings, character and team names, test ids.
+
+Held by `src/app/core/services/app-i18n-first-visit-language.spec.ts`.
+
+## English text inside a Greek page is marked English
+
+With Greek selected the page is `<html lang="el">`. English text inside it has
+to say so, or a screen reader reads English sentences with a Greek voice:
+
+- the seven tool and guide pages, whose words are written once, in English —
+  `seo-content.page.ts` declares `host: { lang: 'en' }` (869dwcbb8);
+- on a character page, the four paragraphs that print the community database's
+  English verbatim — captain ability, notes, special and effect texts — carry
+  `lang="en"` (869f13c59), held by
+  `src/app/pages/character-detail/character-detail-english-text.spec.ts`, which
+  also makes whoever adds an untranslated paragraph decide its language.
+
+The lists and rows on the same page are deliberately **not** marked. They mix
+dataset words with numbers formatted in the chosen language (`formatNumber`,
+`formatScalar`), and a Greek `1.234` read by an English voice is a different
+number.
