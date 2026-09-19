@@ -157,3 +157,33 @@ describe('generated character pages, one per shape', () => {
     expect(html).not.toContain('Pirate Rumble');
   });
 });
+
+/*
+ * 869f13c5r. `sitemap.html` is the static index of every public page that is not a character page,
+ * sectioned by class, plus the newest characters only - see the purpose written above
+ * `writeSitemapHtml` in the generator.
+ */
+describe('generated sitemap.html', () => {
+  it('sections every public page by class, Home first, then the newest characters', async () => {
+    const html = await readFile(path.join(outputDir, 'sitemap.html'), 'utf8');
+
+    expect([...html.matchAll(/<h2>([^<]*)<\/h2>/gu)].map((match) => match[1])).toEqual([
+      'Home',
+      'Tools',
+      'Guides',
+      'App screens',
+      'Help and legal',
+      'Newest OPTC character pages',
+    ]);
+    expect(html).toContain(`<a href="${siteBaseUrl}/">`);
+  });
+
+  it('names the newest characters, newest first, and no arbitrary early block', async () => {
+    const html = await readFile(path.join(outputDir, 'sitemap.html'), 'utf8');
+    const newest = html.slice(html.indexOf('<h2>Newest OPTC character pages</h2>'));
+    const ids = [...newest.matchAll(/characters\/(\d+)\//gu)].map((match) => Number(match[1]));
+
+    expect(ids).toEqual([4645, 3134, 2, 1]);
+    expect(html).not.toContain('Early OPTC character pages');
+  });
+});
