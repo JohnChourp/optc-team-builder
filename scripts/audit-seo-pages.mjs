@@ -287,10 +287,26 @@ async function auditSitemapHtml() {
     errors.push('sitemap.html must be generated next to sitemap.xml.');
   }
 
-  for (const expectedText of ['Main public pages', 'Newest generated OPTC character pages']) {
-    if (sitemapHtml && !sitemapHtml.includes(expectedText)) {
-      errors.push(`sitemap.html must include "${expectedText}".`);
+  /*
+   * 869f13c5r. The page is the static index of every public page that is not a character page
+   * (see SITEMAP_HTML_SECTIONS in the generator), so it must be sectioned and complete.
+   */
+  for (const heading of ['Home', 'Tools', 'Guides', 'App screens', 'Help and legal', 'Newest OPTC character pages']) {
+    if (sitemapHtml && !sitemapHtml.includes(`<h2>${heading}</h2>`)) {
+      errors.push(`sitemap.html must include the section "${heading}".`);
     }
+  }
+
+  for (const record of publicRouteRecords) {
+    const expectedHref = buildAbsoluteUrl(record.canonicalPath);
+
+    if (sitemapHtml && !sitemapHtml.includes(`href="${expectedHref}"`)) {
+      errors.push(`sitemap.html must link the public page ${expectedHref}.`);
+    }
+  }
+
+  if (sitemapHtml.includes('Early OPTC character pages')) {
+    errors.push('sitemap.html must not list an arbitrary block of early character pages.');
   }
 }
 
