@@ -11,23 +11,7 @@ import { IonTitle } from '@ionic/angular/ion-title';
 import { IonToolbar } from '@ionic/angular/ion-toolbar';
 import { albumsOutline, flashOutline, gridOutline, shieldHalfOutline } from 'ionicons/icons';
 
-interface SeoContentLink {
-  label: string;
-  route: string;
-}
-
-interface SeoContentSection {
-  title: string;
-  copy: string;
-}
-
-interface SeoContentPageData {
-  eyebrow: string;
-  title: string;
-  summary: string;
-  sections: readonly SeoContentSection[];
-  links: readonly SeoContentLink[];
-}
+import { SEO_CONTENT_PAGES, type SeoContentPageData } from './seo-content.data';
 
 const defaultPage: SeoContentPageData = {
   eyebrow: 'Fan-made OPTC tools',
@@ -65,7 +49,7 @@ const defaultPage: SeoContentPageData = {
   styleUrl: './seo-content.page.scss',
   /*
    * 869f13c6b. The four tool pages and three guides are English by decision (869dwcbb8): their text
-   * is written in the route data, not translated. With Greek selected the app sets <html lang="el">,
+   * is written in `seo-content.data.ts`, not translated. With Greek selected the app sets <html lang="el">,
    * so without this the English copy was announced as Greek and a screen reader read it with Greek
    * pronunciation. Translate the page and this has to change with it.
    */
@@ -74,8 +58,12 @@ const defaultPage: SeoContentPageData = {
 export class SeoContentPage {
   private readonly route = inject(ActivatedRoute);
 
+  /*
+   * 869f13c5t. Keyed by the path this route is served at, which is also the key the static fallback
+   * generator reads, so the page and its crawlable copy cannot pick different records.
+   */
   public readonly page: SeoContentPageData =
-    (this.route.snapshot.data['content'] as SeoContentPageData | undefined) ?? defaultPage;
+    SEO_CONTENT_PAGES[this.route.snapshot.routeConfig?.path ?? ''] ?? defaultPage;
   public readonly primaryIcon = resolveIcon(this.route.snapshot.data['contentIcon']);
 }
 

@@ -425,6 +425,11 @@
       "name": "SEO pages and GitHub Pages deploy",
       "featurePaths": [
         "src/app/pages/seo-content/",
+        "src/app/app.routes.ts",
+        "src/app/core/data/public-routes.data.ts",
+        "scripts/lib/public-routes.mjs",
+        "scripts/lib/seo-content.mjs",
+        "scripts/lib/seo-content.spec.ts",
         "scripts/generate-seo-pages.mjs",
         "scripts/audit-seo-pages.mjs",
         "scripts/verify-guide-discoverability.mjs",

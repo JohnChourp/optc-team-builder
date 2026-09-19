@@ -118,11 +118,7 @@ export const PUBLIC_GUIDE_CASES = [
     path: 'guides/how-to-build-an-optc-team',
     seoTitle: 'How to Build an OPTC Team | One Piece Treasure Cruise Guide',
     heading: 'How to Build an OPTC Team',
-    appRouteFragments: ['Start with the captain', 'Map the mechanics', 'Lock and search'],
-    seoGeneratorFragments: [
-      'cover bind, despair, paralysis',
-      'let Auto Team Builder search for candidates',
-    ],
+    contentFragments: ['Start with the captain', 'Map the mechanics', 'Lock and search'],
     helpSources: [
       {
         file: 'README.md',
@@ -135,11 +131,7 @@ export const PUBLIC_GUIDE_CASES = [
     path: 'guides/guided-build-compare-team-sharing',
     seoTitle: 'Guided Build, Compare Mode, and Team Sharing | OPTC Team Builder',
     heading: 'Guided Build, Compare Mode, and Team Sharing',
-    appRouteFragments: ['Guided auto build', 'Supported transfer formats', 'Current limits'],
-    seoGeneratorFragments: [
-      'Saved Teams transfer supports schema v1',
-      'browser blocks native share or clipboard access',
-    ],
+    contentFragments: ['Guided auto build', 'Supported transfer formats', 'Current limits'],
     helpSources: [
       {
         file: 'src/app/pages/auto-team-builder/auto-team-builder.page.html',
@@ -366,22 +358,25 @@ function extractPlaceholders(value) {
 
 function checkPublicGuideSources({ appRoot, publicGuideCases, errors }) {
   const appRoutesPath = path.join(appRoot, 'src', 'app', 'app.routes.ts');
-  const seoGeneratorPath = path.join(appRoot, 'scripts', 'generate-seo-pages.mjs');
   /*
    * 869f12x57. A guide's canonical path and `<title>` used to be asserted in
-   * BOTH of the files above, which is precisely why they were a duplication:
-   * this check was the sixth place the public route list was written down, and
-   * it kept the first five honest by grepping them for each other's strings.
+   * both the router and the generator, which is precisely why they were a
+   * duplication: this check was the sixth place the public route list was
+   * written down, and it kept the first five honest by grepping them for each
+   * other's strings. They now live once, in the registry, so that is where they
+   * are asserted.
    *
-   * They now live once, in the registry, so that is where they are asserted.
-   * What stays pointed at the router and the generator is what each of them
-   * genuinely owns: the route declaration itself, the in-page heading, and the
-   * prose fragments that prove the guide still says what it is meant to say.
+   * 869f13c5t did the same for the page text. The heading and the prose lived
+   * in the router AND, as different sentences, in the generator; both copies
+   * were pinned here. They now live once, in `seo-content.data.ts`, which the
+   * page renders and the generator reads, so the router is asked only for the
+   * route declaration and the generator for nothing.
    */
   const registryPath = path.join(appRoot, 'src', 'app', 'core', 'data', 'public-routes.data.ts');
+  const contentPath = path.join(appRoot, 'src', 'app', 'pages', 'seo-content', 'seo-content.data.ts');
   const appRoutes = readSourceFile(appRoot, appRoutesPath, errors);
-  const seoGenerator = readSourceFile(appRoot, seoGeneratorPath, errors);
   const publicRouteRegistry = readSourceFile(appRoot, registryPath, errors);
+  const content = readSourceFile(appRoot, contentPath, errors);
 
   for (const guide of publicGuideCases) {
     expectSourceContains({
@@ -389,11 +384,7 @@ function checkPublicGuideSources({ appRoot, publicGuideCases, errors }) {
       appRoot,
       filePath: appRoutesPath,
       guideId: guide.id,
-      values: [
-        routePathAssignment('path', guide.path),
-        guide.heading,
-        ...guide.appRouteFragments,
-      ],
+      values: [routePathAssignment('path', guide.path)],
       errors,
     });
     expectSourceContains({
@@ -405,11 +396,11 @@ function checkPublicGuideSources({ appRoot, publicGuideCases, errors }) {
       errors,
     });
     expectSourceContains({
-      source: seoGenerator,
+      source: content,
       appRoot,
-      filePath: seoGeneratorPath,
+      filePath: contentPath,
       guideId: guide.id,
-      values: [guide.path, guide.heading, ...guide.seoGeneratorFragments],
+      values: [`'${guide.path}': {`, guide.heading, ...guide.contentFragments],
       errors,
     });
 
