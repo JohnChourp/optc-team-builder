@@ -3,7 +3,8 @@
 **Status:** recorded 2026-09-15 · [869f17h7w](https://app.clickup.com/t/90121749478/869f17h7w) · [869f17h7a](https://app.clickup.com/t/90121749478/869f17h7a)
 
 Across this backlog the word "support" has been used for five different things at
-once: an iOS project that is versioned and never built, a sideloaded Android APK,
+once: an iOS project that was versioned and never built until it was dropped on
+2026-09-20, a sideloaded Android APK,
 engines with automated coverage, engines without, and a PWA installable
 everywhere. Most of the open platform questions are really *"which level is
 this?"* — and once the levels exist, the answers are cheap.
@@ -52,7 +53,7 @@ installed. That is why the iOS platform row is *best effort* while the engine is
 | **Web** | **verified** | deployed on every push to `main`, with a post-deploy service-worker freshness check and scheduled synthetics against the live site |
 | **Android APK** | supported | built and signed on every release, sideloaded rather than on Google Play, self-updating. **No automated UI test runs on a device or emulator** — the APK is proven to *build* automatically and proven to *work* by hand |
 | **iOS via PWA** | best effort | the installed web app is the intended path. The engine is covered; **installing to the home screen, storage eviction and service-worker lifetime on iOS have never been exercised** |
-| **iOS native app** | not supported | no App Store build exists and none is planned. See [the iOS footprint](ios-platform-footprint.md) — the `ios/` project is kept, and is load-bearing for the *Android* release |
+| **iOS native app** | not supported | no App Store build exists and none is planned. **The `ios/` project was dropped on 2026-09-20**, after the pbxproj write it held the Android release hostage to was removed first. See [the iOS footprint](ios-platform-footprint.md); restoring it is `npx cap add ios` |
 
 ## A single failing browser run decides nothing
 

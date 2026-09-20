@@ -7,6 +7,8 @@ import { chromium, devices } from 'playwright';
 
 export const MEMORY_PRESSURE_SCHEMA_VERSION = 1;
 
+// The task this budget was first measured for. It titles the report; it is NO LONGER
+// the output directory - see 869f13c78 and the artifact path below.
 const taskId = '869dwcee1';
 const appRoot = process.cwd();
 const port = Number(process.env.PERF_PORT ?? process.env.E2E_PORT ?? 8441);
@@ -117,7 +119,7 @@ function resolveDefaultArtifactDir() {
   const siblingBrainDir = path.resolve(appRoot, '..', 'optc-team-builder-brain');
 
   return existsSync(siblingBrainDir)
-    ? path.join(siblingBrainDir, 'live-artifacts', taskId)
+    ? path.join(siblingBrainDir, 'live-artifacts', 'tool-runs', 'perf-memory-pressure')
     : path.join(appRoot, 'perf-artifacts', 'memory-pressure');
 }
 

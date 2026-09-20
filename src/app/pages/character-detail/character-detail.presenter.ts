@@ -7,7 +7,7 @@ import {
   buildCaptainCoverageTierView,
   type CaptainCoverageTierScopeToken,
 } from '../../core/services/captain-coverage-tier-view.utils';
-import { formattingLanguage } from '../../core/i18n/app-locale-format';
+import { formatBoolean, formattingLanguage } from '../../core/i18n/app-locale-format';
 
 type DisplayLabel = {
   label?: string;
@@ -1110,7 +1110,7 @@ function formatScalar(value: unknown): string | null {
   }
 
   if (typeof value === 'boolean') {
-    return value ? 'Yes' : 'No';
+    return formatBoolean(value);
   }
 
   const sanitized = sanitizeText(value);

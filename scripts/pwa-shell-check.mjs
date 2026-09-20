@@ -19,7 +19,18 @@ import {
 
 const ROOT_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIST_DIR = path.join(ROOT_DIR, 'dist', 'optc-team-builder', 'browser');
-const DEFAULT_TASK_ID = '869dwc7wk';
+/*
+ * 869f13c78. The default output directory used to be a CITED evidence folder - a real
+ * task id under `live-artifacts/`, named by an audit as where that task's proof lives.
+ * So running this tool today overwrote the evidence of a task finished months ago, and
+ * nothing said so.
+ *
+ * The default is now a tool-run folder, which no audit cites and which the retention
+ * plan is free to sweep. Writing into a task's folder is still possible and is now a
+ * CHOICE: pass the directory explicitly when the run is meant to become that task's
+ * evidence.
+ */
+const DEFAULT_TASK_ID = 'tool-runs';
 const TASK_ID = process.env.PWA_SHELL_TASK_ID || DEFAULT_TASK_ID;
 const BUILD_SCRIPT = process.env.PWA_SHELL_BUILD_SCRIPT || 'build';
 const DEFAULT_BRAIN_ARTIFACT_DIR = path.resolve(

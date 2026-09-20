@@ -359,8 +359,28 @@ function auditJsonLdGraph(jsonLd, htmlPath, routePath) {
     return;
   }
 
-  if (!graph.some((node) => node?.['@type'] === 'WebSite' && node?.potentialAction?.['@type'] === 'SearchAction')) {
-    errors.push(`${relative(htmlPath)} JSON-LD WebSite must include SearchAction.`);
+  /*
+   * 869f13c8w. This used to REQUIRE a `SearchAction`. It now forbids one, and the
+   * inversion is the point rather than a relaxation.
+   *
+   * The declaration named `/tabs/characters?q={search_term_string}` and **nothing in
+   * `src` has ever read `q`**, so a reader arriving from it lands on an unfiltered
+   * list with their search term silently dropped. Its consumer is gone too - Google
+   * retired the sitelinks search box on 2024-11-21.
+   *
+   * So the guard keeps the same job, pointed the other way: it stops the markup
+   * re-appearing while the behaviour it promises still does not exist. Implement the
+   * query parameter on the Characters page FIRST, prove a reader can land on a
+   * filtered list, and only then delete this check and restore the node.
+   */
+  const searchActionNode = graph.find(
+    (node) => node?.['@type'] === 'WebSite' && node?.potentialAction?.['@type'] === 'SearchAction',
+  );
+  if (searchActionNode) {
+    errors.push(
+      `${relative(htmlPath)} JSON-LD WebSite declares a SearchAction, but no route reads its query parameter. ` +
+        'Implement the search parameter before re-declaring it (869f13c8w).',
+    );
   }
 
   if (!graph.some((node) => node?.['@type'] === 'BreadcrumbList')) {

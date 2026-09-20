@@ -136,6 +136,13 @@ export const NON_LANE_TEST_SCRIPTS = new Map([
   ['test:e2e:webkit', 'One browser projection of test:e2e.'],
   ['test:public-entry-visual', 'Visual check on a scheduled workflow, not a verify:local lane.'],
   ['test:post-merge-smoke', 'Runs after a merge against the deployed site, on its own workflow.'],
+  [
+    'test:drive-sync-server',
+    'FROZEN, not deleted (869f13c92, owner 2026-09-19). The Drive-sync backend is out of the default '
+      + 'checks, so this is no longer a lane - but server/ stays in the repository and this suite still '
+      + 'passes. Run it by hand when you touch server/. Thawing means restoring the drive-sync-server '
+      + 'entry in SCRIPT_SUITES, both test.yml lists and the routing spec, and removing this row.',
+  ],
 ]);
 
 export function listFiles(root = projectRoot) {

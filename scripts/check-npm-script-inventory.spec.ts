@@ -230,13 +230,19 @@ describe('npm script inventory', () => {
       expect(errors.some((error) => error.includes('never runs in verify:local'))).toBe(false);
     });
 
-    it('keeps the allowlist to the eight measured exemptions', () => {
+    it('keeps the allowlist to the nine measured exemptions', () => {
       /*
        * The allowlist is check D's escape hatch, so a row added to silence a
        * failure IS the failure. Pinning the size makes adding one a deliberate
        * edit to this test rather than a quiet line in a map.
+       *
+       * Went from eight to nine on 2026-09-20: `test:drive-sync-server`, when the
+       * owner froze the Drive-sync backend out of the default checks (869f13c92).
+       * That is the allowlist used for what it is for - the suite still exists and
+       * still passes, it simply is not a lane any more - and the row says how to
+       * thaw it. The count moves again only for another decision of that kind.
        */
-      expect(NON_LANE_TEST_SCRIPTS.size).toBe(8);
+      expect(NON_LANE_TEST_SCRIPTS.size).toBe(9);
 
       for (const reason of NON_LANE_TEST_SCRIPTS.values()) {
         expect(reason.length).toBeGreaterThan(30);

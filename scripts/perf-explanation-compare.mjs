@@ -165,7 +165,7 @@ function resolveDefaultArtifactDir() {
   const siblingBrainDir = path.resolve(appRoot, '..', 'optc-team-builder-brain');
 
   return existsSync(siblingBrainDir)
-    ? path.join(siblingBrainDir, 'live-artifacts', '869dvr7x5')
+    ? path.join(siblingBrainDir, 'live-artifacts', 'tool-runs', 'perf-explanation-compare')
     : path.join(appRoot, 'perf-artifacts', 'explanation-compare');
 }
 

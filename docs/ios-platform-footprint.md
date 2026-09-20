@@ -1,15 +1,44 @@
-# The iOS footprint: everything that exists only because of iOS
+# The iOS footprint: everything that existed only because of iOS
 
-**Status:** recorded 2026-09-15 · [869f17h6e](https://app.clickup.com/t/90121749478/869f17h6e)
+**Status:** recorded 2026-09-15 · **the project was dropped 2026-09-20** ·
+[869f17h6e](https://app.clickup.com/t/90121749478/869f17h6e) ·
+[869f13c92](https://app.clickup.com/t/90121749478/869f13c92)
 
-## The decision
+## The decision, and its reversal
 
 **The PWA is the iOS path.** iPhone players install the web app to the home
-screen. There is no App Store build, none is planned, and the `ios/` Capacitor
-project is kept so the option stays open — not because anything ships from it.
+screen. There is no App Store build and none is planned. That part is unchanged.
 
-Owner decision, 2026-09-14. Recorded here so the next reader does not have to
-infer it from an unbuilt Xcode project.
+What changed is the second half. Until 2026-09-20 the `ios/` Capacitor project was
+**kept so the option stayed open**; on 2026-09-19 the owner decided to stop
+carrying it, and on 2026-09-20 it was removed — 19 tracked files, `@capacitor/ios`,
+the `ios:open` and `ios:sync` scripts, and the pbxproj write in `bump-version.sh`.
+
+**Restoring it is `npx cap add ios`** plus putting that write back. This document is
+kept, past tense, because the inventory below is what makes the restoration safe and
+the removal reviewable.
+
+### The order mattered, and this document set it
+
+The section *"The release depends on the iOS project, and fails badly without it"*
+below said: guard or remove the pbxproj write **first**, prove a release still bumps
+cleanly, and only then remove `ios/`. That is exactly the order the removal followed.
+`scripts/bump-version.spec.ts` now carries a case that bumps in a workspace with **no
+`ios/` at all** and asserts every other file still moved — so the absence is pinned,
+not merely untested.
+
+### One entry of the inventory below was wrong
+
+Entry 4 calls the npm `xcode` override iOS-only. **It is not, and removing it
+reintroduced three moderate advisories.** `xcode` is a dependency of
+`@capacitor/cli`, which the **Android** build needs, so the override protects a
+package iOS never owned alone. Measured 2026-09-20: `npm audit` reports **0** on
+`main`, **3 moderate** with the override removed, and **0** again once it was put
+back. The override stays.
+
+That is the whole reason this document exists — *"anyone removing 'the iOS things'
+by name"* would have broken something — and it caught a second instance of its own
+warning.
 
 ## The complete inventory
 

@@ -348,7 +348,6 @@ describe('ci-check-routing', () => {
       'published-teams',
       'public-entry-synthetics',
       'i18n-regression',
-      'drive-sync-server',
       'source-data',
       'perf-budget',
       'e2e-triage',

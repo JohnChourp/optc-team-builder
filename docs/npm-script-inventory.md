@@ -133,8 +133,6 @@ and when a `test:` script is not a lane.
 | `i18n:support-claims` | npm script · test:support-claims | `test:support-claims` |
 | `i18n:validate` | npm script · test:i18n-regression | `test:i18n-regression` |
 | `ionic:host-property` | npm script · test:ionic-host-property | `test:ionic-host-property` |
-| `ios:open` | documented · ios-platform-footprint.md | a documented manual step |
-| `ios:sync` | documented · ios-platform-footprint.md | a documented manual step |
 | `members:unused` | npm script · test:unused-members | `test:unused-members` |
 | `model:field-naming` | npm script · test:field-naming | `test:field-naming` |
 | `ng` | npm script · start, build, build:pages, watch, test, test:ci, test:saved-team-codecs | `start`, `build`, `build:pages`, `watch`, `test`, `test:ci`, `test:saved-team-codecs` |
@@ -202,7 +200,7 @@ and when a `test:` script is not a lane.
 | `test:docs-commands` | lane · docs-commands | the `docs-commands` lane |
 | `test:docs-drift` | lane · docs-drift | the `docs-drift` lane |
 | `test:docs-integrity` | lane · docs-integrity | the `docs-integrity` lane |
-| `test:drive-sync-server` | lane · drive-sync-server | the `drive-sync-server` lane |
+| `test:drive-sync-server` | script file · ci-check-routing.mjs | whatever ci-check-routing.mjs drives |
 | `test:e2e` | script file · playwright-e2e-runner.mjs, run-playwright-e2e.mjs | whatever playwright-e2e-runner.mjs, run-playwright-e2e.mjs drives |
 | `test:e2e-triage` | lane · e2e-triage | the `e2e-triage` lane |
 | `test:e2e:chromium` | npm script · test:post-merge-smoke | `test:post-merge-smoke` |

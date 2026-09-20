@@ -2,7 +2,8 @@
  * What "we support this" means here, per platform and per engine.
  *
  * 869f17h7w / 869f17h7a. Across this backlog the word has been used for five
- * different things at once - an iOS project that is versioned and never built, a
+ * different things at once - an iOS project that was versioned and never built until
+ * it was dropped on 2026-09-20, a
  * sideloaded Android APK, engines with automated coverage, engines without. Most
  * of the open platform questions are really "which level is this?", and the
  * answers are cheap once the levels exist.

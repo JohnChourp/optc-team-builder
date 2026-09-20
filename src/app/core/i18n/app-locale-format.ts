@@ -40,6 +40,31 @@ export function formattingLanguage(): SupportedLanguage {
   return activeLanguage;
 }
 
+/**
+ * A boolean as a player reads it, in the interface language.
+ *
+ * 869f13c58. `formatScalar` on Character Detail returned a hard-coded `'Yes'` / `'No'`
+ * on the line *below* one that formats numbers with `formattingLanguage()`. So a Greek
+ * reader saw a Greek-formatted number and an English word in the same row, from the
+ * same function, four lines apart.
+ *
+ * It lives beside `formattingLanguage` for the reason that function's own note gives:
+ * the call sites are presenters and `*.utils.ts` files with no injector, and page specs
+ * here run without a TestBed. A translation key would need one.
+ *
+ * This is for a boolean the APP computes. A `Yes` inside untranslated English dataset
+ * prose stays English, exactly as the note above says of numbers.
+ */
+const BOOLEAN_WORDS: Readonly<Record<SupportedLanguage, readonly [string, string]>> = {
+  en: ['Yes', 'No'],
+  el: ['Ναι', 'Όχι'],
+};
+
+export function formatBoolean(value: boolean): string {
+  const [yes, no] = BOOLEAN_WORDS[activeLanguage] ?? BOOLEAN_WORDS[DEFAULT_APP_LANGUAGE];
+  return value ? yes : no;
+}
+
 /** Restores the module default. Exposed for tests, which share module state. */
 export function resetFormattingLanguageForTests(): void {
   activeLanguage = DEFAULT_APP_LANGUAGE;

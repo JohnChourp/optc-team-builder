@@ -9,6 +9,8 @@ import { performance } from 'node:perf_hooks';
 export const SAVED_TEAM_CODEC_PERFORMANCE_SCHEMA_VERSION = 1;
 
 const require = createRequire(import.meta.url);
+// The task this budget was first measured for. It titles the report; it is NO LONGER
+// the output directory - see 869f13c78 and the artifact path below.
 const taskId = '869dwchtw';
 const appRoot = process.cwd();
 const artifactDir = process.env.PERF_ARTIFACT_DIR ?? resolveDefaultArtifactDir();
@@ -199,7 +201,7 @@ function resolveDefaultArtifactDir() {
   const siblingBrainDir = path.resolve(appRoot, '..', 'optc-team-builder-brain');
 
   return existsSync(siblingBrainDir)
-    ? path.join(siblingBrainDir, 'live-artifacts', taskId)
+    ? path.join(siblingBrainDir, 'live-artifacts', 'tool-runs', 'perf-saved-team-codecs')
     : path.join(appRoot, 'perf-artifacts', 'saved-team-codecs');
 }
 

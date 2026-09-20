@@ -119,18 +119,13 @@ export const NPM_SCRIPT_REGISTRY = [
     reason:
       'Appends to the flake ledger from a local run. CI deliberately does not call it: test.yml uploads the ledger as an artifact rather than committing it, because a run that amended a tracked file would be a push this repo does not allow.',
   },
-  {
-    script: 'ios:open',
-    class: 'manual',
-    reason:
-      'Opens Xcode. Retained under the decision that the PWA is the iOS path: there is no App Store build and no workflow builds ios/, but the Capacitor project stays usable by hand.',
-    owner: '869f17h6e',
-  },
-  {
-    script: 'ios:sync',
-    class: 'manual',
-    reason:
-      'Capacitor sync scoped to iOS. Same standing as ios:open under the PWA-is-the-iOS-path decision.',
-    owner: '869f17h6e',
-  },
+  /*
+   * `ios:open` and `ios:sync` were registered here as `manual`, kept usable by hand under the
+   * PWA-is-the-iOS-path decision (869f17h6e). The owner dropped the unbuilt iOS project on
+   * 2026-09-19 (869f13c92) and it was removed on 2026-09-20, so both scripts are gone and their
+   * entries with them - a registry row for a script that does not exist is what this check
+   * exists to catch.
+   *
+   * Restoring iOS is `npx cap add ios`, the two scripts, and these two rows.
+   */
 ];
