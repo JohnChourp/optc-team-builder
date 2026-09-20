@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-09-19T19:08:18.229Z",
+  "generatedAt": "2026-09-20T19:29:46.362Z",
   "sourceVersion": "36",
-  "total": 586,
+  "total": 587,
   "distinctClauses": 108,
   "byKind": {
     "teamConditionRawOnly": 67,
-    "triggerClause": 519
+    "triggerClause": 520
   },
   "items": [
     {
@@ -131,7 +131,7 @@
     {
       "kind": "triggerClause",
       "clause": "if they have a [RCV] orb",
-      "instances": 9,
+      "instances": 10,
       "characterIds": [
         2012,
         2013,

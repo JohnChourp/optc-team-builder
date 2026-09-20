@@ -9,7 +9,7 @@
   "charactersWithNoClasses": 18,
   "detailRows": 4622,
   "teamConditions": 301,
-  "triggerConditions": 856,
+  "triggerConditions": 858,
   "fieldConditions": 17,
   "teamConditionsByKind": {
     "crew-composition": 240,
@@ -18,7 +18,7 @@
   },
   "triggerClauseInstances": {
     "beneficialOrb": 292,
-    "applicableTag": 45,
+    "applicableTag": 46,
     "performsExcellentActionSpecial": 52
   }
 }
