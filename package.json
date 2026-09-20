@@ -125,7 +125,7 @@
     "secrets:scan": "node ./scripts/check-secrets.mjs",
     "test:secrets": "vitest run scripts/check-secrets.spec.ts && npm run secrets:scan",
     "test:ability-catalogue": "vitest run scripts/check-ability-catalogue.spec.ts && npm run abilities:catalogue-check",
-    "test:dataset-delivery": "vitest run scripts/build-dataset-binary.spec.ts scripts/check-dataset-delivery.spec.ts scripts/lib/prefetch-payload.spec.ts && npm run build && npm run dataset-delivery:check",
+    "test:dataset-delivery": "vitest run scripts/build-dataset-binary.spec.ts scripts/check-dataset-delivery.spec.ts scripts/check-dataset-delivery-platform-provided.spec.ts scripts/lib/prefetch-payload.spec.ts && npm run build && npm run dataset-delivery:check",
     "perf:ability-filters": "node ./scripts/perf-ability-filters.mjs",
     "perf:explanation-compare": "node ./scripts/perf-explanation-compare.mjs",
     "perf:saved-team-codecs": "node ./scripts/perf-saved-team-codecs.mjs",

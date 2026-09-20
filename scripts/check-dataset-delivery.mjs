@@ -93,6 +93,25 @@ export function readRuntimeDataFiles(appRoot) {
   return files;
 }
 
+/**
+ * Names the app may read that the WEB build legitimately does not contain, each with its reason.
+ *
+ * 869f4kxrm. The check's rule - everything the app reads must be in the build - is right for every
+ * other file, and this is the one case where the FILE IS CREATED BY THE PACKAGER rather than by us.
+ * `cap sync` copies `optc-seed.sqlite.gz` into the Android assets, and AAPT unpacks a `.gz` asset and
+ * strips the extension when it builds the APK, so `optc-seed.sqlite` exists inside the APK and
+ * nowhere else. The app asks for it only after the `.gz` name 404s, which happens only there.
+ *
+ * This is a list of TWO things, deliberately: the name, and why it is exempt. A name added here
+ * without a reason is the failure this check exists to prevent, so keep them together.
+ */
+const PLATFORM_PROVIDED_DATA_FILES = new Map([
+  [
+    'optc-seed.sqlite',
+    'created inside the APK by AAPT, which unpacks optc-seed.sqlite.gz and strips the extension; the web build only ever holds the .gz',
+  ],
+]);
+
 export function inspectShippedDataFiles({ distDir, runtimeDataFiles }) {
   const findings = [];
   const dataDir = path.join(distDir, 'assets', 'data');
@@ -119,7 +138,7 @@ export function inspectShippedDataFiles({ distDir, runtimeDataFiles }) {
   }
 
   for (const name of [...runtimeDataFiles].sort()) {
-    if (!shipped.includes(name)) {
+    if (!shipped.includes(name) && !PLATFORM_PROVIDED_DATA_FILES.has(name)) {
       findings.push({
         kind: 'missing-runtime-data-file',
         detail: `the app reads assets/data/${name}, and the build does not contain it`,
