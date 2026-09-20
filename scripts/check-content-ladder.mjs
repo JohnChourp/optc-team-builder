@@ -32,6 +32,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import ts from 'typescript';
+import { pathToFileURL } from 'node:url';
 
 export const SEED_PATH = 'public/assets/data/optc-seed.sql';
 export const LADDER_PATH = 'src/app/core/data/content-ladder.data.ts';
@@ -340,6 +341,6 @@ function main() {
   }
 }
 
-if (process.argv[1] && import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   main();
 }

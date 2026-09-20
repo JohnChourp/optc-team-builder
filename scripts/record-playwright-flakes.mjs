@@ -16,6 +16,7 @@ import path from 'node:path';
 import process from 'node:process';
 
 import { collectFailures } from './summarize-playwright-failures.mjs';
+import { pathToFileURL } from 'node:url';
 import {
   createEmptyFlakeLedger,
   formatFlakeLedgerSummary,
@@ -136,7 +137,7 @@ function parseArgs(argv) {
   return options;
 }
 
-if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href) {
+if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   recordPlaywrightFlakes(parseArgs(process.argv.slice(2)))
     .then((result) => {
       console.log(

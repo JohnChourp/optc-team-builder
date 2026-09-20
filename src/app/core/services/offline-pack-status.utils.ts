@@ -4,15 +4,22 @@ import type { OfflinePackSummary } from '../models/optc.models';
  * 869f138pr. What the offline image packs really are, and how much of one is really offline.
  *
  * Three packs ship with the app - `thumbnails-glo`, `thumbnails-jap`, `ship-thumbnails` - totalling
- * **189 MB across 11,023 files**, and until this was measured nothing on any screen mentioned them.
+ * **161.6 MB across 11,039 files** (measured 2026-09-20, v0.5.3), and until this was measured
+ * nothing on any screen mentioned them.
+ *
+ * This read **"189 MB"** until 2026-09-20, which is what `du -sh` reports. That is DISK USAGE, and it
+ * counts the slack in the last block of each of eleven thousand small files - about 27 MB of nothing.
+ * The packs' SIZE, the number that matters to a reader deciding whether to download them, is the sum
+ * of the file lengths. Quote the sum; `du` answers a different question.
  * The audit on 869f138pj establishes what they actually do, which is not what the folder name
  * suggests:
  *
  * - they are NOT prefetched. A first visit does not pay for them; each image is fetched the first
  *   time a screen shows it.
  * - `ngsw-config.json` keeps them in the `runtime-media` data group, `strategy: performance`.
- *   Until 2026-09-17 that was **`maxSize: 750`, `maxAge: 30d`** - at most 750 of the 11,023 files,
- *   about **6.4%**, each expiring after thirty days, so whatever a reader had seen was dropped to
+ *   Until 2026-09-17 that was **`maxSize: 750`, `maxAge: 30d`** - at most 750 of the 11,039 files,
+ *   **6.79%** (this said "about 6.4%", which was wrong against either file count), each expiring
+ *   after thirty days, so whatever a reader had seen was dropped to
  *   make room for what they looked at next. The owner raised both when that was measured; see
  *   {@link RUNTIME_MEDIA_MAX_ENTRIES}.
  * - `installed: true` in the manifest means "these files exist on the server", not "this reader

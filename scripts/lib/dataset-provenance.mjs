@@ -64,7 +64,9 @@ const ANY_INSERT_COLUMNS_PATTERN = /INSERT INTO (\w+) \(\s*([\s\S]*?)\s*\)\s*VAL
 export const DERIVED_COLUMNS = Object.freeze({
   id: 'The upstream row index plus one, used as the stable character id.',
   is_incomplete:
-    'True when the row is missing data the app needs; computed during normalization, not carried upstream.',
+    'True when a MANUAL overlay character was added without full stats. Derived, never carried upstream, '
+    + 'and set on no other path: the upstream importer always writes 0, so 0 of 4,622 shipped rows carry it '
+    + '(measured 2026-09-20, v0.5.3). An always-false column, kept because the overlay can still set it.',
   primary_class: 'classes[0] of the normalized class list.',
   secondary_class: 'classes[1] of the normalized class list, or null.',
   classes_json: 'The normalized class list, serialized.',

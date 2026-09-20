@@ -18,7 +18,7 @@ import { createServer } from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const INDEX_HTML = path.join(ROOT_DIR, 'src', 'index.html');
@@ -439,6 +439,6 @@ async function main() {
   console.log(`\n[csp] OK - ${ROUTES.length} routes served under the policy with zero violations.`);
 }
 
-if (process.argv[1] && import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   await main();
 }

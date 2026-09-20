@@ -11,6 +11,7 @@ import path from 'node:path';
 import process from 'node:process';
 
 import { buildConsumerCensus, findCensusFailures } from './lib/dataset-consumers.mjs';
+import { pathToFileURL } from 'node:url';
 
 export const DATASET_LIB_PATH = 'scripts/lib/optc-dataset.mjs';
 export const REPOSITORY_PATH = 'src/app/core/services/optc-repository.service.ts';
@@ -98,6 +99,6 @@ async function main() {
   );
 }
 
-if (process.argv[1] && import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   await main();
 }

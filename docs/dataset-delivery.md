@@ -26,8 +26,12 @@ mentions it, and nothing in the repository ever read it. It is gone.
 
 `public/assets/data/optc-seed.sql` is the source of truth. The importer writes it, git diffs it,
 and about twenty scripts read it as text. `optc-seed.sqlite.gz` is derived from it and is not
-committed: `scripts/build-dataset-binary.mjs` builds it before every `ng build` and `ng serve`
-(the `build`, `build:pages` and `start` npm scripts run `npm run dataset:binary` first).
+committed: `scripts/build-dataset-binary.mjs` builds it before every `npm run build`,
+`npm run build:pages` and `npm start`, each of which runs `npm run dataset:binary` first.
+
+**A bare `ng build` or `ng serve` does not build it** — only those npm scripts do. Run
+`npm run dataset:binary` by hand if you drive the Angular CLI directly, or the app loads whatever
+database the last build left in `public/`.
 
 ## Why a database file, gzipped
 
@@ -37,9 +41,15 @@ Measured on 2026-09-16, before this change:
 | --- | ---: | --- |
 | `optc-seed.sql` over the wire | 27,722,752 | no `content-encoding`: the host does not compress `application/sql` |
 | the same file, gzip -9 | 2,329,140 | what compression alone would give |
-| the built database, gzip -9 | **2,289,988** | what ships now |
-| everything prefetched, before | 35,163,757 | the seed was 79% of it |
+| the built database, gzip -9 | **2,289,988** | what shipped that day |
+| everything prefetched, before | 35,163,757 | the seed was **79% of the stored bytes** |
 | everything prefetched, after | 9,735,554 | |
+
+Every figure above is the measurement of one day's data, not a constant. **The database's gzipped
+size moves with every release that imports characters**, so do not read the third row as what ships
+today: at v0.5.3 a fresh build of the same pipeline measured **2,293,417 B** on Node 26. Read the
+live number from `npm run perf:dataset` (`databaseGzipBytes`) rather than from this table, and see
+*Deterministic* below for why the Node release matters as well as the data.
 
 Size was only half of it. The app also executed the seed's 13,863 statements on **every** start.
 In Chromium with the files already cached, at 4x CPU throttling, that took 1,584 ms; opening the
