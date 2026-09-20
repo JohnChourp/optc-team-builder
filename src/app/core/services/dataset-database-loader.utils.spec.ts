@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   DATASET_DATABASE_PATH,
+  DATASET_DATABASE_UNPACKED_PATH,
   DATASET_READY_MARK,
   DATASET_SEED_PATH,
   gunzipBytes,
@@ -209,7 +210,17 @@ describe('dataset database loader', () => {
         const loaded = await loadDatasetDatabase(dependencies);
 
         expect(loaded.source).toBe('seed-statements');
-        expect(requested).toEqual([DATASET_DATABASE_PATH, DATASET_SEED_PATH]);
+        /*
+         * 869f4kxrm. The unpacked name is tried between the two now, because AAPT strips `.gz`
+         * from an Android asset and the APK holds `optc-seed.sqlite`. Here the fake answers it
+         * with the seed text, so it is rejected too and the SQL path still wins - which is what
+         * makes this a fair test of the fallback rather than of the new candidate.
+         */
+        expect(requested).toEqual([
+          DATASET_DATABASE_PATH,
+          DATASET_DATABASE_UNPACKED_PATH,
+          DATASET_SEED_PATH,
+        ]);
         expect(warnings).toHaveLength(1);
         expect(warnings[0]?.code).toBe('optc:dataset-database-fallback');
         expect(warnings[0]?.detail).toMatch(detail);

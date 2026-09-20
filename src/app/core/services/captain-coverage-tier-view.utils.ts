@@ -284,7 +284,7 @@ function collectCaptainCoverageTierConditionLines(
  * `if they have a beneficial orb`
  * (292 [@dataset triggerClauseInstances.beneficialOrb], a quarter of every condition line in the
  * app) and `if they have the applicable tag`
- * (45 [@dataset triggerClauseInstances.applicableTag]). Matching the exact string is
+ * (46 [@dataset triggerClauseInstances.applicableTag]). Matching the exact string is
  * deliberate: anything else falls through to the raw clause unchanged, so an
  * upstream rewording degrades to today's English instead of breaking.
  */

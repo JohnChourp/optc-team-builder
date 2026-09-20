@@ -17,6 +17,27 @@ import type { Database, SqlJsStatic } from 'sql.js';
  */
 
 export const DATASET_DATABASE_PATH = 'assets/data/optc-seed.sqlite.gz';
+
+/**
+ * The same database under the name the ANDROID build leaves it at.
+ *
+ * 869f4kxrm, measured on an API 35 emulator. `cap sync` copies `optc-seed.sqlite.gz` into the
+ * Android assets correctly, and then **AAPT unpacks a `.gz` asset and strips the extension when it
+ * packages the APK**. So the APK holds `optc-seed.sqlite` - byte-identical to the gunzipped file,
+ * verified - while the app asked for the `.gz` name, got a 404, and rebuilt the whole database from
+ * the 27.8 MB SQL seed on EVERY launch: the slow path 869f138q7 existed to remove, 1.6 s of
+ * main-thread work against 0.12 s. Nothing in `android/app/build.gradle` asks for this; it is
+ * AAPT's own behaviour, and the web is unaffected (the site serves the `.gz` with a 200).
+ *
+ * Trying this second name costs one extra request only where the first genuinely 404s, and the
+ * reader below already decides gzip-or-not from the BYTES rather than the file name, so an
+ * already-unpacked file needs no other special case.
+ */
+export const DATASET_DATABASE_UNPACKED_PATH = 'assets/data/optc-seed.sqlite';
+
+/** Tried in order. The first that answers and parses wins; the SQL seed is the last resort. */
+export const DATASET_DATABASE_PATHS = [DATASET_DATABASE_PATH, DATASET_DATABASE_UNPACKED_PATH] as const;
+
 export const DATASET_SEED_PATH = 'assets/data/optc-seed.sql';
 
 /**
@@ -219,23 +240,53 @@ async function openDatabaseFile(
   dependencies: DatasetDatabaseLoaderDependencies,
   decompressionStream: DecompressionStreamConstructor,
 ): Promise<Database | null> {
+  /*
+   * Every candidate's failure is collected and reported together. Warning on the FIRST one would
+   * make the Android path - where the `.gz` name always 404s - log a fallback warning on every
+   * launch while the database in fact opened from the second name, which is worse than silence
+   * because it trains the reader to ignore the one warning that matters.
+   */
+  const failures: string[] = [];
+
+  for (const candidate of DATASET_DATABASE_PATHS) {
+    const database = await openDatabaseCandidate(dependencies, decompressionStream, candidate, failures);
+
+    if (database) {
+      return database;
+    }
+  }
+
+  dependencies.warn(
+    'optc:dataset-database-fallback',
+    `${failures.join('; ')}; building it from the SQL seed.`,
+  );
+
+  return null;
+}
+
+async function openDatabaseCandidate(
+  dependencies: DatasetDatabaseLoaderDependencies,
+  decompressionStream: DecompressionStreamConstructor,
+  databasePath: string,
+  failures: string[],
+): Promise<Database | null> {
   const reject = (detail: string): null => {
-    dependencies.warn('optc:dataset-database-fallback', `${detail}; building it from the SQL seed.`);
+    failures.push(detail);
     return null;
   };
 
   let received: Uint8Array<ArrayBuffer>;
 
   try {
-    const response = await dependencies.fetch(DATASET_DATABASE_PATH);
+    const response = await dependencies.fetch(databasePath);
 
     if (!response.ok) {
-      return reject(`${DATASET_DATABASE_PATH} answered ${response.status}`);
+      return reject(`${databasePath} answered ${response.status}`);
     }
 
     received = await readResponseBytes(response, dependencies.onProgress);
   } catch (error) {
-    return reject(`${DATASET_DATABASE_PATH} could not be downloaded (${describe(error)})`);
+    return reject(`${databasePath} could not be downloaded (${describe(error)})`);
   }
 
   let bytes = received;
@@ -248,12 +299,12 @@ async function openDatabaseFile(
     try {
       bytes = await gunzipBytes(received, decompressionStream);
     } catch (error) {
-      return reject(`${DATASET_DATABASE_PATH} did not decompress (${describe(error)})`);
+      return reject(`${databasePath} did not decompress (${describe(error)})`);
     }
   }
 
   if (!hasSqliteFileHeader(bytes)) {
-    return reject(`${DATASET_DATABASE_PATH} is not a SQLite database`);
+    return reject(`${databasePath} is not a SQLite database`);
   }
 
   let database: Database | null = null;
@@ -265,7 +316,7 @@ async function openDatabaseFile(
     return database;
   } catch (error) {
     database?.close();
-    return reject(`${DATASET_DATABASE_PATH} did not open (${describe(error)})`);
+    return reject(`${databasePath} did not open (${describe(error)})`);
   }
 }
 

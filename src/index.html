@@ -23,6 +23,15 @@
     reader accepts analytics, injects inline scripts at runtime, so a hash or nonce list cannot
     hold. (index.html itself carries two inline bootstrap scripts since 869f13c5m, down from five.) What the policy still buys is the part that matters most for a client-side app
     with no backend - an injected script cannot reach an origin that is not listed in connect-src,
+    which is why every origin below is there for a named reason.
+
+    `https://api.github.com` is the ANDROID app's update check, and nothing else. The sideloaded APK
+    has no store to tell it a new version exists, so `native-update.service.ts` polls the repository's
+    latest release - guarded by `Capacitor.isNativePlatform()`, so the website never makes the call.
+    It was absent until 2026-09-20 (869f4kxrm) and the omission was a REGRESSION, not a decision: the
+    update check shipped on 2026-07-08 and worked, this policy arrived on 2026-09-15 without it, and
+    from then on the APK could not even ask whether an update existed - while the support ladder went
+    on calling it self-updating. Measured on an API 35 emulator, the WebView was refusing the request.
     cannot set a <base>, and cannot post a form off-site.
 
     'wasm-unsafe-eval' is required by sql.js, which compiles the dataset engine from WASM.
@@ -54,7 +63,7 @@
   -->
   <meta
     http-equiv="Content-Security-Policy"
-    content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://www.googletagmanager.com https://www.clarity.ms https://scripts.clarity.ms https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://*.googleusercontent.com https://www.googletagmanager.com https://www.google-analytics.com https://*.clarity.ms https://c.bing.com; connect-src 'self' data: blob: https://www.googleapis.com https://accounts.google.com https://www.googletagmanager.com https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com https://*.clarity.ms https://c.bing.com https://cloudflareinsights.com https://static.cloudflareinsights.com; worker-src 'self' blob:; frame-src 'self' https://www.googletagmanager.com https://accounts.google.com; manifest-src 'self'; media-src 'self' data: blob:; object-src 'none'; base-uri 'self'; form-action 'self'"
+    content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://www.googletagmanager.com https://www.clarity.ms https://scripts.clarity.ms https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://*.googleusercontent.com https://www.googletagmanager.com https://www.google-analytics.com https://*.clarity.ms https://c.bing.com; connect-src 'self' data: blob: https://api.github.com https://www.googleapis.com https://accounts.google.com https://www.googletagmanager.com https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com https://*.clarity.ms https://c.bing.com https://cloudflareinsights.com https://static.cloudflareinsights.com; worker-src 'self' blob:; frame-src 'self' https://www.googletagmanager.com https://accounts.google.com; manifest-src 'self'; media-src 'self' data: blob:; object-src 'none'; base-uri 'self'; form-action 'self'"
   >
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>OPTC Team Builder | One Piece Treasure Cruise Tools</title>
