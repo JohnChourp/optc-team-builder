@@ -31,6 +31,27 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.5.4',
+    date: '2026-09-20',
+    userVisible: true,
+    headline: {
+      en: 'Character pages now answer Yes and No in Greek',
+      el: 'Οι σελίδες χαρακτήρων απαντούν πλέον Ναι και Όχι στα ελληνικά',
+    },
+    summaryEn:
+      'On a Greek interface, the rows on a character page answered "Yes" and "No" in English, right next to numbers that were already written the Greek way - so one line was in two languages at once. Those answers now read Ναι and Όχι, and they follow whatever language you have chosen. Nothing else on the page changed, and the English interface reads exactly as it did.',
+    summaryEl:
+      'Στα ελληνικά, οι γραμμές στη σελίδα ενός χαρακτήρα απαντούσαν «Yes» και «No» στα αγγλικά, δίπλα ακριβώς σε αριθμούς που ήταν ήδη γραμμένοι με τον ελληνικό τρόπο - οπότε η ίδια γραμμή ήταν σε δύο γλώσσες μαζί. Αυτές οι απαντήσεις διαβάζονται πλέον Ναι και Όχι, και ακολουθούν όποια γλώσσα έχεις επιλέξει. Τίποτε άλλο στη σελίδα δεν άλλαξε, και στα αγγλικά διαβάζεται ακριβώς όπως πριν.',
+    added: [],
+    improved: [],
+    fixed: [
+      {
+        en: 'On a **character page**, the rows that answer with a yes or a no now read **Ναι** and **Όχι** in the Greek interface. They were in English even there, beside numbers already written in Greek.',
+        el: 'Στη **σελίδα χαρακτήρα**, οι γραμμές που απαντούν με ναι ή όχι διαβάζονται πλέον **Ναι** και **Όχι** στα ελληνικά. Ήταν στα αγγλικά ακόμα κι εκεί, δίπλα σε αριθμούς ήδη γραμμένους στα ελληνικά.',
+      },
+    ],
+  },
+  {
     version: '0.5.3',
     date: '2026-09-19',
     userVisible: true,
