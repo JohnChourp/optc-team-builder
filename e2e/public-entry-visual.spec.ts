@@ -32,9 +32,27 @@ const CONTENT_PAGE_STATES = [
   },
 ] as const;
 
+/*
+ * 869f13c5b. `maxDiffPixelRatio` was **0.02**, and a whole text card is about **1%**
+ * of one of these frames. So the gate would have passed a baseline that no longer
+ * showed an entire card - the exact regression these baselines exist to catch, sitting
+ * at half the allowance.
+ *
+ * It is **0.004** now: still four times the 0.1% that anti-aliasing and font-hinting
+ * noise measure at on the CI renderer, and roughly a QUARTER of one card. Anything
+ * that removes, blanks or displaces a card is now larger than the allowance.
+ *
+ * `threshold` stays 0.25. It is the PER-PIXEL colour distance at which two pixels
+ * count as different, and loosening or tightening it does not change what a missing
+ * card costs - that is `maxDiffPixelRatio`'s job, and confusing the two is how the
+ * gate came to allow a 2% blind spot in the first place.
+ *
+ * If this turns out to be flaky rather than strict, raise it with the measured noise
+ * floor from a real run quoted here - not by doubling it until the run goes green.
+ */
 const SNAPSHOT_OPTIONS = {
   threshold: 0.25,
-  maxDiffPixelRatio: 0.02,
+  maxDiffPixelRatio: 0.004,
 } as const;
 
 test.describe('public entry visual baselines @public-entry-visual', () => {

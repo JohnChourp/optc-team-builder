@@ -19,7 +19,6 @@
     "*.mjs"
   ],
   "ignoreDependencies": [
-    "@capacitor/cli",
-    "@capacitor/ios"
+    "@capacitor/cli"
   ]
 }

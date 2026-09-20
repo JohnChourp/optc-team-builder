@@ -1,6 +1,7 @@
 import { execFile } from 'node:child_process';
 import { copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { promisify } from 'node:util';
 
@@ -33,7 +34,6 @@ async function makeWorkspace(
 
   await mkdir(path.join(root, 'scripts'), { recursive: true });
   await mkdir(path.join(root, 'android/app'), { recursive: true });
-  await mkdir(path.join(root, 'ios/App/App.xcodeproj'), { recursive: true });
   await mkdir(path.join(root, 'src/app/core/data'), { recursive: true });
 
   await copyFile(scriptPath, path.join(root, 'scripts/bump-version.sh'));
@@ -45,10 +45,6 @@ async function makeWorkspace(
   await writeFile(
     path.join(root, 'android/app/build.gradle'),
     `versionCode ${versionCode}\nversionName "${version}"\n`,
-  );
-  await writeFile(
-    path.join(root, 'ios/App/App.xcodeproj/project.pbxproj'),
-    `CURRENT_PROJECT_VERSION = ${versionCode};\nMARKETING_VERSION = ${version};\n`,
   );
   await writeFile(path.join(root, APP_VERSION_TS), appVersionSource);
 
@@ -133,7 +129,7 @@ describe('bump-version.sh', () => {
     await expect(nextVersion('1.2.3', 'major')).resolves.toBe('2.0.0');
   });
 
-  it('rewrites the web app\'s own APP_VERSION alongside package.json and the two native projects', async () => {
+  it('rewrites the web app\'s own APP_VERSION alongside package.json and the Android project', async () => {
     const root = await makeWorkspace('0.4.16', 420);
 
     await execFileAsync('bash', [path.join(root, 'scripts/bump-version.sh'), '--bump', 'patch'], {
@@ -144,11 +140,33 @@ describe('bump-version.sh', () => {
 
     expect(JSON.parse(await read('package.json')).version).toBe('0.4.17');
     expect(await read('android/app/build.gradle')).toContain('versionName "0.4.17"');
-    expect(await read('ios/App/App.xcodeproj/project.pbxproj')).toContain(
-      'MARKETING_VERSION = 0.4.17;',
-    );
     // Without this the Settings card would keep naming the previous release.
     expect(await read(APP_VERSION_TS)).toContain("export const APP_VERSION = '0.4.17';");
+  });
+
+  it('bumps cleanly in a workspace with no ios/ directory at all', async () => {
+    // 869f13c92. This is the case that used to abort the release MID-BUMP: the
+    // pbxproj was read unguarded, AFTER package.json and build.gradle had been
+    // written, under `set -euo pipefail`. The fixture above no longer creates an
+    // Xcode project, so this asserts the absence is now simply uneventful - and
+    // that every other file still moved, which is what makes it a real control
+    // rather than a test that the script did nothing.
+    const root = await makeWorkspace('0.4.16', 420);
+
+    await expect(
+      execFileAsync('bash', [path.join(root, 'scripts/bump-version.sh'), '--bump', 'patch'], {
+        cwd: root,
+      }),
+    ).resolves.toBeTruthy();
+
+    expect(existsSync(path.join(root, 'ios'))).toBe(false);
+    expect(JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8')).version).toBe('0.4.17');
+    expect(await readFile(path.join(root, 'android/app/build.gradle'), 'utf8')).toContain(
+      'versionCode 421',
+    );
+    expect(await readFile(path.join(root, APP_VERSION_TS), 'utf8')).toContain(
+      "export const APP_VERSION = '0.4.17';",
+    );
   });
 
   it('keeps the rest of the APP_VERSION file intact', async () => {

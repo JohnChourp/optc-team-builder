@@ -1,6 +1,6 @@
 # OPTC Team Builder
 
-Offline-first Ionic Angular app for browsing One Piece Treasure Cruise characters and building teams on web, Android, and iOS.
+Offline-first Ionic Angular app for browsing One Piece Treasure Cruise characters and building teams on web and Android, and on iOS through the installed web app.
 
 ## Live site
 
@@ -17,7 +17,7 @@ Offline-first Ionic Angular app for browsing One Piece Treasure Cruise character
 - Generated SQLite seed loaded inside the app through `sql.js`.
 - Offline-friendly character browser, detail view, collection view, and team builder.
 - Multi-select character type and class filters with an AND/OR match mode, shared by Characters, Character Boxes, Captain Coverage, the Manual Team Builder candidate picker, and the character image picker. Select several types or classes at once and choose whether a character must match **all** of them or **any** of them; dual-type characters are found by either of their types. Because a character holds at most two types and two classes, `all` is limited to two values and says so instead of silently returning nothing.
-- Capacitor Android and iOS projects already scaffolded.
+- Capacitor Android project. **There is no iOS project**: the unbuilt one was dropped on 2026-09-20 — iPhone players install the web app to the home screen, which is and was the iOS path. See [the iOS footprint](docs/ios-platform-footprint.md).
 - Manual update workflow for metadata and optional image packs.
 
 ## Source of truth
@@ -417,7 +417,7 @@ Optional Pages secret when you also want the same generated config file to carry
 The workflow:
 
 - runs only through `workflow_dispatch`
-- bumps `package.json`, `package-lock.json`, Android `versionName`/`versionCode`, and iOS `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION`
+- bumps `package.json`, `package-lock.json`, Android `versionName`/`versionCode`, and the web app's own `APP_VERSION`
 - builds the signed Android APK
 - commits `release: vX.Y.Z`, tags `vX.Y.Z`, pushes both to `main`, and publishes a GitHub Release
 - uploads `release-provenance` so maintainers can trace an auto-triggered

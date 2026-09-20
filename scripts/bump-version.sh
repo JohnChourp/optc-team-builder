@@ -11,7 +11,13 @@ USAGE
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd -P)"
 ANDROID_GRADLE="${PROJECT_ROOT}/android/app/build.gradle"
-IOS_PBXPROJ="${PROJECT_ROOT}/ios/App/App.xcodeproj/project.pbxproj"
+# 869f13c92: the unbuilt iOS project was dropped on 2026-09-20. This used to hold
+# ios/App/App.xcodeproj/project.pbxproj and was read UNGUARDED below, after
+# package.json and build.gradle had already been written - so deleting ios/ without
+# removing this first would have aborted a release mid-bump under set -euo pipefail,
+# with the version advanced in two tracked files and no tag cut. Removed FIRST, and
+# the bump proved clean, before ios/ was touched. Restoring iOS means npx cap add ios
+# and putting the pbxproj write back.
 APP_VERSION_TS="${PROJECT_ROOT}/src/app/core/data/app-version.data.ts"
 
 BUMP_TYPE=""
@@ -172,13 +178,12 @@ if (( PRINT_ONLY == 0 )); then
         (cd "${PROJECT_ROOT}" && npm version "${NEXT_VERSION}" --no-git-tag-version >/dev/null)
     fi
 
-    NEXT_VERSION="${NEXT_VERSION}" NEXT_CODE="${NEXT_CODE}" ANDROID_GRADLE="${ANDROID_GRADLE}" IOS_PBXPROJ="${IOS_PBXPROJ}" APP_VERSION_TS="${APP_VERSION_TS}" node <<'NODE'
+    NEXT_VERSION="${NEXT_VERSION}" NEXT_CODE="${NEXT_CODE}" ANDROID_GRADLE="${ANDROID_GRADLE}" APP_VERSION_TS="${APP_VERSION_TS}" node <<'NODE'
 const fs = require('fs');
 
 const nextVersion = process.env.NEXT_VERSION;
 const nextCode = process.env.NEXT_CODE;
 const androidGradle = process.env.ANDROID_GRADLE;
-const iosPbxproj = process.env.IOS_PBXPROJ;
 const appVersionTs = process.env.APP_VERSION_TS;
 
 let android = fs.readFileSync(androidGradle, 'utf8');
@@ -189,17 +194,6 @@ if (!/versionCode\s+\d+/.test(android) || !/versionName\s+"[^"]+"/.test(android)
 android = android.replace(/versionCode\s+\d+/, `versionCode ${nextCode}`);
 android = android.replace(/versionName\s+"[^"]+"/, `versionName "${nextVersion}"`);
 fs.writeFileSync(androidGradle, android);
-
-let ios = fs.readFileSync(iosPbxproj, 'utf8');
-const currentProjectVersionMatches = ios.match(/CURRENT_PROJECT_VERSION = [^;]+;/g) || [];
-const marketingVersionMatches = ios.match(/MARKETING_VERSION = [^;]+;/g) || [];
-if (currentProjectVersionMatches.length === 0 || marketingVersionMatches.length === 0) {
-  console.error(`ERROR: Failed to locate iOS version fields in ${iosPbxproj}`);
-  process.exit(1);
-}
-ios = ios.replace(/CURRENT_PROJECT_VERSION = [^;]+;/g, `CURRENT_PROJECT_VERSION = ${nextCode};`);
-ios = ios.replace(/MARKETING_VERSION = [^;]+;/g, `MARKETING_VERSION = ${nextVersion};`);
-fs.writeFileSync(iosPbxproj, ios);
 
 // The web app reads its own version from this constant; package.json is not
 // reachable from the bundle. Fail loudly rather than ship a stale number.

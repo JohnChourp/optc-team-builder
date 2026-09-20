@@ -1,3 +1,5 @@
+import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -14,6 +16,55 @@ const siteBaseUrl = normalizeSiteBaseUrl(
   process.env.SEO_SITE_BASE_URL ?? 'https://optcteambuilder.com',
 );
 const generatedAt = new Date().toISOString().slice(0, 10);
+
+/*
+ * 869f13c58. `lastmod` used to be `generatedAt` - TODAY'S DATE - on every one of the
+ * 4,642 URLs. `deploy-pages` runs on every merge to `main`, so the sitemap told
+ * crawlers that all 4,642 pages had changed, every single day, including the 4,622
+ * character pages whose data had not moved since the last import. A `lastmod` that
+ * is always now carries no information and invites a crawler to stop trusting the
+ * field across the whole file.
+ *
+ * Two real dates replace it, and neither moves on a build that changed nothing:
+ *
+ * - **character pages** take the dataset manifest's own `generatedAt`, which moves
+ *   only when a release imports characters - exactly when those pages change;
+ * - **every other page** takes the last commit date of the file that defines the
+ *   public routes and their SEO copy, which moves only when that copy changes.
+ *
+ * Both fall back to the build date if they cannot be read, because a sitemap with a
+ * slightly stale `lastmod` is better than one that fails to generate.
+ */
+function readDatasetGeneratedAt() {
+  try {
+    const manifestPath = path.join(projectRoot, 'public', 'assets', 'data', 'optc-manifest.json');
+    const value = JSON.parse(readFileSync(manifestPath, 'utf8'))?.generatedAt;
+    return typeof value === 'string' && value.length >= 10 ? value.slice(0, 10) : generatedAt;
+  } catch {
+    return generatedAt;
+  }
+}
+
+function readRouteCopyLastModified() {
+  try {
+    return (
+      execFileSync('git', ['log', '-1', '--format=%cs', '--', 'src/app/core/data/public-routes.data.ts'], {
+        cwd: projectRoot,
+        encoding: 'utf8',
+      }).trim() || generatedAt
+    );
+  } catch {
+    return generatedAt;
+  }
+}
+
+const datasetLastModified = readDatasetGeneratedAt();
+const routeCopyLastModified = readRouteCopyLastModified();
+
+/** A character page changes with the dataset; everything else with its own copy. */
+function lastModifiedFor(routePath) {
+  return routePath.startsWith('characters/') ? datasetLastModified : routeCopyLastModified;
+}
 const siteName = 'OPTC Team Builder';
 const homePageTitle = 'OPTC Team Builder | One Piece Treasure Cruise Tools';
 const siteDescription =
@@ -355,7 +406,7 @@ async function writeSitemap(routePaths) {
     .map(
       (routePath) => `  <url>
     <loc>${escapeXml(buildAbsoluteUrl(routePath))}</loc>
-    <lastmod>${generatedAt}</lastmod>${(alternatesByPath.get(routePath) ?? [])
+    <lastmod>${lastModifiedFor(routePath)}</lastmod>${(alternatesByPath.get(routePath) ?? [])
       .map(
         (link) => `
     <xhtml:link rel="alternate" hreflang="${escapeXml(link.hreflang)}" href="${escapeXml(link.href)}"/>`,
@@ -575,11 +626,18 @@ function buildJsonLd(pageNode, extraGraphNodes = []) {
         url: buildAbsoluteUrl(''),
         description: siteDescription,
         inLanguage: SITE_LANGUAGE,
-        potentialAction: {
-          '@type': 'SearchAction',
-          target: `${buildAbsoluteUrl('tabs/characters')}?q={search_term_string}`,
-          'query-input': 'required name=search_term_string',
-        },
+        /*
+         * 869f13c8w. There was a `SearchAction` here, pointing crawlers at
+         * `/tabs/characters?q={search_term_string}`. **Nothing in `src` has ever read
+         * `q`** - a reader following that URL lands on an unfiltered character list and
+         * their search term is silently dropped, which is worse than no declaration.
+         *
+         * It is removed rather than implemented, because the feature it fed no longer
+         * exists: Google retired the sitelinks search box on 2024-11-21, so the markup
+         * has no consumer left either. If an in-app query parameter is ever wanted, it
+         * is a Characters-page feature first and a `SearchAction` only afterwards - in
+         * that order, so the declaration can never again outrun the behaviour.
+         */
       },
       pageNode,
       ...extraGraphNodes,

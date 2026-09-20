@@ -521,8 +521,7 @@
         "scripts/bump-version.sh",
         "scripts/setup-release-signing.sh",
         "scripts/post-dispatch-production-smoke.mjs",
-        "android/",
-        "ios/"
+        "android/"
       ],
       "docsPaths": [
         "README.md",
