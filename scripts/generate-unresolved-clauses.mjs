@@ -13,6 +13,7 @@ import path from 'node:path';
 import process from 'node:process';
 
 import { createUnresolvedClauseCatalog } from './lib/unresolved-clauses.mjs';
+import { pathToFileURL } from 'node:url';
 
 export const SEED_PATH = 'public/assets/data/optc-seed.sql';
 export const MANIFEST_PATH = 'public/assets/data/optc-manifest.json';
@@ -78,7 +79,7 @@ function parseArgs(argv) {
   return options;
 }
 
-if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href) {
+if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   const { appRoot, check } = parseArgs(process.argv.slice(2));
   const target = path.join(appRoot, CATALOG_PATH);
   const catalog = buildCatalog({ appRoot });

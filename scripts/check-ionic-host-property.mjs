@@ -30,6 +30,7 @@ import path from 'node:path';
 import process from 'node:process';
 
 import { readCssRules, stripScssComments } from './check-ionic-overlay-contrast.mjs';
+import { pathToFileURL } from 'node:url';
 
 /**
  * The Ionic custom properties that define a SHAPE the host can be asked to reproduce. Colour and
@@ -280,7 +281,7 @@ function parseArgs(argv) {
   return options;
 }
 
-if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href) {
+if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   const result = inspectIonicHostProperties(parseArgs(process.argv.slice(2)));
 
   console.log(formatIonicHostPropertyResult(result));

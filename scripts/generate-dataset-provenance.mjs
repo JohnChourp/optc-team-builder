@@ -11,6 +11,7 @@ import path from 'node:path';
 import process from 'node:process';
 
 import { buildProvenance, formatProvenanceMarkdown } from './lib/dataset-provenance.mjs';
+import { pathToFileURL } from 'node:url';
 
 export const IMPORTER_PATH = 'scripts/import-optc-data.mjs';
 export const DATASET_LIB_PATH = 'scripts/lib/optc-dataset.mjs';
@@ -63,7 +64,7 @@ function parseArgs(argv) {
   return options;
 }
 
-if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href) {
+if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   const { appRoot, check } = parseArgs(process.argv.slice(2));
   const provenance = readProvenance({ appRoot });
   const jsonPath = path.join(appRoot, PROVENANCE_JSON_PATH);

@@ -170,41 +170,49 @@ function parseDetailJson(value, characterId) {
   return parseJson(value, `character ${characterId} detail_json`);
 }
 
+/**
+ * The columns `characters` HAS in the snapshot being read, which is not the same set this script
+ * knows about.
+ *
+ * A digest compares an OLD ref against a new one, and the old ref's seed carries the schema of its
+ * own day. `region_release_json` arrived in v0.4.43, so a hard-coded `SELECT c.region_release_json`
+ * failed with a bare `no such column: c.region_release_json` against ANY base older than that -
+ * naming the column but not the ref, the schema or the fix, which is the whole diagnosis missing.
+ *
+ * So the projection is built from `PRAGMA table_info` and a column the snapshot lacks is selected as
+ * NULL under its own name. Every reader below already tolerates a null through its `?? default`, so
+ * an older base reports "no change" for a column that did not exist yet, which is the truthful
+ * answer.
+ */
+function selectCharacterColumns(database, wanted) {
+  const present = new Set(
+    selectAll(database, `PRAGMA table_info(characters)`).map((row) => String(row.name)),
+  );
+
+  return wanted.map((column) =>
+    present.has(column) ? `c.${column}` : `NULL AS ${column}`,
+  );
+}
+
+const DIGEST_CHARACTER_COLUMNS = Object.freeze([
+  'id', 'name', 'is_incomplete', 'type', 'primary_class', 'secondary_class', 'classes_json',
+  'stars', 'stars_label', 'cost', 'combo', 'min_hp', 'min_atk', 'min_rcv', 'max_hp', 'max_atk',
+  'max_rcv', 'growth', 'captain_hp_boost', 'captain_atk_boost', 'captain_average_boost',
+  'region_json', 'region_release_json', 'assets_json', 'search_text',
+]);
+
 async function loadSeedSnapshot(sqlSeed, SQL) {
   const database = new SQL.Database();
 
   try {
     executeSqlSeed(database, sqlSeed);
 
+    const projection = selectCharacterColumns(database, DIGEST_CHARACTER_COLUMNS);
     const characterRows = selectAll(
       database,
       `
         SELECT
-          c.id,
-          c.name,
-          c.is_incomplete,
-          c.type,
-          c.primary_class,
-          c.secondary_class,
-          c.classes_json,
-          c.stars,
-          c.stars_label,
-          c.cost,
-          c.combo,
-          c.min_hp,
-          c.min_atk,
-          c.min_rcv,
-          c.max_hp,
-          c.max_atk,
-          c.max_rcv,
-          c.growth,
-          c.captain_hp_boost,
-          c.captain_atk_boost,
-          c.captain_average_boost,
-          c.region_json,
-          c.region_release_json,
-          c.assets_json,
-          c.search_text,
+          ${projection.join(',\n          ')},
           d.detail_json
         FROM characters c
         LEFT JOIN character_details d ON d.character_id = c.id

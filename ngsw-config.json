@@ -12,7 +12,8 @@
           "/manifest.webmanifest",
           "/*.css",
           "/*.js",
-          "!/app-config.js"
+          "!/app-config.js",
+          "!/app-config.example.js"
         ]
       }
     },

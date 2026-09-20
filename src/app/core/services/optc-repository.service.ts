@@ -68,6 +68,28 @@ const FALLBACK_CHARACTER_IMAGE = 'assets/placeholders/character-card.svg';
 const INVALID_CLASS_PATTERN = /^Class\d+$/i;
 const SHIP_THUMBNAIL_PACK_ID = 'ship-thumbnails';
 const SHIP_THUMBNAIL_PACK_KEY = 'shipThumbnails';
+/**
+ * How many rows are decorated between two `await yieldToMainThread()` calls, so a
+ * full-catalogue decoration does not hold the main thread for one long task.
+ *
+ * At today's 4,622 characters and 4,622 detail rows that is **9** yields on the
+ * character pass and **18** on the detail pass - a macrotask boundary roughly
+ * every tenth of the work, not per row.
+ *
+ * **Both values are UNMEASURED, and that is recorded rather than dressed up.**
+ * They arrived together in `6cb47dc1` (2026-05-09), a generic "update user state
+ * readiness checks" refactor whose message does not mention them, with no stated
+ * measurement anywhere and no test pinning either number. Nothing establishes why
+ * the detail pass yields twice as often as the character pass - the plausible
+ * reason is that a detail row parses more JSON per row, but nobody wrote that down
+ * and nobody timed it.
+ *
+ * So: do not read these as tuned figures, and do not "optimise" them on the
+ * strength of the ratio. If one needs changing, measure the long-task profile
+ * first and replace this note with the number you got. Same shape as
+ * `RECENT_FALLBACK_AVERAGE_ALPHA` in `auto-team-builder.engine.ts`, which is
+ * documented the same honest way.
+ */
 const CHARACTER_DECORATION_YIELD_INTERVAL = 500;
 const DETAIL_DECORATION_YIELD_INTERVAL = 250;
 

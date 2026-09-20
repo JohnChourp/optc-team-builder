@@ -7,6 +7,19 @@
  * invisible to code review, machine-written, publicly served - is exactly where a key eventually
  * lands by accident, and nothing checked it until 2026-09-15.
  *
+ * WHY ITS OWN `freshness` GROUP, recorded 2026-09-20 because nothing said it. Every other `.js` in
+ * `public/` is part of the BUILD and is content-hashed, so prefetching it is safe: a new build means
+ * a new filename. `app-config.js` is the one exception - a fixed name whose CONTENTS are written per
+ * deploy, per environment. Prefetch it into the `app` asset group and the service worker pins one
+ * deploy's configuration into an immutable cache entry, and a reader keeps the old configuration
+ * until the whole app version turns over. `freshness` with `maxAge: 1d` and `timeout: 2s` asks the
+ * network first and falls back to the cache, so a configuration change reaches readers on the next
+ * visit while an offline start still works. `maxSize: 1` because there is only ever one of it.
+ *
+ * `app-config.example.js` sits beside it as a DEVELOPER reference - nothing in the app loads it -
+ * and is excluded from the prefetch group for a different reason: it is 837 B that every first visit
+ * used to download and no reader ever uses.
+ *
  * `write-app-config.mjs` already validates each value it writes, so a secret cannot arrive through
  * the generator. This check covers what the generator does not: a hand-edited file, a stale file
  * left over from an experiment, or a key someone adds to the generator without adding it here.
@@ -18,7 +31,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -129,6 +142,6 @@ async function main() {
   );
 }
 
-if (process.argv[1] && import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   await main();
 }

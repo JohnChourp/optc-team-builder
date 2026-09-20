@@ -44,12 +44,24 @@ from its own measurement `x1.03` — the margin this repository already uses for
 bytes, because bytes reproduce to 0.01% across runs and there is no weather to
 absorb:
 
-| Row | Budget | Actual | Headroom |
-| --- | ---: | ---: | ---: |
-| `entry script raw JS` | 391,000 | 378,675 | 3.3% |
-| `entry script gzip JS` | 100,000 | 96,700 | 3.4% |
-| `initial payload raw JS` | 1,536,000 | 1,491,088 | 3.0% |
-| `initial payload gzip JS` | 387,000 | 375,577 | 3.0% |
+| Row | Budget | Actual | Headroom | Actual measured |
+| --- | ---: | ---: | ---: | --- |
+| `entry script raw JS` | 391,000 | **385,908** | **1.3%** | 2026-09-20, v0.5.3, Node 24.15.0 |
+| `entry script gzip JS` | 100,000 | **98,776** | **1.2%** | 2026-09-20, v0.5.3, Node 24.15.0 |
+| `initial payload raw JS` | 1,536,000 | 1,491,088 | 3.0% | when the budget was set |
+| `initial payload gzip JS` | 387,000 | 375,577 | 3.0% | when the budget was set |
+
+**The two entry rows were re-measured on CI's own Node** — the `.nvmrc` pin, 24.15.0 — because that
+is the build whose bytes the gate judges, and zlib's output differs between Node releases. Both are
+**inside** the budget.
+
+That corrects a premise carried into 869f45n8q as work item 2, which recorded the entry script as
+**over** budget at 392,350 / 391,000 raw and 101,195 / 100,000 gzip on app#549's build. It was, on
+that build; work merged since brought it back under. **The ceiling was not raised, and must not be
+raised while nothing is failing** — the Ideas #5 decision was to keep it as a ceiling and re-base the
+measurement on CI's Node, which is what this table now records. Headroom of 1.2% is roughly 1,200
+gzipped bytes: the next feature that adds an eager import will fail here, and that is the budget
+doing its job.
 
 **`angular.json` is the backstop.** One budget over the initial payload, set
 deliberately looser so it never fires during ordinary work and still refuses a

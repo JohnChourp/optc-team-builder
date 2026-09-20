@@ -788,9 +788,13 @@ build can still get wrong:
   entries against a URL → `content-length` map built once from the outgoing
   version. It is keyed by the *request* url, because ngsw stores a cache-busted
   or redirected response under the clean request it was asked for. Byte weighting
-  is load-bearing: `optc-seed.sqlite.gz` alone is ~2.3 MB against 56 i18n files
-  totalling ~60 KB, so a file-count ratio would sit frozen near 100% for the
-  whole database transfer.
+  is load-bearing, and the gap is one of COUNT against SIZE: measured 2026-09-20
+  at v0.5.3, the i18n group is **60 files totalling 553,306 stored bytes** while
+  `optc-seed.sqlite.gz` is **one file of about 2.3 MB**. So by file count the
+  database is 1 of 61 - a ratio that races to 98% and then sits there for the
+  whole database transfer - while by bytes it is about four fifths of the group.
+  (This read "56 files totalling ~60 KB" until 2026-09-20; both figures had gone
+  stale, and the conclusion they support did not change.)
 - **What it measures is install progress, not wire bytes.** ngsw copies an
   unchanged asset out of the outgoing cache instead of re-fetching it, so a
   deploy that only changes the JS bundle races through the copied assets and then

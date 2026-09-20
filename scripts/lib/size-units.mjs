@@ -2,19 +2,24 @@
  * 869f138r0. The same file has four sizes, and a number without one of them is unusable.
  *
  * `optc-seed.sql` is the worked example the task gave, and every row of it is a different answer to
- * "how big is it?":
+ * "how big is it?" (**re-measured 2026-09-20 at v0.5.3**; the figures this block shipped with were
+ * from before v0.4.21 and had drifted by about 9%):
  *
  * | Question | Answer |
  * | --- | ---: |
- * | Bytes on disk | 25,534,782 |
- * | Bytes over the wire, as it was served | 25,534,782 - no encoding, which is what 869f138q7 fixed |
- * | Bytes over the wire, compressed | 2,179,760 |
+ * | Bytes on disk | 27,751,668 |
+ * | Bytes over the wire, as it was served | 27,751,668 - no encoding, which is what 869f138q7 fixed |
+ * | Bytes over the wire, compressed | 2,332,820 |
  * | Bytes in the service-worker cache | the raw bytes, because a response is cached decoded |
  * | Bytes after parsing into SQLite | never measured |
  *
- * The abilities catalogue tells it differently and worse: 1,674,521 raw against 206,920 gzipped is
- * an **eight-fold** difference, so two people quoting "1.6 MB" and "207 KB" are describing the same
+ * The abilities catalogue tells it differently and worse: 795,904 raw against 137,886 gzipped is a
+ * **near six-fold** difference, so two people quoting "796 KB" and "138 KB" are describing the same
  * file and will not realise they agree.
+ *
+ * **Every number above is a snapshot and every release that imports characters moves it.** They are
+ * here to show that one file has four sizes, not to be quoted as current - which is exactly the
+ * mistake this module exists to prevent. Re-measure before citing one.
  *
  * So every byte budget declares which one it is, and the report fails on a row that does not. This
  * is not documentation - `unit: 'bytes'` was already there and said nothing, which is precisely the

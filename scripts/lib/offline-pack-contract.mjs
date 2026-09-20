@@ -4,7 +4,8 @@ import path from 'node:path';
 /**
  * 869f138qw. What an offline image pack is, declared as data instead of implied by a folder.
  *
- * 869f138pr established what the packs DO: 189 MB that ship, are never prefetched, are fetched one
+ * 869f138pr established what the packs DO: 161.6 MB that ship (189 MB is `du`'s DISK USAGE, not the
+ * packs' size - see `offline-pack-status.utils.ts`), never prefetched, fetched one
  * image at a time as a reader browses, and are cached by the service worker's `runtime-media` group.
  * What no file said is the contract - which pack holds what, what it costs, where it sits in the
  * precedence chain that resolves a character's picture, and what happens when it has no entry.

@@ -17,8 +17,9 @@ import {
 /**
  * 869f138q7. Turns the committed SQL seed into the gzipped SQLite database the app downloads.
  *
- * It runs before every `ng build` and `ng serve` (see the `build`, `build:pages` and `start` npm
- * scripts), writing into `public/`, which Angular copies. The output is gitignored: it is derived
+ * It runs before every `npm run build`, `npm run build:pages` and `npm start`, each of which
+ * chains `npm run dataset:binary` (a BARE `ng build` or `ng serve` does NOT run it), writing into
+ * `public/`, which Angular copies. The output is gitignored: it is derived
  * entirely from `optc-seed.sql`, and committing a 2.3 MB binary on every data change would grow the
  * repository for no information.
  *

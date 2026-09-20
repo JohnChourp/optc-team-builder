@@ -153,7 +153,7 @@
     "test:dataset-provenance": "vitest run scripts/generate-dataset-provenance.spec.ts && node ./scripts/generate-dataset-provenance.mjs --check",
     "test:unresolved-clauses": "vitest run scripts/generate-unresolved-clauses.spec.ts && node ./scripts/generate-unresolved-clauses.mjs --check",
     "test:dataset-measurements": "vitest run scripts/check-dataset-measurements.spec.ts && npm run dataset:measurements",
-    "test:dataset-digest": "vitest run scripts/dataset-change-digest.spec.ts",
+    "test:dataset-digest": "vitest run scripts/dataset-change-digest.spec.ts scripts/dataset-change-digest-old-schema.spec.ts",
     "test:docs-integrity": "vitest run scripts/check-docs-integrity.spec.ts && npm run docs:integrity -- --app-only",
     "docs:integrity": "node ./scripts/check-docs-integrity.mjs",
     "test:docs-drift": "vitest run scripts/check-docs-drift.spec.ts",
