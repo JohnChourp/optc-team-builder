@@ -31,6 +31,36 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.5.5',
+    date: '2026-09-21',
+    userVisible: true,
+    headline: {
+      en: 'Recently viewed is one row again, and the Android app opens much faster',
+      el: 'Το Recently viewed είναι ξανά μία σειρά, και το Android app ανοίγει πολύ πιο γρήγορα',
+    },
+    summaryEn:
+      'Two things that were quietly wrong. On the Characters screen, the Recently viewed row had lost its layout and was showing one character per line down the left edge instead of a single row you scroll sideways. And the Android app had been rebuilding its whole character database from a 27.8 MB text file every single time you opened it, which is why it felt slow to start; it now opens the ready-made database directly. The Android app can also check for updates again, which it had silently stopped being able to do.',
+    summaryEl:
+      'Δύο πράγματα που ήταν σιωπηλά χαλασμένα. Στην οθόνη Χαρακτήρες, η σειρά Recently viewed είχε χάσει τη διάταξή της και έδειχνε έναν χαρακτήρα ανά γραμμή στην αριστερή άκρη, αντί για μία σειρά που κυλάς στο πλάι. Και το Android app ξανάχτιζε ολόκληρη τη βάση χαρακτήρων από ένα αρχείο κειμένου 27,8 MB κάθε φορά που το άνοιγες - γι αυτό άργαγε να ξεκινήσει· τώρα ανοίγει κατευθείαν την έτοιμη βάση. Το Android app μπορεί επίσης να ελέγχει ξανά για ενημερώσεις, κάτι που είχε πάψει σιωπηλά να μπορεί να κάνει.',
+    added: [],
+    improved: [
+      {
+        en: 'The **Android app** opens much faster. It was rebuilding the whole character database from a 27.8 MB text file on **every** launch; it now opens the ready-made database straight away.',
+        el: 'Το **Android app** ανοίγει πολύ πιο γρήγορα. Ξανάχτιζε ολόκληρη τη βάση χαρακτήρων από αρχείο κειμένου 27,8 MB σε **κάθε** άνοιγμα· τώρα ανοίγει κατευθείαν την έτοιμη βάση.',
+      },
+    ],
+    fixed: [
+      {
+        en: 'On the **Characters** screen, the **Recently viewed** row shows the characters side by side on one line again, scrolling sideways when there are more than fit. It had been listing them one per line down the left edge.',
+        el: 'Στην οθόνη **Χαρακτήρες**, η σειρά **Recently viewed** δείχνει ξανά τους χαρακτήρες δίπλα-δίπλα σε μία γραμμή, κυλώντας στο πλάι όταν δεν χωρούν. Τους έδειχνε έναν ανά γραμμή στην αριστερή άκρη.',
+      },
+      {
+        en: 'The **Android app** can check for a new version again. That check had been blocked since mid-September and was failing without saying anything.',
+        el: 'Το **Android app** μπορεί ξανά να ελέγξει για νέα έκδοση. Ο έλεγχος αυτός ήταν μπλοκαρισμένος από τα μέσα Σεπτεμβρίου και αποτύγχανε χωρίς να το λέει πουθενά.',
+      },
+    ],
+  },
+  {
     version: '0.5.4',
     date: '2026-09-20',
     userVisible: true,
