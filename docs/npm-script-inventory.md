@@ -98,7 +98,7 @@ and when a `test:` script is not a lane.
 | `data:apply-manual` | documented · maintainer-validation-guide.md | a documented manual step |
 | `data:backtest-release` | workflow · check-optc-db-release.yml | the check-optc-db-release.yml workflow |
 | `data:check-release` | workflow · check-optc-db-release.yml | the check-optc-db-release.yml workflow |
-| `data:import:all` | script file · check-dataset-spec-pins.mjs, generate-whats-new-entry.mjs | whatever check-dataset-spec-pins.mjs, generate-whats-new-entry.mjs drives |
+| `data:import:all` | script file · check-dataset-spec-pins.mjs, generate-whats-new-entry.mjs, release-contract.mjs | whatever check-dataset-spec-pins.mjs, generate-whats-new-entry.mjs, release-contract.mjs drives |
 | `data:monitor-upstream` | workflow · check-optc-db-release.yml | the check-optc-db-release.yml workflow |
 | `data:overlay-register` | npm script · test:overlay-register | `test:overlay-register` |
 | `data:upsert-manual-character` | manual · — | Applies a hand-written character overlay. Run deliberately by a maintainer; automating it would let the dataset drift from upstream without a decision. |
@@ -135,7 +135,7 @@ and when a `test:` script is not a lane.
 | `ionic:host-property` | npm script · test:ionic-host-property | `test:ionic-host-property` |
 | `members:unused` | npm script · test:unused-members | `test:unused-members` |
 | `model:field-naming` | npm script · test:field-naming | `test:field-naming` |
-| `native:surface` | manual · — | 869f13d80. Regenerates the native surface record from capacitor.config.ts, the two gradle files and the Android manifest. The CHECK half runs in the native-surface lane; this write half is run deliberately when a plugin, an app id, an SDK level or the activity behaviour changes on purpose. Permission NAMES are not here - check-support-claims.mjs owns those. |
+| `native:surface` | script file · generate-native-surface.mjs | whatever generate-native-surface.mjs drives |
 | `ng` | npm script · start, build, build:pages, watch, test, test:ci, test:saved-team-codecs | `start`, `build`, `build:pages`, `watch`, `test`, `test:ci`, `test:saved-team-codecs` |
 | `packs:contract` | npm script · test:packs-contract | `test:packs-contract` |
 | `pages:doc-coverage` | npm script · test:page-doc-coverage | `test:page-doc-coverage` |
@@ -144,15 +144,15 @@ and when a `test:` script is not a lane.
 | `perf:budget-report` | workflow · performance-budgets.yml | the performance-budgets.yml workflow |
 | `perf:dataset` | workflow · test.yml | the test.yml workflow |
 | `perf:explanation-compare` | workflow · performance-budgets.yml | the performance-budgets.yml workflow |
-| `perf:memory-pressure` | script file · perf-memory-pressure.mjs | whatever perf-memory-pressure.mjs drives |
-| `perf:mobile-pickers` | documented · feature-coverage-map.md, maintainer-validation-guide.md | a documented manual step |
+| `perf:memory-pressure` | script file · suite-environments.mjs, perf-memory-pressure.mjs | whatever suite-environments.mjs, perf-memory-pressure.mjs drives |
+| `perf:mobile-pickers` | script file · suite-environments.mjs | whatever suite-environments.mjs drives |
 | `perf:route-load` | workflow · performance-budgets.yml | the performance-budgets.yml workflow |
 | `perf:saved-team-codecs` | workflow · performance-budgets.yml | the performance-budgets.yml workflow |
 | `platforms:support-ladder` | npm script · test:support-ladder | `test:support-ladder` |
 | `pr:traceability` | workflow · pr-traceability.yml | the pr-traceability.yml workflow |
 | `prepare` | lifecycle · npm | 869f33bru. npm runs it after every `npm ci` and `npm install`. It points git at .githooks/, so every commit and push on a developer machine is scanned for secret-shaped values without a setup step anyone has to remember. Nothing in the repository calls it, and nothing should. |
 | `pwa:ngsw:pages` | npm script · build:pages | `build:pages` |
-| `release:contract` | manual · — | 869f13d7j/869f13d7n. Regenerates the release contract by BUMPING A FIXTURE of the real tree and diffing, so it is the write half of a measurement rather than of a list. The CHECK half runs in the release-contract lane as `generate-release-contract.mjs --check`; this is run deliberately when a version field or a release step legitimately changes. Same split as dataset:provenance and dataset:consumers. |
+| `release:contract` | script file · generate-release-contract.mjs | whatever generate-release-contract.mjs drives |
 | `release:decision-history` | workflow · check-optc-db-release.yml | the check-optc-db-release.yml workflow |
 | `release:detector-status` | workflow · check-optc-db-release.yml | the check-optc-db-release.yml workflow |
 | `release:post-dispatch-smoke` | workflow · release-android.yml | the release-android.yml workflow |
@@ -171,7 +171,7 @@ and when a `test:` script is not a lane.
 | `server:drive-sync` | documented · README.md | a documented manual step |
 | `shared:component-map` | npm script · test:component-map | `test:component-map` |
 | `shared:picker-dismissal` | npm script · test:picker-dismissal | `test:picker-dismissal` |
-| `start` | script file · audit-i18n.mjs, auto-team-builder-ability-parser.mjs, benchmark-dataset.mjs, build-dataset-binary.mjs, check-app-config.mjs, check-component-inventory.mjs, check-docs-commands.spec.ts, check-docs-integrity.mjs, check-docs-integrity.spec.ts, check-github-ci-triggers.mjs, check-modal-dialog-labels.mjs, check-optc-upstream-monitor.mjs, check-secrets.mjs, check-style-panel-inventory.mjs, check-tag-picker-panel-scoping.spec.ts, generate-dataset-provenance.mjs, generate-dataset-provenance.spec.ts, generate-seo-pages.mjs, import-optc-data.spec.ts, captain-ability-coverage.mjs, captain-ability-coverage.spec.ts, dataset-binary.mjs, dataset-provenance.mjs, enemy-mechanic-vocabulary.mjs, import-pipeline.mjs, optc-dataset.mjs, perf-ability-filters.mjs, perf-budget-report.mjs, perf-explanation-compare.mjs, perf-memory-pressure.mjs, perf-mobile-pickers.mjs | whatever audit-i18n.mjs, auto-team-builder-ability-parser.mjs, benchmark-dataset.mjs, build-dataset-binary.mjs, check-app-config.mjs, check-component-inventory.mjs, check-docs-commands.spec.ts, check-docs-integrity.mjs, check-docs-integrity.spec.ts, check-github-ci-triggers.mjs, check-modal-dialog-labels.mjs, check-optc-upstream-monitor.mjs, check-secrets.mjs, check-style-panel-inventory.mjs, check-tag-picker-panel-scoping.spec.ts, generate-dataset-provenance.mjs, generate-dataset-provenance.spec.ts, generate-seo-pages.mjs, import-optc-data.spec.ts, captain-ability-coverage.mjs, captain-ability-coverage.spec.ts, dataset-binary.mjs, dataset-provenance.mjs, enemy-mechanic-vocabulary.mjs, import-pipeline.mjs, optc-dataset.mjs, perf-ability-filters.mjs, perf-budget-report.mjs, perf-explanation-compare.mjs, perf-memory-pressure.mjs, perf-mobile-pickers.mjs drives |
+| `start` | script file · audit-i18n.mjs, auto-team-builder-ability-parser.mjs, benchmark-dataset.mjs, build-dataset-binary.mjs, check-app-config.mjs, check-component-inventory.mjs, check-docs-commands.spec.ts, check-docs-integrity.mjs, check-docs-integrity.spec.ts, check-github-ci-triggers.mjs, check-modal-dialog-labels.mjs, check-optc-upstream-monitor.mjs, check-secrets.mjs, check-style-panel-inventory.mjs, check-tag-picker-panel-scoping.spec.ts, generate-dataset-provenance.mjs, generate-dataset-provenance.spec.ts, generate-release-contract.mjs, generate-seo-pages.mjs, import-optc-data.spec.ts, captain-ability-coverage.mjs, captain-ability-coverage.spec.ts, dataset-binary.mjs, dataset-provenance.mjs, enemy-mechanic-vocabulary.mjs, import-pipeline.mjs, optc-dataset.mjs, suite-environments.mjs, perf-ability-filters.mjs, perf-budget-report.mjs, perf-explanation-compare.mjs, perf-memory-pressure.mjs, perf-mobile-pickers.mjs | whatever audit-i18n.mjs, auto-team-builder-ability-parser.mjs, benchmark-dataset.mjs, build-dataset-binary.mjs, check-app-config.mjs, check-component-inventory.mjs, check-docs-commands.spec.ts, check-docs-integrity.mjs, check-docs-integrity.spec.ts, check-github-ci-triggers.mjs, check-modal-dialog-labels.mjs, check-optc-upstream-monitor.mjs, check-secrets.mjs, check-style-panel-inventory.mjs, check-tag-picker-panel-scoping.spec.ts, generate-dataset-provenance.mjs, generate-dataset-provenance.spec.ts, generate-release-contract.mjs, generate-seo-pages.mjs, import-optc-data.spec.ts, captain-ability-coverage.mjs, captain-ability-coverage.spec.ts, dataset-binary.mjs, dataset-provenance.mjs, enemy-mechanic-vocabulary.mjs, import-pipeline.mjs, optc-dataset.mjs, suite-environments.mjs, perf-ability-filters.mjs, perf-budget-report.mjs, perf-explanation-compare.mjs, perf-memory-pressure.mjs, perf-mobile-pickers.mjs drives |
 | `storage:keys` | npm script · test:storage-keys | `test:storage-keys` |
 | `styles:component-budget` | npm script · test:component-style-budget | `test:component-style-budget` |
 | `styles:panel-inventory` | npm script · test:style-panels | `test:style-panels` |
