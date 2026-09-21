@@ -47,6 +47,18 @@ export const SCRIPT_SUITES = {
     label: 'Release detector replay tests',
     command: 'npm run test:release-check',
   },
+  'release-contract': {
+    label: 'Release contract tests',
+    command: 'npm run test:release-contract',
+  },
+  'suite-environments': {
+    label: 'Suite environment record tests',
+    command: 'npm run test:suite-environments',
+  },
+  'native-surface': {
+    label: 'Native surface record tests',
+    command: 'npm run test:native-surface',
+  },
   'release-runbook-drift': {
     label: 'Release runbook drift tests',
     command: 'npm run test:release-runbook-drift',
@@ -699,6 +711,64 @@ function isReleaseReadinessPath(filePath) {
     filePath === 'scripts/release-readiness-report.mjs' ||
     filePath === 'scripts/release-readiness-report.spec.ts' ||
     filePath.startsWith('scripts/fixtures/release-readiness/')
+  );
+}
+
+/*
+ * 869f13d7j / 869f13d7n. The contract MEASURES which version fields a bump moves, so a
+ * change to the bump script, to any file it writes, or to either release producer has to
+ * re-derive it - otherwise the record goes stale exactly the way FAQ.md's version count
+ * did after `ios/` was dropped.
+ */
+function isReleaseContractPath(filePath) {
+  return (
+    filePath === 'scripts/generate-release-contract.mjs' ||
+    filePath === 'scripts/generate-release-contract.spec.ts' ||
+    filePath === 'scripts/lib/release-contract.mjs' ||
+    filePath === 'docs/release-contract.json' ||
+    filePath === 'scripts/bump-version.sh' ||
+    filePath === 'scripts/bump-version.spec.ts' ||
+    filePath === 'scripts/release-and-tag.sh' ||
+    filePath === 'package.json' ||
+    filePath === 'package-lock.json' ||
+    filePath === 'android/app/build.gradle' ||
+    filePath === 'src/app/core/data/app-version.data.ts'
+  );
+}
+
+/*
+ * 869f13d8b. The record is DERIVED from vitest.config.mjs and SCRIPT_SUITES, so a change to
+ * either has to re-derive it. Individual specs are deliberately NOT listed: the record
+ * stopped reading their sources when the DOM-global check was withdrawn, and routing every
+ * `scripts/*.spec.ts` here would add this suite to every focused run for no derivation.
+ */
+function isSuiteEnvironmentPath(filePath) {
+  return (
+    filePath === 'scripts/generate-suite-environments.mjs' ||
+    filePath === 'scripts/generate-suite-environments.spec.ts' ||
+    filePath === 'scripts/lib/suite-environments.mjs' ||
+    filePath === 'docs/suite-environments.json' ||
+    filePath === 'vitest.config.mjs' ||
+    filePath === 'playwright.config.ts' ||
+    filePath === 'scripts/ci-check-routing.mjs'
+  );
+}
+
+/*
+ * 869f13d80. Derived from the four native sources, so a change to any of them has to
+ * re-derive it. The manifest is in the list although the permission NAMES belong to
+ * check-support-claims.mjs: this record carries their count and the activity's behaviour.
+ */
+function isNativeSurfacePath(filePath) {
+  return (
+    filePath === 'scripts/generate-native-surface.mjs' ||
+    filePath === 'scripts/generate-native-surface.spec.ts' ||
+    filePath === 'scripts/lib/native-surface.mjs' ||
+    filePath === 'docs/native-surface.json' ||
+    filePath === 'capacitor.config.ts' ||
+    filePath === 'android/variables.gradle' ||
+    filePath === 'android/app/build.gradle' ||
+    filePath === 'android/app/src/main/AndroidManifest.xml'
   );
 }
 
@@ -1945,6 +2015,25 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
       categories.add('release-readiness');
       addScriptSuite(scriptSuites, 'release-readiness');
       continue;
+    }
+
+    if (isReleaseContractPath(filePath)) {
+      categories.add('release-contract');
+      addScriptSuite(scriptSuites, 'release-contract');
+      continue;
+    }
+
+    if (isSuiteEnvironmentPath(filePath)) {
+      categories.add('suite-environments');
+      addScriptSuite(scriptSuites, 'suite-environments');
+      // deliberately no `continue`: a scripts/*.spec.ts also routes to its own suite below
+    }
+
+    if (isNativeSurfacePath(filePath)) {
+      categories.add('native-surface');
+      addScriptSuite(scriptSuites, 'native-surface');
+      // no `continue`: build.gradle and the manifest also route to release-contract
+      // and support-claims respectively, and all three need to re-derive.
     }
 
     if (isReleaseRunbookDriftPath(filePath)) {

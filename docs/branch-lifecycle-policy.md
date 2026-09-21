@@ -46,10 +46,65 @@ Use the report status this way:
 
 ## Routine Branches
 
-Routine OPTC feature branches normally use the `codex/` prefix. A `codex/`
-branch is not automatically disposable after a squash merge because the branch
-head is often not an ancestor of `main`. The report therefore uses merged PR
-metadata first and Git ancestry only as supporting evidence.
+Routine OPTC feature branches use the `ai/<task-id>-<slug>` prefix. **This said
+`codex/` until 2026-09-21**, when all 218 local branches across the two
+checkouts were measured and every one of them was `ai/`.
+
+Such a branch is not automatically disposable after a squash merge, because the
+branch head is often not an ancestor of `main`. The report therefore uses merged
+PR metadata first and Git ancestry only as supporting evidence.
+
+## The local side, and why ancestry is not the only wrong answer
+
+The rules above are about **remote** branches. Local ones accumulate silently:
+measured 2026-09-21 there were **218** across the two permanent checkouts — 141
+in the app and 77 in the brain — against an earlier count of 21.
+
+Three candidate tests were run against all 140 pre-existing app branches, and
+**two of the three do not work**:
+
+| Test | Result |
+| --- | --- |
+| `git merge-base --is-ancestor` | reports 0 of 140 merged — the documented squash trap |
+| tree identical to `main`'s | **0 of 140**, because `main` has moved on since every one of those merges. It can only ever pass on a branch merged seconds ago |
+| `git merge-tree --write-tree main <branch>` | 15 contribute nothing, **125 conflict** textually with later work |
+
+So a content comparison is as wrong as the ancestry check it was meant to
+replace. **What works is merged-PR metadata**, which is what
+`npm run branch:cleanup-report` already uses:
+
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
+```bash
+gh pr list --repo JohnChourp/optc-team-builder --state merged --limit 500 \
+  --json headRefName --jq '.[].headRefName' > /tmp/merged.txt
+git for-each-ref --format='%(refname:short)' refs/heads | grep -v '^main$' \
+  | while read -r b; do grep -qx "$b" /tmp/merged.txt || echo "NO MERGED PR: $b"; done
+```
+
+A branch that prints is the one worth looking at. All 218 matched.
+
+### The lifecycle, end to end
+
+1. **Created** in the permanent checkout, never a per-task clone — isolation
+   comes from the branch, not the folder.
+2. **Named** `ai/<task-id>-<slug>`.
+3. **Merged** by squash, which deletes the remote head and leaves the local one
+   behind looking unmerged forever.
+4. **Proven disposable** by the merged-PR match above, never by ancestry and
+   never by a tree diff.
+5. **Deleted** with `git branch -D`. `-d` refuses every squash-merged branch,
+   which is all of them, so `-D` here is correct rather than careless.
+
+**Recovery is not the reflog.** Every deleted branch has a merged pull request
+and GitHub keeps that PR's head SHA permanently, so the path back is
+`gh pr view <n> --json headRefOid`.
+
+### Before you run `git branch -d`
+
+You will get `error: the branch 'ai/...' is not fully merged`. That message is
+**almost always wrong here** — it is the squash trap, not a warning. Check the
+merged-PR list before believing it, and check it before reaching for `-D` too.
 
 ## What Not To Do
 

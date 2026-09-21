@@ -135,6 +135,7 @@ and when a `test:` script is not a lane.
 | `ionic:host-property` | npm script · test:ionic-host-property | `test:ionic-host-property` |
 | `members:unused` | npm script · test:unused-members | `test:unused-members` |
 | `model:field-naming` | npm script · test:field-naming | `test:field-naming` |
+| `native:surface` | manual · — | 869f13d80. Regenerates the native surface record from capacitor.config.ts, the two gradle files and the Android manifest. The CHECK half runs in the native-surface lane; this write half is run deliberately when a plugin, an app id, an SDK level or the activity behaviour changes on purpose. Permission NAMES are not here - check-support-claims.mjs owns those. |
 | `ng` | npm script · start, build, build:pages, watch, test, test:ci, test:saved-team-codecs | `start`, `build`, `build:pages`, `watch`, `test`, `test:ci`, `test:saved-team-codecs` |
 | `packs:contract` | npm script · test:packs-contract | `test:packs-contract` |
 | `pages:doc-coverage` | npm script · test:page-doc-coverage | `test:page-doc-coverage` |
@@ -151,6 +152,7 @@ and when a `test:` script is not a lane.
 | `pr:traceability` | workflow · pr-traceability.yml | the pr-traceability.yml workflow |
 | `prepare` | lifecycle · npm | 869f33bru. npm runs it after every `npm ci` and `npm install`. It points git at .githooks/, so every commit and push on a developer machine is scanned for secret-shaped values without a setup step anyone has to remember. Nothing in the repository calls it, and nothing should. |
 | `pwa:ngsw:pages` | npm script · build:pages | `build:pages` |
+| `release:contract` | manual · — | 869f13d7j/869f13d7n. Regenerates the release contract by BUMPING A FIXTURE of the real tree and diffing, so it is the write half of a measurement rather than of a list. The CHECK half runs in the release-contract lane as `generate-release-contract.mjs --check`; this is run deliberately when a version field or a release step legitimately changes. Same split as dataset:provenance and dataset:consumers. |
 | `release:decision-history` | workflow · check-optc-db-release.yml | the check-optc-db-release.yml workflow |
 | `release:detector-status` | workflow · check-optc-db-release.yml | the check-optc-db-release.yml workflow |
 | `release:post-dispatch-smoke` | workflow · release-android.yml | the release-android.yml workflow |
@@ -174,6 +176,7 @@ and when a `test:` script is not a lane.
 | `styles:component-budget` | npm script · test:component-style-budget | `test:component-style-budget` |
 | `styles:panel-inventory` | npm script · test:style-panels | `test:style-panels` |
 | `styles:tag-picker-scoping` | npm script · test:tag-picker-scoping | `test:tag-picker-scoping` |
+| `suites:environments` | manual · — | 869f13d8b. Regenerates the suite-environment record from vitest.config.mjs, SCRIPT_SUITES and package.json. The CHECK half runs in the suite-environments lane; this write half is run deliberately when a project, a suite or a gated harness is added. |
 | `synthetic:public-entry` | workflow · public-entry-synthetics.yml, release-android.yml | the public-entry-synthetics.yml, release-android.yml workflow |
 | `teams:published` | npm script · test:published-teams | `test:published-teams` |
 | `test` | npm script · test:ci, test:saved-team-codecs | `test:ci`, `test:saved-team-codecs` |
@@ -220,6 +223,7 @@ and when a `test:` script is not a lane.
 | `test:locale-formatting` | lane · locale-formatting | the `locale-formatting` lane |
 | `test:maintainer-doctor` | lane · maintainer-doctor | the `maintainer-doctor` lane |
 | `test:modal-labels` | lane · modal-labels | the `modal-labels` lane |
+| `test:native-surface` | lane · native-surface | the `native-surface` lane |
 | `test:overlay-contrast` | lane · overlay-contrast | the `overlay-contrast` lane |
 | `test:overlay-register` | lane · overlay-register | the `overlay-register` lane |
 | `test:packs-contract` | lane · packs-contract | the `packs-contract` lane |
@@ -233,6 +237,7 @@ and when a `test:` script is not a lane.
 | `test:published-teams` | lane · published-teams | the `published-teams` lane |
 | `test:pwa-shell` | lane · pwa-shell | the `pwa-shell` lane |
 | `test:release-check` | lane · release-check | the `release-check` lane |
+| `test:release-contract` | lane · release-contract | the `release-contract` lane |
 | `test:release-readiness` | lane · release-readiness | the `release-readiness` lane |
 | `test:release-runbook-drift` | lane · release-runbook-drift | the `release-runbook-drift` lane |
 | `test:route-sitemap-coverage` | lane · route-sitemap-coverage | the `route-sitemap-coverage` lane |
@@ -244,6 +249,7 @@ and when a `test:` script is not a lane.
 | `test:seo-pages` | lane · seo-pages | the `seo-pages` lane |
 | `test:storage-keys` | lane · storage-keys | the `storage-keys` lane |
 | `test:style-panels` | lane · style-panels | the `style-panels` lane |
+| `test:suite-environments` | lane · suite-environments | the `suite-environments` lane |
 | `test:support-claims` | lane · support-claims | the `support-claims` lane |
 | `test:support-ladder` | lane · support-ladder | the `support-ladder` lane |
 | `test:tag-picker-scoping` | lane · tag-picker-scoping | the `tag-picker-scoping` lane |
