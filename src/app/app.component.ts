@@ -311,7 +311,12 @@ export class AppComponent {
         return 'appUpdate.downloadFailedNative';
       }
 
-      return 'appUpdate.copyNative';
+      // 869f13d5u. Same separate-key shape as the web path below, and for the same
+      // transloco reason: a key carrying {{size}} that sometimes has no value renders
+      // the literal braces.
+      return this.nativeUpdateService.updateSizeLabel()
+        ? 'appUpdate.copyNativeWithSize'
+        : 'appUpdate.copyNative';
     }
 
     // A failed install used to tear the banner down silently, which read as the
@@ -348,8 +353,18 @@ export class AppComponent {
     await this.nativeUpdateService.openReleasePageManually();
   }
 
-  /** 869f138pt. Null unless the pending update is large enough that its size is worth saying. */
-  public readonly updateSizeLabel = computed(() => this.appUpdateService.updateSizeLabel());
+  /**
+   * 869f138pt. Null unless the pending update is large enough that its size is worth saying.
+   *
+   * 869f13d5u: the native path answers first when it has an update, because both services can
+   * hold one at once on a native shell - the service worker keeps running behind the APK - and
+   * the banner is already showing the native one in that case.
+   */
+  public readonly updateSizeLabel = computed(() =>
+    this.nativeUpdateService.availableUpdate()
+      ? this.nativeUpdateService.updateSizeLabel()
+      : this.appUpdateService.updateSizeLabel(),
+  );
 
   public readonly updateDownloading = computed(() =>
     this.nativeUpdateService.availableUpdate()
@@ -545,10 +560,18 @@ export class AppComponent {
     }
 
     const isNativeUpdate = this.nativeUpdateService.availableUpdate() !== null;
+    // 869f13d5u. The alert is where the player actually agrees to the download, so it is the
+    // one place the size has to appear - the banner behind it can be read past, this cannot.
+    const nativeSizeLabel = isNativeUpdate ? this.nativeUpdateService.updateSizeLabel() : null;
     const alert = await this.alertController.create({
       header: this.i18n.translate('appUpdate.confirm.title'),
       message: this.i18n.translate(
-        isNativeUpdate ? 'appUpdate.confirm.messageNative' : 'appUpdate.confirm.message',
+        isNativeUpdate
+          ? nativeSizeLabel
+            ? 'appUpdate.confirm.messageNativeWithSize'
+            : 'appUpdate.confirm.messageNative'
+          : 'appUpdate.confirm.message',
+        nativeSizeLabel ? { size: nativeSizeLabel } : undefined,
       ),
       buttons: [
         {

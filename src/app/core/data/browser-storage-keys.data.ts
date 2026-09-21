@@ -293,6 +293,14 @@ export const BROWSER_STORAGE_KEYS: readonly BrowserStorageKeyRecord[] = [
     note: 'Search text and sort order on the Saved Teams list.',
   },
   {
+    key: 'recentErrorLog',
+    constantName: 'ERROR_LOG_KEY',
+    owner: 'src/app/core/services/error-log.service.ts',
+    backend: 'local',
+    classification: 'transient-ui-state',
+    note: 'The last 20 failures, kept so a reader can see and quote them. 869f13d6y. Never durable-user-data: it is about the app, not the reader\u2019s work, and losing it costs them nothing. `local` rather than `preferences` because an error handler writes synchronously and Preferences is async - a log that needs a promise to record a crash records nothing during one.',
+  },
+  {
     key: 'autoTeamBuilder.selectionState.v1',
     constantName: 'AUTO_TEAM_BUILDER_SELECTION_SESSION_KEY',
     owner: 'src/app/pages/auto-team-builder/auto-team-builder-selection-state.utils.ts',

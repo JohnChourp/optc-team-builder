@@ -484,6 +484,20 @@
       },
       "title": "What is stored on this device"
     },
+    "recentErrors": {
+      "clear": "Clear the list",
+      "copy": "{{count}} problems were recorded while you used the app.",
+      "empty": "Nothing has gone wrong since you last cleared this.",
+      "hide": "Hide",
+      "kind": {
+        "angular": "in a screen",
+        "window": "in the page",
+        "rejection": "in a background task"
+      },
+      "privacy": "This list never leaves your device on its own. The diagnostics file above carries these entries without their text.",
+      "show": "Show",
+      "title": "Recent problems on this device"
+    },
     "savedRumbleTeams": {
       "errors": {
         "generic": "The saved Rumble teams data could not be imported.",

@@ -163,9 +163,25 @@ console.log(parts.join('.'));
 NODE
 )"
 
+# 869f13d7b. versionCode is the ONE version field whose constraint is imposed by
+# Android rather than by us: an install is accepted as an upgrade only when the
+# incoming versionCode is strictly greater than the installed one. A code that
+# fails to increase does not error anywhere - every installed app simply refuses
+# the update, which is indistinguishable from a broken updater and would be
+# debugged there first.
+#
+# The default path (CURRENT_CODE + 1) is monotonic by construction. --code was
+# not: it validated the SHAPE of the argument and never compared it to what is
+# already released, so `--code 5` at versionCode 199 wrote a silent regression.
 if [[ -n "${EXPLICIT_CODE}" ]]; then
     if [[ ! "${EXPLICIT_CODE}" =~ ^[1-9][0-9]*$ ]]; then
         echo "ERROR: --code must be a positive integer." >&2
+        exit 1
+    fi
+    if (( EXPLICIT_CODE <= CURRENT_CODE )); then
+        echo "ERROR: --code ${EXPLICIT_CODE} does not increase versionCode ${CURRENT_CODE}." >&2
+        echo "       Android accepts an install as an upgrade only when versionCode strictly increases." >&2
+        echo "       Installed apps would silently refuse this release." >&2
         exit 1
     fi
     NEXT_CODE="${EXPLICIT_CODE}"

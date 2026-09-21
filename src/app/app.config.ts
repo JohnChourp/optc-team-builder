@@ -1,5 +1,11 @@
 import { provideHttpClient } from '@angular/common/http';
-import { type ApplicationConfig, inject, isDevMode, provideAppInitializer } from '@angular/core';
+import {
+  type ApplicationConfig,
+  ErrorHandler,
+  inject,
+  isDevMode,
+  provideAppInitializer,
+} from '@angular/core';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
@@ -13,6 +19,7 @@ import { TranslocoHttpLoader } from './core/i18n/transloco-loader';
 import { AnalyticsConsentService } from './core/services/analytics-consent.service';
 import { AppI18nService } from './core/services/app-i18n.service';
 import { AppUpdateService } from './core/services/app-update.service';
+import { ErrorLogService, LoggingErrorHandler } from './core/services/error-log.service';
 import { GoogleAccountService } from './core/services/google-account.service';
 import { NativeUpdateService } from './core/services/native-update.service';
 import { StoragePersistenceService } from './core/services/storage-persistence.service';
@@ -48,6 +55,14 @@ export const appConfig: ApplicationConfig = {
       }),
       loader: TranslocoHttpLoader,
     }),
+    /*
+     * 869f13d6y. Angular's handler sees anything thrown inside its zone; the two
+     * window listeners in ErrorLogService.init() catch what it never does. Both
+     * halves are needed - an unhandled promise rejection reaches neither the
+     * framework nor `window.onerror`.
+     */
+    { provide: ErrorHandler, useClass: LoggingErrorHandler },
+    provideAppInitializer(() => inject(ErrorLogService).init()),
     provideAppInitializer(() => inject(AppI18nService).ready()),
     provideAppInitializer(() => inject(AnalyticsConsentService).ready()),
     provideAppInitializer(() => inject(GoogleAccountService).ready()),

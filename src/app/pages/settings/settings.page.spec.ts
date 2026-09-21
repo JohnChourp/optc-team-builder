@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { type LocalCharacterOverride } from '../../core/models/optc.models';
 import { BrowserStoragePersistenceError } from '../../core/services/browser-storage-error.utils';
+import { ErrorLogService } from '../../core/services/error-log.service';
 import { UserDataTransferService } from '../../core/services/user-data-transfer.service';
 import {
   captureJsonDownloads,
@@ -1733,6 +1734,10 @@ function createPage() {
     restorePrompt: driveManualSyncPrompt,
     syncStatus: driveSyncStatus,
   };
+  // 869f13d6y. The real service over a stub: it holds no dependency beyond a Document,
+  // so a stub would only be a second implementation of the message-stripping rule - and
+  // that rule is exactly what the Settings tests must not be able to pass while broken.
+  const errorLog = new ErrorLogService({ defaultView: null } as unknown as Document);
   const page = new SettingsPage(
     repository as never,
     i18n as never,
@@ -1744,10 +1749,12 @@ function createPage() {
     userDataTransfer as never,
     googleAccount as never,
     driveBackup as never,
+    errorLog,
   );
 
   return {
     page,
+    errorLog,
     repository,
     userState,
     characterOverrideState,

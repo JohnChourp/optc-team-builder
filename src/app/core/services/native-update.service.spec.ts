@@ -165,6 +165,63 @@ describe('NativeUpdateService', () => {
     expect(update?.apkBytes).toBe(1000);
   });
 
+  /*
+   * 869f13d5u. `apkBytes` was read off the release API long before this and spent only on the
+   * downloader's integrity check, so the size never reached the player who was being asked to
+   * accept a ~207 MB download. These four cover the label and both silences.
+   */
+  it('formats the pending apk size for the reader', async () => {
+    const { service } = createService({
+      latest: {
+        ...APK_RELEASE,
+        assets: [{ ...APK_RELEASE.assets[0], size: 207_181_342 }],
+      },
+    });
+
+    await service.check();
+
+    // The real v0.4.51 asset. One decimal above a megabyte, same spelling in both languages.
+    expect(service.updateSizeLabel()).toBe('207.2 MB');
+  });
+
+  it('says nothing when the apk is below the size worth saying', async () => {
+    const { service } = createService({ latest: APK_RELEASE });
+
+    await service.check();
+
+    // The fixture's 1000 bytes is far under the shared 300 KB floor, so the banner and the
+    // alert read exactly as they did before rather than announcing a trivial number.
+    expect(service.availableUpdate()?.apkBytes).toBe(1000);
+    expect(service.updateSizeLabel()).toBeNull();
+  });
+
+  it('says nothing when the release publishes no apk asset at all', async () => {
+    // Never a guess: with no asset there is no authoritative figure, and the release-page
+    // fallback is what the reader gets.
+    const { service } = createService({ latest: { tag_name: 'v1.1.0', html_url: 'https://rel/1.1.0' } });
+
+    await service.check();
+
+    expect(service.availableUpdate()).not.toBeNull();
+    expect(service.updateSizeLabel()).toBeNull();
+  });
+
+  it('drops the size label once there is no pending update', async () => {
+    const { service } = createService({
+      latest: {
+        ...APK_RELEASE,
+        assets: [{ ...APK_RELEASE.assets[0], size: 207_181_342 }],
+      },
+    });
+
+    await service.check();
+    expect(service.updateSizeLabel()).toBe('207.2 MB');
+
+    service.snooze();
+
+    expect(service.updateSizeLabel()).toBeNull();
+  });
+
   it('reports real byte progress while downloading the apk in-app', async () => {
     const { service, emit, apkUpdater } = createService({ latest: APK_RELEASE });
 
