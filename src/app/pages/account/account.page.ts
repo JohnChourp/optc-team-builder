@@ -18,6 +18,7 @@ import {
   personCircleOutline,
 } from 'ionicons/icons';
 
+import { formattingLanguage } from '../../core/i18n/app-locale-format';
 import { type CharacterListItem } from '../../core/models/optc.models';
 import { AppI18nService } from '../../core/services/app-i18n.service';
 import {
@@ -283,7 +284,14 @@ export class AccountPage {
       return value;
     }
 
-    return new Intl.DateTimeFormat(undefined, {
+    /*
+     * 869f13epb. `undefined` here means the BROWSER's locale, which has nothing to
+     * do with the language this app is running in - the same defect 869f17h2x fixed
+     * for numbers, in the one place that formats a date. It survived that pass
+     * because the guard reads `toLocale*` call sites and this is an `Intl`
+     * construction, so the guard now covers both.
+     */
+    return new Intl.DateTimeFormat(formattingLanguage(), {
       dateStyle: 'medium',
       timeStyle: 'short',
     }).format(parsedDate);

@@ -21,7 +21,14 @@ import { fileURLToPath } from 'node:url';
  *   B. no hard-coded locale string unless the site is listed below with a reason,
  *      because "always English" is a real decision and an accident looks identical;
  *   C. every allowlist entry still exists and still holds a hard-coded locale, so
- *      the list cannot outlive the code it excuses.
+ *      the list cannot outlive the code it excuses;
+ *   D. no `Intl.*` formatter is constructed with `undefined` or no locale at all.
+ *
+ * 869f13epb added D. Rules A-C read `toLocale*` CALL SITES, and the project's one
+ * date was formatted by an `Intl.DateTimeFormat(undefined, …)` CONSTRUCTION - the
+ * identical defect, in a shape the guard could not see. It sat in
+ * `account.page.ts` through the whole of 869f17h2x's pass and through this guard
+ * going green. A guard that covers one spelling of a defect certifies the other.
  *
  * `localeCompare` is deliberately NOT covered. Character names come from the
  * community database and are Latin script whatever the interface language is, so
@@ -35,6 +42,15 @@ const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 
 const BARE_CALL = /\.toLocale(?:String|DateString|TimeString)\(\s*\)/gu;
 const HARD_CODED = /\.toLocale(?:String|DateString|TimeString)\(\s*['"]([a-zA-Z-]+)['"]/gu;
+
+/**
+ * `new Intl.X(` with no locale argument, or an explicit `undefined`.
+ *
+ * Both mean "the browser's locale". A `formattingLanguage()` or a quoted locale
+ * is what a bound site looks like, and neither matches.
+ */
+const BARE_INTL =
+  /new\s+Intl\.(NumberFormat|DateTimeFormat|RelativeTimeFormat|ListFormat|PluralRules|Collator|Segmenter|DisplayNames)\s*\(\s*(?:\)|undefined\b|\{)/gu;
 
 /** Sites that must stay in a fixed locale, each with the reason. */
 export const FIXED_LOCALE_ALLOWLIST = [
@@ -108,6 +124,13 @@ export function checkLocaleFormatting({ sources, allowlist = FIXED_LOCALE_ALLOWL
           `${file} is allowed to fix its locale to '${entry.locale}' but uses '${match[1]}'.`,
         );
       }
+    }
+
+    /* D. */
+    for (const match of contents.matchAll(BARE_INTL)) {
+      errors.push(
+        `${file} constructs Intl.${match[1]} with no locale. Pass formattingLanguage() so the value follows the chosen language, not the browser's.`,
+      );
     }
   }
 

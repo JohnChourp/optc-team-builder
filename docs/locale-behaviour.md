@@ -30,6 +30,7 @@ So **0 of 85** locale-dependent call sites followed the chosen language.
 | `documentElement.lang` | yes — **already did** | `AppI18nService.setLanguage` |
 | Number grouping and decimals | yes | `toLocaleString(formattingLanguage())`, 40 sites |
 | Dates in translated copy | yes | same, via `formattingLanguage()` |
+| The Account sync timestamp | yes — **since 869f13epb** | `new Intl.DateTimeFormat(formattingLanguage(), …)` |
 
 `app-locale-format.ts` holds the locale as module state, not an injected service,
 because half the call sites are presenters and `*.utils.ts` files with no
@@ -81,6 +82,24 @@ it.
 
 It deliberately says nothing about `localeCompare`, because "unbound" is the
 correct state there and a guard demanding otherwise would be wrong.
+
+**869f13epb added a fourth rule, after the guard certified the defect it was
+written for.** Rules A–C read `toLocale*` **call sites**. The project's one date
+was formatted by an `Intl.DateTimeFormat(undefined, …)` **construction** — the
+identical defect, *"the browser's locale, not the app's"*, in a shape those rules
+cannot see. It sat in `account.page.ts` through the whole of the pass above and
+through this guard going green.
+
+Rule **D** fails any `Intl.*` formatter — `NumberFormat`, `DateTimeFormat`,
+`RelativeTimeFormat`, `ListFormat`, `PluralRules`, `Collator`, `Segmenter`,
+`DisplayNames` — constructed with `undefined`, with no argument, or with options
+and no locale before them. Held by
+`scripts/check-locale-formatting-intl.spec.ts`, and mutation-tested against the
+real file: reverting `account.page.ts` turns the lane red.
+
+The lesson generalises past this file: **a guard that covers one spelling of a
+defect certifies the other.** Two mechanisms of wave 8's four were already fixed
+and one never existed; the one that survived did so by being written differently.
 
 ## The language a first visit starts in
 

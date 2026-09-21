@@ -11,7 +11,6 @@ import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
 import { provideIonicAngular } from '@ionic/angular';
 import { provideTransloco, translocoConfig } from '@jsverse/transloco';
-import { provideLottieOptions } from 'ngx-lottie';
 
 import { routes } from './app.routes';
 import { APP_I18N_AVAILABLE_LANGUAGES } from './core/i18n/app-i18n.types';
@@ -28,9 +27,6 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideHttpClient(),
     provideAnimations(),
-    provideLottieOptions({
-      player: () => import('lottie-web/build/player/esm/lottie_svg.min.js'),
-    }),
     provideIonicAngular(),
     provideRouter(routes, withComponentInputBinding()),
     provideServiceWorker('ngsw-worker.js', {

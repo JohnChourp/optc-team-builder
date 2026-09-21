@@ -86,12 +86,6 @@ export const PUBLIC_DIRECTORIES = [
     reason: 'A container only; nothing reads it directly.',
   },
   {
-    path: 'assets/animations',
-    consumer: null,
-    reason:
-      'save-team-loading.json (41 KB, Lottie) has had no reader since b2f898b0 (2026-04-24) removed the last <ng-lottie>. ngsw-config.json caches the folder only on request, so no visitor downloads it; it still ships in every build and APK, with lottie-web and ngx-lottie behind it. Kept until the owner decides what to stop (869f13c92).',
-  },
-  {
     path: 'assets/data',
     consumer: 'the dataset: optc-repository.service.ts loads it and ngsw-config.json prefetches it',
     reason: 'check-dataset-delivery.mjs proves it ships only what the app reads.',

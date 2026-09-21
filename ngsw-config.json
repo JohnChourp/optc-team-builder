@@ -70,7 +70,6 @@
     {
       "name": "runtime-media",
       "urls": [
-        "/assets/animations/**",
         "/assets/exact-character-images/**",
         "/assets/offline-packs/**",
         "/assets/placeholders/**"
