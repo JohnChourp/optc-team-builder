@@ -326,16 +326,50 @@ function addAnchorForHeading({ anchors, slugCounts, heading }) {
   anchors.add(slug);
 }
 
+/**
+ * GitHub's heading anchor, as `github-slugger` actually produces it.
+ *
+ * 869f13c6k. This used to be an approximation, and so did the brain's copy in
+ * `audit-docs-integrity.mjs`, and the two approximated DIFFERENTLY - which is why a
+ * link could resolve in one checker and not the other. `CLAUDE.md` recorded the
+ * disagreement and that **neither matched GitHub**, without saying which to fix.
+ *
+ * Settled 2026-09-21 by measurement against the external reality both were modelling:
+ * 150 adversarial headings from these two repositories, rendered through GitHub's own
+ * `POST /markdown` API and read back off the emitted `id` attributes.
+ *
+ *   this implementation  0 disagreements
+ *   the previous one     121
+ *   the brain's          110
+ *
+ * Four behaviours carry all of it, and every one of them was wrong here before:
+ *
+ *   - **runs of hyphens are KEPT.** `\`npm install --dry-run\` exits 0` anchors as
+ *     `npm-install---dry-run-exits-0` - three hyphens. The old `-+` collapse is the
+ *     single reason `FAQ.md`'s symptom index was unresolvable here while the brain
+ *     resolved it;
+ *   - **one hyphen per SPACE**, never per run of whitespace. An em dash is deleted and
+ *     leaves the spaces either side of it, so `FAQ — for maintainers` anchors as
+ *     `faq--for-maintainers`;
+ *   - **a leading or trailing hyphen is kept.** `## 🎯 The gap` anchors as `-the-gap`;
+ *   - **`_` is a letter here, not emphasis.** `CLAUDE_MEMORY.md` keeps its underscore.
+ *     No heading in either repository uses `_italic_`, checked, so this needs no
+ *     emphasis handling and must not have any.
+ *
+ * Marks are kept alongside letters and numbers because the Greek headings in the brain
+ * carry combining accents, and dropping them would silently rewrite those anchors.
+ */
 export function slugifyHeading(value) {
   return stripHtmlTagsForSlug(String(value))
+    .replace(/!\[([^\]]*)\]\([^)]+\)/gu, '$1')
     .replace(/\[([^\]]+)\]\([^)]+\)/gu, '$1')
+    .replace(/\[([^\]]+)\]\[[^\]]*\]/gu, '$1')
     .replace(/[`*~]/gu, '')
+    .replace(/&amp;/gu, '&')
     .trim()
     .toLowerCase()
-    .replace(/[^\p{Letter}\p{Number}\s_-]/gu, '')
-    .replace(/\s+/gu, '-')
-    .replace(/-+/gu, '-')
-    .replace(/^-|-$/gu, '');
+    .replace(/[^\p{Letter}\p{Number}\p{Mark} _-]/gu, '')
+    .replace(/ /gu, '-');
 }
 
 function stripHtmlTagsForSlug(value) {
