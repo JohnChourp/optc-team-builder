@@ -83,6 +83,7 @@ export const AUTOMATIC_OUTPUT_SIGNATURES = Object.freeze([
   { id: 'regenerated-dataset', producer: 'scripts/release-and-tag.sh', signature: 'npm run data:import:all', what: 'the regenerated dataset files, committed straight to main' },
   { id: 'signed-apk', producer: 'scripts/release-and-tag.sh', signature: 'assembleRelease', what: 'the signed APK' },
   { id: 'github-release', producer: 'scripts/release-and-tag.sh', signature: 'gh release create', what: 'the GitHub Release, with the APK attached and a body built from the commit list' },
+  { id: 'install-preamble', producer: 'scripts/release-and-tag.sh', signature: 'install_preamble', what: '869f13d5t. The install explanation in the release body, EN + EL, above the commit list - for a reader who has no app yet and so cannot read the /supported screen' },
   { id: 'provenance-report', producer: '.github/workflows/release-android.yml', signature: 'Write release provenance report', what: 'the release provenance report, uploaded as an artifact' },
   { id: 'pages-deploy', producer: '.github/workflows/release-android.yml', signature: 'npm run build:pages', what: 'the Pages rebuild from the release commit, so the UI finally shows the new version' },
 ]);

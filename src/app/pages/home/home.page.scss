@@ -1,3 +1,26 @@
 :host {
   display: contents;
 }
+
+/* 869f13d6j. The empty-install notice. Its dismiss is the global .section-details-toggle. */
+.first-run-transfer {
+  display: grid;
+  gap: 10px;
+}
+
+.first-run-transfer h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.first-run-transfer p {
+  margin: 0;
+  color: var(--ion-text-color-step-200);
+}
+
+.first-run-transfer__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}

@@ -207,6 +207,73 @@ prune_android_ds_store() {
     find "${PROJECT_ROOT}/android" -type f -name '.DS_Store' -delete 2>/dev/null || true
 }
 
+# 869f13d5t. The install explanation, on the page where the install happens.
+#
+# The `/supported` screen already answers this - in EN and EL - for somebody who has the
+# app. This is for somebody who does not: they arrive at a GitHub Release, see a generated
+# commit list, and are asked to allow installation from an unknown source. That warning is
+# correct and should be respected, so the text says what it is rather than talking the
+# reader past it.
+#
+# Deliberately NOT a safety claim. "Here is what it does and how to check the file" is
+# something this project can stand behind; "it is safe" is not, and a stranger's APK is
+# exactly the case where that distinction matters.
+#
+# Greek as well as English, unlike the What's New paragraph: that one is duplicated by the
+# in-app modal, and this one has no in-app counterpart for a reader who has not installed
+# anything yet.
+install_preamble() {
+    cat <<'PREAMBLE'
+## Before you install
+
+**What this is.** OPTC Team Builder, a fan-made planning tool for One Piece Treasure
+Cruise. It is not made by, endorsed by, or connected to Bandai Namco.
+
+**Why your phone will warn you.** This app is not on Google Play, so Android asks you to
+allow installing from an unknown source and shows a warning. That warning is doing its job
+- it is how malware arrives too - and it is worth reading rather than clicking past.
+
+**What it asks for once installed.** Exactly two permissions: internet access, and
+permission to install packages so the app can install its own updates when you accept one.
+Nothing else - no contacts, no location, no camera.
+
+**How to check the file is the one published here.** GitHub shows a SHA-256 for the `.apk`
+above. Compare it with the file you downloaded:
+
+```bash
+shasum -a 256 optc-team-builder-vX.Y.Z.apk
+```
+
+That tells you the download was not corrupted or swapped in transit. It does not, and
+cannot, tell you the app is safe - only that you have the file this page published.
+
+**Source.** https://github.com/JohnChourp/optc-team-builder
+
+---
+
+## Πριν την εγκατάσταση
+
+**Τι είναι.** Το OPTC Team Builder, ένα fan-made εργαλείο σχεδιασμού για το One Piece
+Treasure Cruise. Δεν κατασκευάζεται από τη Bandai Namco, δεν εγκρίνεται από αυτήν και δεν
+συνδέεται με αυτήν.
+
+**Γιατί σε προειδοποιεί το τηλέφωνο.** Η εφαρμογή δεν είναι στο Google Play, οπότε το
+Android σού ζητά να επιτρέψεις εγκατάσταση από άγνωστη πηγή και δείχνει προειδοποίηση.
+Αυτή η προειδοποίηση κάνει τη δουλειά της - έτσι φτάνει και το κακόβουλο λογισμικό - και
+αξίζει να τη διαβάσεις αντί να την προσπεράσεις.
+
+**Τι ζητά μόλις εγκατασταθεί.** Ακριβώς δύο άδειες: πρόσβαση στο internet, και άδεια
+εγκατάστασης πακέτων ώστε να μπορεί να εγκαθιστά τις δικές της ενημερώσεις όταν τις
+αποδέχεσαι. Τίποτα άλλο - ούτε επαφές, ούτε τοποθεσία, ούτε κάμερα.
+
+**Πώς ελέγχεις ότι το αρχείο είναι αυτό που δημοσιεύτηκε εδώ.** Το GitHub δείχνει ένα
+SHA-256 για το `.apk` παραπάνω. Σύγκρινέ το με το αρχείο που κατέβασες με την ίδια εντολή.
+
+Αυτό σου λέει ότι η λήψη δεν αλλοιώθηκε στον δρόμο. Δεν σου λέει - και δεν μπορεί να σου
+πει - ότι η εφαρμογή είναι ασφαλής· μόνο ότι έχεις το αρχείο που δημοσίευσε αυτή η σελίδα.
+PREAMBLE
+}
+
 generate_release_notes() {
     local version="$1"
     local version_code="$2"
@@ -230,6 +297,8 @@ generate_release_notes() {
         else
             printf -- '- Changes since: first tagged release\n'
         fi
+        printf '\n'
+        install_preamble
         printf '\n## Commits\n\n'
         git log "${range_spec}" --pretty=format:'- %s (%h)'
         printf '\n'

@@ -11,6 +11,33 @@
   <ion-content [fullscreen]="true">
     <app-home-style-panels>
       <div class="page-shell home-shell">
+        @if (showFirstRunTransferNotice()) {
+          <!--
+            869f13d6j. Only on an installation holding nothing of the reader's. It detects
+            nothing about other installations - that is impossible across origins - so it
+            states the one fact it has and names the two routes that actually work.
+          -->
+          <section class="glass-card first-run-transfer" data-test="home-first-run-transfer">
+            <h2>{{ t('firstRunTransfer.title') }}</h2>
+            <p>{{ t('firstRunTransfer.body') }}</p>
+            <div class="first-run-transfer__actions">
+              <ion-button size="small" fill="solid" [routerLink]="['/tabs/drive-sync']" routerDirection="root">
+                {{ t('firstRunTransfer.drive') }}
+              </ion-button>
+              <ion-button size="small" fill="outline" color="light" [routerLink]="['/tabs/settings']" routerDirection="root">
+                {{ t('firstRunTransfer.import') }}
+              </ion-button>
+              <!--
+                A native button, as every dismiss in this app is: ion-button copies aria-*
+                into its shadow button once, at load, so a changing state goes stale there.
+              -->
+              <button type="button" class="section-details-toggle" data-test="home-first-run-transfer-dismiss" (click)="dismissFirstRunTransferNotice()">
+                {{ t('firstRunTransfer.dismiss') }}
+              </button>
+            </div>
+          </section>
+        }
+
         <section class="home-hero glass-card">
           <div class="home-hero__copy">
             <div class="section-label">
