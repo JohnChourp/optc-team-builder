@@ -39,9 +39,9 @@ export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
       el: 'Μόνο συντήρηση - τίποτα δεν άλλαξε σε καμία οθόνη',
     },
     summaryEn:
-      'Nothing in this release changes anything you can see or do in the app. It was an update of the tools the project uses to build and test itself: the program that runs the automated checks moved to a new major version, fifteen other build-time packages moved up with it, and so did one of the steps that assembles the Android app. The project\u2019s own notes were also corrected, because they did not describe how the Android app finds its character database.',
+      'Nothing in this release changes anything you can see or do in the app. It was an update of the tools the project uses to build and test itself: fifteen build-time packages moved to newer versions, along with one of the steps that assembles the Android app. The project\u2019s own notes were also corrected, because they did not describe how the Android app finds its character database.',
     summaryEl:
-      'Τίποτα σε αυτή την έκδοση δεν αλλάζει κάτι που βλέπεις ή κάνεις στην εφαρμογή. Ήταν μια ενημέρωση των εργαλείων που χρησιμοποιεί το project για να χτίζει και να ελέγχει τον εαυτό του: το πρόγραμμα που τρέχει τους αυτόματους ελέγχους πήγε σε νέα μεγάλη έκδοση, άλλα δεκαπέντε πακέτα του build ανέβηκαν μαζί του, και μαζί τους και ένα από τα βήματα που συναρμολογούν το Android app. Διορθώθηκαν επίσης οι εσωτερικές σημειώσεις του project, γιατί δεν περιέγραφαν πώς το Android app βρίσκει τη βάση χαρακτήρων του.',
+      'Τίποτα σε αυτή την έκδοση δεν αλλάζει κάτι που βλέπεις ή κάνεις στην εφαρμογή. Ήταν μια ενημέρωση των εργαλείων που χρησιμοποιεί το project για να χτίζει και να ελέγχει τον εαυτό του: δεκαπέντε πακέτα του build πήγαν σε νεότερες εκδόσεις, μαζί με ένα από τα βήματα που συναρμολογούν το Android app. Διορθώθηκαν επίσης οι εσωτερικές σημειώσεις του project, γιατί δεν περιέγραφαν πώς το Android app βρίσκει τη βάση χαρακτήρων του.',
     added: [],
     improved: [],
     fixed: [],
