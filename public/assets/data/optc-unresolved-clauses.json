@@ -1,8 +1,18 @@
 {
-  "generatedAt": "2026-09-21T15:37:35.802Z",
+  "generatedAt": "2026-09-21T17:24:06.475Z",
   "sourceVersion": "36",
   "total": 587,
   "distinctClauses": 108,
+  "totals": {
+    "triggerClauses": 858,
+    "teamConditions": 301,
+    "clauses": 1159
+  },
+  "unresolvedShare": {
+    "triggerClause": 0.6061,
+    "teamConditionRawOnly": 0.2226,
+    "overall": 0.5065
+  },
   "byKind": {
     "teamConditionRawOnly": 67,
     "triggerClause": 520

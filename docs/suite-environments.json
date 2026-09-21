@@ -135,6 +135,16 @@
       "specCount": 0
     },
     {
+      "id": "app-contrast",
+      "label": "App surface contrast tests",
+      "command": "npm run test:app-contrast",
+      "environment": "node",
+      "environments": [
+        "node"
+      ],
+      "specCount": 1
+    },
+    {
       "id": "branch-cleanup",
       "label": "Branch cleanup report tests",
       "command": "npm run test:branch-cleanup",
@@ -470,7 +480,7 @@
         "jsdom",
         "node"
       ],
-      "specCount": 3
+      "specCount": 4
     },
     {
       "id": "maintainer-doctor",
@@ -841,7 +851,7 @@
       "environments": [
         "node"
       ],
-      "specCount": 1
+      "specCount": 2
     },
     {
       "id": "unused-members",

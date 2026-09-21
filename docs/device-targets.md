@@ -56,13 +56,59 @@ large enough. The sizes have to be read from **rendered geometry**, not from the
 that measurement has not been done. It is named here as open rather than left to be
 rediscovered.
 
+## Measured against this contract, 2026-09-21
+
+The declaration above was written first and measured second, in Claude's built-in browser
+against a local dev server.
+
+### Public pages at desktop widths — was failing, now fixed
+
+**It was the second of the two predicted shapes: lines run to unreadable length.** Not a
+stranded phone column — there was no horizontal overflow at any width, and the page shell
+filled the viewport.
+
+| Guide page | Widest text block | Characters per line |
+| --- | :-: | :-: |
+| 1366px, before | 771px | **98** |
+| 1920px, before | 1,325px | **169** |
+| 1920px, **after** | 628px | **80** |
+| 1366px, after | 628px | **80** |
+| 390px, after | 316px | **40**, unchanged |
+
+Readable is **45–75**. The cause was precise and was not a missing breakpoint: every
+container from the paragraph up to `ion-content` had `max-width: none`, so the copy simply
+took the viewport. The fix is one rule — a `72ch` cap on the hero's reading column in
+`seo-content.page.scss` — and the mobile pass is untouched, because a 72ch cap never binds
+at 390px.
+
+### Touch targets — measured, and the CSS had it backwards
+
+**The stylesheet predicted the wrong failure.** `min-height: 44` appearing in 7 files against
+`min-width: 44` in 1 suggested narrow targets. Rendered geometry on Captain Coverage at
+390px says otherwise:
+
+| | Instances |
+| --- | :-: |
+| Interactive controls rendered | **411** |
+| Below 44px in some dimension | **124** |
+| Tall enough but **too narrow** | **0** |
+| Wide enough but **too short** | 18 |
+| **Too small in both** | **106** |
+
+There is no asymmetry to fix. The controls that fail are simply **small**, and one class is
+most of it: `button.captain-result__cost`, at **31×28**, **95 instances**. After it come
+`.ability-rank-toggle__chip` (59×26) and the five `.character-facet-filter__option` type
+buttons (~56×32).
+
+**That fix is not in this change**, and the reason is recorded rather than implied: raising
+95 badges and a filter row changes the density of the screen they sit on, which is a visual
+decision to be looked at rather than a number to satisfy. It is
+[869f13epp](https://app.clickup.com/t/90121749478/869f13epp)'s remaining half.
+
 ## What is still open under this contract
 
-Declaring the target does not measure conformance to it. Open, in the order that matters:
-
-1. **Rendered touch-target geometry at 360–480px** ([869f13epp](https://app.clickup.com/t/90121749478/869f13epp)) — measured from the element, not the stylesheet.
-2. **Public pages at 1366 and 1920** ([869f13epm](https://app.clickup.com/t/90121749478/869f13epm)) — the two failure shapes to expect are a phone column stranded in the middle and lines run to unreadable length. Which one it is decides the work.
-3. **Binding the visual baselines to this set** rather than to profiles somebody chose once.
+1. **Raising the 124 controls** ([869f13epp](https://app.clickup.com/t/90121749478/869f13epp)), and a check that a new one falling short is caught. The measurement above is the input to it.
+2. **Binding the visual baselines to this set** rather than to profiles somebody chose once.
 
 ## What this file is not
 

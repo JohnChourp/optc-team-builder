@@ -19,6 +19,27 @@
     linear-gradient(135deg, rgba(24, 35, 61, 0.95), rgba(9, 14, 28, 0.94));
 }
 
+/*
+ * 869f13epm. The reading measure on the public pages.
+ *
+ * Measured 2026-09-21 on this page at desktop widths: the hero paragraph ran to
+ * **1325px at 1920** - about **169 characters per line**, against a readable range
+ * of 45-75 - and **98** at 1366. Nothing capped it: every container from the
+ * paragraph up to `ion-content` had `max-width: none`, so the copy simply took the
+ * viewport.
+ *
+ * This is the failure shape `docs/device-targets.md` predicts for these pages, and
+ * the one that matters, because a stranger arriving from a search result lands
+ * here rather than on a builder. The cards below are already a three-column grid
+ * and need no cap.
+ *
+ * `ch` rather than px because the constraint IS the character count; expressing it
+ * in pixels means re-deriving it whenever the font changes.
+ */
+.seo-content-hero .section-copy {
+  max-width: 72ch;
+}
+
 .seo-content-actions {
   display: flex;
   flex-wrap: wrap;

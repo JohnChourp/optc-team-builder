@@ -105,3 +105,52 @@
   --app-muted: rgba(248, 251, 255, 0.65);
   --app-gradient: linear-gradient(135deg, #e63946 0%, #f5c84c 48%, #4cc9f0 100%);
 }
+
+/*
+ * 869f13ept. A reader who asked their system for more contrast.
+ *
+ * `prefers-reduced-motion` was honoured in 10 files and `prefers-contrast` in **zero** -
+ * in a dark-only app whose single most-reported visual defect was contrast, three times.
+ *
+ * This is NOT a second palette. Every value below is one the ramp above already
+ * contains: each text step takes the value of the step at **half its darkness**, so
+ * ordering and relative distinction survive and no colour is invented. The effect is
+ * that the ramp stops halfway: its darkest text step becomes `#80838b`, which measures
+ * **4.81:1** on `#070b17`, so under this preference **no text step falls below AA** -
+ * where the default ramp's lowest steps sit far under it and are only safe because
+ * nothing uses them for body text.
+ *
+ * The BACKGROUND ramp is deliberately untouched. It drives borders and surfaces as well
+ * as fills, and darkening those to gain separation would change layout weight across
+ * every screen to solve a problem the text ramp already solves.
+ *
+ * Guarded: `npm run theme:app-contrast` resolves this block separately from `:root` and
+ * re-measures all 196 self-contained colour pairs against it, so this ramp cannot rot
+ * behind the default one. A ramp nothing measures is how the original defect shipped.
+ */
+@media (prefers-contrast: more) {
+  :root {
+    --ion-text-color-step-50: #eceff3;
+    --ion-text-color-step-100: #eceff3;
+    --ion-text-color-step-150: #e0e3e8;
+    --ion-text-color-step-200: #e0e3e8;
+    --ion-text-color-step-250: #d4d7dc;
+    --ion-text-color-step-300: #d4d7dc;
+    --ion-text-color-step-350: #c8cbd1;
+    --ion-text-color-step-400: #c8cbd1;
+    --ion-text-color-step-450: #bcbfc5;
+    --ion-text-color-step-500: #bcbfc5;
+    --ion-text-color-step-550: #b0b3b9;
+    --ion-text-color-step-600: #b0b3b9;
+    --ion-text-color-step-650: #a4a7ae;
+    --ion-text-color-step-700: #a4a7ae;
+    --ion-text-color-step-750: #989ba2;
+    --ion-text-color-step-800: #989ba2;
+    --ion-text-color-step-850: #8c8f97;
+    --ion-text-color-step-900: #8c8f97;
+    --ion-text-color-step-950: #80838b;
+
+    /* The ramp fallback is now well clear of the 3.68:1 this was pinned against. */
+    --ion-placeholder-color: var(--ion-text-color-step-350);
+  }
+}
