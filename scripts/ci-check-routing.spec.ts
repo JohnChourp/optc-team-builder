@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { readFileSync, readdirSync } from 'node:fs';
 
 import { describe, expect, it } from 'vitest';
@@ -844,5 +845,74 @@ describe('ci-check-routing', () => {
     expect(formatGitHubOutput(plan)).toContain('script_matrix=');
     expect(renderMarkdown(plan)).toContain('CI check routing');
     expect(renderMarkdown(plan)).toContain('docs/maintainer-validation-guide.md');
+  });
+});
+
+/*
+ * 869f13d76. `vitest.config.mjs` decides a spec's environment from where it LIVES: a
+ * `scripts` project in Node and a `src` project with a DOM and `src/test-setup.ts`, so
+ * the same file can no longer answer differently to `ng test` and to a bare
+ * `vitest run`. That was worth fixing - it was 45 files failing under one invocation and
+ * not the other, almost all of them failing to LOAD.
+ *
+ * It introduces one hazard of its own, and this is the guard for it. With `projects`, a
+ * spec matching NO project's include is not an error: it is silently never collected.
+ * A new top-level directory, or a spec named `.spec.mts`, would simply stop running -
+ * which is the same shape as the load failure this repo already knows to fear, with no
+ * count to notice it by.
+ *
+ * So every tracked spec must be claimed by exactly one owner: a Vitest project, or
+ * Playwright. Deliberately in this existing lane rather than a new one - the standing
+ * rule is that a guard earns a lane only when a defect class recurs, and this one is
+ * paying for a mechanism introduced in the same change.
+ */
+describe('every spec file has exactly one owner', () => {
+  const trackedSpecs = execFileSync('git', ['ls-files', '*.spec.ts', '*.spec.mts', '*.spec.mjs'], {
+    encoding: 'utf8',
+  })
+    .split('\n')
+    .filter(Boolean);
+
+  const config = readFileSync('vitest.config.mjs', 'utf8');
+  const includes = [...config.matchAll(/include: \[([^\]]*)\]/gu)]
+    .flatMap((m) => [...m[1].matchAll(/'([^']+)'/gu)].map((g) => g[1]));
+
+  /** The include globs are simple enough that a prefix plus a suffix decides them. */
+  const matches = (glob: string, file: string): boolean => {
+    const [prefix, suffix] = glob.split('**/');
+    return file.startsWith(prefix) && file.endsWith(suffix.replace('*', ''));
+  };
+
+  it('reads the project includes out of the real config', () => {
+    // Without this the loop below passes vacuously when the config shape changes.
+    expect(includes.length).toBeGreaterThanOrEqual(3);
+    expect(trackedSpecs.length).toBeGreaterThan(200);
+  });
+
+  it('claims every tracked spec exactly once', () => {
+    const unclaimed: string[] = [];
+    const doubleClaimed: string[] = [];
+
+    for (const file of trackedSpecs) {
+      // Playwright owns e2e/, and vitest.config.mjs deliberately excludes it.
+      if (file.startsWith('e2e/')) continue;
+
+      const owners = includes.filter((glob) => matches(glob, file));
+      if (owners.length === 0) unclaimed.push(file);
+      if (owners.length > 1) doubleClaimed.push(`${file} -> ${owners.join(', ')}`);
+    }
+
+    expect(unclaimed, 'specs no vitest project collects - they would silently never run').toEqual([]);
+    expect(doubleClaimed, 'specs two projects would both run, in two environments').toEqual([]);
+  });
+
+  it('keeps Playwright specs out of the vitest projects', () => {
+    // They load under vitest with "Playwright Test did not expect test.describe()".
+    const e2e = trackedSpecs.filter((file) => file.startsWith('e2e/'));
+
+    expect(e2e.length).toBeGreaterThan(0);
+    for (const file of e2e) {
+      expect(includes.some((glob) => matches(glob, file)), file).toBe(false);
+    }
   });
 });
