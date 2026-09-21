@@ -145,6 +145,22 @@ export const NON_LANE_TEST_SCRIPTS = new Map([
   ],
 ]);
 
+/**
+ * Tracked files only, which has a consequence worth knowing before it costs a red lane.
+ *
+ * 869f13d7d. A script added in the same change is UNTRACKED while you write it, so a
+ * regeneration run before `git add` cannot see it and classifies the npm scripts it calls
+ * from the registry instead - `manual` rather than `script file`. The lane then passes
+ * locally and goes red the moment the change is committed, with a diff nobody expected.
+ *
+ * Measured 2026-09-21: six rows flipped that way after the commit that introduced
+ * `generate-native-surface.mjs`, `generate-release-contract.mjs` and
+ * `lib/suite-environments.mjs`.
+ *
+ * So regenerate AFTER staging, not before. `git ls-files` is still right - the inventory
+ * describes the repository, not the working directory - and the fix is the order, not the
+ * listing.
+ */
 export function listFiles(root = projectRoot) {
   return execFileSync('git', ['ls-files'], { cwd: root, encoding: 'utf8', maxBuffer: 1e8 })
     .split('\n')
