@@ -209,4 +209,60 @@ describe('bump-version.sh', () => {
 
     expect(stdout.match(/^VERSION=(.+)$/m)?.[1]).toBe('3.4.100');
   });
+
+  /*
+   * 869f13d7b. The segment cap above is OUR rule and refusing is a choice. This
+   * one is Android's: an install is accepted as an upgrade only when the incoming
+   * versionCode is strictly greater than the installed one, so a code that fails
+   * to increase makes every installed app refuse the release - silently, with no
+   * error anywhere in the pipeline. The symptom looks exactly like a broken
+   * updater, which is where it would be debugged.
+   *
+   * Each case runs --print-only so the assertion is about the refusal itself and
+   * not about a half-written tree.
+   */
+  const bumpWithCode = async (root: string, code: string) =>
+    execFileAsync(
+      'bash',
+      [path.join(root, 'scripts/bump-version.sh'), '--bump', 'patch', '--code', code, '--print-only'],
+      { cwd: root },
+    );
+
+  it('refuses an explicit --code that goes backwards', async () => {
+    const root = await makeWorkspace('0.5.6', 199);
+
+    await expect(bumpWithCode(root, '5')).rejects.toThrow(/does not increase versionCode 199/u);
+  });
+
+  it('refuses an explicit --code equal to the current one', async () => {
+    // Equal is the more likely mistake than backwards - a re-run of a release, or
+    // a code copied from the version that is already out - and Android rejects it
+    // for the same reason, so the boundary is `<=` and not `<`.
+    const root = await makeWorkspace('0.5.6', 199);
+
+    await expect(bumpWithCode(root, '199')).rejects.toThrow(/does not increase versionCode 199/u);
+  });
+
+  it('accepts an explicit --code that increases, including a jump', async () => {
+    const root = await makeWorkspace('0.5.6', 199);
+
+    const { stdout } = await bumpWithCode(root, '250');
+
+    expect(stdout.match(/^CODE=(.+)$/m)?.[1]).toBe('250');
+  });
+
+  it('still increments by one when no --code is given', async () => {
+    // The default path was always monotonic by construction; the guard must not
+    // have changed it. Without this the two refusals above would also pass
+    // against a script that refused every --code.
+    const root = await makeWorkspace('0.5.6', 199);
+
+    const { stdout } = await execFileAsync(
+      'bash',
+      [path.join(root, 'scripts/bump-version.sh'), '--bump', 'patch', '--print-only'],
+      { cwd: root },
+    );
+
+    expect(stdout.match(/^CODE=(.+)$/m)?.[1]).toBe('200');
+  });
 });

@@ -4,6 +4,7 @@ import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 
 import { ApkUpdater, type ApkUpdaterPlugin } from './apk-updater.plugin';
+import { UPDATE_SIZE_WORTH_SAYING_BYTES, formatUpdateSize } from './update-payload-size.utils';
 
 export interface NativeAppUpdate {
   version: string;
@@ -97,6 +98,29 @@ export class NativeUpdateService {
 
   /** Last download failure, surfaced so the banner can fall back to the release page. */
   public readonly downloadError: Signal<string | null> = this.downloadErrorSignal.asReadonly();
+
+  /**
+   * 869f13d5u. How large this APK is, already formatted - or null when there is no
+   * authoritative figure.
+   *
+   * The web path has said its size since 869f138pt and the native path did not, which is the
+   * wrong way round: a web update is a few megabytes of changed bundle, while the release APK
+   * measured **207 MB** at v0.4.51. `apkBytes` was already being read off the release API and
+   * spent only on the downloader's integrity check, so the number a player most needs before
+   * agreeing to a download was the one number already in hand and never rendered.
+   *
+   * Null when the release publishes no asset size - never a guess, for the same reason the web
+   * path refuses one: a size nobody can stand behind is worse than no size. The threshold is
+   * shared with the web path rather than raised for APKs, because an APK below it would be the
+   * surprising thing and worth saying too.
+   */
+  public readonly updateSizeLabel: Signal<string | null> = computed(() => {
+    const bytes = this.availableSignal()?.apkBytes;
+
+    return typeof bytes === 'number' && bytes >= UPDATE_SIZE_WORTH_SAYING_BYTES
+      ? formatUpdateSize(bytes)
+      : null;
+  });
 
   private started = false;
   private progressListener: { remove: () => Promise<void> } | null = null;

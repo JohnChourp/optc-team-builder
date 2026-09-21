@@ -31,6 +31,36 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.6.0',
+    date: '2026-09-21',
+    userVisible: true,
+    headline: {
+      en: 'The app remembers what went wrong, and an Android update says how big it is',
+      el: 'Η εφαρμογή θυμάται τι πήγε στραβά, και μια ενημέρωση στο Android λέει πόσο μεγάλη είναι',
+    },
+    summaryEn:
+      'Until now, when something went wrong on your device the app carried on and the problem left no trace - so if you wrote in about it, there was nothing to look at. Settings now keeps a short list of the last problems that happened on this device. It stays on your phone: you can read it, clear it, and choose to include it in the diagnostics file you already export by hand, which carries those entries without their text. Separately, when the Android app offers you a new version, it now tells you how large the download is before you accept it.',
+    summaryEl:
+      'Μέχρι τώρα, όταν κάτι πήγαινε στραβά στη συσκευή σου η εφαρμογή συνέχιζε και το πρόβλημα δεν άφηνε κανένα ίχνος - οπότε αν μας έγραφες γι αυτό, δεν υπήρχε τίποτα να δούμε. Οι Ρυθμίσεις κρατούν πλέον μια σύντομη λίστα με τα τελευταία προβλήματα που συνέβησαν σε αυτή τη συσκευή. Μένει στο τηλέφωνό σου: μπορείς να τη διαβάσεις, να τη σβήσεις, και να διαλέξεις να μπει στο αρχείο διαγνωστικών που ήδη εξάγεις με το χέρι, το οποίο κρατά αυτές τις καταγραφές χωρίς το κείμενό τους. Χωριστά, όταν το Android app σού προτείνει νέα έκδοση, λέει πλέον πόσο μεγάλη είναι η λήψη πριν την αποδεχτείς.',
+    added: [
+      {
+        en: 'The **Settings** screen has a new **Recent problems on this device** section. It lists the last few things that went wrong, you can show, hide or clear it, and nothing in it leaves your device on its own.',
+        el: 'Η οθόνη **Ρυθμίσεις** έχει μια νέα ενότητα **Πρόσφατα προβλήματα σε αυτή τη συσκευή**. Δείχνει τα τελευταία πράγματα που πήγαν στραβά, μπορείς να την εμφανίσεις, να την κρύψεις ή να τη σβήσεις, και τίποτα από αυτήν δεν φεύγει μόνο του από τη συσκευή σου.',
+      },
+    ],
+    improved: [
+      {
+        en: 'The **update** pop-up in the **Android app** now says how large the download is before you accept it. The release file is around 200 MB, which is worth knowing before you are on mobile data.',
+        el: 'Το αναδυόμενο παράθυρο **ενημέρωσης** στο **Android app** λέει πλέον πόσο μεγάλη είναι η λήψη πριν την αποδεχτείς. Το αρχείο της έκδοσης είναι γύρω στα 200 MB, κάτι που αξίζει να ξέρεις πριν βρεθείς σε mobile data.',
+      },
+      {
+        en: 'The **diagnostics file** you can export from the **Settings** screen now carries those recent problems too, so a report you send says what actually failed rather than only what is stored.',
+        el: 'Το **αρχείο διαγνωστικών** που μπορείς να εξάγεις από την οθόνη **Ρυθμίσεις** περιλαμβάνει πλέον και αυτά τα πρόσφατα προβλήματα, ώστε μια αναφορά που στέλνεις να λέει τι πραγματικά απέτυχε και όχι μόνο τι είναι αποθηκευμένο.',
+      },
+    ],
+    fixed: [],
+  },
+  {
     version: '0.5.6',
     date: '2026-09-21',
     userVisible: false,

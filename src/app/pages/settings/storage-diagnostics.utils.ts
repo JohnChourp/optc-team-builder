@@ -1,3 +1,4 @@
+import { type ErrorLogDiagnosticsEntry } from '../../core/services/error-log.service';
 import { type SyncScopeSummary } from '../../core/services/user-data-transfer.service';
 
 /**
@@ -101,13 +102,20 @@ export function formatStorageBytes(bytes: number | null): string {
 }
 
 export interface StorageDiagnosticsPayload {
-  schemaVersion: 1;
+  schemaVersion: 2;
   source: 'storage-diagnostics';
   generatedAt: string;
   appVersion: string;
   dataset: { sourceVersion: string; generatedOn: string; characterCount: number } | null;
   counts: SyncScopeSummary;
   storage: StorageQuotaEstimate;
+  /**
+   * 869f13d6y. The recent failures, WITHOUT their messages - see
+   * `ErrorLogService`'s docblock for why the message is the one field that stays
+   * on the device. Empty when nothing has gone wrong, which is the common case
+   * and reads correctly as "no failures recorded".
+   */
+  recentErrors: ErrorLogDiagnosticsEntry[];
 }
 
 /**
@@ -118,22 +126,32 @@ export interface StorageDiagnosticsPayload {
  * broken is by someone later adding "just the names" - so the payload is built
  * from the summary object, which holds numbers and nothing else, rather than
  * from the stored data itself.
+ *
+ * 869f13d6y added `recentErrors` and it keeps that promise rather than bending
+ * it: the caller passes `ErrorLogService.diagnosticsEntries()`, which is the log
+ * with every `message` already removed. A message is precisely the "just the
+ * names" hole - `Cannot read properties of undefined` is harmless and a message
+ * that interpolated a team name is not, and nothing in the type tells them
+ * apart. What survives is when, which mechanism caught it, the error's
+ * constructor name and where in our own bundle it came from.
  */
 export function buildStorageDiagnosticsPayload(input: {
   appVersion: string;
   dataset: { sourceVersion: string; generatedOn: string; characterCount: number } | null;
   counts: SyncScopeSummary;
   storage: StorageQuotaEstimate;
+  recentErrors?: readonly ErrorLogDiagnosticsEntry[];
   generatedAt?: string;
 }): StorageDiagnosticsPayload {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     source: 'storage-diagnostics',
     generatedAt: input.generatedAt ?? new Date().toISOString(),
     appVersion: input.appVersion,
     dataset: input.dataset ? { ...input.dataset } : null,
     counts: { ...input.counts },
     storage: { ...input.storage },
+    recentErrors: (input.recentErrors ?? []).map((entry) => ({ ...entry })),
   };
 }
 

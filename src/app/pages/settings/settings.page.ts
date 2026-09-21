@@ -3,7 +3,7 @@ import {
   buildFailureLines,
   resolveFailureFamily,
 } from '../../core/services/failure-message.utils';
-import { Component, type OnInit, computed, signal } from '@angular/core';
+import { Component, type OnInit, type Signal, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { IonSelect, IonToggle } from '@ionic/angular';
 import { IonButton } from '@ionic/angular/ion-button';
@@ -19,6 +19,7 @@ import { IonToolbar } from '@ionic/angular/ion-toolbar';
 import { TranslocoDirective } from '@jsverse/transloco';
 
 import { APP_VERSION } from '../../core/data/app-version.data';
+import { ErrorLogService, type ErrorLogEntry } from '../../core/services/error-log.service';
 import {
   type CharacterBox,
   type CharacterListItem,
@@ -280,6 +281,17 @@ export class SettingsPage implements OnInit {
   public readonly savedTeamsFeedback = signal<TransferFeedback | null>(null);
   public readonly savedEnemiesFeedback = signal<TransferFeedback | null>(null);
 
+  /**
+   * 869f13d6y. The failures recorded on THIS device, newest last, and nowhere else.
+   *
+   * Rendered rather than merely collected: a log the reader cannot see is the same
+   * blindness with extra storage. The export button above carries these entries
+   * WITHOUT their messages - see `ErrorLogService` for why that split exists.
+   */
+  public readonly recentErrors: Signal<readonly ErrorLogEntry[]>;
+  /** Collapsed by default: the common case is an empty log nobody needs to open. */
+  public readonly recentErrorsOpen = signal(false);
+
   public constructor(
     private readonly repository: OptcRepositoryService,
     private readonly i18n: AppI18nService,
@@ -291,7 +303,9 @@ export class SettingsPage implements OnInit {
     private readonly userDataTransfer: UserDataTransferService,
     private readonly googleAccount: GoogleAccountService,
     private readonly driveBackup: DriveBackupService,
+    private readonly errorLog: ErrorLogService,
   ) {
+    this.recentErrors = this.errorLog.entries;
     this.favoriteIds = this.userState.favoriteCharacterIds;
     this.favoriteShipIds = this.userState.favoriteShipIds;
     this.characterBoxes = this.userState.characterBoxes;
@@ -449,6 +463,22 @@ export class SettingsPage implements OnInit {
    * than from the stored data itself, which is what keeps that true when
    * somebody later wants to add "just the names".
    */
+  /** 869f13d6y. A plain toggle; the template's trigger is a native button on purpose. */
+  public toggleRecentErrors(): void {
+    this.recentErrorsOpen.update((open) => !open);
+  }
+
+  /**
+   * Forgets the log on this device.
+   *
+   * Offered because the reader owns it: a list of their own failures they cannot
+   * dismiss would be a permanent reminder of something already handled.
+   */
+  public clearRecentErrors(): void {
+    this.errorLog.clear();
+    this.recentErrorsOpen.set(false);
+  }
+
   public downloadStorageDiagnostics(
     documentRef: Document = document,
     urlRef: Pick<typeof URL, 'createObjectURL' | 'revokeObjectURL'> = URL,
@@ -458,6 +488,9 @@ export class SettingsPage implements OnInit {
       dataset: this.datasetSummary(),
       counts: this.localSyncScopeSummary(),
       storage: this.storageQuota(),
+      // 869f13d6y. Already stripped of every message by the service, which is what
+      // keeps this file's COUNTS-ONLY promise true.
+      recentErrors: this.errorLog.diagnosticsEntries(),
     });
     const objectUrl = urlRef.createObjectURL(
       new Blob([JSON.stringify(payload, null, 2) + '\n'], {

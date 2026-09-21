@@ -51,6 +51,7 @@ let nativeUpdateStub: {
   availableUpdate: ReturnType<typeof signal>;
   updatePhase: ReturnType<typeof signal>;
   downloadProgress: ReturnType<typeof signal>;
+  updateSizeLabel: ReturnType<typeof signal<string | null>>;
   init: ReturnType<typeof vi.fn>;
   check: ReturnType<typeof vi.fn>;
   snooze: ReturnType<typeof vi.fn>;
@@ -190,6 +191,7 @@ describe('AppComponent', () => {
       availableUpdate: signal(null),
       updatePhase: signal('idle'),
       downloadProgress: signal(0),
+      updateSizeLabel: signal<string | null>(null),
       init: vi.fn(),
       check: vi.fn().mockResolvedValue(undefined),
       snooze: vi.fn(),

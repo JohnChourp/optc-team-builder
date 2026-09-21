@@ -339,3 +339,39 @@
     justify-items: start;
   }
 }
+
+/* 869f13d6y. The recent-problems list. The toggle itself is the global .section-details-toggle. */
+.recent-errors-list {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.recent-errors-list li {
+  padding: 10px 12px;
+  border: 1px solid rgba(var(--ion-color-secondary-rgb), 0.24);
+  border-radius: 12px;
+}
+
+.recent-errors-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  align-items: baseline;
+  margin: 0 0 4px;
+  font-size: 0.86rem;
+}
+
+.recent-errors-head time {
+  color: var(--ion-text-color-step-400);
+  font-variant-numeric: tabular-nums;
+}
+
+/* An error message is arbitrary text, so it must wrap rather than widen the card. */
+.recent-errors-message {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 0.9rem;
+}

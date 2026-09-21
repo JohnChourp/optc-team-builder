@@ -924,6 +924,76 @@
         <p class="build-hint">{{ t('management.storedData.diagnosticsCopy') }}</p>
       </section>
 
+      <!--
+        869f13d6y. The recent failures, on this device only. Nothing here is ever
+        transmitted; the diagnostics file above is the only way any of it leaves,
+        and it carries these entries without their messages.
+      -->
+      <section class="glass-card recent-errors-card" data-test="settings-recent-errors">
+        <div class="section-head section-head--compact">
+          <div>
+            <h2>{{ t('management.recentErrors.title') }}</h2>
+            <p>
+              {{
+                recentErrors().length === 0
+                  ? t('management.recentErrors.empty')
+                  : t('management.recentErrors.copy', { count: recentErrors().length })
+              }}
+            </p>
+          </div>
+          @if (recentErrors().length > 0) {
+            <!--
+              A native button, as every disclosure toggle in the app is: ion-button copies
+              aria-* into its shadow button once, at load, so aria-expanded went stale there.
+            -->
+            <button
+              type="button"
+              class="section-details-toggle"
+              data-test="settings-recent-errors-toggle"
+              aria-controls="settings-recent-errors-list"
+              [attr.aria-expanded]="recentErrorsOpen() ? 'true' : 'false'"
+              (click)="toggleRecentErrors()"
+            >
+              {{
+                recentErrorsOpen()
+                  ? t('management.recentErrors.hide')
+                  : t('management.recentErrors.show')
+              }}
+            </button>
+          }
+        </div>
+
+        @if (recentErrorsOpen() && recentErrors().length > 0) {
+          <ul id="settings-recent-errors-list" class="recent-errors-list">
+            @for (entry of recentErrors(); track entry.at + entry.name) {
+              <li>
+                <p class="recent-errors-head">
+                  <strong>{{ entry.name }}</strong>
+                  <span>{{ t('management.recentErrors.kind.' + entry.kind) }}</span>
+                  <time [attr.datetime]="entry.at">{{ entry.at }}</time>
+                </p>
+                <p class="recent-errors-message">{{ entry.message }}</p>
+                @if (entry.where) {
+                  <p class="build-hint">{{ entry.where }}</p>
+                }
+              </li>
+            }
+          </ul>
+
+          <ion-button
+            fill="outline"
+            size="small"
+            color="light"
+            data-test="settings-recent-errors-clear"
+            (click)="clearRecentErrors()"
+          >
+            {{ t('management.recentErrors.clear') }}
+          </ion-button>
+        }
+
+        <p class="build-hint">{{ t('management.recentErrors.privacy') }}</p>
+      </section>
+
       <section class="glass-card about-card" data-test="settings-about">
         <div class="section-head">
           <div>
