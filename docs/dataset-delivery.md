@@ -79,13 +79,45 @@ instead of 27.7 MB.
 
 1. Fetch `optc-seed.sqlite.gz`, decompress it with `DecompressionStream`, check the SQLite
    header, open it, and read one table to prove the pages are there.
-2. If any step fails - no `DecompressionStream` (older than every browser Angular 22 supports),
-   a missing or damaged file, or a dev server answering a missing file with `index.html` - log a
-   warning with a stable code (`optc:dataset-database-fallback` or
-   `optc:dataset-database-unsupported`) and build the database from `optc-seed.sql` instead.
+2. If that name answers 404, fetch `optc-seed.sqlite` and do the same. That is the ANDROID name -
+   see below - and on the web it simply does not exist, so this costs one extra request only where
+   the first genuinely failed.
+3. If every candidate fails - no `DecompressionStream` (older than every browser Angular 22
+   supports), a missing or damaged file, or a dev server answering a missing file with
+   `index.html` - log ONE warning with a stable code (`optc:dataset-database-fallback` or
+   `optc:dataset-database-unsupported`), naming every name tried, and build the database from
+   `optc-seed.sql` instead.
 
 The header decides, not the file name: a host that sent the file with `content-encoding: gzip`
-would hand over an already-decoded database, and that is accepted as it is.
+would hand over an already-decoded database, and that is accepted as it is. That is also what makes
+the Android name need no special case - the bytes there are already decompressed, and the reader can
+see that for itself.
+
+## The Android app takes a different path, and AAPT renames the file
+
+**Measured 2026-09-20 on an API 35 emulator ([869f4kxrm](https://app.clickup.com/t/90121749478/869f4kxrm)).**
+
+Everything above describes the web. In the APK the same dataset arrives differently, and the
+difference is not ours:
+
+- `cap sync` copies `optc-seed.sqlite.gz` into the Android assets correctly.
+- **AAPT unpacks a `.gz` asset and strips the extension when it packages the APK.** The APK
+  therefore holds `optc-seed.sqlite` - byte-identical to the gunzipped file, verified by extracting
+  it - and no `optc-seed.sqlite.gz` at all. Nothing in `android/app/build.gradle` asks for this.
+- Capacitor serves those assets from local storage over `https://localhost`, so **nothing about the
+  Android path depends on the service worker**. The service worker does register there (the scheme
+  is a secure context and `resolveServiceWorkerRequests` defaults to true), but the bytes are on the
+  device either way.
+
+Until 2026-09-20 the app asked only for the `.gz` name, got a 404 on every launch, and rebuilt the
+whole database from the 27.8 MB text seed: **1.6 s of main-thread work against 0.12 s**, every single
+time the app opened. That is the slow path this whole document exists to have removed, still running
+on Android months after the web stopped using it.
+
+What this costs today, and has not been changed: the APK carries **both** files - 27,761,415 B of
+seed and a 27,115,520 B unpacked database, about **54.9 MB** where the web ships one gzipped 2.3 MB
+copy. Removing either is a separate decision. It is safe to ASK now only because Android no longer
+depends on the seed; before this fix the seed was the only working dataset path there.
 
 ## The guard
 
