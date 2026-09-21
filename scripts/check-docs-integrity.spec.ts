@@ -4,7 +4,12 @@ import path from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { checkDocsIntegrity, formatFailures, isValidClickUpTaskUrl } from './check-docs-integrity.mjs';
+import {
+  checkDocsIntegrity,
+  formatFailures,
+  isValidClickUpTaskUrl,
+  slugifyHeading,
+} from './check-docs-integrity.mjs';
 
 let tempDirs: string[] = [];
 
@@ -814,5 +819,56 @@ describe('isValidClickUpTaskUrl', () => {
     expect(isValidClickUpTaskUrl('https://app.clickup.com/t/90121749478')).toBe(false);
     expect(isValidClickUpTaskUrl('https://app.clickup.com/t/123456789')).toBe(false);
     expect(isValidClickUpTaskUrl('https://app.clickup.com/t/123456789/869dwc3zd')).toBe(false);
+  });
+});
+
+/*
+ * 869f13c6k. These nine are not invented: each is a heading that exists in this
+ * repository or the brain, and each expected value was read off the `id` attribute
+ * GitHub's own `POST /markdown` API emitted for it on 2026-09-21. The brain's copy of
+ * this function carries the same nine, so the two cannot drift apart again without one
+ * of them going red.
+ *
+ * Before that measurement this function disagreed with GitHub on 121 of 150 sampled
+ * headings and the brain's on 110, in DIFFERENT places - which is how a link came to
+ * resolve in one checker and not the other, and why 43 links across the two repos were
+ * broken on github.com while both lanes were green.
+ */
+describe('slugifyHeading', () => {
+  const GITHUB_ANCHORS: readonly (readonly [string, string])[] = [
+    // runs of hyphens survive; collapsing them is what broke FAQ.md's symptom index
+    [
+      '`npm install --dry-run` exits 0 on the dependency branch. Is the peer conflict gone?',
+      'npm-install---dry-run-exits-0-on-the-dependency-branch-is-the-peer-conflict-gone',
+    ],
+    // an em dash is deleted and leaves the space either side of it
+    ['FAQ \u2014 for maintainers and agents', 'faq--for-maintainers-and-agents'],
+    [
+      'Captain and Friend Captain \u2014 the same character is legal',
+      'captain-and-friend-captain--the-same-character-is-legal',
+    ],
+    // so is an arrow
+    ['AGENTS.md \u2194 CLAUDE.md Parity', 'agentsmd--claudemd-parity'],
+    // `_` is a letter here, never emphasis
+    ['MEMORY.md \u2194 CLAUDE_MEMORY.md Parity', 'memorymd--claude_memorymd-parity'],
+    // an emoji is deleted and its trailing space still becomes a LEADING hyphen
+    ['\u{1F3AF} The gap this task found', '-the-gap-this-task-found'],
+    // two ASCII hyphens plus the spaces around them make four
+    ['Lane A -- Captain abilities', 'lane-a----captain-abilities'],
+    // Greek keeps its combining accents
+    [
+      '\u03A0\u03C1\u03CC\u03C3\u03C6\u03B1\u03C4\u03B1 \u03C0\u03C1\u03BF\u03B2\u03BB\u03AE\u03BC\u03B1\u03C4\u03B1 \u03C3\u03B5 \u03B1\u03C5\u03C4\u03AE \u03C4\u03B7 \u03C3\u03C5\u03C3\u03BA\u03B5\u03C5\u03AE',
+      '\u03C0\u03C1\u03CC\u03C3\u03C6\u03B1\u03C4\u03B1-\u03C0\u03C1\u03BF\u03B2\u03BB\u03AE\u03BC\u03B1\u03C4\u03B1-\u03C3\u03B5-\u03B1\u03C5\u03C4\u03AE-\u03C4\u03B7-\u03C3\u03C5\u03C3\u03BA\u03B5\u03C5\u03AE',
+    ],
+    [
+      'The file is now 123 KB \u2014 accepted, and why the alternatives were not taken',
+      'the-file-is-now-123-kb--accepted-and-why-the-alternatives-were-not-taken',
+    ],
+  ];
+
+  it('matches the anchor GitHub actually emits', () => {
+    for (const [heading, expected] of GITHUB_ANCHORS) {
+      expect(slugifyHeading(heading), heading).toBe(expected);
+    }
   });
 });
