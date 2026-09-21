@@ -31,6 +31,36 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.6.1',
+    date: '2026-09-21',
+    userVisible: true,
+    headline: {
+      en: 'A fresh install tells you your teams are not lost, and dates read in your language',
+      el: 'Μια νέα εγκατάσταση σού λέει ότι οι ομάδες σου δεν χάθηκαν, και οι ημερομηνίες διαβάζονται στη γλώσσα σου',
+    },
+    summaryEn:
+      "Opening the app somewhere new used to look like everything was gone. It was not: your teams and boxes are kept by the browser or install you built them in, and nothing can reach them from a different one. The home screen now says so on an install that holds nothing yet, and points at the two ways to bring them across - Google Drive sync, or a file you exported from Settings. There is also a Start fresh button for when the install really is meant to be new. Separately, the synced-at time on the Account screen now follows the language you picked in the app instead of your phone's, so a Greek interface no longer shows an English date.",
+    summaryEl:
+      "Το να ανοίξεις την εφαρμογή κάπου καινούργιο έμοιαζε σαν να χάθηκαν όλα. Δεν είχαν χαθεί: οι ομάδες και τα boxes σου κρατιούνται από τον browser ή την εγκατάσταση όπου τα έφτιαξες, και τίποτα δεν μπορεί να τα φτάσει από κάπου αλλού. Η αρχική οθόνη το λέει πλέον σε μια εγκατάσταση που δεν κρατά ακόμα τίποτα, και δείχνει τους δύο τρόπους να τα φέρεις - συγχρονισμό Google Drive, ή αρχείο που εξήγαγες από τις Ρυθμίσεις. Υπάρχει και ένα κουμπί Ξεκίνα από την αρχή, για όταν η εγκατάσταση όντως πρέπει να είναι καινούργια. Χωριστά, η ώρα τελευταίου συγχρονισμού στην οθόνη Λογαριασμός ακολουθεί πλέον τη γλώσσα που διάλεξες στην εφαρμογή και όχι του τηλεφώνου σου, οπότε ένα ελληνικό περιβάλλον δεν δείχνει πια αγγλική ημερομηνία.",
+    added: [
+      {
+        en: 'The **home screen** shows a **This install is empty** card when nothing of yours is saved here yet. It names where your teams actually are, and offers **Set up Drive sync**, **Import a file**, or **Start fresh**.',
+        el: 'Η **αρχική οθόνη** δείχνει μια κάρτα **Αυτή η εγκατάσταση είναι άδεια** όταν δεν έχει αποθηκευτεί ακόμα τίποτα δικό σου εδώ. Λέει πού βρίσκονται πραγματικά οι ομάδες σου, και προσφέρει **Ρύθμισε τον συγχρονισμό Drive**, **Εισαγωγή αρχείου**, ή **Ξεκίνα από την αρχή**.',
+      },
+    ],
+    improved: [],
+    fixed: [
+      {
+        en: "The **last synced** time on the **Account** screen was formatted in your phone's language instead of the one you picked in the app, so a Greek interface could show an English date. It now follows the app.",
+        el: 'Η ώρα **τελευταίου συγχρονισμού** στην οθόνη **Λογαριασμός** μορφοποιούνταν στη γλώσσα του τηλεφώνου σου αντί για αυτή που διάλεξες στην εφαρμογή, οπότε ένα ελληνικό περιβάλλον μπορούσε να δείξει αγγλική ημερομηνία. Πλέον ακολουθεί την εφαρμογή.',
+      },
+      {
+        en: 'An unused animation was still being shipped inside every download. It is gone, so the app you install is a little smaller.',
+        el: 'Ένα animation που δεν χρησιμοποιούνταν ταξίδευε ακόμα μέσα σε κάθε λήψη. Έφυγε, οπότε η εφαρμογή που εγκαθιστάς είναι λίγο μικρότερη.',
+      },
+    ],
+  },
+  {
     version: '0.6.0',
     date: '2026-09-21',
     userVisible: true,
