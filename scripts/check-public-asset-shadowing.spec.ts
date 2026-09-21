@@ -180,15 +180,44 @@ describe('public folder census', () => {
     expect(result.errors.join('\n')).toContain('declares public/assets/placeholders/, which no longer exists');
   });
 
+  /*
+   * 869f13eq0. This used to mutate the real `assets/animations` entry, because it was
+   * the project's one `consumer: null` folder. The owner stopped the unplayed Lottie
+   * animation on 2026-09-21, the folder went with it, and this test went red - not
+   * because the rule broke, but because the row it borrowed stopped existing.
+   *
+   * It now builds its own reader-less entry, so it tests the RULE rather than whichever
+   * folder happens to be unread today. A test that depends on a particular row is a
+   * test that fails the next time somebody cleans one up correctly.
+   */
   it('accepts a folder with no reader only when it says why, and counts it', () => {
-    const declared = PUBLIC_DIRECTORIES.map((entry) =>
-      entry.path === 'assets/animations' ? { ...entry, reason: 'n/a' } : entry,
-    );
+    const readerless = {
+      path: 'assets/ghost',
+      consumer: null,
+      reason: 'A synthetic reader-less folder, so this rule has something to judge.',
+    };
+    const directories = [...realFolders, readerless.path].sort();
+    const declared = [...PUBLIC_DIRECTORIES, readerless];
 
-    expect(inspectPublicDirectories({ directories: realFolders, declared }).errors.join('\n')).toContain(
-      'entry "assets/animations" needs a real reason',
-    );
-    expect(inspectPublicDirectories({ directories: realFolders }).unread).toBe(1);
+    const accepted = inspectPublicDirectories({ directories, declared });
+
+    expect(accepted.errors).toEqual([]);
+    expect(accepted.unread).toBe(1);
+
+    const refused = inspectPublicDirectories({
+      directories,
+      declared: [...PUBLIC_DIRECTORIES, { ...readerless, reason: 'n/a' }],
+    });
+
+    expect(refused.errors.join('\n')).toContain('entry "assets/ghost" needs a real reason');
+  });
+
+  /*
+   * The state the removal above produced, asserted so a new reader-less folder has to
+   * be noticed rather than quietly joining a population of one.
+   */
+  it('has no reader-less folder left in the real census', () => {
+    expect(inspectPublicDirectories({ directories: realFolders }).unread).toBe(0);
   });
 
   it('requires every entry to name its consumer, or null', () => {

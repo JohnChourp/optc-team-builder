@@ -7,7 +7,6 @@
     "maxSize": 12000,
     "maxAge": "365d",
     "urls": [
-      "/assets/animations/**",
       "/assets/exact-character-images/**",
       "/assets/offline-packs/**",
       "/assets/placeholders/**"
