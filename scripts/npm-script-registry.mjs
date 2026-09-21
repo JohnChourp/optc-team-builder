@@ -75,6 +75,24 @@ export const NPM_SCRIPT_REGISTRY = [
       '869f1328p. Regenerates the ability tag catalogue. The CHECK half runs in the ability-tags lane and fails only on drift beyond the threshold, so this write half is run deliberately after a dataset release or a parser change has moved the counts on purpose.',
   },
   {
+    script: 'release:contract',
+    class: 'manual',
+    reason:
+      '869f13d7j/869f13d7n. Regenerates the release contract by BUMPING A FIXTURE of the real tree and diffing, so it is the write half of a measurement rather than of a list. The CHECK half runs in the release-contract lane as `generate-release-contract.mjs --check`; this is run deliberately when a version field or a release step legitimately changes. Same split as dataset:provenance and dataset:consumers.',
+  },
+  {
+    script: 'suites:environments',
+    class: 'manual',
+    reason:
+      '869f13d8b. Regenerates the suite-environment record from vitest.config.mjs, SCRIPT_SUITES and package.json. The CHECK half runs in the suite-environments lane; this write half is run deliberately when a project, a suite or a gated harness is added.',
+  },
+  {
+    script: 'native:surface',
+    class: 'manual',
+    reason:
+      '869f13d80. Regenerates the native surface record from capacitor.config.ts, the two gradle files and the Android manifest. The CHECK half runs in the native-surface lane; this write half is run deliberately when a plugin, an app id, an SDK level or the activity behaviour changes on purpose. Permission NAMES are not here - check-support-claims.mjs owns those.',
+  },
+  {
     script: 'dataset:consumers',
     class: 'manual',
     reason:
