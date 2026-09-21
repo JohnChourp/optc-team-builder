@@ -13,7 +13,9 @@ const catalogPanelsTemplate = `
                 <app-characters-catalog-list-panel>
                   <app-characters-catalog-thumb-panel>
                     <app-characters-catalog-metrics-panel>
-                      <ng-content></ng-content>
+                      <app-characters-recents-panel>
+                        <ng-content></ng-content>
+                      </app-characters-recents-panel>
                     </app-characters-catalog-metrics-panel>
                   </app-characters-catalog-thumb-panel>
                 </app-characters-catalog-list-panel>
@@ -62,6 +64,16 @@ export class CharactersCatalogSummaryPanelComponent {}
   host: panelHost,
 })
 export class CharactersCatalogAbilityRailPanelComponent {}
+
+@Component({
+  selector: 'app-characters-recents-panel',
+  standalone: true,
+  encapsulation: ViewEncapsulation.None,
+  template: projectedTemplate,
+  styleUrl: './characters-recents-panel.component.scss',
+  host: panelHost,
+})
+export class CharactersRecentsPanelComponent {}
 
 @Component({
   selector: 'app-characters-catalog-active-strip-panel',
@@ -158,6 +170,7 @@ export class CharactersCatalogMetricsPanelComponent {}
     CharactersCatalogSummaryPanelComponent,
     CharactersCatalogThumbPanelComponent,
     CharactersCatalogToolbarPanelComponent,
+    CharactersRecentsPanelComponent,
   ],
   template: catalogPanelsTemplate,
   styleUrl: './characters-catalog-panel.component.scss',

@@ -116,7 +116,7 @@ declaration in one of these files lacks `ViewEncapsulation.None` and a `styleUrl
 | `saved-enemies` | 30 | 20 | 1 |
 | `auto-team-builder-rumble` | 22 | 7 | 1 |
 | `captain-coverage` | 20 | 19 | 1 |
-| `characters` | 19 | 10 | 1 |
+| `characters` | 20 | 11 | 1 |
 | `crew-forge` | 14 | 13 | 1 |
 | `manual-team-builder` | 14 | 7 | 1 |
 | `saved-teams` | 14 | 13 | 1 |
@@ -130,5 +130,5 @@ declaration in one of these files lacks `ViewEncapsulation.None` and a `styleUrl
 | `ship-picker` | 7 | 6 | 1 |
 | `character-facet-filter` | 3 | 2 | 1 |
 | `character-tag-filter` | 3 | 2 | 1 |
-| **Total** | **262** | | |
+| **Total** | **263** | | |
 <!-- style-panel-inventory:end -->

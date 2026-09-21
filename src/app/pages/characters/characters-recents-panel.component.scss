@@ -1,0 +1,87 @@
+/*
+ * The Recently viewed strip (869f1327d) shipped its markup with NO stylesheet at all.
+ *
+ * `recents-strip`, `recents-card` and their children appeared in exactly one file - the template -
+ * and were styled nowhere, so the anchors fell back to block layout and stacked ONE CHARACTER PER
+ * ROW down the left edge, and the Clear control rendered as a bare browser button. A strip is the
+ * one shape the feature is named after, and it was the one shape it did not have.
+ */
+.recents-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.recents-card__clear {
+  flex: 0 0 auto;
+  padding: 3px 9px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(248, 251, 255, 0.58);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.68rem;
+}
+
+.recents-card__clear:focus-visible {
+  outline: 2px solid rgba(245, 200, 76, 0.72);
+  outline-offset: 2px;
+}
+
+/* One line, scrolled horizontally when the row runs out of width. */
+.recents-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding-bottom: 4px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.recents-strip__item {
+  position: relative;
+  /*
+   * `flex: 0 0 auto` is what keeps this a strip: without it the thumbs shrink to fit instead of
+   * overflowing into the scroll, which is the same failure as stacking, one axis over.
+   */
+  flex: 0 0 auto;
+  display: block;
+  width: 72px;
+  /*
+   * The thumbnails are square - 112x112, measured from the files - and the box is reserved rather
+   * than left to the image, because these are `loading="lazy"`: below the fold they have not
+   * loaded yet, and an unloaded `<img>` contributes no height at all. Measured on this strip, an
+   * item was **2px** tall before this line and **72px** after it, so without it the whole strip
+   * collapses to a hairline and then shoves the page down the moment the pictures arrive.
+   *
+   * It also keeps the shape when a picture is genuinely missing, which the offline packs make a
+   * real case rather than a hypothetical one.
+   */
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  line-height: 0;
+}
+
+.recents-strip__item img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.recents-strip__item:focus-visible {
+  outline: 2px solid rgba(245, 200, 76, 0.72);
+  outline-offset: 2px;
+}
+
+.recents-strip .character-status-badge--region {
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+}
