@@ -162,6 +162,39 @@ export function parseRootTokens(css) {
 }
 
 /**
+ * The `:root` overrides inside one `@media` block.
+ *
+ * 869f13ept. `parseRootTokens` matches `:root {` only at the start of the file or after
+ * a `}`, so a `:root` nested in a media query is invisible to it. That default is right -
+ * a conditional ramp must not silently replace the tokens the normal measurement uses -
+ * but it leaves the conditional ramp measured by nothing, which is how the defect this
+ * whole guard exists for shipped in the first place.
+ */
+export function parseMediaRootTokens(css, condition) {
+  const escaped = String(condition).replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+  const pattern = new RegExp(
+    `@media[^{]*\\(\\s*${escaped}\\s*\\)[^{]*\\{\\s*:root\\s*\\{([^}]*)\\}`,
+    'giu',
+  );
+  const tokens = new Map();
+  let block = pattern.exec(String(css ?? ''));
+
+  while (block) {
+    const declarations = /(--[\w-]+)\s*:\s*([^;]+);/gu;
+    let declaration = declarations.exec(block[1]);
+
+    while (declaration) {
+      tokens.set(declaration[1], declaration[2].trim());
+      declaration = declarations.exec(block[1]);
+    }
+
+    block = pattern.exec(String(css ?? ''));
+  }
+
+  return tokens;
+}
+
+/**
  * Resolve a CSS value through the token map.
  *
  * Returns `{ value, missing }`: `missing` names the first `var()` whose token is
@@ -509,6 +542,8 @@ export function inspectOverlayContrast({
   ionicRoot,
   textThreshold = TEXT_CONTRAST_THRESHOLD,
   nonTextThreshold = NON_TEXT_CONTRAST_THRESHOLD,
+  /** Layered over `:root`, so one conditional ramp can be measured on its own terms. */
+  tokenOverrides = new Map(),
 } = {}) {
   const componentsRoot =
     ionicRoot ?? path.join(appRoot, 'node_modules/@ionic/core/dist/collection/components');
@@ -522,6 +557,10 @@ export function inspectOverlayContrast({
         tokens.set(name, value);
       }
     }
+  }
+
+  for (const [name, value] of tokenOverrides) {
+    tokens.set(name, value);
   }
 
   const surfaceRaw = tokens.get('--ion-overlay-background-color') ?? tokens.get('--ion-background-color');
@@ -718,6 +757,35 @@ function main() {
 
     if (!result.ok) {
       process.exitCode = 1;
+    }
+
+    /*
+     * 869f13ept. The same overlay parts, measured again against the ramp a reader who
+     * asked their system for more contrast actually gets. These parts are where the
+     * `--ion-text-color-step-*` tokens are consumed - the app's own stylesheets use
+     * literal colours, so nothing else in the repo exercises that ramp at all.
+     */
+    const themePath = path.join(args.appRoot, 'src/theme/variables.scss');
+    const highContrast = existsSync(themePath)
+      ? parseMediaRootTokens(readFileSync(themePath, 'utf8'), 'prefers-contrast: more')
+      : new Map();
+
+    if (highContrast.size) {
+      const conditional = inspectOverlayContrast({
+        appRoot: args.appRoot,
+        tokenOverrides: highContrast,
+      });
+
+      if (!args.json) {
+        process.stdout.write(
+          `\n[overlay-contrast] prefers-contrast: more - ${highContrast.size} token override(s):\n`,
+        );
+        process.stdout.write(formatOverlayContrastResult(conditional));
+      }
+
+      if (!conditional.ok) {
+        process.exitCode = 1;
+      }
     }
   } catch (error) {
     console.error(`[overlay-contrast] ${error instanceof Error ? error.message : String(error)}`);

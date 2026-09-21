@@ -97,9 +97,25 @@ and no locale before them. Held by
 `scripts/check-locale-formatting-intl.spec.ts`, and mutation-tested against the
 real file: reverting `account.page.ts` turns the lane red.
 
+**869f13epu then found a THIRD spelling, which proves the point twice.** Captain
+Coverage rendered a leader boost with `String(Number(value.toFixed(3)))` — `2.5`
+in every language, so a Greek reader saw an English decimal separator on the
+result card. Rules A–D never had a chance: that one is arithmetic plus `String`
+and names neither `toLocale*` nor `Intl`.
+
+Rule **E** covers it as an *allowlist* rather than a pattern, because "a `toFixed`
+whose result reaches a template" is not decidable from the text. Five sites are
+listed in `FIXED_PRECISION_ALLOWLIST`, each with the reason it is allowed to be
+locale-blind — a size read back in bug reports, the debug report, a whole-number
+percentage with no separator to get wrong. A `toFixed` anywhere else fails until
+somebody writes the reason down. Held by
+`scripts/check-locale-formatting-precision.spec.ts` and mutation-tested against
+the real file.
+
 The lesson generalises past this file: **a guard that covers one spelling of a
 defect certifies the other.** Two mechanisms of wave 8's four were already fixed
-and one never existed; the one that survived did so by being written differently.
+and one never existed; the two that survived both did so by being written
+differently — and the second was found only because the first was.
 
 ## The language a first visit starts in
 

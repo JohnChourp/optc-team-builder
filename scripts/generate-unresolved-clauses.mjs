@@ -87,7 +87,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   if (!check) {
     writeFileSync(target, `${JSON.stringify(catalog, null, 2)}\n`, 'utf8');
     console.log(
-      `[unresolved-clauses] wrote ${CATALOG_PATH}: ${catalog.total} instance(s) across ${catalog.distinctClauses} distinct clause(s).`,
+      `[unresolved-clauses] wrote ${CATALOG_PATH}: ${catalog.total} of ${catalog.totals.clauses} clause instance(s) fall through (${(catalog.unresolvedShare.overall * 100).toFixed(1)}%), across ${catalog.distinctClauses} distinct clause(s).`,
     );
     process.exit(0);
   }

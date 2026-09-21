@@ -86,6 +86,7 @@ import {
 } from '../../core/services/character-facet-filter.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
+import { formattingLanguage } from '../../core/i18n/app-locale-format';
 import { AppI18nService } from '../../core/services/app-i18n.service';
 import { CharacterCatalogCacheService } from '../../core/services/character-catalog-cache.service';
 import { resolveCharacterPartyConflictKeys } from '../../core/services/auto-team-builder.utils';
@@ -1661,8 +1662,23 @@ export class CaptainCoveragePage implements OnInit {
     return reason ? this.t(`results.pending.${reason}`) : '';
   }
 
+  /**
+   * A leader boost, in the interface language.
+   *
+   * 869f13epu. This used to be `String(Number(value.toFixed(3)))`, which formats with
+   * a `.` decimal separator in every language - so a Greek reader saw `ATK:2.5` where
+   * they write `2,5`. It is the THIRD spelling of the defect 869f17h2x fixed for
+   * `toLocaleString` and 869f13epb fixed for `Intl`, and it escaped both because the
+   * guard reads those two names and this one is arithmetic plus `String`.
+   *
+   * `maximumFractionDigits: 3` reproduces the old `toFixed(3)` + `Number` exactly,
+   * trailing zeros included: `2` stays `2`, not `2.000`. Grouping never applies -
+   * a leader boost is a small multiplier, never a thousand.
+   */
   public formatBoost(value: number): string {
-    return value > 0 ? String(Number(value.toFixed(3))) : '-';
+    return value > 0
+      ? value.toLocaleString(formattingLanguage(), { maximumFractionDigits: 3 })
+      : '-';
   }
 
   public trackCharacter(_index: number, card: CaptainCoverageCardView): number {

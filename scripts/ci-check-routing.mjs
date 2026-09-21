@@ -288,6 +288,10 @@ export const SCRIPT_SUITES = {
     label: 'Ionic overlay contrast tests',
     command: 'npm run test:overlay-contrast',
   },
+  'app-contrast': {
+    label: 'App surface contrast tests',
+    command: 'npm run test:app-contrast',
+  },
   'ionic-host-property': {
     label: 'Ionic host shape property tests',
     command: 'npm run test:ionic-host-property',
@@ -1608,6 +1612,20 @@ function isIonicHostPropertyPath(filePath) {
   );
 }
 
+/*
+ * 869f13eqr. Broader than the overlay matcher on purpose: an overlay's colours live in
+ * the theme, but ANY component stylesheet can declare its own colour-on-background pair,
+ * which is exactly what this lane judges.
+ */
+function isAppContrastPath(filePath) {
+  return (
+    filePath.endsWith('.scss') ||
+    filePath === 'scripts/check-app-surface-contrast.mjs' ||
+    filePath === 'scripts/check-app-surface-contrast.spec.ts' ||
+    filePath === 'scripts/check-ionic-overlay-contrast.mjs'
+  );
+}
+
 function isOverlayContrastPath(filePath) {
   return (
     filePath === 'src/theme/variables.scss' ||
@@ -2216,6 +2234,11 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
     if (isWhatsNewPath(filePath)) {
       categories.add('whats-new');
       addScriptSuite(scriptSuites, 'whats-new');
+    }
+
+    if (isAppContrastPath(filePath)) {
+      categories.add('app-contrast');
+      addScriptSuite(scriptSuites, 'app-contrast');
     }
 
     if (isOverlayContrastPath(filePath)) {

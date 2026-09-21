@@ -92,7 +92,7 @@ and when a `test:` script is not a lane.
 | `cap:copy` | documented · ios-platform-footprint.md | a documented manual step |
 | `cap:sync` | documented · ios-platform-footprint.md | a documented manual step |
 | `components:inventory` | npm script · test:component-inventory | `test:component-inventory` |
-| `config:app` | npm script · start, build, watch | `start`, `build`, `watch` |
+| `config:app` | npm script · build, start, watch | `build`, `start`, `watch` |
 | `config:app:web-strict` | npm script · build:pages | `build:pages` |
 | `content:ladder` | npm script · test:content-ladder | `test:content-ladder` |
 | `data:apply-manual` | documented · maintainer-validation-guide.md | a documented manual step |
@@ -104,7 +104,7 @@ and when a `test:` script is not a lane.
 | `data:upsert-manual-character` | manual · — | Applies a hand-written character overlay. Run deliberately by a maintainer; automating it would let the dataset drift from upstream without a decision. |
 | `dataset-delivery:check` | npm script · test:dataset-delivery | `test:dataset-delivery` |
 | `dataset:ability-tags` | documented · maintainer-validation-guide.md, post-merge-smoke-pack.md | a documented manual step |
-| `dataset:binary` | npm script · start, build, build:pages | `start`, `build`, `build:pages` |
+| `dataset:binary` | npm script · build, build:pages, start | `build`, `build:pages`, `start` |
 | `dataset:consumers` | script file · generate-dataset-consumers.mjs | whatever generate-dataset-consumers.mjs drives |
 | `dataset:digest` | workflow · dataset-change-digest.yml | the dataset-change-digest.yml workflow |
 | `dataset:enemy-vocabulary` | script file · generate-enemy-vocabulary.mjs | whatever generate-enemy-vocabulary.mjs drives |
@@ -136,7 +136,7 @@ and when a `test:` script is not a lane.
 | `members:unused` | npm script · test:unused-members | `test:unused-members` |
 | `model:field-naming` | npm script · test:field-naming | `test:field-naming` |
 | `native:surface` | script file · generate-native-surface.mjs | whatever generate-native-surface.mjs drives |
-| `ng` | npm script · start, build, build:pages, watch, test, test:ci, test:saved-team-codecs | `start`, `build`, `build:pages`, `watch`, `test`, `test:ci`, `test:saved-team-codecs` |
+| `ng` | npm script · build, build:pages, start, test, test:ci, test:saved-team-codecs, watch | `build`, `build:pages`, `start`, `test`, `test:ci`, `test:saved-team-codecs`, `watch` |
 | `packs:contract` | npm script · test:packs-contract | `test:packs-contract` |
 | `pages:doc-coverage` | npm script · test:page-doc-coverage | `test:page-doc-coverage` |
 | `perf:ability-filters` | workflow · performance-budgets.yml | the performance-budgets.yml workflow |
@@ -171,7 +171,7 @@ and when a `test:` script is not a lane.
 | `server:drive-sync` | documented · README.md | a documented manual step |
 | `shared:component-map` | npm script · test:component-map | `test:component-map` |
 | `shared:picker-dismissal` | npm script · test:picker-dismissal | `test:picker-dismissal` |
-| `start` | script file · audit-i18n.mjs, auto-team-builder-ability-parser.mjs, benchmark-dataset.mjs, build-dataset-binary.mjs, check-app-config.mjs, check-component-inventory.mjs, check-docs-commands.spec.ts, check-docs-integrity.mjs, check-docs-integrity.spec.ts, check-github-ci-triggers.mjs, check-modal-dialog-labels.mjs, check-optc-upstream-monitor.mjs, check-secrets.mjs, check-style-panel-inventory.mjs, check-tag-picker-panel-scoping.spec.ts, generate-dataset-provenance.mjs, generate-dataset-provenance.spec.ts, generate-release-contract.mjs, generate-seo-pages.mjs, import-optc-data.spec.ts, captain-ability-coverage.mjs, captain-ability-coverage.spec.ts, dataset-binary.mjs, dataset-provenance.mjs, enemy-mechanic-vocabulary.mjs, import-pipeline.mjs, optc-dataset.mjs, suite-environments.mjs, perf-ability-filters.mjs, perf-budget-report.mjs, perf-explanation-compare.mjs, perf-memory-pressure.mjs, perf-mobile-pickers.mjs | whatever audit-i18n.mjs, auto-team-builder-ability-parser.mjs, benchmark-dataset.mjs, build-dataset-binary.mjs, check-app-config.mjs, check-component-inventory.mjs, check-docs-commands.spec.ts, check-docs-integrity.mjs, check-docs-integrity.spec.ts, check-github-ci-triggers.mjs, check-modal-dialog-labels.mjs, check-optc-upstream-monitor.mjs, check-secrets.mjs, check-style-panel-inventory.mjs, check-tag-picker-panel-scoping.spec.ts, generate-dataset-provenance.mjs, generate-dataset-provenance.spec.ts, generate-release-contract.mjs, generate-seo-pages.mjs, import-optc-data.spec.ts, captain-ability-coverage.mjs, captain-ability-coverage.spec.ts, dataset-binary.mjs, dataset-provenance.mjs, enemy-mechanic-vocabulary.mjs, import-pipeline.mjs, optc-dataset.mjs, suite-environments.mjs, perf-ability-filters.mjs, perf-budget-report.mjs, perf-explanation-compare.mjs, perf-memory-pressure.mjs, perf-mobile-pickers.mjs drives |
+| `start` | script file · audit-i18n.mjs, auto-team-builder-ability-parser.mjs, benchmark-dataset.mjs, build-dataset-binary.mjs, check-app-config.mjs, check-component-inventory.mjs, check-docs-commands.spec.ts, check-docs-integrity.mjs, check-docs-integrity.spec.ts, check-github-ci-triggers.mjs, check-ionic-overlay-contrast.mjs, check-modal-dialog-labels.mjs, check-optc-upstream-monitor.mjs, check-secrets.mjs, check-style-panel-inventory.mjs, check-tag-picker-panel-scoping.spec.ts, generate-dataset-provenance.mjs, generate-dataset-provenance.spec.ts, generate-release-contract.mjs, generate-seo-pages.mjs, import-optc-data.spec.ts, captain-ability-coverage.mjs, captain-ability-coverage.spec.ts, dataset-binary.mjs, dataset-provenance.mjs, enemy-mechanic-vocabulary.mjs, import-pipeline.mjs, optc-dataset.mjs, suite-environments.mjs, perf-ability-filters.mjs, perf-budget-report.mjs, perf-explanation-compare.mjs, perf-memory-pressure.mjs, perf-mobile-pickers.mjs | whatever audit-i18n.mjs, auto-team-builder-ability-parser.mjs, benchmark-dataset.mjs, build-dataset-binary.mjs, check-app-config.mjs, check-component-inventory.mjs, check-docs-commands.spec.ts, check-docs-integrity.mjs, check-docs-integrity.spec.ts, check-github-ci-triggers.mjs, check-ionic-overlay-contrast.mjs, check-modal-dialog-labels.mjs, check-optc-upstream-monitor.mjs, check-secrets.mjs, check-style-panel-inventory.mjs, check-tag-picker-panel-scoping.spec.ts, generate-dataset-provenance.mjs, generate-dataset-provenance.spec.ts, generate-release-contract.mjs, generate-seo-pages.mjs, import-optc-data.spec.ts, captain-ability-coverage.mjs, captain-ability-coverage.spec.ts, dataset-binary.mjs, dataset-provenance.mjs, enemy-mechanic-vocabulary.mjs, import-pipeline.mjs, optc-dataset.mjs, suite-environments.mjs, perf-ability-filters.mjs, perf-budget-report.mjs, perf-explanation-compare.mjs, perf-memory-pressure.mjs, perf-mobile-pickers.mjs drives |
 | `storage:keys` | npm script · test:storage-keys | `test:storage-keys` |
 | `styles:component-budget` | npm script · test:component-style-budget | `test:component-style-budget` |
 | `styles:panel-inventory` | npm script · test:style-panels | `test:style-panels` |
@@ -183,6 +183,7 @@ and when a `test:` script is not a lane.
 | `test:ability-catalogue` | lane · ability-catalogue | the `ability-catalogue` lane |
 | `test:ability-tags` | lane · ability-tags | the `ability-tags` lane |
 | `test:actions-pins` | lane · actions-pins | the `actions-pins` lane |
+| `test:app-contrast` | lane · app-contrast | the `app-contrast` lane |
 | `test:branch-cleanup` | lane · branch-cleanup | the `branch-cleanup` lane |
 | `test:captain-contracts` | lane · captain-contracts | the `captain-contracts` lane |
 | `test:ci` | workflow · test.yml | the test.yml workflow |
@@ -259,6 +260,7 @@ and when a `test:` script is not a lane.
 | `test:worker-bundling` | lane · worker-bundling | the `worker-bundling` lane |
 | `test:worker-protocols` | lane · worker-protocols | the `worker-protocols` lane |
 | `test:workflow-budgets` | lane · workflow-budgets | the `workflow-budgets` lane |
+| `theme:app-contrast` | npm script · test:app-contrast | `test:app-contrast` |
 | `theme:overlay-contrast` | npm script · test:overlay-contrast | `test:overlay-contrast` |
 | `verify:local` | workflow · docs-integrity.yml, test.yml | the docs-integrity.yml, test.yml workflow |
 | `verify:local:full` | workflow · test.yml | the test.yml workflow |

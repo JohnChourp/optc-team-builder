@@ -357,6 +357,7 @@ describe('ci-check-routing', () => {
       'e2e-triage',
       'pwa-shell',
       'overlay-contrast',
+      'app-contrast',
       'ionic-host-property',
       'dataset-measurements',
       'unresolved-clauses',

@@ -22,7 +22,19 @@ import { fileURLToPath } from 'node:url';
  *      because "always English" is a real decision and an accident looks identical;
  *   C. every allowlist entry still exists and still holds a hard-coded locale, so
  *      the list cannot outlive the code it excuses;
- *   D. no `Intl.*` formatter is constructed with `undefined` or no locale at all.
+ *   D. no `Intl.*` formatter is constructed with `undefined` or no locale at all;
+ *   E. no `toFixed` outside a listed site, because its output is locale-blind.
+ *
+ * 869f13epu added E, after a THIRD spelling of the same defect was found. Captain
+ * Coverage rendered a leader boost with `String(Number(value.toFixed(3)))`, which
+ * prints `2.5` in every language - so a Greek reader, who writes `2,5`, saw an
+ * English decimal separator on the result card. Rules A-D never had a chance: this
+ * one is arithmetic plus `String`, and names neither `toLocale*` nor `Intl`.
+ *
+ * E is an ALLOWLIST rather than a pattern, because "a `toFixed` whose result reaches
+ * a template" cannot be decided from the text. The list is short, every entry says
+ * why that site is allowed to be locale-blind, and adding a `toFixed` anywhere else
+ * fails until somebody writes the reason down.
  *
  * 869f13epb added D. Rules A-C read `toLocale*` CALL SITES, and the project's one
  * date was formatted by an `Intl.DateTimeFormat(undefined, …)` CONSTRUCTION - the
@@ -49,6 +61,37 @@ const HARD_CODED = /\.toLocale(?:String|DateString|TimeString)\(\s*['"]([a-zA-Z-
  * Both mean "the browser's locale". A `formattingLanguage()` or a quoted locale
  * is what a bound site looks like, and neither matches.
  */
+const TO_FIXED = /\.toFixed\s*\(/gu;
+
+/** Sites allowed to format without the interface language, each with the reason. */
+export const FIXED_PRECISION_ALLOWLIST = [
+  {
+    file: 'src/app/core/services/update-payload-size.utils.ts',
+    reason:
+      'Builds a size string whose own note records that it must read identically in both languages, so that "8.7 MB" in a bug report means one thing.',
+  },
+  {
+    file: 'src/app/core/services/auto-team-builder.utils.ts',
+    reason:
+      'Rounds recencyScore for storage and comparison. The value is never rendered; it is a sort key.',
+  },
+  {
+    file: 'src/app/pages/auto-team-builder/auto-team-builder-debug-report.utils.ts',
+    reason:
+      'The Copy debug report is a maintainer artifact pasted into issues, so it stays in one fixed form whatever the reader chose.',
+  },
+  {
+    file: 'src/app/pages/crew-forge/crew-forge.page.html',
+    reason:
+      'A whole-number percentage with no separator to get wrong: toFixed(0) cannot differ between the two languages.',
+  },
+  {
+    file: 'src/app/pages/auto-team-builder-rumble/auto-team-builder-rumble.page.ts',
+    reason:
+      'Guarded by Number.isInteger and handed to toLocaleString(formattingLanguage()) on the branch that renders, so the locale is already bound.',
+  },
+];
+
 const BARE_INTL =
   /new\s+Intl\.(NumberFormat|DateTimeFormat|RelativeTimeFormat|ListFormat|PluralRules|Collator|Segmenter|DisplayNames)\s*\(\s*(?:\)|undefined\b|\{)/gu;
 
@@ -89,10 +132,22 @@ function stripComments(contents) {
   return contents.replace(/\/\*[\s\S]*?\*\//gu, '').replace(/^\s*\/\/.*$/gmu, '');
 }
 
-export function checkLocaleFormatting({ sources, allowlist = FIXED_LOCALE_ALLOWLIST }) {
+export function checkLocaleFormatting({
+  sources,
+  allowlist = FIXED_LOCALE_ALLOWLIST,
+  /*
+   * Defaults to EMPTY, unlike `allowlist`. A caller that forgets it gets a guard
+   * that excuses nothing rather than one that silently excuses five files, and the
+   * existing rule A-C specs drive this function with two-file fixtures where the
+   * real list's entries are all legitimately absent.
+   */
+  precisionAllowlist = [],
+}) {
   const errors = [];
   const allowed = new Map(allowlist.map((entry) => [entry.file, entry]));
   const seen = new Set();
+  const precisionAllowed = new Set(precisionAllowlist.map((entry) => entry.file));
+  const precisionSeen = new Set();
 
   for (const [file, raw] of sources) {
     const contents = stripComments(raw);
@@ -132,6 +187,16 @@ export function checkLocaleFormatting({ sources, allowlist = FIXED_LOCALE_ALLOWL
         `${file} constructs Intl.${match[1]} with no locale. Pass formattingLanguage() so the value follows the chosen language, not the browser's.`,
       );
     }
+
+    /* E. */
+    if (TO_FIXED.test(contents) && !precisionAllowed.has(file)) {
+      errors.push(
+        `${file} uses toFixed, whose output is the same in every language. Use toLocaleString(formattingLanguage()) when a reader sees it, or add the file to FIXED_PRECISION_ALLOWLIST with the reason it must stay locale-blind.`,
+      );
+    }
+
+    TO_FIXED.lastIndex = 0;
+    precisionSeen.add(file);
   }
 
   /* C. */
@@ -152,12 +217,30 @@ export function checkLocaleFormatting({ sources, allowlist = FIXED_LOCALE_ALLOWL
     }
   }
 
+  /* E's own upkeep: an allowlisted file that no longer uses toFixed, or is gone. */
+  for (const entry of precisionAllowlist) {
+    if (!sources.has(entry.file)) {
+      errors.push(`${entry.file} is allowlisted for fixed precision but is not a tracked source file.`);
+      continue;
+    }
+
+    if (precisionSeen.has(entry.file) && !TO_FIXED.test(stripComments(sources.get(entry.file) ?? ''))) {
+      errors.push(`${entry.file} is allowlisted for fixed precision but no longer uses toFixed. Remove the entry.`);
+    }
+
+    TO_FIXED.lastIndex = 0;
+
+    if (!entry.reason || entry.reason.trim().length < 20) {
+      errors.push(`${entry.file} needs a substantive reason in FIXED_PRECISION_ALLOWLIST.`);
+    }
+  }
+
   return { errors };
 }
 
 function main() {
   const sources = readSources(listSourceFiles());
-  const { errors } = checkLocaleFormatting({ sources });
+  const { errors } = checkLocaleFormatting({ sources, precisionAllowlist: FIXED_PRECISION_ALLOWLIST });
 
   if (errors.length) {
     console.error('locale formatting check failed:\n');

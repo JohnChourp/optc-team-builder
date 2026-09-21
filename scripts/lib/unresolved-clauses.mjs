@@ -46,8 +46,25 @@ function hasStructuredTargets(condition) {
  * roster. A handful of ids is enough to go and look at one.
  */
 export function collectUnresolvedClauses(details, { maxCharacterIdsPerItem = 5 } = {}) {
+  return collectUnresolvedClauseStats(details, { maxCharacterIdsPerItem }).items;
+}
+
+/**
+ * The same walk, plus the DENOMINATORS.
+ *
+ * 869f13er3. Until now this counted only what fell through, which makes the number
+ * unreadable on its own: 587 unresolved clauses is a different fact depending on
+ * whether the dataset holds 700 of them or 7,000. The subtask asks for the
+ * PROPORTION to be tracked rather than the count, and a proportion needs both.
+ *
+ * The denominators are counted in the same pass and by the same walk, so they
+ * cannot drift from the numerators they divide.
+ */
+export function collectUnresolvedClauseStats(details, { maxCharacterIdsPerItem = 5 } = {}) {
   const mapped = new Set(MAPPED_TRIGGER_CLAUSES);
   const byClause = new Map();
+  let totalTriggerClauses = 0;
+  let totalTeamConditions = 0;
 
   const record = (kind, clause, characterId) => {
     const text = String(clause ?? '').trim();
@@ -76,6 +93,8 @@ export function collectUnresolvedClauses(details, { maxCharacterIdsPerItem = 5 }
     for (const entry of detail?.captainAbilityCoverage?.entries ?? []) {
       for (const tier of entry?.tiers ?? []) {
         for (const trigger of tier?.triggerConditions ?? []) {
+          totalTriggerClauses += 1;
+
           const clause = trigger?.rawClause;
 
           if (clause && !mapped.has(String(clause))) {
@@ -84,6 +103,8 @@ export function collectUnresolvedClauses(details, { maxCharacterIdsPerItem = 5 }
         }
 
         for (const condition of tier?.teamConditions ?? []) {
+          totalTeamConditions += 1;
+
           if (!hasStructuredTargets(condition) && condition?.rawClause) {
             record('teamConditionRawOnly', condition.rawClause, characterId);
           }
@@ -94,29 +115,57 @@ export function collectUnresolvedClauses(details, { maxCharacterIdsPerItem = 5 }
 
   // Most-repeated first, then alphabetical, so the file is stable between runs and the clause worth
   // mapping next is the one at the top.
-  return [...byClause.values()].sort(
+  const items = [...byClause.values()].sort(
     (left, right) =>
       right.instances - left.instances ||
       left.kind.localeCompare(right.kind) ||
       left.clause.localeCompare(right.clause),
   );
+
+  return { items, totalTriggerClauses, totalTeamConditions };
+}
+
+/** A proportion in [0, 1], rounded to four places; `0` when there is nothing to divide. */
+function share(part, whole) {
+  return whole > 0 ? Number((part / whole).toFixed(4)) : 0;
 }
 
 export function createUnresolvedClauseCatalog(details, sourceVersion, generatedAt, options = {}) {
-  const items = collectUnresolvedClauses(details, options);
+  const { items, totalTriggerClauses, totalTeamConditions } = collectUnresolvedClauseStats(
+    details,
+    options,
+  );
   const byKind = {};
 
   for (const item of items) {
     byKind[item.kind] = (byKind[item.kind] ?? 0) + item.instances;
   }
 
+  const total = items.reduce((sum, item) => sum + item.instances, 0);
+  const totalClauses = totalTriggerClauses + totalTeamConditions;
+
   return {
     generatedAt,
     sourceVersion,
     // `total` counts INSTANCES, matching optc-unresolved-images.json, where total is how much is
     // missing rather than how many kinds of thing are.
-    total: items.reduce((sum, item) => sum + item.instances, 0),
+    total,
     distinctClauses: items.length,
+    /**
+     * 869f13er3. The denominators, so `total` is readable without going and counting.
+     * A rise in `total` after an upstream release means one thing if `totalClauses` rose
+     * with it and another if it did not, and nothing here said which.
+     */
+    totals: {
+      triggerClauses: totalTriggerClauses,
+      teamConditions: totalTeamConditions,
+      clauses: totalClauses,
+    },
+    unresolvedShare: {
+      triggerClause: share(byKind.triggerClause ?? 0, totalTriggerClauses),
+      teamConditionRawOnly: share(byKind.teamConditionRawOnly ?? 0, totalTeamConditions),
+      overall: share(total, totalClauses),
+    },
     byKind: Object.fromEntries(Object.entries(byKind).sort(([left], [right]) => left.localeCompare(right))),
     items,
   };
