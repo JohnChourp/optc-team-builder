@@ -90,3 +90,22 @@
 .buff-focus-chip ion-icon {
   font-size: 0.95rem;
 }
+
+/*
+ * 869f13epp. A 44px tap target with the paint left alone - the same treatment the other
+ * small icon buttons get. A 22px remove icon inside a chip cannot grow without changing
+ * the chip, so the target is expanded instead.
+ */
+.buff-focus-chip button {
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(44px, 100%);
+    height: max(44px, 100%);
+    transform: translate(-50%, -50%);
+  }
+}

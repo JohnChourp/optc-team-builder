@@ -65,3 +65,57 @@
   justify-content: center;
   margin-top: 16px;
 }
+
+/*
+ * 869f13epp. A 44px TAP TARGET without changing a pixel of what is painted.
+ *
+ * The visual size above is deliberate and its reason is recorded with it - this
+ * badge has to stay legible against whatever portrait is behind it, and the card
+ * it sits in is ~110px wide at 390px, so a 44px badge would be 40% of the card.
+ * Raising the paint would trade a real problem for a worse one.
+ *
+ * A target is the area that accepts the pointer, not the area that is inked, so
+ * an invisible centred box satisfies the minimum with no layout cost. `::before`
+ * rather than `::after`, which this element already uses.
+ *
+ * Neighbours are ~110px apart in both axes, so 44px boxes centred on them do not
+ * overlap - verified with `elementFromPoint`, which is the only check that can
+ * see an overlap at all.
+ */
+.character-thumb-card__favorite {
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(44px, 100%);
+    height: max(44px, 100%);
+    transform: translate(-50%, -50%);
+  }
+}
+
+/*
+ * 869f13epp. A 44px TAP TARGET, with the paint left alone.
+ *
+ * These are small icon buttons inside dense rows and cards. Raising what is painted
+ * would change the density of the screen they sit in; a target is the area that accepts
+ * the pointer, not the area that is inked, so an invisible centred box meets the floor
+ * at no layout cost. `::before`, because several of these already use `::after`.
+ *
+ * `position: relative` is added only where the rule does not already position the
+ * element - an absolutely-positioned button already provides the containing block, and
+ * overriding it would move the button.
+ */
+.character-thumb-card__membership-action {
+  position: relative;
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(44px, 100%);
+    height: max(44px, 100%);
+    transform: translate(-50%, -50%);
+  }
+}
+

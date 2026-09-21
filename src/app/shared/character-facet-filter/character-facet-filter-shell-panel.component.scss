@@ -63,7 +63,9 @@
   min-width: 0;
 }
 
+/* 869f13epp. A type button in a wrapping row has the space for the declared 44px floor. */
 .character-facet-filter__option {
+  min-height: 44px;
   flex: 0 1 auto;
   padding: 7px 14px;
   border: 1px solid rgba(248, 251, 255, 0.22);

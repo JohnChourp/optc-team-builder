@@ -358,6 +358,7 @@ describe('ci-check-routing', () => {
       'pwa-shell',
       'overlay-contrast',
       'app-contrast',
+      'touch-targets',
       'ionic-host-property',
       'dataset-measurements',
       'unresolved-clauses',

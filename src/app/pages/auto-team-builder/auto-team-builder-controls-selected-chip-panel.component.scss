@@ -7,7 +7,9 @@
   margin-top: 2px;
 }
 
+/* 869f13epp. A chip in a wrapping row has the space for the declared 44px floor. */
 .selected-value-chip {
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   gap: 6px;

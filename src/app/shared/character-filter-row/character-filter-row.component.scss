@@ -55,7 +55,8 @@ ion-select {
   --border-radius: 12px;
   --color: #f8fbff;
   --highlight-color-focused: rgba(245, 200, 76, 0.8);
-  min-height: 38px;
+  /* 869f13epp. 38 -> 44: the declared touch-target floor. */
+  min-height: 44px;
 }
 
 .character-filter-toggle {
@@ -65,7 +66,8 @@ ion-select {
   flex: 1 1 190px;
   gap: 10px;
   min-width: min(100%, 180px);
-  min-height: 43px;
+  /* 869f13epp. 43 -> 44: the declared touch-target floor. */
+  min-height: 44px;
   margin-top: 18px;
   padding: 4px 8px 4px 12px;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -81,7 +83,8 @@ ion-select {
 .character-filter-clear {
   align-self: start;
   flex: 0 0 auto;
-  min-height: 38px;
+  /* 869f13epp. 38 -> 44: the declared touch-target floor. */
+  min-height: 44px;
   margin-top: 18px;
 }
 

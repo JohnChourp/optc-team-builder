@@ -36,7 +36,8 @@
 }
 
 .manual-panel-toggle__button {
-  min-height: 40px;
+  /* 869f13epp. 40 -> 44: the declared touch-target floor. */
+  min-height: 44px;
   padding: 0 12px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 14px;

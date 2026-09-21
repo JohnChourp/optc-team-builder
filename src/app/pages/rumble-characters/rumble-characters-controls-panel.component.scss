@@ -37,7 +37,8 @@
   --border-color: rgba(255, 255, 255, 0.1);
   --border-radius: 12px;
   --color: #f8fbff;
-  min-height: 42px;
+  /* 869f13epp. 42 -> 44: the declared touch-target floor. */
+  min-height: 44px;
 }
 
 .toggle-chip {
@@ -45,7 +46,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  min-height: 42px;
+  /* 869f13epp. 42 -> 44: the declared touch-target floor. */
+  min-height: 44px;
   padding: 6px 10px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 14px;

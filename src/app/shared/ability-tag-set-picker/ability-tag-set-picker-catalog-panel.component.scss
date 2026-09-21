@@ -201,7 +201,8 @@
 .ability-tag-set-picker-modal .ability-tag-set-card__title,
 .character-tag-set-picker-modal .ability-tag-set-card__title {
   /* 24 px is the floor; 28 keeps it clear of sub-pixel layout rounding. */
-  min-height: 28px;
+  /* 869f13epp. 28 -> 44: the declared touch-target floor. */
+  min-height: 44px;
 }
 
 /*
@@ -223,7 +224,8 @@
 /* Ionic's own clear button inside the catalog search is 22 px wide by default. */
 .ability-tag-set-picker-modal .ability-tag-set-catalog__search .searchbar-clear-button,
 .character-tag-set-picker-modal .ability-tag-set-catalog__search .searchbar-clear-button {
-  min-width: 28px;
+  /* 869f13epp. 28 -> 44: the declared touch-target floor. */
+  min-width: 44px;
 }
 
 .ability-tag-set-picker-modal .ability-tag-set-chip__turns,
