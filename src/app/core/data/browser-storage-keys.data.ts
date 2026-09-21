@@ -293,6 +293,14 @@ export const BROWSER_STORAGE_KEYS: readonly BrowserStorageKeyRecord[] = [
     note: 'Search text and sort order on the Saved Teams list.',
   },
   {
+    key: 'firstRunTransferNoticeDismissed',
+    constantName: 'FIRST_RUN_TRANSFER_DISMISSED_KEY',
+    owner: 'src/app/pages/home/first-run-transfer.utils.ts',
+    backend: 'local',
+    classification: 'device-preference',
+    note: 'Whether the reader dismissed the empty-install notice (869f13d6j). A choice about this device, not content, so it is deliberately NOT exported - carrying it to a new install would suppress the notice on exactly the install that needs it.',
+  },
+  {
     key: 'recentErrorLog',
     constantName: 'ERROR_LOG_KEY',
     owner: 'src/app/core/services/error-log.service.ts',

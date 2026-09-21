@@ -94,6 +94,13 @@
   },
   "home": {
     "title": "Home",
+    "firstRunTransfer": {
+      "title": "This install is empty",
+      "body": "Nothing is saved here yet. If you have used OPTC Team Builder somewhere else - in a browser, or in another install of the app - your teams and boxes are still there: they live in that browser's storage, and nothing can read it from here. Bring them across with Google Drive sync, or with a file you exported from Settings.",
+      "drive": "Set up Drive sync",
+      "import": "Import a file",
+      "dismiss": "Start fresh"
+    },
     "hero": {
       "eyebrow": "Fan-made OPTC tools",
       "title": "Plan One Piece Treasure Cruise crews faster",

@@ -1,4 +1,7 @@
 import '@angular/compiler';
+import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { socialLogin } from '../../../test-mocks/social-login';
@@ -468,3 +471,98 @@ function encodeJwtPayload(payload: Record<string, unknown>): string {
     .replace(/\//g, '_')
     .replace(/=+$/g, '');
 }
+
+/*
+ * 869f13d63. "Two or three distinct authentication paths depending on where the app runs"
+ * was the premise. Measured 2026-09-21, and the first pass at this got it WRONG in a way
+ * worth recording: a grep for `isNativePlatform` returned zero and the conclusion drawn was
+ * "no platform branch anywhere". This service branches four times - on
+ * `Capacitor.getPlatform()`. A negative assertion over one spelling of a concept proves
+ * nothing about the concept.
+ *
+ * What the four branches actually are:
+ *
+ *   1. `getWebRedirectUrl` - web only, because only the web flow has a redirect URL;
+ *   2. `completeGooglePopupRedirectIfNeeded` - web only, same reason;
+ *   3. `getPlatform() === 'ios'` -> `googleIosClientId` - UNREACHABLE today. It needs a
+ *      native Capacitor iOS app, and there is none since 2026-09-20. On iPhone the PWA
+ *      reports `web`. Kept, not deleted: `docs/ios-platform-footprint.md` records that
+ *      `APP_GOOGLE_IOS_CLIENT_ID` is supplied by four workflows including the one that
+ *      builds the WEBSITE, and that removing "the iOS things" by name would take Google
+ *      sign-in down on the web app;
+ *   4. `isBackendSessionEnabled` - web AND a configured URL. There is no such URL: it is
+ *      the empty string in production and no workflow sets it, so the third "path" the
+ *      task counted is unreachable in every shipped build.
+ *
+ * So the answer to the task: **the things it asked to compare cannot differ.** Session
+ * lifetime, expiry behaviour and Drive reach are decided by code with no platform branch at
+ * all - `refreshAuthorizationState` and the two Drive services. The branches that exist are
+ * about how a token is OBTAINED, never about how long it lasts or what it reaches.
+ *
+ * These assertions keep that true. In this EXISTING spec rather than a new lane: the
+ * defect has not recurred, so it has not earned one.
+ */
+describe('what the three sign-in paths can and cannot differ on', () => {
+  const read = (file: string) => readFileSync(file, 'utf8');
+
+  const ACCOUNT = 'src/app/core/services/google-account.service.ts';
+  const DRIVE = [
+    'src/app/core/services/drive-backup.service.ts',
+    'src/app/core/services/drive-sync-state.service.ts',
+  ];
+
+  it('reads the real files, so nothing below passes vacuously', () => {
+    for (const file of [ACCOUNT, ...DRIVE]) {
+      expect(read(file).length, file).toBeGreaterThan(1000);
+    }
+  });
+
+  it('decides Drive reach with no platform branch at all', () => {
+    // Both spellings, because the first pass at this checked only one and was wrong.
+    for (const file of DRIVE) {
+      const source = read(file);
+
+      expect(source, `${file} branches on platform`).not.toMatch(/isNativePlatform|getPlatform\s*\(/u);
+    }
+  });
+
+  it('decides session lifetime and expiry with no platform branch', () => {
+    // The slice is guarded: if refreshAuthorizationState is renamed, this fails loudly
+    // rather than silently checking an empty string.
+    const source = read(ACCOUNT);
+    const from = source.indexOf('private async refreshAuthorizationState(');
+    const to = source.indexOf('\n  private ', from + 10);
+
+    expect(from, 'refreshAuthorizationState must exist').toBeGreaterThan(-1);
+    expect(to, 'its end must be findable').toBeGreaterThan(from);
+
+    const body = source.slice(from, to);
+    expect(body.length, 'a slice that misses makes this trivially pass').toBeGreaterThan(900);
+    expect(body).not.toMatch(/isNativePlatform|getPlatform\s*\(/u);
+  });
+
+  it('keeps every platform branch in the one place that obtains a token', () => {
+    const source = read(ACCOUNT);
+    const branches = [...source.matchAll(/Capacitor\.getPlatform\(\)\s*(?:!==?|===?)\s*'(\w+)'/gu)].map((m) => m[1]);
+
+    // Four, and no more. A fifth means somebody made a NEW thing platform-dependent.
+    expect(branches.sort()).toEqual(['ios', 'web', 'web', 'web']);
+  });
+
+  it('ships with the backend session path unreachable', () => {
+    // The third "path". `git grep -l` exits 1 when nothing matches, which is the answer
+    // wanted here - so the exit code is what is asserted, not stdout.
+    let matched = true;
+    try {
+      execFileSync('git', ['grep', '-l', 'APP_GOOGLE_DRIVE_BACKEND_URL', '--', '.github/workflows'], {
+        encoding: 'utf8',
+        stdio: 'pipe',
+      });
+    } catch {
+      matched = false;
+    }
+
+    expect(matched, 'no workflow may configure a backend that is frozen').toBe(false);
+    expect(read(ACCOUNT)).toMatch(/getPlatform\(\) === 'web' && this\.getBackendUrl\(\)\.length > 0/u);
+  });
+});

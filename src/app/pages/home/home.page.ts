@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
 import { IonButton } from '@ionic/angular/ion-button';
@@ -31,6 +31,11 @@ import {
   type GoogleAccountProfile,
 } from '../../core/services/google-account.service';
 import { HomeStylePanelsComponent } from './home-style-panels.component';
+import { UserDataTransferService } from '../../core/services/user-data-transfer.service';
+import {
+  FIRST_RUN_TRANSFER_DISMISSED_KEY,
+  shouldShowFirstRunTransferNotice,
+} from './first-run-transfer.utils';
 
 interface HomeAction {
   color: 'light' | 'warning';
@@ -73,6 +78,43 @@ interface HomeHeroCharacter {
 })
 export class HomePage {
   private readonly googleAccount = inject(GoogleAccountService);
+  private readonly userDataTransfer = inject(UserDataTransferService);
+
+  /**
+   * 869f13d6j. Shown only on an installation that holds nothing of the reader's.
+   *
+   * It detects nothing about other installations - reading another origin's storage is
+   * impossible by design - so it states the one fact it has, names the two routes that
+   * work, and goes away when dismissed.
+   */
+  private readonly transferNoticeDismissed = signal(this.readTransferNoticeDismissed());
+
+  public readonly showFirstRunTransferNotice = computed(() =>
+    shouldShowFirstRunTransferNotice({
+      summary: this.userDataTransfer.getSyncScopeSummary(),
+      dismissed: this.transferNoticeDismissed(),
+      signedIn: this.googleAccountSignedIn(),
+    }),
+  );
+
+  public dismissFirstRunTransferNotice(): void {
+    this.transferNoticeDismissed.set(true);
+
+    try {
+      globalThis.localStorage?.setItem(FIRST_RUN_TRANSFER_DISMISSED_KEY, 'true');
+    } catch {
+      // A reader who cannot persist the dismissal still gets it dismissed for this visit.
+      // Nagging them again next launch is a smaller harm than an error out of a click.
+    }
+  }
+
+  private readTransferNoticeDismissed(): boolean {
+    try {
+      return globalThis.localStorage?.getItem(FIRST_RUN_TRANSFER_DISMISSED_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  }
 
   public readonly accountIcon = personCircleOutline;
   public readonly accountRoute = '/tabs/account';
