@@ -77,6 +77,7 @@ and when a `test:` script is not a lane.
 | Script | Reached by | What breaks without it |
 | --- | --- | --- |
 | `a11y:modal-labels` | npm script · test:modal-labels | `test:modal-labels` |
+| `a11y:touch-targets` | npm script · test:touch-targets | `test:touch-targets` |
 | `abilities:catalogue-check` | npm script · test:ability-catalogue | `test:ability-catalogue` |
 | `actions:ci-triggers` | lane · ci-triggers | the `ci-triggers` lane |
 | `actions:pins` | lane · actions-pins | the `actions-pins` lane |
@@ -254,6 +255,7 @@ and when a `test:` script is not a lane.
 | `test:support-claims` | lane · support-claims | the `support-claims` lane |
 | `test:support-ladder` | lane · support-ladder | the `support-ladder` lane |
 | `test:tag-picker-scoping` | lane · tag-picker-scoping | the `tag-picker-scoping` lane |
+| `test:touch-targets` | lane · touch-targets | the `touch-targets` lane |
 | `test:unresolved-clauses` | lane · unresolved-clauses | the `unresolved-clauses` lane |
 | `test:unused-members` | lane · unused-members | the `unused-members` lane |
 | `test:whats-new` | lane · whats-new | the `whats-new` lane |

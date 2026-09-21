@@ -39,7 +39,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 38px;
+  /* 869f13epp. 38 -> 44: the declared touch-target floor. */
+  min-height: 44px;
   padding: 8px 12px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.06);

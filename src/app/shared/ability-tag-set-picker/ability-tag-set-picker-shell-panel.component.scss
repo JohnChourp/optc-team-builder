@@ -158,7 +158,8 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  min-height: 40px;
+  /* 869f13epp. 40 -> 44: the declared touch-target floor. */
+  min-height: 44px;
   padding: 10px 14px;
   border: 0;
   border-radius: 14px;

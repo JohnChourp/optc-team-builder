@@ -41,7 +41,9 @@
   gap: 6px;
 }
 
+/* 869f13epp. A tier chip is an action and owes the declared 44px floor. */
 .ability-rank-toggle__chip {
+  min-height: 44px;
   appearance: none;
   padding: 6px 12px;
   border: 1px solid rgba(255, 255, 255, 0.18);

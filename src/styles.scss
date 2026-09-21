@@ -117,8 +117,55 @@ ion-content {
 }
 
 .builder-intro-card__toggle,
+
+/*
+ * Touch targets: 44px in BOTH dimensions.
+ *
+ * 869f13epp. `docs/device-targets.md` declares the minimum; this is where the
+ * families that miss it are raised, once, rather than per component - the lesson
+ * the overlay-contrast ramp taught after being patched twice at call sites.
+ *
+ * The subtask predicted NARROW targets, from `min-height: 44` appearing in 7
+ * stylesheets against `min-width: 44` in 1. Measured from rendered geometry at
+ * 390px, that is wrong: **0** controls are tall-but-narrow. 106 of 124 failures
+ * are small in both dimensions, and most of the rest are Ionic controls sitting
+ * at their own defaults - `ion-button` at **36px**, `size="small"` at **27px**,
+ * `ion-select` and inputs at **38px**. Those defaults are the single biggest
+ * class, and they are fixed here in four rules.
+ *
+ * Set on the HOST, not through an Ionic custom property: `--padding` and friends
+ * are consumed inside the shadow DOM and never reach the element whose geometry
+ * a tap is measured against. That is this repository's own documented trap.
+ */
+ion-button,
+ion-select,
+ion-input,
+ion-searchbar,
+ion-toggle {
+  min-height: 44px;
+}
+
+/*
+ * The ONE genuinely narrow control in the app, and it only became visible after the
+ * heights were fixed: an `ion-toggle` renders its track 36px wide. Everything else
+ * that failed was short, not narrow - the opposite of what the stylesheet predicted.
+ */
+ion-toggle {
+  min-width: 44px;
+}
+
+/*
+ * Ionic centres its own native control inside the host, so raising the host is
+ * enough for height. Width is already past 44px everywhere measured - a control
+ * narrow enough to miss did not turn up at all.
+ */
+ion-button::part(native) {
+  min-height: 44px;
+}
+
+/* 869f13epp. Was 32px; a disclosure toggle is an action and owes the full 44. */
 .section-details-toggle {
-  min-height: 32px;
+  min-height: 44px;
   padding: 4px 12px;
   border: 1px solid rgba(var(--ion-color-secondary-rgb), 0.4);
   border-radius: 999px;
@@ -137,7 +184,9 @@ ion-content {
 }
 
 /* 869f13c5b. An in-app link to a public guide, the same look as the compare card's guide link. */
+/* 869f13epp. A standalone guide link is an action, not inline prose: it owes the 44px floor. */
 .guide-link {
+  min-height: 44px;
   width: fit-content;
   color: var(--ion-color-secondary);
   font-size: 0.86rem;

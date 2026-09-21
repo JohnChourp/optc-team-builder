@@ -37,3 +37,29 @@
   border-radius: 50%;
   object-fit: cover;
 }
+
+/*
+ * 869f13epp. A 44px TAP TARGET, with the paint left alone.
+ *
+ * These are small icon buttons inside dense rows and cards. Raising what is painted
+ * would change the density of the screen they sit in; a target is the area that accepts
+ * the pointer, not the area that is inked, so an invisible centred box meets the floor
+ * at no layout cost. `::before`, because several of these already use `::after`.
+ *
+ * `position: relative` is added only where the rule does not already position the
+ * element - an absolutely-positioned button already provides the containing block, and
+ * overriding it would move the button.
+ */
+.manual-lock-chip__icon-button {
+  position: relative;
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(44px, 100%);
+    height: max(44px, 100%);
+    transform: translate(-50%, -50%);
+  }
+}
+

@@ -292,6 +292,10 @@ export const SCRIPT_SUITES = {
     label: 'App surface contrast tests',
     command: 'npm run test:app-contrast',
   },
+  'touch-targets': {
+    label: 'Touch target size tests',
+    command: 'npm run test:touch-targets',
+  },
   'ionic-host-property': {
     label: 'Ionic host shape property tests',
     command: 'npm run test:ionic-host-property',
@@ -1617,6 +1621,15 @@ function isIonicHostPropertyPath(filePath) {
  * the theme, but ANY component stylesheet can declare its own colour-on-background pair,
  * which is exactly what this lane judges.
  */
+/* Any stylesheet can size a control, so the trigger is every .scss plus the guard itself. */
+function isTouchTargetPath(filePath) {
+  return (
+    filePath.endsWith('.scss') ||
+    filePath === 'scripts/check-touch-targets.mjs' ||
+    filePath === 'scripts/check-touch-targets.spec.ts'
+  );
+}
+
 function isAppContrastPath(filePath) {
   return (
     filePath.endsWith('.scss') ||
@@ -2234,6 +2247,11 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
     if (isWhatsNewPath(filePath)) {
       categories.add('whats-new');
       addScriptSuite(scriptSuites, 'whats-new');
+    }
+
+    if (isTouchTargetPath(filePath)) {
+      categories.add('touch-targets');
+      addScriptSuite(scriptSuites, 'touch-targets');
     }
 
     if (isAppContrastPath(filePath)) {

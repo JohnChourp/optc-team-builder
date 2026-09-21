@@ -16,7 +16,8 @@
   display: inline-grid;
   justify-items: center;
   gap: 2px;
-  min-width: 42px;
+  /* 869f13epp. 42 -> 44: the declared touch-target floor. */
+  min-width: 44px;
   padding: 5px 6px;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.08);

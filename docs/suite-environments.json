@@ -844,6 +844,16 @@
       "specCount": 1
     },
     {
+      "id": "touch-targets",
+      "label": "Touch target size tests",
+      "command": "npm run test:touch-targets",
+      "environment": "node",
+      "environments": [
+        "node"
+      ],
+      "specCount": 1
+    },
+    {
       "id": "unresolved-clauses",
       "label": "Unresolved clause record tests",
       "command": "npm run test:unresolved-clauses",
