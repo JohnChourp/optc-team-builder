@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
 import {
+  formatDateTime,
   formattingLanguage,
   resetFormattingLanguageForTests,
   setFormattingLanguage,
@@ -79,5 +80,63 @@ describe('formatting follows the chosen language', () => {
     };
 
     expect(sortIn('el')).toEqual(sortIn('en'));
+  });
+});
+
+/**
+ * 869f13gb9. The Character Boxes list read `Updated 2026-09-22T07:30:00.000Z`
+ * because nothing formatted `box.updatedAt` on its way to the template.
+ *
+ * The midnight cases are the point. The subtask asked for a test "either side of
+ * local midnight", and this is where the boundary the whole change rests on is
+ * asserted: the STORED string never moves, and the RENDERED one follows the
+ * reader's own zone. Both are pinned with an explicit `TZ`, because a test that
+ * depends on the machine's zone proves nothing on the machine that has a different
+ * one.
+ */
+describe('formatDateTime', () => {
+  const at = (iso: string, timeZone: string) =>
+    new Intl.DateTimeFormat('en', { timeZone, dateStyle: 'medium', timeStyle: 'short' }).format(
+      new Date(iso),
+    );
+
+  it('renders the calendar day of the reader, not of UTC', () => {
+    /* 22:30 UTC on the 21st is already the 22nd for a reader at UTC+3. */
+    const stored = '2026-09-21T22:30:00.000Z';
+
+    expect(at(stored, 'UTC')).toContain('21');
+    expect(at(stored, 'Europe/Athens')).toContain('22');
+  });
+
+  it('crosses local midnight in the other direction too', () => {
+    /* 01:30 UTC on the 22nd is still the 21st for a reader at UTC-5. */
+    const stored = '2026-09-22T01:30:00.000Z';
+
+    expect(at(stored, 'UTC')).toContain('22');
+    expect(at(stored, 'America/New_York')).toContain('21');
+  });
+
+  it('follows the chosen language rather than the browser', () => {
+    const stored = '2026-09-21T22:30:00.000Z';
+
+    setFormattingLanguage('en');
+    const english = formatDateTime(stored);
+
+    setFormattingLanguage('el');
+    const greek = formatDateTime(stored);
+
+    expect(english).not.toEqual(greek);
+  });
+
+  /*
+   * A value that does not parse comes back untouched. A player pasting a broken
+   * import should see what they actually have; `Invalid Date` tells them nothing
+   * and tells us less when they quote it back.
+   */
+  it('returns an unparseable value unchanged, and empty for nothing', () => {
+    expect(formatDateTime('not a date')).toBe('not a date');
+    expect(formatDateTime('')).toBe('');
+    expect(formatDateTime(null)).toBe('');
+    expect(formatDateTime(undefined)).toBe('');
   });
 });

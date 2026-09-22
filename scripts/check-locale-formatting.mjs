@@ -23,7 +23,9 @@ import { fileURLToPath } from 'node:url';
  *   C. every allowlist entry still exists and still holds a hard-coded locale, so
  *      the list cannot outlive the code it excuses;
  *   D. no `Intl.*` formatter is constructed with `undefined` or no locale at all;
- *   E. no `toFixed` outside a listed site, because its output is locale-blind.
+ *   E. no `toFixed` outside a listed site, because its output is locale-blind;
+ *   F. no TEMPLATE interpolates a raw timestamp field, because a value that is
+ *      never formatted has no call site for A-E to read.
  *
  * 869f13epu added E, after a THIRD spelling of the same defect was found. Captain
  * Coverage rendered a leader boost with `String(Number(value.toFixed(3)))`, which
@@ -41,6 +43,14 @@ import { fileURLToPath } from 'node:url';
  * identical defect, in a shape the guard could not see. It sat in
  * `account.page.ts` through the whole of 869f17h2x's pass and through this guard
  * going green. A guard that covers one spelling of a defect certifies the other.
+ *
+ * 869f13gb9 added F, after a FOURTH spelling was found - and this one had no call
+ * site at all. `character-boxes.page.html` interpolated `box.updatedAt` directly into
+ * a translated sentence, so the Character Boxes list read `Updated
+ * 2026-09-22T07:30:00.000Z` in both languages. Rules A-E each read a formatter being
+ * INVOKED; none of them can see a formatter that was never reached for. So F reads the
+ * `.html` templates and fails on a `{{ ... }}` that interpolates a field whose name
+ * says it is a timestamp, unless something is called on it.
  *
  * `localeCompare` is deliberately NOT covered. Character names come from the
  * community database and are Latin script whatever the interface language is, so
@@ -104,6 +114,47 @@ export const FIXED_LOCALE_ALLOWLIST = [
       'Builds untranslated English sentences from dataset text - "50% chance to resist Poison". The number is part of an English phrase, so formatting it as Greek would produce a sentence in neither language.',
   },
 ];
+
+/** Field names that hold a stored timestamp. Suffix-bound, never a substring. */
+const TIMESTAMP_FIELDS =
+  'updatedAt|createdAt|savedAt|generatedAt|deletedAt|syncedAt|importedAt|lastSeenAt';
+
+const INTERPOLATION = /\{\{([\s\S]*?)\}\}/gu;
+
+/**
+ * Quoted text inside an interpolation is data, not an expression.
+ *
+ * The translation KEY is the trap: `t('list.updatedAt', …)` contains the literal
+ * `list.updatedAt`, which reads exactly like a field reference. Blanking string
+ * bodies to spaces rather than deleting them keeps every later index aligned with
+ * the original text, so the "is it a call argument?" lookbehind still sees the real
+ * neighbouring characters.
+ */
+function blankStringLiterals(expression) {
+  return expression.replace(/'[^']*'|"[^"]*"|`[^`]*`/gu, (literal) => ' '.repeat(literal.length));
+}
+const TIMESTAMP_REFERENCE = new RegExp(`\\b[A-Za-z_$][\\w$]*\\.(?:${TIMESTAMP_FIELDS})\\b`, 'gu');
+
+/**
+ * Is this timestamp reference formatted, or handed over raw?
+ *
+ * The FIRST attempt at rule F asked whether the interpolation contained a `(`
+ * anywhere, and it was green on the defect that motivated it: the real site is
+ * `{{ t('list.updatedAt', { timestamp: box.updatedAt }) }}`, which contains `t(`
+ * while passing the timestamp through untouched. A call somewhere in the
+ * interpolation says nothing about THIS value.
+ *
+ * So the question is asked of the reference itself: it is formatted when it is the
+ * argument of a call - `formatDateTime(box.updatedAt)`, any helper name - or when a
+ * pipe follows it. Anything else, including sitting in an object literal handed to
+ * a translate call, is raw.
+ */
+function timestampReferenceIsFormatted(interpolation, index, length) {
+  const before = interpolation.slice(0, index);
+  const after = interpolation.slice(index + length);
+
+  return /[\w$]\s*\(\s*$/u.test(before) || /^\s*\|/u.test(after);
+}
 
 export function listSourceFiles(root = projectRoot) {
   return execFileSync('git', ['ls-files', 'src'], { cwd: root, encoding: 'utf8', maxBuffer: 1e8 })
@@ -197,6 +248,24 @@ export function checkLocaleFormatting({
 
     TO_FIXED.lastIndex = 0;
     precisionSeen.add(file);
+
+    /* F. */
+    if (file.endsWith('.html')) {
+      for (const interpolation of contents.matchAll(INTERPOLATION)) {
+        const body = interpolation[1];
+        const expression = blankStringLiterals(body);
+
+        for (const reference of expression.matchAll(TIMESTAMP_REFERENCE)) {
+          if (timestampReferenceIsFormatted(expression, reference.index, reference[0].length)) {
+            continue;
+          }
+
+          errors.push(
+            `${file} interpolates the raw timestamp \`${reference[0]}\` in \`{{${body.trim()}}}\`. A player reads the stored ISO string. Pass it through formatDateTime() so the date follows the chosen language and the reader's own timezone; storage stays UTC.`,
+          );
+        }
+      }
+    }
   }
 
   /* C. */

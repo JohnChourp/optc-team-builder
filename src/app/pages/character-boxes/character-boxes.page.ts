@@ -42,6 +42,7 @@ import {
   type AutoBuildAbilityCatalog,
   type AutoBuildAbilityRequirement,
 } from '../../core/models/auto-team-builder-ability.models';
+import { formatDateTime } from '../../core/i18n/app-locale-format';
 import { AppI18nService } from '../../core/services/app-i18n.service';
 import {
   cloneAbilityFilterTagSetSelection,
@@ -510,6 +511,16 @@ export class CharacterBoxesPage implements OnInit {
     }
 
     this.selectBox(createdBox.id);
+  }
+
+  /**
+   * 869f13gb9. The list rendered `box.updatedAt` raw, so a player read
+   * `Updated 2026-09-22T07:30:00.000Z`. The stored value stays the UTC ISO string
+   * it has always been - it is sorted, compared and carried into the Drive backup -
+   * and only this display hop converts it.
+   */
+  public formatUpdatedAt(value: string): string {
+    return formatDateTime(value);
   }
 
   public selectBox(boxId: string): void {
