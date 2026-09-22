@@ -151,8 +151,8 @@ export function buildEntry({ version, date, added }) {
         count === 1 ? 'του' : 'τους'
       } διαβασμένα και ταξινομημένα όπως κάθε άλλης κάρτας. Τίποτε άλλο δεν άλλαξε σε αυτή την έκδοση.`,
     added: named.map((character) => ({
-      en: `${describeCharacter(character)}, with its Captain Ability, special, sailor ability and potentials read in - so it turns up in the ability filters and in Captain Coverage the same way every other character does.`,
-      el: `${describeCharacterEl(character)}, με το Captain Ability, το special, το sailor ability και τα potentials του διαβασμένα - οπότε εμφανίζεται στα φίλτρα ικανοτήτων και στο Captain Coverage όπως κάθε άλλος χαρακτήρας.`,
+      en: `${describeCharacter(character)}, with its Captain Ability, special, sailor ability and potentials read in - so it turns up in the **ability filters** and on **Captain Coverage** the same way every other character does.`,
+      el: `${describeCharacterEl(character)}, με το Captain Ability, το special, το sailor ability και τα potentials του διαβασμένα - οπότε εμφανίζεται στα **φίλτρα ικανοτήτων** και στο **Captain Coverage** όπως κάθε άλλος χαρακτήρας.`,
     })),
     improved: [],
     fixed: [],
