@@ -1861,8 +1861,12 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
       addScriptSuite(scriptSuites, 'modal-labels');
     }
 
-    /* Any template can hide a derived value behind a static label, so every one routes here. */
-    if (filePath.startsWith('src/app/') && (filePath.endsWith('.html') || filePath.endsWith('.ts'))) {
+    /*
+     * Any template can hide a derived value behind a static label, so every one routes here -
+     * scoped the same way the modal-label guard scopes itself, because a `.ts` that is not a page
+     * or a component carries no template and pulling the suite in for it is noise.
+     */
+    if (touchesModalLabelSources(filePath)) {
       addScriptSuite(scriptSuites, 'accessible-names');
     }
 
