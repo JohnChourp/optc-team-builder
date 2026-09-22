@@ -52,6 +52,6 @@ This is the **record**, which is what 869f13gbr asked for and what the wave-9 fi
 to exist first. Its own *Done when* also asks that "a display conversion applied to a payload field
 fails a test". That guard is **not** built: `check-locale-formatting.mjs` rule F covers the
 converse - an unformatted value reaching a player - and the defect class this would catch has not
-occurred once, let alone twice. Per `CLAUDE.md`, a guard earns its lane when a class **recurs**.
+occurred once, let alone twice. A guard earns its lane when a class **recurs**.
 
 Recorded deliberately as not-done, rather than left to look finished.

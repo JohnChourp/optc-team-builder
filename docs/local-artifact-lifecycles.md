@@ -15,9 +15,14 @@ It is the obvious place to look when answering *"what does the app actually serv
 on every machine. And it answers **silently and wrongly** when it is stale.
 
 That is not hypothetical. On 2026-09-12, reading `dist/` for the sitemap gave **7 URLs**; the live
-sitemap has **4,637**. The seven-URL file is `public/sitemap.xml` - a checked-in seed that looks
-authoritative - copied verbatim into a build where `npm run seo:pages` had never run. Every
-conclusion drawn from that directory would have been wrong, confidently.
+sitemap has **4,637**. The seven-URL file was a checked-in seed that looked authoritative, copied
+verbatim into a build where `npm run seo:pages` had never run. Every conclusion drawn from that
+directory would have been wrong, confidently.
+
+**That seed no longer exists** - measured 2026-09-22, there is no tracked `sitemap*.xml` anywhere
+in the repository, so the sitemap is generated or it is absent. The trap it created is what
+survives: a `dist/` can still be newer than every source file and still be missing a generation
+step's output entirely.
 
 Measured again on 2026-09-22: **0 source files were newer than the built `index.html`**, so the
 symptom was not present that day. **That is exactly why this is a record and not only a fix:** the

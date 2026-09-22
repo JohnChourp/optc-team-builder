@@ -74,4 +74,4 @@ Because two other things depend on the list, and both have already been wrong on
 row fails the lane". **The lane already exists** - `npm run test:storage-keys` fails on a storage
 key with no registry row, which is the mechanical half. What it cannot see is a tunable value
 *nested inside* a registered blob, like `matchThreshold`. That gap is recorded here rather than
-closed, because it has occurred once and `CLAUDE.md` gives a guard its lane when a class recurs.
+closed, because it has occurred once, and a guard earns its lane when a class recurs.

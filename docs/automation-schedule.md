@@ -49,4 +49,4 @@ an invented one.
 
 `check-optc-db-release` → `release-android` → `deploy-pages` is the automatic release chain. It
 releases new upstream data with no human involved. Whatever is decided about the other four, this
-one runs, and `CLAUDE.md` forbids disabling it to save minutes.
+one runs, and the brain's instruction file forbids disabling it to save minutes.
