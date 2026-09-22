@@ -1,0 +1,34 @@
+/**
+ * Text that a screen reader announces and nobody sees.
+ *
+ * 869f13gaw / 869f13gbk. This app's screens are dense with DERIVED values whose
+ * meaning comes from their surroundings: "3 tag(s) in 2 group(s)" on a filter
+ * trigger, a tier chip, a Relaxed marker, a multiplier. A sighted player reads
+ * the surroundings. A screen-reader user gets the accessible name and nothing
+ * else - and measured on 2026-09-22, `aria-describedby` appeared in 0 files and
+ * `sr-only` in 0, against `aria-label` in 34 and `aria-live` in 17. Labels and
+ * announcements were covered; explanation had no mechanism at all.
+ *
+ * THIS IS GLOBAL ON PURPOSE. Angular scopes a component's styles to that
+ * component, so a shared class has to live outside one. It is imported by
+ * `src/styles.scss` and lives here, beside the a11y utility it belongs with.
+ *
+ * WHY `clip-path` AND THE LEGACY `clip` TOGETHER: `clip` is deprecated and still
+ * the only one some older engines honour; `clip-path` is the current one. Both
+ * cost nothing.
+ *
+ * WHY NOT `display: none` OR `visibility: hidden`: either removes the element
+ * from the accessibility tree, which is the opposite of the point.
+ */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

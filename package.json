@@ -18,6 +18,7 @@
     "pirate-rumble"
   ],
   "scripts": {
+    "a11y:accessible-names": "node ./scripts/check-ionic-accessible-names.mjs",
     "a11y:modal-labels": "node ./scripts/check-modal-dialog-labels.mjs",
     "a11y:touch-targets": "node ./scripts/check-touch-targets.mjs",
     "abilities:catalogue-check": "node ./scripts/check-ability-catalogue.mjs",
@@ -166,6 +167,7 @@
     "test:ionic-host-property": "vitest run scripts/check-ionic-host-property.spec.ts && npm run ionic:host-property",
     "test:locale-formatting": "vitest run scripts/check-locale-formatting.spec.ts scripts/check-locale-formatting-intl.spec.ts scripts/check-locale-formatting-precision.spec.ts scripts/check-locale-formatting-timestamp.spec.ts src/app/core/i18n/app-locale-format.spec.ts && npm run i18n:locale-formatting",
     "test:maintainer-doctor": "vitest run scripts/maintainer-environment-doctor.spec.ts",
+    "test:accessible-names": "vitest run scripts/check-ionic-accessible-names.spec.ts && npm run a11y:accessible-names",
     "test:modal-labels": "vitest run scripts/check-modal-dialog-labels.spec.ts && npm run a11y:modal-labels",
     "test:native-surface": "vitest run scripts/generate-native-surface.spec.ts && node ./scripts/generate-native-surface.mjs --check",
     "test:overlay-contrast": "vitest run scripts/check-ionic-overlay-contrast.spec.ts && npm run theme:overlay-contrast",

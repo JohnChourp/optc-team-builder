@@ -22,7 +22,6 @@
           fill="outline"
           color="light"
           [attr.data-testid]="testIdPrefix + '-character-tag-trigger'"
-          [attr.aria-label]="t('label')"
           [attr.aria-busy]="status() === 'loading' ? 'true' : null"
           [disabled]="triggerDisabled()"
           (click)="openPicker()"
@@ -32,6 +31,7 @@
           } @else {
             <ion-icon slot="start" [icon]="filterIcon" aria-hidden="true"></ion-icon>
           }
+          <span class="visually-hidden">{{ t('label') }}: </span>
           {{ triggerLabel() }}
         </ion-button>
       </div>
