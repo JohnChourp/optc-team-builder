@@ -268,6 +268,7 @@ and when a `test:` script is not a lane.
 | `verify:local:full` | workflow · test.yml | the test.yml workflow |
 | `watch` | documented · README.md, ci-trigger-policy.md, maintainer-validation-guide.md | a documented manual step |
 | `whats-new:check` | npm script · test:whats-new | `test:whats-new` |
+| `whats-new:growth` | npm script · test:whats-new | `test:whats-new` |
 | `worker-bundling:check` | npm script · test:worker-bundling | `test:worker-bundling` |
 | `workers:protocols` | npm script · test:worker-protocols | `test:worker-protocols` |
 <!-- npm-script-inventory:end -->
