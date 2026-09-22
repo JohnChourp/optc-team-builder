@@ -112,3 +112,47 @@
 .whats-new__group--fixed > span {
   color: rgba(245, 200, 76, 0.9);
 }
+
+/*
+ * 869f13gaq. The divider is the answer to "what changed since I last looked", so it
+ * reads as a statement rather than as a heading: full width, its own rule, and the
+ * only accented text in the list.
+ */
+.whats-new__divider {
+  margin: 1.25rem 0 0.5rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--ion-color-step-200, rgba(255, 255, 255, 0.14));
+  color: var(--ion-text-color-step-150, #dfe4f2);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.whats-new__divider--quiet {
+  color: var(--ion-text-color-step-450, #9aa3b8);
+  font-weight: 500;
+}
+
+/*
+ * A native <button>, not an ion-button. Ionic copies aria-* into its shadow button
+ * ONCE, at load, so a CHANGING aria-expanded is correct on the host forever after
+ * and stale in the element a screen reader reads.
+ */
+.whats-new__more {
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--ion-color-step-200, rgba(255, 255, 255, 0.14));
+  border-radius: 0.75rem;
+  background: transparent;
+  color: var(--ion-text-color-step-150, #dfe4f2);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.whats-new__more:hover,
+.whats-new__more:focus-visible {
+  background: var(--ion-background-color-step-100, rgba(255, 255, 255, 0.06));
+}

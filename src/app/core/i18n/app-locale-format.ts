@@ -69,3 +69,43 @@ export function formatBoolean(value: boolean): string {
 export function resetFormattingLanguageForTests(): void {
   activeLanguage = DEFAULT_APP_LANGUAGE;
 }
+
+/**
+ * A timestamp as a player reads it, in the interface language and their own zone.
+ *
+ * 869f13gb9. `character-boxes.page.html` interpolated `box.updatedAt` straight into
+ * a translated sentence, so the Character Boxes list read `Updated
+ * 2026-09-22T07:30:00.000Z` - a raw ISO 8601 string, in both languages, on a screen
+ * a player uses every session.
+ *
+ * The rules A-E in `scripts/check-locale-formatting.mjs` could not see it, and that
+ * is the point worth carrying: every one of them reads a CALL SITE - a `toLocale*`,
+ * an `Intl` construction, a `toFixed`. Here there was no call at all. A guard over
+ * how a formatter is invoked is blind to a value that was never formatted, so rule
+ * F reads the templates instead.
+ *
+ * Storage stays UTC and untouched: `updatedAt` is compared, sorted and round-tripped
+ * through the Drive backup, and converting a payload field corrupts stored data,
+ * which is far worse than a date that reads a day early. Only display converts - and
+ * omitting `timeZone` is what does it, because `Intl` then uses the runtime's own
+ * zone rather than UTC.
+ *
+ * Returns the input unchanged when it does not parse. A player pasting a bad value
+ * into an import should see what they actually have, not `Invalid Date`.
+ */
+export function formatDateTime(value: string | null | undefined): string {
+  if (!value) {
+    return '';
+  }
+
+  const parsed = new Date(value);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat(formattingLanguage(), {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(parsed);
+}

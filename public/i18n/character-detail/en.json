@@ -110,5 +110,10 @@
   },
   "region": {
     "japanOnly": "Japan only"
+  },
+  "report": {
+    "action": "Something here looks wrong",
+    "copied": "Report copied. Paste it wherever you contact us, and add what you expected.",
+    "copyFailed": "Could not copy the report. Your browser blocked the clipboard - select the page text and copy it by hand."
   }
 }

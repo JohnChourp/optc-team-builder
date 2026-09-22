@@ -274,7 +274,10 @@
     "copy": "Every version of OPTC Team Builder, newest first, in plain language.",
     "added": "Added",
     "improved": "Improved",
-    "fixed": "Fixed"
+    "fixed": "Fixed",
+    "sinceLastOpened": "New since you last opened this - {{count}} version(s)",
+    "earlier": "Earlier versions",
+    "showOlder": "Show older versions ({{count}})"
   },
   "offline": {
     "title": "You are offline",

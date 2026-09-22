@@ -19,11 +19,17 @@ import {
   type AutoBuildAbilityCatalog,
   type NormalizedBuilderAbility,
 } from '../../core/models/auto-team-builder-ability.models';
-import { type CharacterDetailRecord } from '../../core/models/optc.models';
+import {
+  type CharacterDetailRecord,
+  type DatasetManifest,
+} from '../../core/models/optc.models';
 import { CharacterOverridesService } from '../../core/services/character-overrides.service';
 import { AppI18nService } from '../../core/services/app-i18n.service';
 import { createLocalCharacterOverrideFromRecord } from '../../core/services/character-overrides.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
+import { APP_VERSION } from '../../core/data/app-version.data';
+import { copyTextToClipboard } from '../../shared/clipboard/clipboard-copy.utils';
+import { buildDisagreementReport } from '../../shared/disagreement/disagreement-report.utils';
 import {
   buildProgressionCards,
   collectProgressionCharacterIds,
@@ -150,6 +156,15 @@ export class CharacterDetailPage implements OnInit {
   public readonly favoriteIcon = heart;
   public readonly favoriteOutlineIcon = heartOutline;
 
+  /**
+   * 869f13gb3. The dataset the reader is on, for the disagreement report.
+   *
+   * Nullable throughout: the manifest may not have loaded, and a report that quotes
+   * a version it does not have is worse than one that says `unknown` - the
+   * maintainer's first question is whether the reader already had the fix.
+   */
+  public readonly datasetManifest = signal<DatasetManifest | null>(null);
+
   public constructor(
     private readonly route: ActivatedRoute,
     private readonly repository: OptcRepositoryService,
@@ -158,6 +173,44 @@ export class CharacterDetailPage implements OnInit {
     private readonly i18n: AppI18nService,
   ) {
     this.favoriteIds = this.userState.favoriteCharacterIds;
+  }
+
+  /**
+   * 869f13gb3. One action turns "this is wrong" into something a maintainer can act
+   * on without a reply.
+   *
+   * Everything the app knows is assembled rather than transcribed - the character,
+   * what the parser derived for it, the app version, the dataset version. Only the
+   * expectation is left blank, because that is the one thing the app genuinely does
+   * not know.
+   *
+   * Reuses `copyTextToClipboard` and the page's existing `transferFeedback` banner
+   * rather than adding an overlay: the clipboard can fail for four different reasons
+   * and that utility already names them, so a failure here tells the reader to copy
+   * it themselves instead of appearing to do nothing.
+   */
+  public async copyDisagreementReport(character: CharacterDetailRecord): Promise<void> {
+    const manifest = this.datasetManifest();
+    const report = buildDisagreementReport({
+      characterId: character.id,
+      characterName: character.name,
+      derivedTags: character.detail.builderAbilities.map(
+        (ability) => `${ability.label} [${ability.source}]`,
+      ),
+      appVersion: APP_VERSION,
+      datasetSourceVersion: manifest?.sourceVersion ?? null,
+      datasetGeneratedOn: manifest?.generatedAt ? String(manifest.generatedAt).slice(0, 10) : null,
+      language: this.i18n.activeLanguage(),
+      generatedAt: new Date().toISOString(),
+    });
+
+    const failure = await copyTextToClipboard(report);
+
+    this.transferFeedback.set(
+      failure
+        ? { tone: 'error', message: this.text('report.copyFailed') }
+        : { tone: 'success', message: this.text('report.copied') },
+    );
   }
 
   /** Translates within this page's own scope, so call sites carry only the key. */
@@ -180,12 +233,14 @@ export class CharacterDetailPage implements OnInit {
       this.userState.readyFavoriteCharacterIds(),
       this.userState.readyGameRegionPreference(),
     ]);
-    const [abilityCatalog] = await Promise.all([
+    const [abilityCatalog, datasetManifest] = await Promise.all([
       this.repository.getAutoBuilderAbilityCatalog().catch(() => null),
+      this.repository.getDatasetManifest().catch(() => null),
       this.loadCharacter(characterId, true),
     ]);
 
     this.abilityCatalog.set(abilityCatalog);
+    this.datasetManifest.set(datasetManifest);
     this.loading.set(false);
   }
 

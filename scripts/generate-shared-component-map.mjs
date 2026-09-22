@@ -56,6 +56,11 @@ export const HOST_CONSTRAINTS = Object.freeze({
     'Must not treat `dismiss` as "the reader changed something" - it fires only when the pop-up closed WITHOUT a save, including on a backdrop tap, and never after the save output.',
   'special-ability-picker':
     'Must not treat `dismiss` as "the reader changed something" - it fires only when the pop-up closed WITHOUT a save, including on a backdrop tap, and never after the save output.',
+  /*
+   * 869f13gb3. A pure builder with no host at all - the page assembles the report and
+   * copies it. Nothing to constrain until something presents it.
+   */
+  'disagreement': null,
   'team-coverage-summary': null,
   'toolbar-back-button': null,
   /* Presented by the side menu only, and its own modal owns its open state. */

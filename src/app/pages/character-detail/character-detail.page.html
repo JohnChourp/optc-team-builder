@@ -172,6 +172,19 @@
                           {{ t('hero.resetOverride') }}
                         </ion-button>
                       }
+                      <!--
+                        869f13gb3. The correctness channel. Sits with the local tools because
+                        both belong to a reader who thinks the data is wrong: an override fixes
+                        it for them, this tells us so it can be fixed for everyone.
+                      -->
+                      <ion-button
+                        fill="outline"
+                        color="light"
+                        data-test="character-report-disagreement"
+                        (click)="copyDisagreementReport(current)"
+                      >
+                        {{ t('report.action') }}
+                      </ion-button>
                     </div>
                   }
                 </div>

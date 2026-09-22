@@ -12,7 +12,7 @@
     "parallel history store. Refresh it with `npm run styles:component-budget -- --write`",
     "in the same commit as the change that moved a number."
   ],
-  "measuredOn": "2026-09-21",
+  "measuredOn": "2026-09-22",
   "budget": {
     "warningBytes": 12000,
     "errorBytes": 20000
@@ -97,6 +97,10 @@
       "compiledBytes": 2200
     },
     {
+      "file": "src/app/shared/whats-new/whats-new-modal.component.scss",
+      "compiledBytes": 2200
+    },
+    {
       "file": "src/app/pages/manual-team-builder/manual-team-builder-workbench-slot-detail-panel.component.scss",
       "compiledBytes": 2050
     },
@@ -159,10 +163,6 @@
     {
       "file": "src/app/pages/characters/characters-catalog-thumb-panel.component.scss",
       "compiledBytes": 1570
-    },
-    {
-      "file": "src/app/shared/whats-new/whats-new-modal.component.scss",
-      "compiledBytes": 1460
     },
     {
       "file": "src/app/pages/character-edit/character-edit.page.scss",

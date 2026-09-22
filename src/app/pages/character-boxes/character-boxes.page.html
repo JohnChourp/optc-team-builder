@@ -74,7 +74,7 @@
                       <strong>{{ box.name }}</strong>
                       <span>{{ t('list.count', { count: box.characterIds.length }) }}</span>
                     </div>
-                    <small>{{ t('list.updatedAt', { timestamp: box.updatedAt }) }}</small>
+                    <small>{{ t('list.updatedAt', { timestamp: formatUpdatedAt(box.updatedAt) }) }}</small>
                   </button>
                 }
               </div>

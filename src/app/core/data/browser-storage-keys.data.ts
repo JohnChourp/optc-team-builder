@@ -211,6 +211,14 @@ export const BROWSER_STORAGE_KEYS: readonly BrowserStorageKeyRecord[] = [
     note: 'A one-time explainer the reader closed.',
   },
   {
+    key: 'whatsNewLastSeenVersion',
+    constantName: 'WHATS_NEW_LAST_SEEN_VERSION_KEY',
+    owner: 'src/app/shared/whats-new/whats-new-modal.component.ts',
+    backend: 'preferences',
+    classification: 'transient-ui-state',
+    note: "The app version the reader last had the What's New modal open on, so the list can divide at \"new since you last looked\" (869f13gaq). Deliberately not durable-user-data: losing it costs one extra scroll, nothing in the export payload depends on it, and it describes this device rather than the reader's work. Matched by equality against the entry list, never parsed as a number - an unknown value means never-seen, which hides nothing.",
+  },
+  {
     key: 'installPromptDismissed',
     constantName: 'INSTALL_BANNER_DISMISSED_PREFERENCE_KEY',
     owner: 'src/app/app.component.ts',
