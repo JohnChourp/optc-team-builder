@@ -91,6 +91,8 @@ and when a `test:` script is not a lane.
 | `build:ionic` | workflow · release-android.yml | the release-android.yml workflow |
 | `build:mobile` | documented · README.md, ios-platform-footprint.md | a documented manual step |
 | `build:pages` | workflow · deploy-pages.yml, guide-discoverability.yml, release-android.yml | the deploy-pages.yml, guide-discoverability.yml, release-android.yml workflow |
+| `build:stamp` | script file · write-build-stamp.mjs | whatever write-build-stamp.mjs drives |
+| `build:stamp:check` | script file · check-build-stamp.mjs | whatever check-build-stamp.mjs drives |
 | `cap:copy` | documented · ios-platform-footprint.md | a documented manual step |
 | `cap:sync` | documented · ios-platform-footprint.md | a documented manual step |
 | `components:inventory` | npm script · test:component-inventory | `test:component-inventory` |
@@ -188,6 +190,7 @@ and when a `test:` script is not a lane.
 | `test:actions-pins` | lane · actions-pins | the `actions-pins` lane |
 | `test:app-contrast` | lane · app-contrast | the `app-contrast` lane |
 | `test:branch-cleanup` | lane · branch-cleanup | the `branch-cleanup` lane |
+| `test:build-stamp` | lane · build-stamp | the `build-stamp` lane |
 | `test:captain-contracts` | lane · captain-contracts | the `captain-contracts` lane |
 | `test:ci` | workflow · test.yml | the test.yml workflow |
 | `test:ci-routing` | lane · ci-routing | the `ci-routing` lane |

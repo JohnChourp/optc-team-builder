@@ -385,6 +385,7 @@ describe('ci-check-routing', () => {
       'ability-catalogue',
       'modal-labels',
       'accessible-names',
+      'build-stamp',
       'picker-dismissal',
       'dataset-schema',
       'component-map',
