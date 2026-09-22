@@ -27,7 +27,7 @@ function entry(overrides: Record<string, unknown> = {}) {
     headline: { en: 'A thing', el: 'Κάτι' },
     summaryEn: 'A sentence long enough to count as a real summary for a player.',
     summaryEl: 'Μια πρόταση αρκετά μεγάλη ώστε να μετράει ως πραγματική περίληψη.',
-    added: [{ en: 'Added a thing', el: 'Προστέθηκε κάτι' }],
+    added: [{ en: 'Added a thing to **Settings**', el: 'Προστέθηκε κάτι στις **Ρυθμίσεις**' }],
     improved: [],
     fixed: [],
     ...overrides,
@@ -140,7 +140,7 @@ describe('check-whats-new', () => {
 
   it('accepts the word control, which is player prose', async () => {
     const appRoot = await makeRoot(
-      [entry({ version: '1.0.1', added: [{ en: 'New bulk controls in the filter bar', el: 'Κάτι' }] })],
+      [entry({ version: '1.0.1', added: [{ en: 'New bulk controls in the **filter bar**', el: 'Κάτι στη **μπάρα φίλτρων**' }] })],
       '1.0.1',
     );
 
@@ -168,6 +168,70 @@ describe('check-whats-new', () => {
 
     expect(vocabulary).toHaveLength(1);
     expect(vocabulary[0]?.version).toBe('1.0.2');
+  });
+
+  /*
+   * 869f13gc3. Rule F is GLOBAL because it is measured as already universally true - 0 of 642
+   * bullets across 203 entries - so it can only ever catch a new failure.
+   */
+  it('fails a bullet whose Greek is byte-identical to its English', async () => {
+    const appRoot = await makeRoot(
+      [entry({ added: [{ en: 'A thing in **Settings**', el: 'A thing in **Settings**' }] })],
+      '1.0.0',
+    );
+
+    const kinds = inspectWhatsNew({ appRoot }).findings.map((finding) => finding.kind);
+
+    expect(kinds).toContain('untranslated-bullet');
+  });
+
+  it('accepts Greek that keeps the game\'s own English terms, because it still differs', async () => {
+    const appRoot = await makeRoot(
+      [
+        entry({
+          added: [
+            {
+              en: 'The **Friend Captain** slot on **Captain Coverage** accepts a Super Tandem unit.',
+              el: 'Η θέση **Friend Captain** στο **Captain Coverage** δέχεται unit με Super Tandem.',
+            },
+          ],
+        }),
+      ],
+      '1.0.0',
+    );
+
+    const kinds = inspectWhatsNew({ appRoot }).findings.map((finding) => finding.kind);
+
+    expect(kinds).not.toContain('untranslated-bullet');
+  });
+
+  /*
+   * Rule G is NEWEST-ONLY and must stay that way: 556 of 642 published bullets predate the
+   * place-naming rule, and published entries are never regenerated.
+   */
+  it('fails a newest-entry bullet that names no place in bold', async () => {
+    const appRoot = await makeRoot(
+      [entry({ added: [{ en: 'Something got better', el: 'Κάτι βελτιώθηκε' }] })],
+      '1.0.0',
+    );
+
+    const kinds = inspectWhatsNew({ appRoot }).findings.map((finding) => finding.kind);
+
+    expect(kinds).toContain('bullet-without-a-place');
+  });
+
+  it('leaves an OLDER unbolded bullet alone, because history could not follow the rule', async () => {
+    const appRoot = await makeRoot(
+      [
+        entry({ version: '1.0.2', added: [{ en: 'A thing in **Settings**', el: 'Κάτι στις **Ρυθμίσεις**' }] }),
+        entry({ version: '1.0.1', added: [{ en: 'Something got better', el: 'Κάτι βελτιώθηκε' }] }),
+      ],
+      '1.0.2',
+    );
+
+    const kinds = inspectWhatsNew({ appRoot }).findings.map((finding) => finding.kind);
+
+    expect(kinds).not.toContain('bullet-without-a-place');
   });
 
   it('parses the array past its type annotation', () => {

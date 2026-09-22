@@ -27,6 +27,8 @@ export const APP_DOCS = [
   'docs/maintainer-validation-guide.md',
   'docs/typescript-strictness.md',
   'docs/fixture-ownership-guide.md',
+  'docs/local-artifact-lifecycles.md',
+  'docs/player-settings-inventory.md',
   'e2e/README.md',
   'server/README.md',
 ];
