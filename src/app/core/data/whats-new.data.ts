@@ -31,6 +31,27 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.6.4',
+    date: '2026-09-22',
+    userVisible: true,
+    headline: {
+      en: 'What\'s new stops showing you asterisks',
+      el: 'Το What\'s new σταματά να σου δείχνει αστερίσκους',
+    },
+    summaryEn:
+      'Every note in this list is written to point at the screen it happened on, and those screen names are meant to stand out. Until now they arrived with the asterisks still around them - you were reading `**Settings**` instead of Settings - which made every note harder to scan than it should have been. The names now stand out the way they were meant to, in both languages, on all 202 versions in the list at once. Nothing was rewritten to do it: the same words you would have read before are simply shown properly.',
+    summaryEl:
+      'Κάθε σημείωση σε αυτή τη λίστα γράφεται ώστε να δείχνει την οθόνη στην οποία έγινε η αλλαγή, και αυτά τα ονόματα οθονών υποτίθεται ότι ξεχωρίζουν. Μέχρι τώρα έφταναν με τους αστερίσκους ακόμα γύρω τους - διάβαζες `**Ρυθμίσεις**` αντί για Ρυθμίσεις - κάτι που έκανε κάθε σημείωση πιο δύσκολη στο διάβασμα από όσο έπρεπε. Τα ονόματα πλέον ξεχωρίζουν όπως έπρεπε εξαρχής, και στις δύο γλώσσες, σε όλες τις 202 εκδόσεις της λίστας ταυτόχρονα. Δεν ξαναγράφτηκε τίποτα για να γίνει αυτό: οι ίδιες λέξεις που θα διάβαζες και πριν απλώς εμφανίζονται σωστά.',
+    added: [],
+    improved: [
+      {
+        en: 'The **What\'s new** pop-up in the **side menu** now shows screen names in bold instead of wrapping them in asterisks. Every version in the list gets it, not just the newest.',
+        el: 'Το αναδυόμενο παράθυρο **What\'s new** στο **πλαϊνό μενού** δείχνει πλέον τα ονόματα των οθονών με έντονα γράμματα, αντί να τα τυλίγει σε αστερίσκους. Ισχύει για κάθε έκδοση της λίστας, όχι μόνο για την πιο πρόσφατη.',
+      },
+    ],
+    fixed: [],
+  },
+  {
     version: '0.6.3',
     date: '2026-09-22',
     userVisible: true,
