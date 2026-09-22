@@ -12,6 +12,8 @@ player can actually change; if the two disagree, the registry is right.
 
 Regenerate this table with:
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 node --input-type=module -e "import {readStorageRegistry} from './scripts/lib/browser-storage-registry.mjs'; console.log(readStorageRegistry(process.cwd()).length)"
 ```

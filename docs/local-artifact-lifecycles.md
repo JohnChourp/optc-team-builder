@@ -30,6 +30,8 @@ trap is intermittent, and an intermittent trap that nobody wrote down is one eve
 
 ### Before reading anything out of `dist/`
 
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
 ```bash
 find src -newer dist/optc-team-builder/browser/index.html -type f | wc -l
 ```
