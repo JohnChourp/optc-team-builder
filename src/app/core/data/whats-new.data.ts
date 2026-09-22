@@ -31,6 +31,37 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.6.3',
+    date: '2026-09-22',
+    userVisible: true,
+    headline: {
+      en: 'Tell us when a character looks wrong, and What\'s new stops making you scroll',
+      el: 'Πες μας όταν ένας χαρακτήρας φαίνεται λάθος, και το What\'s new σταματά να σε βάζει να κάνεις scroll',
+    },
+    summaryEn:
+      'If you know a character has an ability the app did not find, there was nothing you could do about it except fix it on your own device. The Character screen now has a button that writes the whole thing up for you - the character, everything the app worked out about it, and which version of the app and of the data you are on - and copies it, so all you add is what you expected. The What\'s new pop-up in the side menu had grown to 201 versions in one long list; it now starts at the ones that arrived since you last opened it, keeps the five most recent open below that, and puts everything else behind one tap. Nothing was removed - every version is still there. And the Character Boxes list was showing a raw machine date; it now shows a real one, in your language and your own time.',
+    summaryEl:
+      'Αν ξέρεις ότι ένας χαρακτήρας έχει μια ικανότητα που η εφαρμογή δεν βρήκε, δεν υπήρχε τίποτα να κάνεις γι αυτό εκτός από το να το διορθώσεις στη δική σου συσκευή. Η οθόνη Χαρακτήρα έχει πλέον ένα κουμπί που τα γράφει όλα για λογαριασμό σου - τον χαρακτήρα, όσα έβγαλε η εφαρμογή γι αυτόν, και σε ποια έκδοση της εφαρμογής και των δεδομένων είσαι - και τα αντιγράφει, οπότε εσύ προσθέτεις μόνο τι περίμενες. Το αναδυόμενο παράθυρο What\'s new στο πλαϊνό μενού είχε φτάσει τις 201 εκδόσεις σε μία μεγάλη λίστα - τώρα ξεκινά από όσες ήρθαν μετά την τελευταία φορά που το άνοιξες, κρατά ανοιχτές τις πέντε πιο πρόσφατες από κάτω, και βάζει όλες τις υπόλοιπες πίσω από ένα πάτημα. Δεν αφαιρέθηκε τίποτα - κάθε έκδοση είναι ακόμα εκεί. Και η λίστα στα Character Boxes έδειχνε μια ωμή ημερομηνία μηχανής - τώρα δείχνει κανονική, στη γλώσσα σου και στη δική σου ώρα.',
+    added: [
+      {
+        en: 'The **Character** screen has a new **Something here looks wrong** button, with the local tools. It copies a ready-made report - the character, everything the app worked out about it, the app version and the data version - and leaves you one line to fill in.',
+        el: 'Η οθόνη **Χαρακτήρα** έχει ένα νέο κουμπί **Κάτι εδώ φαίνεται λάθος**, μαζί με τα τοπικά εργαλεία. Αντιγράφει μια έτοιμη αναφορά - τον χαρακτήρα, όσα έβγαλε η εφαρμογή γι αυτόν, την έκδοση της εφαρμογής και την έκδοση των δεδομένων - και σου αφήνει μία γραμμή να συμπληρώσεις.',
+      },
+    ],
+    improved: [
+      {
+        en: 'The **What\'s new** pop-up in the **side menu** now opens at the versions that arrived since you last looked, keeps the five most recent open below them, and puts the rest behind a **Show older versions** step. Every version is still reachable.',
+        el: 'Το αναδυόμενο παράθυρο **What\'s new** στο **πλαϊνό μενού** ανοίγει πλέον στις εκδόσεις που ήρθαν μετά την τελευταία φορά που κοίταξες, κρατά ανοιχτές τις πέντε πιο πρόσφατες από κάτω, και βάζει τις υπόλοιπες πίσω από ένα βήμα **Δείξε παλαιότερες εκδόσεις**. Κάθε έκδοση παραμένει προσβάσιμη.',
+      },
+    ],
+    fixed: [
+      {
+        en: 'The **Character Boxes** list showed the update date as a raw machine string like `2026-09-22T07:30:00.000Z`. It now reads as a normal date, in your language and your own timezone.',
+        el: 'Η **λίστα** στα **Character Boxes** έδειχνε την ημερομηνία ενημέρωσης ως ωμό κείμενο μηχανής, όπως `2026-09-22T07:30:00.000Z`. Τώρα διαβάζεται σαν κανονική ημερομηνία, στη γλώσσα σου και στη δική σου ζώνη ώρας.',
+      },
+    ],
+  },
+  {
     version: '0.6.2',
     date: '2026-09-22',
     userVisible: true,
