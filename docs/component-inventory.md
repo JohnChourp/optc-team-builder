@@ -75,20 +75,21 @@ drifts and when a component is reachable by neither a route nor a template.
 | `SupportedPage` | page | route | **no** | - |
 | `TermsOfServicePage` | page | route | yes | - |
 | `AbilityFilterRailComponent` | shared | 7 templates | yes | - |
-| `AbilityRequirementPickerComponent` | shared | 3 templates | yes | yes |
-| `AbilityTagSetPickerComponent` | shared | 7 templates | yes | yes |
+| `AbilityRequirementPickerComponent` | shared | 4 templates | yes | yes |
+| `AbilityTagSetPickerComponent` | shared | 8 templates | yes | yes |
 | `CaptainTeamConditionStatusComponent` | shared | 4 templates | **no** | - |
 | `CharacterAbilityGroupsComponent` | shared | 3 templates | yes | - |
-| `CharacterFacetFilterComponent` | shared | 6 templates | yes | yes |
+| `CharacterFacetFilterComponent` | shared | 7 templates | yes | yes |
 | `CharacterFilterRowComponent` | shared | 3 templates | yes | - |
 | `CharacterImagePickerComponent` | shared | 2 templates | yes | - |
-| `CharacterTagFilterComponent` | shared | 7 templates | yes | yes |
+| `CharacterTagFilterComponent` | shared | 8 templates | yes | yes |
 | `CharacterTagSetPickerComponent` | shared | 5 templates | yes | - |
-| `ShipPickerComponent` | shared | 2 templates | yes | yes |
+| `ShipPickerComponent` | shared | 3 templates | yes | yes |
 | `SpecialAbilityPickerComponent` | shared | 1 template | yes | - |
 | `TeamCoverageSummaryComponent` | shared | 4 templates | **no** | - |
 | `ToolbarBackButtonComponent` | shared | 5 templates | yes | - |
 | `WhatsNewModalComponent` | shared | 1 template | yes | - |
+| `WhatsNewTextComponent` | shared | 1 template | yes | - |
 | `AppComponent` | shell | route | yes | - |
 | `TabsPage` | shell | route | yes | - |
 <!-- component-inventory:end -->
