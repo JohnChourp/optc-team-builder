@@ -31,6 +31,40 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.6.2',
+    date: '2026-09-22',
+    userVisible: true,
+    headline: {
+      en: 'Everything is easier to tap, and Greek numbers finally read as Greek',
+      el: 'Όλα πατιούνται πιο εύκολα, και οι ελληνικοί αριθμοί διαβάζονται επιτέλους ως ελληνικοί',
+    },
+    summaryEn:
+      "Buttons and controls across the whole app were smaller than a finger comfortably hits, so they are all bigger now. Where a control had to stay small - the little heart on a character card, the cost badge on a Captain Coverage result - it looks exactly the same but the area that responds to your tap is larger, so nothing on those screens moved or got more cramped. Separately, two things that read wrong in Greek are fixed: the ATK and HP multipliers on Captain Coverage showed 2.5 where Greek writes 2,5, and the guides and character pages ran their text to about twice a comfortable line length on a laptop. And if you have asked your phone or computer for higher contrast, the app now follows that setting instead of ignoring it.",
+    summaryEl:
+      "Τα κουμπιά και τα controls σε όλη την εφαρμογή ήταν μικρότερα απ' όσο πατάει άνετα ένα δάχτυλο, οπότε είναι όλα μεγαλύτερα τώρα. Εκεί που ένα control έπρεπε να μείνει μικρό - η καρδούλα στην κάρτα χαρακτήρα, το σήμα κόστους σε ένα αποτέλεσμα του Captain Coverage - φαίνεται ακριβώς ίδιο, αλλά η περιοχή που απαντά στο πάτημά σου είναι μεγαλύτερη, οπότε τίποτα σε εκείνες τις οθόνες δεν μετακινήθηκε ούτε στρίμωξε. Χωριστά, δύο πράγματα που διαβάζονταν λάθος στα ελληνικά διορθώθηκαν: οι πολλαπλασιαστές ATK και HP στο Captain Coverage έδειχναν 2.5 εκεί που τα ελληνικά γράφουν 2,5, και οι οδηγοί και οι σελίδες χαρακτήρων άπλωναν το κείμενό τους σε περίπου διπλάσιο μήκος γραμμής σε laptop. Και αν έχεις ζητήσει από το τηλέφωνο ή τον υπολογιστή σου περισσότερη αντίθεση, η εφαρμογή ακολουθεί πλέον αυτή τη ρύθμιση αντί να την αγνοεί.",
+    added: [],
+    improved: [
+      {
+        en: 'Every button and control in the app is now at least as large as a finger needs. On the **character cards** and the **results list** in **Captain Coverage**, the small heart and cost badges look the same as before - only the area that answers your tap is bigger, so the screens are no more crowded than they were.',
+        el: 'Κάθε κουμπί και control στην εφαρμογή είναι πλέον τουλάχιστον όσο χρειάζεται ένα δάχτυλο. Στις **κάρτες χαρακτήρα** και στη **λίστα αποτελεσμάτων** στο **Captain Coverage**, η μικρή καρδιά και τα σήματα κόστους φαίνονται ίδια με πριν - μόνο η περιοχή που απαντά στο πάτημά σου είναι μεγαλύτερη, οπότε οι οθόνες δεν στρίμωξαν καθόλου.',
+      },
+      {
+        en: 'If your phone or computer is set to show **higher contrast**, the app now follows that setting. Text that was dimmest is lifted, so nothing on a screen falls below a readable level.',
+        el: 'Αν το τηλέφωνο ή ο υπολογιστής σου είναι ρυθμισμένος για **περισσότερη αντίθεση**, η εφαρμογή ακολουθεί πλέον αυτή τη ρύθμιση. Το πιο θαμπό κείμενο ανεβαίνει, ώστε τίποτα σε μια οθόνη να μην πέφτει κάτω από αναγνώσιμο επίπεδο.',
+      },
+    ],
+    fixed: [
+      {
+        en: 'The **ATK** and **HP** multipliers on a **Captain Coverage** result card showed an English decimal point in the Greek interface - **2.5** where Greek writes **2,5**. They now follow the language you chose.',
+        el: 'Οι πολλαπλασιαστές **ATK** και **HP** στην **κάρτα αποτελέσματος** του **Captain Coverage** έδειχναν αγγλική υποδιαστολή στο ελληνικό περιβάλλον - **2.5** εκεί που τα ελληνικά γράφουν **2,5**. Πλέον ακολουθούν τη γλώσσα που διάλεξες.',
+      },
+      {
+        en: 'The **guides** and the **character pages** stretched their paragraphs across the whole window on a laptop - about **twice** a comfortable line length - which made them tiring to read. The text now keeps a readable width at any window size, and nothing changed on a phone.',
+        el: 'Οι **οδηγοί** και οι **σελίδες χαρακτήρων** άπλωναν τις παραγράφους τους σε όλο το παράθυρο σε laptop - περίπου **διπλάσιο** μήκος γραμμής από το άνετο - κάτι που τις έκανε κουραστικές. Το κείμενο κρατά πλέον αναγνώσιμο πλάτος σε κάθε μέγεθος παραθύρου, και στο κινητό δεν άλλαξε τίποτα.',
+      },
+    ],
+  },
+  {
     version: '0.6.1',
     date: '2026-09-21',
     userVisible: true,
