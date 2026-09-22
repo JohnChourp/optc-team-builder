@@ -249,6 +249,28 @@ export class CrewForgePage implements OnInit {
     () => Boolean(this.imageImportRecognition()) && this.recognitionPendingReviewCount() === 0,
   );
 
+  /**
+   * How many slots this import lost to the threshold, and what the threshold was.
+   *
+   * 869f13gay. `matchThreshold` lives on the image profile, it is stored per player, and it was
+   * invisible: set too high it silently rejects correct matches, too low it accepts wrong ones,
+   * and in BOTH cases the import simply looks worse with nothing pointing at the setting that
+   * caused it.
+   *
+   * `ambiguous` is exactly the population that answers it - the matcher found a best candidate
+   * and the threshold rejected it. `empty` is not, because nothing was compared at all, and a
+   * count that mixed the two would blame the threshold for a blank crop.
+   */
+  public readonly thresholdExcludedCount = computed(
+    () =>
+      (this.imageImportRecognition()?.slots ?? []).filter((slot) => slot.status === 'ambiguous')
+        .length,
+  );
+
+  public readonly activeMatchThreshold = computed(
+    () => this.selectedImageProfile()?.preprocess.matchThreshold ?? null,
+  );
+
   public constructor(
     private readonly characterCatalogCache: CharacterCatalogCacheService,
     private readonly autoTeamBuilder: AutoTeamBuilderService,

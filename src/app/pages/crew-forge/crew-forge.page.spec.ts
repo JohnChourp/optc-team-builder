@@ -160,6 +160,56 @@ describe('CrewForgePage', () => {
     expect(page.isRecognitionCandidateSelected(slot!.slot, 103)).toBe(true);
   });
 
+  /*
+   * 869f13gay. The count must blame the threshold for exactly the slots the threshold rejected.
+   * `empty` is the control: nothing was compared there, so counting it would blame the setting
+   * for a blank crop and send the reader to change a dial that did nothing.
+   */
+  it('counts the slots the threshold turned down, and not the blank ones', async () => {
+    const { page, crewForgeImageImport } = createPage();
+    const recognitionResult = createRecognitionResult([101, null, null, null, 105]);
+
+    recognitionResult.slots[1] = {
+      ...recognitionResult.slots[1],
+      characterId: null,
+      confidence: 0.88,
+      status: 'ambiguous',
+      candidates: [{ characterId: 103, confidence: 0.88, source: 'catalog' as const }],
+    };
+    recognitionResult.slots[2] = {
+      ...recognitionResult.slots[2],
+      characterId: null,
+      confidence: 0.9,
+      status: 'ambiguous',
+      candidates: [{ characterId: 107, confidence: 0.9, source: 'catalog' as const }],
+    };
+    // the control: blank crop, nothing compared, NOT the threshold's doing
+    recognitionResult.slots[3] = {
+      ...recognitionResult.slots[3],
+      characterId: null,
+      confidence: 0,
+      status: 'empty',
+      candidates: [],
+    };
+    crewForgeImageImport.recognizeImage.mockResolvedValue(recognitionResult);
+
+    await page.ngOnInit();
+    page.imageImportDataUrl.set('data:image/png;base64,ZmFrZQ==');
+    page.imageImportWidth.set(1080);
+    page.imageImportHeight.set(1920);
+
+    await page.runImageRecognition();
+
+    expect(page.thresholdExcludedCount()).toBe(2);
+  });
+
+  it('counts nothing before a screenshot has been recognised', () => {
+    const { page } = createPage();
+
+    expect(page.thresholdExcludedCount()).toBe(0);
+    expect(page.activeMatchThreshold()).toBeNull();
+  });
+
   it('marks the matching suggested candidate as selected after a candidate override', async () => {
     const { page, crewForgeImageImport } = createPage();
     const recognitionResult = createRecognitionResult([101, 102, 103, 104, 105]);
