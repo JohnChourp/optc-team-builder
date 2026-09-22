@@ -576,6 +576,16 @@ export const SCRIPT_SUITES = {
     command: 'npm run test:modal-labels',
   },
   /*
+   * 869f13gaw / 869f13gbk. Measured from Ionic's own source: `inheritAttributes` calls
+   * `removeAttribute`, so an `aria-describedby` on an Ionic control is MOVED into the shadow root
+   * where its IDREF can never reach a light-DOM id. The same pass found three filter triggers
+   * announcing a static label while the screen read "3 filter(s) in 2 group(s)".
+   */
+  'accessible-names': {
+    label: 'Ionic accessible name tests',
+    command: 'npm run test:accessible-names',
+  },
+  /*
    * 869f138pv. Proves every shared picker still closes the same way. All six already did when this
    * was written; what nothing protected was the contract, and a pop-up that keeps a draft on a
    * backdrop tap in an app where every other one discards it is invisible until somebody reports it.
@@ -1169,6 +1179,16 @@ function isPickerDismissalPath(filePath) {
     filePath === 'scripts/check-shared-picker-dismissal.mjs' ||
     filePath === 'scripts/check-shared-picker-dismissal.spec.ts' ||
     filePath === 'scripts/lib/shared-picker-dismissal.mjs'
+  );
+}
+
+/* 869f13gaw. Terminating: the guard and the screen-reader-only utility the fix depends on. */
+function isAccessibleNamePath(filePath) {
+  return (
+    filePath === 'scripts/check-ionic-accessible-names.mjs' ||
+    filePath === 'scripts/check-ionic-accessible-names.spec.ts' ||
+    filePath === 'scripts/lib/ionic-accessible-names.mjs' ||
+    filePath === 'src/app/shared/a11y/visually-hidden.scss'
   );
 }
 
@@ -1841,6 +1861,11 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
       addScriptSuite(scriptSuites, 'modal-labels');
     }
 
+    /* Any template can hide a derived value behind a static label, so every one routes here. */
+    if (filePath.startsWith('src/app/') && (filePath.endsWith('.html') || filePath.endsWith('.ts'))) {
+      addScriptSuite(scriptSuites, 'accessible-names');
+    }
+
     if (touchesPickerDismissalSources(filePath)) {
       addScriptSuite(scriptSuites, 'picker-dismissal');
     }
@@ -1961,6 +1986,11 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
 
     if (isAbilityCataloguePath(filePath)) {
       addScriptSuite(scriptSuites, 'ability-catalogue');
+      continue;
+    }
+
+    if (isAccessibleNamePath(filePath)) {
+      addScriptSuite(scriptSuites, 'accessible-names');
       continue;
     }
 

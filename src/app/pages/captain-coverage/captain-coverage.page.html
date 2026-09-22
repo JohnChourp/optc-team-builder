@@ -231,11 +231,11 @@
                   fill="outline"
                   color="light"
                   data-testid="captain-coverage-ability-filter-trigger"
-                  [attr.aria-label]="t('filters.abilityTagSets.label')"
                   [disabled]="loading() || !hasAbilityFilterSections()"
                   (click)="openAbilityTagSetPicker()"
                 >
                   <ion-icon slot="start" [icon]="characterTagFilterIcon" aria-hidden="true"></ion-icon>
+                  <span class="visually-hidden">{{ t('filters.abilityTagSets.label') }}: </span>
                   {{ abilityFilterTriggerLabel() }}
                 </ion-button>
               </div>
@@ -280,7 +280,6 @@
                   fill="outline"
                   color="light"
                   data-testid="captain-coverage-character-tag-trigger"
-                  [attr.aria-label]="t('filters.characterTags.label')"
                   [disabled]="loading() || !availableCharacterTags().length"
                   (click)="openCharacterTagSetPicker()"
                 >
@@ -289,6 +288,7 @@
                     [icon]="characterTagFilterIcon"
                     aria-hidden="true"
                   ></ion-icon>
+                  <span class="visually-hidden">{{ t('filters.characterTags.label') }}: </span>
                   {{ characterTagFilterTriggerLabel() }}
                 </ion-button>
               </div>
