@@ -138,6 +138,16 @@
                       }}
                     </p>
                   }
+                  @if (thresholdExcludedCount() > 0 && activeMatchThreshold() !== null) {
+                    <p class="build-hint" data-test="crew-forge-threshold-excluded">
+                      {{
+                        t('imageImport.review.thresholdExcluded', {
+                          count: thresholdExcludedCount(),
+                          threshold: activeMatchThreshold()
+                        })
+                      }}
+                    </p>
+                  }
                 </div>
                 @if (!recognitionReviewComplete()) {
                   <ion-button

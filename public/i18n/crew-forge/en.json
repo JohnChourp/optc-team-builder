@@ -34,7 +34,8 @@
       "confirm": "Looks right",
       "confirmAll": "Accept the rest",
       "pending": "{{count}} still to check - the least certain are first.",
-      "reopen": "Check again"
+      "reopen": "Check again",
+      "thresholdExcluded": "{{count}} slot(s) had a best match your profile's cut-off of {{threshold}} turned down. They are at the top of the list below - if the right character is among the choices, pick it; if this keeps happening, lower the cut-off in the profile."
     },
     "confidence": "Confidence",
     "picker": {
