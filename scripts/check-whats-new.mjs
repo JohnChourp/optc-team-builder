@@ -275,6 +275,24 @@ export function inspectWhatsNew({ appRoot = process.cwd() } = {}) {
       });
     }
 
+    // F. a bullet's Greek is never byte-identical to its English.
+    //
+    // 869f13gc3. Checked on EVERY entry, not only the newest, because it is a true
+    // invariant here: measured 2026-09-22, 0 of 642 bullets across 203 entries.
+    // An identical pair means the Greek was never written - the translation was
+    // skipped and the English pasted - and a player reading Greek meets English.
+    // The game's own terms staying untranslated is a DIFFERENT thing: those sit
+    // inside a Greek sentence, so the two strings still differ.
+    for (const [index, bullet] of bullets.entries()) {
+      if (bullet?.en !== undefined && bullet.en === bullet?.el) {
+        findings.push({
+          kind: 'untranslated-bullet',
+          version: where,
+          detail: `${where} bullet ${index + 1} has Greek byte-identical to its English. The Greek was not written.`,
+        });
+      }
+    }
+
     // E. the NEWEST entry speaks the reader's language, not ours.
     //
     // Newest, not released: the entry is written before the version bump, so
@@ -318,6 +336,25 @@ export function inspectWhatsNew({ appRoot = process.cwd() } = {}) {
           version: where,
           detail: `${where} ${field} names the file "${filename[0]}". Name the screen and the place inside it instead.`,
         });
+      }
+    }
+
+    // G. every bullet on the newest entry names its place, in bold, in both languages.
+    //
+    // 869f13gc3. NEWEST only, and this one has to be: the rule arrived partway
+    // through the project's life and 556 of 642 published bullets predate it.
+    // They are readable - measured, 0 of 166 visible entries name a file, a
+    // component or a refactor - and they are never regenerated, so a blanket
+    // check would be red on history for a rule history could not have followed.
+    for (const [index, bullet] of bullets.entries()) {
+      for (const [language, value] of [['en', bullet?.en], ['el', bullet?.el]]) {
+        if (value !== undefined && !String(value).includes('**')) {
+          findings.push({
+            kind: 'bullet-without-a-place',
+            version: where,
+            detail: `${where} bullet ${index + 1} (${language}) names no place in bold. Say WHERE it happened - the screen, and the pop-up or area inside it.`,
+          });
+        }
       }
     }
   }
