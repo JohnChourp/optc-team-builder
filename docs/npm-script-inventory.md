@@ -91,8 +91,8 @@ and when a `test:` script is not a lane.
 | `build:ionic` | workflow · release-android.yml | the release-android.yml workflow |
 | `build:mobile` | documented · README.md, ios-platform-footprint.md | a documented manual step |
 | `build:pages` | workflow · deploy-pages.yml, guide-discoverability.yml, release-android.yml | the deploy-pages.yml, guide-discoverability.yml, release-android.yml workflow |
-| `build:stamp` | unclassified · — | unknown |
-| `build:stamp:check` | documented · maintainer-validation-guide.md | a documented manual step |
+| `build:stamp` | script file · write-build-stamp.mjs | whatever write-build-stamp.mjs drives |
+| `build:stamp:check` | script file · check-build-stamp.mjs | whatever check-build-stamp.mjs drives |
 | `cap:copy` | documented · ios-platform-footprint.md | a documented manual step |
 | `cap:sync` | documented · ios-platform-footprint.md | a documented manual step |
 | `components:inventory` | npm script · test:component-inventory | `test:component-inventory` |

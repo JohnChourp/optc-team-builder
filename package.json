@@ -32,7 +32,7 @@
     "build": "npm run config:app && npm run dataset:binary && ng build && node ./scripts/write-build-stamp.mjs --steps config:app,dataset:binary",
     "build:ionic": "npm run build",
     "build:mobile": "npm run build:ionic && npx cap sync",
-    "build:pages": "npm run config:app:web-strict && npm run security:app-config && npm run dataset:binary && ng build --configuration production --base-href / && npm run seo:pages && npm run pwa:ngsw:pages && npm run seo:audit && node ./scripts/check-secrets.mjs --dir dist/optc-team-builder/browser && node ./scripts/write-build-stamp.mjs --steps config:app:web-strict,dataset:binary,seo:pages,pwa:ngsw:pages,seo:audit",
+    "build:pages": "npm run config:app:web-strict && npm run security:app-config && npm run dataset:binary && ng build --configuration production --base-href / && npm run seo:pages && npm run pwa:ngsw:pages && npm run seo:audit && node ./scripts/write-build-stamp.mjs --steps config:app:web-strict,dataset:binary,seo:pages,pwa:ngsw:pages,seo:audit && node ./scripts/check-secrets.mjs --dir dist/optc-team-builder/browser",
     "build:stamp": "node ./scripts/write-build-stamp.mjs",
     "build:stamp:check": "node ./scripts/check-build-stamp.mjs",
     "cap:copy": "npx cap copy",
