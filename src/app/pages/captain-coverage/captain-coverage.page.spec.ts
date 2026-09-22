@@ -2849,7 +2849,18 @@ describe('CaptainCoveragePage', () => {
     expect(template).not.toContain('coverage-chip');
     expect(template).toContain('class="coverage-tag-filter"');
     expect(template).toContain("t('filters.characterTags.label')");
-    expect(template).toContain('[attr.aria-label]="t(\'filters.characterTags.label\')"');
+    // 869f13gaw. The label moved INTO the content. A static aria-label would override
+    // name-from-content, so the trigger would announce "Character Tags" while the screen read
+    // "5 tag(s) in 2 group(s)" - and aria-describedby cannot fix it, because Ionic moves that
+    // attribute into the shadow root where its IDREF cannot resolve.
+    expect(template).not.toContain('[attr.aria-label]="t(\'filters.characterTags.label\')"');
+    expect(template).toContain(
+      '<span class="visually-hidden">{{ t(\'filters.characterTags.label\') }}: </span>',
+    );
+    expect(template).toContain(
+      '<span class="visually-hidden">{{ t(\'filters.abilityTagSets.label\') }}: </span>',
+    );
+    expect(template).not.toContain('[attr.aria-label]="t(\'filters.abilityTagSets.label\')"');
     expect(template).toContain('hasSelectedCharacterTags()');
     expect(template).toContain('(click)="clearSelectedCharacterTags()"');
     expect(template).toContain('data-testid="captain-coverage-character-tag-trigger"');

@@ -127,6 +127,16 @@
       "specCount": 1
     },
     {
+      "id": "accessible-names",
+      "label": "Ionic accessible name tests",
+      "command": "npm run test:accessible-names",
+      "environment": "node",
+      "environments": [
+        "node"
+      ],
+      "specCount": 1
+    },
+    {
       "id": "actions-pins",
       "label": "GitHub Actions pin tests",
       "command": "npm run test:actions-pins && npm run actions:pins",

@@ -53,6 +53,7 @@ describe('ci-check-routing', () => {
       'failure-vocabulary',
       'unused-members',
       'modal-labels',
+      'accessible-names',
       'component-map',
     ]);
   });
@@ -383,6 +384,7 @@ describe('ci-check-routing', () => {
       'dataset-delivery',
       'ability-catalogue',
       'modal-labels',
+      'accessible-names',
       'picker-dismissal',
       'dataset-schema',
       'component-map',
