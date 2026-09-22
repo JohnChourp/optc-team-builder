@@ -11,6 +11,7 @@ import { WHATS_NEW_ENTRIES, type WhatsNewEntry } from '../../core/data/whats-new
 import { AppI18nService } from '../../core/services/app-i18n.service';
 import { PreferencesAdapterService } from '../../core/services/preferences-adapter.service';
 import { partitionWhatsNewEntries } from './whats-new-partition.utils';
+import { WhatsNewTextComponent } from './whats-new-text.component';
 
 /**
  * The version the reader last had this modal open on.
@@ -41,7 +42,7 @@ const WHATS_NEW_LAST_SEEN_VERSION_KEY = 'whatsNewLastSeenVersion';
 @Component({
   selector: 'app-whats-new-modal',
   standalone: true,
-  imports: [IonButton, IonButtons, IonContent, IonIcon, IonModal, TranslocoPipe],
+  imports: [IonButton, IonButtons, IonContent, IonIcon, IonModal, TranslocoPipe, WhatsNewTextComponent],
   template: `
     <ion-modal
       [isOpen]="isOpen"
@@ -91,15 +92,17 @@ const WHATS_NEW_LAST_SEEN_VERSION_KEY = 'whatsNewLastSeenVersion';
                   <time class="whats-new__date" [attr.datetime]="entry.date">{{ entry.date }}</time>
                 </header>
 
-                <h3 class="whats-new__headline">{{ localised(entry.headline) }}</h3>
-                <p class="whats-new__summary">{{ summary(entry) }}</p>
+                <h3 class="whats-new__headline">
+                  <app-whats-new-text [value]="localised(entry.headline)" />
+                </h3>
+                <p class="whats-new__summary"><app-whats-new-text [value]="summary(entry)" /></p>
 
                 @if (entry.added.length) {
                   <section class="whats-new__group whats-new__group--added">
                     <span>{{ 'whatsNew.added' | transloco }}</span>
                     <ul>
                       @for (item of entry.added; track $index) {
-                        <li>{{ localised(item) }}</li>
+                        <li><app-whats-new-text [value]="localised(item)" /></li>
                       }
                     </ul>
                   </section>
@@ -110,7 +113,7 @@ const WHATS_NEW_LAST_SEEN_VERSION_KEY = 'whatsNewLastSeenVersion';
                     <span>{{ 'whatsNew.improved' | transloco }}</span>
                     <ul>
                       @for (item of entry.improved; track $index) {
-                        <li>{{ localised(item) }}</li>
+                        <li><app-whats-new-text [value]="localised(item)" /></li>
                       }
                     </ul>
                   </section>
@@ -121,7 +124,7 @@ const WHATS_NEW_LAST_SEEN_VERSION_KEY = 'whatsNewLastSeenVersion';
                     <span>{{ 'whatsNew.fixed' | transloco }}</span>
                     <ul>
                       @for (item of entry.fixed; track $index) {
-                        <li>{{ localised(item) }}</li>
+                        <li><app-whats-new-text [value]="localised(item)" /></li>
                       }
                     </ul>
                   </section>
@@ -148,15 +151,17 @@ const WHATS_NEW_LAST_SEEN_VERSION_KEY = 'whatsNewLastSeenVersion';
                   <time class="whats-new__date" [attr.datetime]="entry.date">{{ entry.date }}</time>
                 </header>
 
-                <h3 class="whats-new__headline">{{ localised(entry.headline) }}</h3>
-                <p class="whats-new__summary">{{ summary(entry) }}</p>
+                <h3 class="whats-new__headline">
+                  <app-whats-new-text [value]="localised(entry.headline)" />
+                </h3>
+                <p class="whats-new__summary"><app-whats-new-text [value]="summary(entry)" /></p>
 
                 @if (entry.added.length) {
                   <section class="whats-new__group whats-new__group--added">
                     <span>{{ 'whatsNew.added' | transloco }}</span>
                     <ul>
                       @for (item of entry.added; track $index) {
-                        <li>{{ localised(item) }}</li>
+                        <li><app-whats-new-text [value]="localised(item)" /></li>
                       }
                     </ul>
                   </section>
@@ -167,7 +172,7 @@ const WHATS_NEW_LAST_SEEN_VERSION_KEY = 'whatsNewLastSeenVersion';
                     <span>{{ 'whatsNew.improved' | transloco }}</span>
                     <ul>
                       @for (item of entry.improved; track $index) {
-                        <li>{{ localised(item) }}</li>
+                        <li><app-whats-new-text [value]="localised(item)" /></li>
                       }
                     </ul>
                   </section>
@@ -178,7 +183,7 @@ const WHATS_NEW_LAST_SEEN_VERSION_KEY = 'whatsNewLastSeenVersion';
                     <span>{{ 'whatsNew.fixed' | transloco }}</span>
                     <ul>
                       @for (item of entry.fixed; track $index) {
-                        <li>{{ localised(item) }}</li>
+                        <li><app-whats-new-text [value]="localised(item)" /></li>
                       }
                     </ul>
                   </section>
@@ -212,15 +217,17 @@ const WHATS_NEW_LAST_SEEN_VERSION_KEY = 'whatsNewLastSeenVersion';
                   <time class="whats-new__date" [attr.datetime]="entry.date">{{ entry.date }}</time>
                 </header>
 
-                <h3 class="whats-new__headline">{{ localised(entry.headline) }}</h3>
-                <p class="whats-new__summary">{{ summary(entry) }}</p>
+                <h3 class="whats-new__headline">
+                  <app-whats-new-text [value]="localised(entry.headline)" />
+                </h3>
+                <p class="whats-new__summary"><app-whats-new-text [value]="summary(entry)" /></p>
 
                 @if (entry.added.length) {
                   <section class="whats-new__group whats-new__group--added">
                     <span>{{ 'whatsNew.added' | transloco }}</span>
                     <ul>
                       @for (item of entry.added; track $index) {
-                        <li>{{ localised(item) }}</li>
+                        <li><app-whats-new-text [value]="localised(item)" /></li>
                       }
                     </ul>
                   </section>
@@ -231,7 +238,7 @@ const WHATS_NEW_LAST_SEEN_VERSION_KEY = 'whatsNewLastSeenVersion';
                     <span>{{ 'whatsNew.improved' | transloco }}</span>
                     <ul>
                       @for (item of entry.improved; track $index) {
-                        <li>{{ localised(item) }}</li>
+                        <li><app-whats-new-text [value]="localised(item)" /></li>
                       }
                     </ul>
                   </section>
@@ -242,7 +249,7 @@ const WHATS_NEW_LAST_SEEN_VERSION_KEY = 'whatsNewLastSeenVersion';
                     <span>{{ 'whatsNew.fixed' | transloco }}</span>
                     <ul>
                       @for (item of entry.fixed; track $index) {
-                        <li>{{ localised(item) }}</li>
+                        <li><app-whats-new-text [value]="localised(item)" /></li>
                       }
                     </ul>
                   </section>
