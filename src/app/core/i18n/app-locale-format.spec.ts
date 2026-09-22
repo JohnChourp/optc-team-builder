@@ -15,10 +15,20 @@ import {
  * No TestBed: page specs here run without an injector, which is exactly why the
  * formatting locale is module state rather than an injected service.
  */
+/*
+ * 869f13gam. File scope, not inside one `describe`.
+ *
+ * It used to sit inside the first block, so the sibling `formatDateTime` block below
+ * set `el` and never reset it - and because `ng test` reuses worker processes across
+ * files, that leaked into whichever file was scheduled next in the same process. The
+ * global hook in `src/test-setup.ts` now catches the class; this keeps the file
+ * correct on its own, and at file scope a describe added later inherits it.
+ */
+afterEach(() => {
+  resetFormattingLanguageForTests();
+});
+
 describe('formatting follows the chosen language', () => {
-  afterEach(() => {
-    resetFormattingLanguageForTests();
-  });
 
   it('defaults to English', () => {
     expect(formattingLanguage()).toBe('en');
