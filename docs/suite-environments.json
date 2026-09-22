@@ -165,6 +165,16 @@
       "specCount": 1
     },
     {
+      "id": "build-stamp",
+      "label": "Build stamp tests",
+      "command": "npm run test:build-stamp",
+      "environment": "node",
+      "environments": [
+        "node"
+      ],
+      "specCount": 1
+    },
+    {
       "id": "captain-contracts",
       "label": "Captain contract script tests",
       "command": "npm run test:captain-contracts",

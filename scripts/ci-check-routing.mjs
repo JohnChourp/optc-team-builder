@@ -586,6 +586,15 @@ export const SCRIPT_SUITES = {
     command: 'npm run test:accessible-names',
   },
   /*
+   * 869f13gbb. A dist/ that is older than its sources - or newer than everything and missing a
+   * generation step - answers questions silently and wrongly. Measured 2026-09-12: reading dist/
+   * for the sitemap gave 7 URLs against a live 4,637.
+   */
+  'build-stamp': {
+    label: 'Build stamp tests',
+    command: 'npm run test:build-stamp',
+  },
+  /*
    * 869f138pv. Proves every shared picker still closes the same way. All six already did when this
    * was written; what nothing protected was the contract, and a pop-up that keeps a draft on a
    * backdrop tap in an app where every other one discards it is invisible until somebody reports it.
@@ -1179,6 +1188,15 @@ function isPickerDismissalPath(filePath) {
     filePath === 'scripts/check-shared-picker-dismissal.mjs' ||
     filePath === 'scripts/check-shared-picker-dismissal.spec.ts' ||
     filePath === 'scripts/lib/shared-picker-dismissal.mjs'
+  );
+}
+
+/* 869f13gbb. Terminating: the stamp writer, its checker, and their spec. */
+function isBuildStampPath(filePath) {
+  return (
+    filePath === 'scripts/write-build-stamp.mjs' ||
+    filePath === 'scripts/check-build-stamp.mjs' ||
+    filePath === 'scripts/check-build-stamp.spec.ts'
   );
 }
 
@@ -1995,6 +2013,11 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
 
     if (isAccessibleNamePath(filePath)) {
       addScriptSuite(scriptSuites, 'accessible-names');
+      continue;
+    }
+
+    if (isBuildStampPath(filePath)) {
+      addScriptSuite(scriptSuites, 'build-stamp');
       continue;
     }
 
