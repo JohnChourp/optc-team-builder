@@ -77,7 +77,28 @@ function areaOf(file) {
 
 export function buildInventory(sources) {
   const routes = sources.get(ROUTES_PATH) ?? '';
-  const templates = [...sources.entries()].filter(([file]) => file.endsWith('.html'));
+  /*
+   * 869f13gam. `.html` files AND the inline `template:` of every component.
+   *
+   * This used to read `.html` only, and it therefore could not see a component that
+   * is rendered exclusively from an inline template - it reported `WhatsNewTextComponent`
+   * as "reached by no route and rendered by no template" while the What's New modal,
+   * whose own template is inline, rendered it fifteen times.
+   *
+   * A component file is included as a template in full rather than having its
+   * `template:` string extracted: the tag search below is a substring test, and a
+   * `<app-foo` inside a component's TypeScript is a reference to that component
+   * however it got there. Extracting the literal would mean parsing template strings
+   * with nested backticks and interpolation, which buys nothing here and is a way to
+   * be subtly wrong.
+   *
+   * A component is not counted as its own host: a selector appearing in the file that
+   * declares it is the declaration, not a use, and counting it would make every
+   * component trivially reachable.
+   */
+  const templates = [...sources.entries()].filter(
+    ([file, contents]) => file.endsWith('.html') || (file.endsWith('.ts') && contents.includes('template:')),
+  );
   const panelFolders = new Set(
     [...sources.keys()].filter((file) => file.endsWith(PANEL_FILE)).map((file) => path.dirname(file)),
   );
@@ -109,7 +130,8 @@ export function buildInventory(sources) {
       routes.includes(componentClass);
 
     const hosts = selector
-      ? templates.filter(([, contents]) => contents.includes(`<${selector}`)).length
+      ? templates.filter(([host, contents]) => host !== file && contents.includes(`<${selector}`))
+          .length
       : 0;
 
     rows.push({
