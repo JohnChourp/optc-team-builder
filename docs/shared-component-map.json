@@ -504,10 +504,12 @@
       "id": "whats-new",
       "kind": "component",
       "exports": [
-        "WhatsNewModalComponent"
+        "WhatsNewModalComponent",
+        "WhatsNewTextComponent"
       ],
       "inputs": [
-        "isOpen"
+        "isOpen",
+        "set"
       ],
       "outputs": [
         "dismiss"
