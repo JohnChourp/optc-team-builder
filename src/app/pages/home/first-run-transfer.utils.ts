@@ -54,6 +54,7 @@ export const TRANSFERABLE_SCOPE_COUNTS = [
   'savedEnemiesCount',
   'savedRumbleTeamsCount',
   'savedTeamsCount',
+  'boostedCharacterCount',
 ] as const satisfies readonly (keyof SyncScopeSummary)[];
 
 /**
