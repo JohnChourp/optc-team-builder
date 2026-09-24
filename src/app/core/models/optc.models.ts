@@ -254,7 +254,8 @@ export interface CharacterDetail {
   sailorNotes: string | null;
   potentialAbilities: Array<{ Name?: string; description?: string[] }>;
   supportData: CharacterSupportEntry[];
-  swapData: Record<string, unknown> | null;
+  /** A Captain Shift: structured for most units, plain text for 90 of them upstream. */
+  swapData: Record<string, unknown> | string | null;
   vsSpecial: Record<string, unknown> | null;
   exSuperData?: Record<string, unknown> | null;
   superType: Record<string, unknown> | null;

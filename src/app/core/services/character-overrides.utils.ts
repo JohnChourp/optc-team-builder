@@ -29,6 +29,15 @@ export interface LocalCharacterOverrideInput {
   updatedAt?: string;
 }
 
+/**
+ * 869f63gqd. The dataset's own captain fields for an overridden character - the text its shipped
+ * Captain boosts and tiers were read from. A Local edit that still carries this text keeps them.
+ */
+export type LocalCharacterOverrideDatasetCaptain = Pick<
+  CharacterDetail,
+  'captainAbility' | 'captainAbilityVariants'
+>;
+
 const NULLABLE_TEXT_DETAIL_KEYS = [
   'captainAbility',
   'captainNotes',
@@ -172,6 +181,14 @@ export function normalizeCharacterDetailInput(
       entry && typeof entry === 'object' && !Array.isArray(entry) ? deepClone(entry) : null;
   });
 
+  // 869f63gqd. Upstream writes 90 Captain Shifts as plain text ("Recovers 2x character's RCV").
+  // Only an object used to survive here, so every save of the editor nulled them.
+  const swapData = record['swapData'];
+
+  if (typeof swapData === 'string' && swapData.trim().length > 0) {
+    detail.swapData = swapData;
+  }
+
   return detail;
 }
 
@@ -197,11 +214,12 @@ export function normalizeLocalCharacterOverride(
     ),
   ];
 
+  // No class is not a missing field: the 18 VS units ship with no classes of their own, and
+  // refusing them made every one of them impossible to save, export or import (869f63gqd).
   if (
     !characterId ||
     !name.length ||
     !type.length ||
-    classes.length === 0 ||
     stars === null ||
     cost === null ||
     combo === null
@@ -276,12 +294,24 @@ export function createLocalCharacterOverrideFromRecord(
 export function applyOverrideToCharacterListItem(
   character: CharacterListItem,
   override: LocalCharacterOverride | null,
+  /**
+   * The dataset's captain fields for this character. A list row carries no detail, so the
+   * repository reads them for overridden ids; without them the boosts are read from the
+   * override's own text, which is all a caller with no dataset can do.
+   */
+  datasetCaptain?: LocalCharacterOverrideDatasetCaptain | null,
 ): CharacterListItem {
   if (!override || override.characterId !== character.id) {
     return character;
   }
 
   const [primaryClass, secondaryClass] = override.classes;
+  // 869f63gqd. The dataset's boosts stand while the captain text does; re-reading them from the
+  // override is only for a text the player actually changed. An untouched save used to move 189.
+  const keepsDatasetCaptain =
+    datasetCaptain !== undefined &&
+    datasetCaptain !== null &&
+    hasSameCaptainText(datasetCaptain, override.detail);
 
   return {
     ...character,
@@ -292,10 +322,14 @@ export function applyOverrideToCharacterListItem(
     primaryClass: primaryClass ?? character.primaryClass,
     secondaryClass: secondaryClass ?? null,
     stars: override.stars,
-    starsLabel: String(override.stars),
+    // The upstream label ("6+", a trained rarity) is only rebuilt when the rarity itself changed.
+    starsLabel:
+      override.stars === character.stars
+        ? (character.starsLabel ?? String(override.stars))
+        : String(override.stars),
     cost: override.cost,
     combo: override.combo,
-    ...resolveCaptainBoosts(override.detail, normalizeHtmlToText),
+    ...(keepsDatasetCaptain ? {} : resolveCaptainBoosts(override.detail, normalizeHtmlToText)),
     stats: {
       min: {
         hp: override.minHp,
@@ -322,11 +356,28 @@ export function applyOverrideToCharacterDetailRecord(
     return character;
   }
 
-  const overlaidRecord = applyOverrideToCharacterListItem(character, override);
+  const overlaidRecord = applyOverrideToCharacterListItem(character, override, character.detail);
+  /*
+   * 869f63gqd. An override stores only the fields the editor knows. Replacing the detail with it
+   * dropped everything else - `captainAbilityCoverage`, `exSuperData`, `switchEffectData`,
+   * `captainShiftData` - so a save that changed nothing wiped the Captain tiers of 4,007
+   * characters. The edited fields go over the dataset's detail instead, which also heals an
+   * override stored before this: what it never kept is read from the dataset again.
+   */
+  const detail: CharacterDetail = {
+    ...cloneCharacterDetail(character.detail),
+    ...cloneCharacterDetail(override.detail),
+  };
+
+  // The tiers describe the dataset's captain text. Once the player rewrites it they describe
+  // nothing, and a stale tier filter would be worse than none.
+  if (!hasSameCaptainText(character.detail, override.detail)) {
+    delete detail.captainAbilityCoverage;
+  }
 
   return {
     ...overlaidRecord,
-    detail: cloneCharacterDetail(override.detail),
+    detail,
     detailImageUrl: override.images.detailDataUrl ?? character.detailImageUrl,
   };
 }
@@ -352,4 +403,25 @@ export function createEditableCharacterOverridePayload(
     growth: override.growth,
     detail: cloneCharacterDetail(override.detail),
   };
+}
+
+/**
+ * Whether a Local edit still carries the dataset's captain text, compared the way the grammar
+ * reads it: HTML-normalized, and variant by variant, because a tier belongs to one variant.
+ */
+function hasSameCaptainText(
+  datasetCaptain: LocalCharacterOverrideDatasetCaptain,
+  detail: LocalCharacterOverrideDatasetCaptain,
+): boolean {
+  return describeCaptainText(datasetCaptain) === describeCaptainText(detail);
+}
+
+function describeCaptainText(captain: LocalCharacterOverrideDatasetCaptain): string {
+  return JSON.stringify([
+    normalizeHtmlToText(captain.captainAbility),
+    ...captain.captainAbilityVariants.map((variant) => [
+      variant.key,
+      normalizeHtmlToText(variant.text),
+    ]),
+  ]);
 }
