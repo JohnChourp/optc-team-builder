@@ -429,10 +429,12 @@ jobs:
           # The checkout is shallow and has no tags. The previous release is the tag
           # before this one in version order - for all 203 releases so far, the same tag
           # release-and-tag.sh names with `git describe` - and only its commit is fetched.
+          # awk reads to the end rather than exiting at the match, so under pipefail no
+          # stage upstream can be cut off mid-write.
           previous_tag="$(git ls-remote --tags --refs origin 'v*' \
             | sed 's#^.*refs/tags/##' \
             | sort -V \
-            | awk -v current="${RELEASE_TAG}" '$0 == current { print previous; found = 1; exit } { previous = $0 } END { if (!found) exit 1 }')"
+            | awk -v current="${RELEASE_TAG}" '$0 == current { found = 1; print previous } !found { previous = $0 } END { if (!found) exit 1 }')"
 
           if [[ -z "${previous_tag}" ]]; then
             echo "No release tag precedes ${RELEASE_TAG}; only the priority set will be submitted." >&2
