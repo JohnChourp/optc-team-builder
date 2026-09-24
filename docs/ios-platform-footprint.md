@@ -9,7 +9,7 @@
 **The PWA is the iOS path.** iPhone players install the web app to the home
 screen. There is no App Store build and none is planned. That part is unchanged.
 
-What changed is the second half. Until 2026-09-20 the `ios/` Capacitor project was
+What changed is the second half. Until 2026-09-20 the ios/ Capacitor project was
 **kept so the option stayed open**; on 2026-09-19 the owner decided to stop
 carrying it, and on 2026-09-20 it was removed — 19 tracked files, `@capacitor/ios`,
 the `ios:open` and `ios:sync` scripts, and the pbxproj write in `bump-version.sh`.
@@ -22,9 +22,9 @@ the removal reviewable.
 
 The section *"The release depends on the iOS project, and fails badly without it"*
 below said: guard or remove the pbxproj write **first**, prove a release still bumps
-cleanly, and only then remove `ios/`. That is exactly the order the removal followed.
+cleanly, and only then remove ios/. That is exactly the order the removal followed.
 `scripts/bump-version.spec.ts` now carries a case that bumps in a workspace with **no
-`ios/` at all** and asserts every other file still moved — so the absence is pinned,
+ios/ at all** and asserts every other file still moved — so the absence is pinned,
 not merely untested.
 
 ### One entry of the inventory below was wrong
@@ -46,7 +46,7 @@ Every artifact that exists because of iOS, measured 2026-09-15.
 
 | # | Artifact | Detail |
 | :--: | --- | --- |
-| 1 | `ios/` Capacitor project | 21 tracked files, 872K, including `App.xcodeproj/project.pbxproj` |
+| 1 | ios/ Capacitor project | 21 tracked files, 872K, including `App.xcodeproj/project.pbxproj` |
 | 2 | `ios:open` | `npx cap open ios` — opens Xcode |
 | 3 | `ios:sync` | `npx cap sync ios` |
 | 4 | npm override `xcode` | `{"uuid": "^11.1.1"}` — the only override in `package.json` |
@@ -71,7 +71,7 @@ There is no existence check. The read happens **after** `package.json` and
 `android/app/build.gradle` have already been written, and the script runs under
 `set -euo pipefail`.
 
-So deleting `ios/` without changing `bump-version.sh` first does not produce a
+So deleting ios/ without changing `bump-version.sh` first does not produce a
 tidy no-op. It aborts the release **mid-bump**, with the version already advanced
 in two tracked files and no tag cut.
 
@@ -82,7 +82,7 @@ footprint is a change rather than a deletion.
 
 If the decision ever reverses, the order is: guard or remove the pbxproj write in
 `bump-version.sh` **first**, prove a release still bumps cleanly, and only then
-remove `ios/`.
+remove ios/.
 
 ## What is *not* part of the footprint
 
@@ -92,14 +92,14 @@ including `deploy-pages.yml`, which builds the website — gated by
 `APP_REQUIRE_GOOGLE_IOS_CLIENT_ID`.
 
 Anyone removing "the iOS things" by name would have taken Google sign-in down on
-the web app. It stays regardless of what happens to `ios/`.
+the web app. It stays regardless of what happens to ios/.
 
 ## What this costs today
 
 Close to nothing, which is why the decision is to keep it:
 
 - no CI minutes — no workflow touches it;
-- no bundle bytes — nothing in `ios/` reaches the web build;
+- no bundle bytes — nothing in ios/ reaches the web build;
 - one npm override, which `npm ci` resolves without complaint;
 - 872K of repository, and two scripts a developer may run by hand.
 
