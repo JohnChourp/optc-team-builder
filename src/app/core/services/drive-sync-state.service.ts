@@ -66,6 +66,8 @@ function normalizeSyncScopeSummary(value: unknown): SyncScopeSummary | null {
     savedEnemiesCount: normalizeSummaryCount(record['savedEnemiesCount']),
     savedRumbleTeamsCount: normalizeSummaryCount(record['savedRumbleTeamsCount']),
     savedTeamsCount: normalizeSummaryCount(record['savedTeamsCount']),
+    // 869f63gug. Absent from metadata stored before boosts were counted, which reads as 0.
+    boostedCharacterCount: normalizeSummaryCount(record['boostedCharacterCount']),
   };
 }
 

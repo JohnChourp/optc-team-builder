@@ -100,6 +100,7 @@ import {
   downloadAllDataExport,
   parseAllDataImportCandidate,
   type AllDataTransferPayload,
+  type AllDataTransferScope,
 } from './all-data-transfer.utils';
 import { normalizeCharacterRegionPreference } from '../../core/services/character-region.utils';
 import {
@@ -402,18 +403,28 @@ export class SettingsPage implements OnInit {
 
   public readonly storedDataRows = computed(() => {
     const counts = this.localSyncScopeSummary();
+    /*
+     * 869f63gug. Keyed by scope and typed as a complete record, so a kind of data cannot be left
+     * off the card - the boost list travelled in every backup and was counted on no screen. `key`
+     * names the Settings section that titles the row; the order here is the card's order.
+     */
+    const rows: Record<AllDataTransferScope, { key: string; count: number }> = {
+      savedTeams: { key: 'savedTeams', count: counts.savedTeamsCount },
+      savedRumbleTeams: { key: 'savedRumbleTeams', count: counts.savedRumbleTeamsCount },
+      savedRumbleOpponents: {
+        key: 'savedRumbleOpponents',
+        count: counts.savedRumbleOpponentsCount,
+      },
+      savedEnemies: { key: 'savedEnemies', count: counts.savedEnemiesCount },
+      characterBoxes: { key: 'characterBoxes', count: counts.characterBoxesCount },
+      characterOverrides: { key: 'characterOverrides', count: counts.characterOverridesCount },
+      crewForgeProfiles: { key: 'crewForgeProfiles', count: counts.crewForgeProfilesCount },
+      favorites: { key: 'favorites', count: counts.favoriteCharacterCount },
+      favoriteShips: { key: 'favoriteShips', count: counts.favoriteShipCount },
+      boostedCharacterIds: { key: 'boostedCharacters', count: counts.boostedCharacterCount },
+    };
 
-    return [
-      { key: 'savedTeams', count: counts.savedTeamsCount },
-      { key: 'savedRumbleTeams', count: counts.savedRumbleTeamsCount },
-      { key: 'savedRumbleOpponents', count: counts.savedRumbleOpponentsCount },
-      { key: 'savedEnemies', count: counts.savedEnemiesCount },
-      { key: 'characterBoxes', count: counts.characterBoxesCount },
-      { key: 'characterOverrides', count: counts.characterOverridesCount },
-      { key: 'crewForgeProfiles', count: counts.crewForgeProfilesCount },
-      { key: 'favorites', count: counts.favoriteCharacterCount },
-      { key: 'favoriteShips', count: counts.favoriteShipCount },
-    ] as const;
+    return Object.values(rows);
   });
 
   public readonly storedDataTotal = computed(() =>

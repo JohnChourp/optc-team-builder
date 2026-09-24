@@ -17,6 +17,7 @@ const counts = {
   savedEnemiesCount: 5,
   savedRumbleTeamsCount: 6,
   savedTeamsCount: 7,
+  boostedCharacterCount: 8,
 };
 
 describe('storage quota estimate', () => {

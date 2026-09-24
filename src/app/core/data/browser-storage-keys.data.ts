@@ -65,6 +65,13 @@ export interface BrowserStorageKeyRecord {
    * what makes "durable means exported" a checkable claim rather than a hope.
    */
   readonly exportedAs?: string;
+  /**
+   * For `durable-user-data` only: why writing this key does NOT raise "Local changes pending" on
+   * the Drive sync card. Absent means it does - the rule, since 869f63gug derives the flag's key
+   * list from this file. It used to be a hand-kept list of six, and the opponents, the boost list
+   * and the Crew Forge profiles travelled in every backup without ever raising it.
+   */
+  readonly pendingFlagExemption?: string;
   /** True when the spelling predates the convention for its backend. */
   readonly legacySpelling?: true;
   readonly note: string;
@@ -168,6 +175,8 @@ export const BROWSER_STORAGE_KEYS: readonly BrowserStorageKeyRecord[] = [
     backend: 'preferences',
     classification: 'durable-user-data',
     exportedAs: 'crewForgeProfiles',
+    pendingFlagExemption:
+      'Rewritten on every screenshot the Crew Forge importer reads, to remember which profile matched. Saving or deleting a profile already raises the flag through crewForgeImageProfiles; raising it for the selection alone would call every import a change waiting for Drive.',
     note: 'Which of those profiles was selected. Carried inside the same scope, as lastProfileId.',
   },
   {
@@ -364,6 +373,14 @@ export const NON_STORAGE_KEY_CONSTANTS: readonly { constantName: string; reason:
 /** Keys whose loss would cost the reader work they cannot redo. */
 export function durableStorageKeys(): readonly BrowserStorageKeyRecord[] {
   return BROWSER_STORAGE_KEYS.filter((record) => record.classification === 'durable-user-data');
+}
+
+/**
+ * 869f63gug. Durable keys whose write raises "Local changes pending": every one, bar a stated
+ * `pendingFlagExemption`.
+ */
+export function pendingFlagStorageKeys(): readonly BrowserStorageKeyRecord[] {
+  return durableStorageKeys().filter((record) => record.pendingFlagExemption === undefined);
 }
 
 /** Keys that must never leave the device, in a file or over sync. */

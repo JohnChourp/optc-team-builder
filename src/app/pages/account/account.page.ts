@@ -406,6 +406,7 @@ export class AccountPage {
 
   public getSummaryCountLabel(
     key:
+      | 'boostedCharacters'
       | 'characterBoxes'
       | 'characterOverrides'
       | 'crewForgeProfiles'

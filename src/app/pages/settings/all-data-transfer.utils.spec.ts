@@ -483,19 +483,21 @@ describe('every scope survives the round trip', () => {
     );
     const builder = service.slice(service.indexOf('public async buildAllDataPayload'));
     /*
-     * Only the object literal handed to the builder, not the whole method: `favorites` and
-     * `favoriteShips` are also local `const` names a few lines above, so a looser slice would
-     * pass on the destructuring line and certify the two scopes it never checked.
+     * 869f63gug. The sections are no longer an object literal in the method: every scope's comes
+     * from its entry in `syncScopeHandlers()`, a record typed over the scope list - so a scope with
+     * no `build` no longer compiles. Still bound here: the method has to build every scope through
+     * that record, and the record has to hold a `build` under every scope's name.
      */
-    const sections = builder.slice(
-      builder.indexOf('buildAllDataTransferPayload('),
-      builder.indexOf('exportedAt,\n    );'),
+    const handlers = service.slice(service.indexOf('private syncScopeHandlers()'));
+    const record = handlers.slice(0, handlers.indexOf('\n  }\n'));
+
+    expect(builder.slice(0, builder.indexOf('\n  }\n'))).toContain(
+      'ALL_DATA_TRANSFER_SCOPES.map(async (scope) => [scope, await handlers[scope].build()])',
     );
 
     for (const scope of ALL_DATA_TRANSFER_SCOPES) {
-      // Shorthand (`favorites,`) and explicit (`savedTeams: ...`) both count as supplied.
-      expect(sections, `buildAllDataPayload supplies ${scope}`).toMatch(
-        new RegExp(`\\b${scope}\\s*[,:]`, 'u'),
+      expect(record, `buildAllDataPayload supplies ${scope}`).toMatch(
+        new RegExp(`\\b${scope}: \\{\\n\\s+build: `, 'u'),
       );
     }
   });

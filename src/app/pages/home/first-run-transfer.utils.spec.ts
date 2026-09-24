@@ -28,6 +28,7 @@ const EMPTY: SyncScopeSummary = {
   savedEnemiesCount: 0,
   savedRumbleTeamsCount: 0,
   savedTeamsCount: 0,
+  boostedCharacterCount: 0,
 };
 
 /*
