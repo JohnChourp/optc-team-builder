@@ -13,6 +13,12 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
+        <!--
+          869f6tcz0. Capacitor's SystemBars paints the window behind both system bars with
+          this colour, so the DayNight default put white bars around the dark-only app on a
+          light device. It is the app's own background, in both device modes.
+        -->
+        <item name="android:windowBackground">@color/app_background</item>
     </style>
 
 

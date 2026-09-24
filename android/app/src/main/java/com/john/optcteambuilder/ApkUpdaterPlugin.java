@@ -15,12 +15,16 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -52,6 +56,14 @@ public class ApkUpdaterPlugin extends Plugin {
     private static final long PROGRESS_MIN_BYTES = 512 * 1024;
     private static final long PROGRESS_MIN_INTERVAL_MS = 200;
 
+    /**
+     * 869f6tczy. The two ways install() says the file it was handed cannot be installed as
+     * it is. The updater answers both by downloading the apk again, so they are stable
+     * codes - the message is for people.
+     */
+    private static final String ERROR_APK_MISSING = "APK_MISSING";
+    private static final String ERROR_APK_DIGEST_MISMATCH = "APK_DIGEST_MISMATCH";
+
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     /**
@@ -74,7 +86,13 @@ public class ApkUpdaterPlugin extends Plugin {
         executor.execute(() -> runDownload(call, url, fileName, expectedBytes));
     }
 
-    /** Opens the system package installer for a previously downloaded file. */
+    /**
+     * Opens the system package installer for a previously downloaded file.
+     *
+     * 869f6tczy. With the `sha256` the release publishes for the asset, the file is hashed
+     * first, off the plugin thread, and a file that no longer matches is deleted and rejected
+     * with APK_DIGEST_MISMATCH rather than handed to the installer.
+     */
     @PluginMethod
     public void install(PluginCall call) {
         final String path = call.getString("path");
@@ -87,10 +105,35 @@ public class ApkUpdaterPlugin extends Plugin {
         final File file = new File(path);
 
         if (!file.exists()) {
-            call.reject("Downloaded apk is missing: " + path);
+            call.reject("Downloaded apk is missing: " + path, ERROR_APK_MISSING);
             return;
         }
 
+        final String expectedSha256 = call.getString("sha256");
+
+        if (expectedSha256 == null || expectedSha256.trim().isEmpty()) {
+            openInstaller(call, file);
+            return;
+        }
+
+        // Hashing ~200 MB takes a moment, so it runs where the download runs.
+        executor.execute(() -> {
+            try {
+                if (!expectedSha256.trim().equalsIgnoreCase(sha256Hex(file))) {
+                    file.delete();
+                    call.reject("Downloaded apk does not match its published digest.", ERROR_APK_DIGEST_MISMATCH);
+                    return;
+                }
+            } catch (Exception error) {
+                call.reject("Unable to check the downloaded apk: " + error.getMessage(), error);
+                return;
+            }
+
+            getBridge().executeOnMainThread(() -> openInstaller(call, file));
+        });
+    }
+
+    private void openInstaller(PluginCall call, File file) {
         try {
             final Uri uri = FileProvider.getUriForFile(
                 getContext(),
@@ -277,6 +320,28 @@ public class ApkUpdaterPlugin extends Plugin {
         }
 
         throw new IOException("Too many redirects while downloading the update.");
+    }
+
+    /** Streams the file through SHA-256, one download buffer at a time, as lowercase hex. */
+    private String sha256Hex(File file) throws IOException, NoSuchAlgorithmException {
+        final MessageDigest digest = MessageDigest.getInstance("SHA-256");
+
+        try (InputStream input = new FileInputStream(file)) {
+            final byte[] buffer = new byte[BUFFER_BYTES];
+            int read;
+
+            while ((read = input.read(buffer)) != -1) {
+                digest.update(buffer, 0, read);
+            }
+        }
+
+        final StringBuilder hex = new StringBuilder();
+
+        for (byte value : digest.digest()) {
+            hex.append(String.format(Locale.ROOT, "%02x", value));
+        }
+
+        return hex.toString();
     }
 
     private void emitProgress(long loaded, long total) {

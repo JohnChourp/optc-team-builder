@@ -15,6 +15,7 @@ import { provideTransloco, translocoConfig } from '@jsverse/transloco';
 import { routes } from './app.routes';
 import { APP_I18N_AVAILABLE_LANGUAGES } from './core/i18n/app-i18n.types';
 import { TranslocoHttpLoader } from './core/i18n/transloco-loader';
+import { AndroidBackButtonService } from './core/services/android-back-button.service';
 import { AnalyticsConsentService } from './core/services/analytics-consent.service';
 import { AppI18nService } from './core/services/app-i18n.service';
 import { AppUpdateService } from './core/services/app-update.service';
@@ -64,6 +65,8 @@ export const appConfig: ApplicationConfig = {
     provideAppInitializer(() => inject(GoogleAccountService).ready()),
     provideAppInitializer(() => inject(AppUpdateService).init()),
     provideAppInitializer(() => inject(NativeUpdateService).init()),
+    // 869f6tcyk. Back on Home leaves the app on Android instead of doing nothing.
+    provideAppInitializer(() => inject(AndroidBackButtonService).init()),
     /*
      * 869f17haa. Last, and deliberately not awaited for its result: a storage
      * hint must never be able to delay or fail startup. Measured before adding

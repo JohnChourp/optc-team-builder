@@ -52,6 +52,7 @@ let nativeUpdateStub: {
   updatePhase: ReturnType<typeof signal>;
   downloadProgress: ReturnType<typeof signal>;
   updateSizeLabel: ReturnType<typeof signal<string | null>>;
+  readyToInstall: ReturnType<typeof signal<boolean>>;
   init: ReturnType<typeof vi.fn>;
   check: ReturnType<typeof vi.fn>;
   snooze: ReturnType<typeof vi.fn>;
@@ -192,6 +193,7 @@ describe('AppComponent', () => {
       updatePhase: signal('idle'),
       downloadProgress: signal(0),
       updateSizeLabel: signal<string | null>(null),
+      readyToInstall: signal(false),
       init: vi.fn(),
       check: vi.fn().mockResolvedValue(undefined),
       snooze: vi.fn(),
@@ -636,6 +638,31 @@ describe('AppComponent', () => {
     expect(nativeUpdateStub.downloadAndInstall).toHaveBeenCalledOnce();
     expect(nativeUpdateStub.openReleasePage).not.toHaveBeenCalled();
     expect(appUpdateStub.applyUpdate).not.toHaveBeenCalled();
+  });
+
+  /*
+   * 869f6tczy. Once the pending version's APK is on disk the action installs it, and
+   * Android's installer asks for the confirmation. The download alert would offer "about
+   * 207 MB to download" for a download that is not going to happen. In this file rather
+   * than one of its own: AppComponent is only testable behind this file's mocked
+   * `inject`, and a second file mocking it binds to whichever loads the component first
+   * under the shared module registry (see src/test-mocks/capacitor-app.ts).
+   */
+  it('installs a downloaded apk without asking to download it again', async () => {
+    nativeUpdateStub.availableUpdate.set({ version: '1.2.0', url: 'https://rel/1.2.0' });
+    nativeUpdateStub.updatePhase.set('ready');
+    const { AppComponent } = await import('./app.component');
+    const component = new AppComponent();
+
+    // `ready` alone is not enough: a newer release can replace the version on disk.
+    await component.openUpdatePrompt();
+    expect(alertControllerStub.create).toHaveBeenCalledOnce();
+
+    nativeUpdateStub.readyToInstall.set(true);
+    await component.openUpdatePrompt();
+
+    expect(alertControllerStub.create).toHaveBeenCalledOnce();
+    expect(nativeUpdateStub.downloadAndInstall).toHaveBeenCalledOnce();
   });
 
   it('asks once the reader has moved inside the app, and hides the banner after acceptance', async () => {
