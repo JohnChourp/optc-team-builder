@@ -443,7 +443,6 @@ function createUnit(overrides: {
       maxSpecialEffects: [],
       maxSpecialCooldown: null,
       baseResistances: [],
-      llbResistances: [],
       passiveEffects: [],
       specialEffects: [],
       roleTags: overrides.roles ?? [],

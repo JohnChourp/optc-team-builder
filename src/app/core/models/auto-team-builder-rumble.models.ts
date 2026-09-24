@@ -70,7 +70,6 @@ export interface NormalizedRumbleData {
   maxSpecialEffects: string[];
   maxSpecialCooldown: number | null;
   baseResistances: string[];
-  llbResistances: string[];
   passiveEffects: NormalizedRumbleEffect[];
   specialEffects: NormalizedRumbleEffect[];
   roleTags: NormalizedRumbleRoleTag[];

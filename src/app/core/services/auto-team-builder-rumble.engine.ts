@@ -759,12 +759,19 @@ export class RumbleTeamBuilderEngine {
     const stats = asRecord(raw['stats']) ?? inherited?.raw['stats'];
     const rawAbility = Array.isArray(raw['ability']) ? raw['ability'] : inherited?.raw['ability'];
     const rawSpecial = Array.isArray(raw['special']) ? raw['special'] : inherited?.raw['special'];
+    /*
+     * 869f6td5p. Every unit is scored as it is BEFORE Level Limit Break: no `llb*` or `gp*`
+     * field is read. The app cannot know which of the reader's units are LLB'd - and the owner
+     * declined to make players maintain investment state (869f13c8m) - so the passive and special
+     * were already the pre-LLB ones. Only `llbresilience` was read, and ADDED to the base line it
+     * upgrades: 174 of the 181 units with one repeat a base attribute, so Sengoku the Buddha
+     * against an Action Bind opponent scored 140.4 (32.4 base + 108.0 LLB) where either line
+     * alone says 32.4 or 108.0. The fields read are pinned in
+     * auto-team-builder-rumble-pre-llb.spec.ts.
+     */
     const rawResilience = Array.isArray(raw['resilience'])
       ? raw['resilience']
       : inherited?.raw['resilience'];
-    const rawLlbResilience = Array.isArray(raw['llbresilience'])
-      ? raw['llbresilience']
-      : inherited?.raw['llbresilience'];
     const passiveEffects = this.normalizeLevelEffects(rawAbility, 'ability');
     const specialEffects = this.normalizeLevelEffects(rawSpecial, 'special');
     const maxPassiveSummary = this.resolveMaxLevelSummary(rawAbility);
@@ -795,7 +802,6 @@ export class RumbleTeamBuilderEngine {
         : (inherited?.maxSpecialEffects ?? []),
       maxSpecialCooldown: maxSpecialSummary?.cooldown ?? inherited?.maxSpecialCooldown ?? null,
       baseResistances: this.formatResistances(rawResilience),
-      llbResistances: this.formatResistances(rawLlbResilience),
       passiveEffects: passiveEffects.length ? passiveEffects : (inherited?.passiveEffects ?? []),
       specialEffects: specialEffects.length ? specialEffects : (inherited?.specialEffects ?? []),
       roleTags: roleTags.length ? roleTags : (inherited?.roleTags ?? []),
@@ -1315,9 +1321,7 @@ export class RumbleTeamBuilderEngine {
     unit: RumbleUnitScore,
     opponentProfile: RumbleOpponentProfile,
   ): number {
-    const resistanceTexts = [...unit.normalized.baseResistances, ...unit.normalized.llbResistances];
-
-    return resistanceTexts.reduce((total, resistanceText) => {
+    return unit.normalized.baseResistances.reduce((total, resistanceText) => {
       const debuffResistance = this.parseDebuffResistance(resistanceText);
 
       if (debuffResistance) {
@@ -2079,10 +2083,7 @@ export class RumbleTeamBuilderEngine {
           opponentProfile.attributeThreatWeights.has(attribute),
         ),
       );
-    const hasMatchedResistance = [
-      ...unit.normalized.baseResistances,
-      ...unit.normalized.llbResistances,
-    ].some((resistanceText) => {
+    const hasMatchedResistance = unit.normalized.baseResistances.some((resistanceText) => {
       const debuffResistance = this.parseDebuffResistance(resistanceText);
 
       if (debuffResistance && opponentProfile.debuffThreatWeights.has(debuffResistance.attribute)) {
@@ -2110,7 +2111,6 @@ export class RumbleTeamBuilderEngine {
       normalized.maxPassiveLevel !== null ||
       normalized.maxSpecialLevel !== null ||
       normalized.baseResistances.length ||
-      normalized.llbResistances.length ||
       normalized.passiveEffects.length ||
       normalized.specialEffects.length ||
       normalized.basedOnId,
