@@ -20,11 +20,16 @@
      * every index read was a silent assertion that the element exists. Enabling
      * it surfaced 62 such assertions, all fixed rather than cast away.
      *
-     * Scoped to the application rather than the shared base on purpose. Nothing
-     * type-checks `tsconfig.spec.json` - `dead-code:check` runs against this
-     * config alone - so putting it in the base would light up 202 errors in
-     * editors with no lane that owns them. Spec coverage is the recorded
-     * remainder, not a claim that it passes.
+     * Scoped to the application rather than the shared base on purpose. Specs
+     * ARE type-checked - `ng test` builds them through `tsconfig.spec.json` and
+     * fails on a type error - so putting it in the base would fail that build on
+     * the 228 errors it finds in specs (869f1zxuy, 2026-09-25; 202 on
+     * 2026-09-14). Measured with
+     * `npx tsc -p tsconfig.spec.json --noEmit --noUncheckedIndexedAccess`.
+     *
+     * `exactOptionalPropertyTypes` stays off on purpose: 117 errors in 34 files
+     * (2026-09-25; 106 on 2026-09-14), deferred. docs/typescript-strictness.md
+     * holds the position and the command that measures it.
      */
     "noUncheckedIndexedAccess": true,
     "types": []

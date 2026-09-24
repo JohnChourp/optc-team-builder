@@ -49,6 +49,7 @@ import {
   type NormalizedSuperSpecialCriteria,
   type SuperCriteriaBranch,
 } from '../models/optc.models';
+import { type CaptainBoosts, resolveCaptainBoosts } from '../grammar/captain-boost-grammar';
 import {
   normalizePartyConflictKey,
   resolveCharacterPartyConflictKeys,
@@ -77,10 +78,6 @@ import { normalizeHtmlToText } from './html-text.utils';
 import { cloneRequiredCharacterGroup } from './required-character-groups.utils';
 import { cloneBattleRequirements } from './auto-team-builder-battle.utils';
 
-const CAPTAIN_BRANCH_PATTERN =
-  /\b(always active|standard captain|powered up captain|rampage captain)\s*:\s*/gi;
-const CAPTAIN_EFFECT_CLAUSE_SEPARATOR =
-  /,\s+(?=(?:and\s+)?(?:boosts?|reduces?|makes?|changes?|increases?|restores?|deals?|cuts?|lowers?|decreases?|sets?|adds?)\b)|\s+\band\s+(?=(?:boosts?|reduces?|makes?|changes?|increases?|restores?|deals?|cuts?|lowers?|decreases?|sets?|adds?)\b)/gi;
 const SCOPE_CLAUSE_PATTERN = /\b(?:of|for)\s+([^.;]{1,160}?)\s+(?:characters|units)\b/g;
 const DOMINANT_TYPE_SCOPE_PATTERN = /\b(?:the\s+)?Dominant Type\b/i;
 const SAME_TYPE_CREW_CONDITION_PATTERN =
@@ -95,7 +92,6 @@ const TYPE_MATCH_PATTERNS = {
   PSY: ['[psy]', ' psy ', 'psy characters', 'psy units'],
   INT: ['[int]', ' int ', 'int characters', 'int units'],
 } as const;
-const DEFAULT_CAPTAIN_BRANCH_LABELS = new Set(['always active', 'standard captain']);
 
 const CHIP_LABELS = {
   atkBoost: 'ATK boost',
@@ -2617,6 +2613,9 @@ function prepareAutoBuildRecord(
       specialText,
       sailorText,
       hasAnyCaptainCoverageTier(record.detail.captainAbilityCoverage),
+      // Read from the raw detail exactly as the dataset column is: `captainText` is normalized
+      // and lower-cased already, and ignores the captain variants the dataset reads first.
+      resolveCaptainBoosts(record.detail, normalizeHtmlToText),
     ),
   };
 }
@@ -4574,6 +4573,7 @@ function prepareAutoBuildEffectFacts(
   specialText: string,
   sailorText: string,
   hasCaptainCoverageTier: boolean,
+  captainBoosts: CaptainBoosts,
 ): PreparedAutoBuildEffectFacts {
   const abilityText = [specialText, sailorText].filter(Boolean).join(' ');
   const burstRoles = uniqueRoles<AutoBuildBurstRole>([
@@ -4629,8 +4629,8 @@ function prepareAutoBuildEffectFacts(
     burstRoles,
     consistencyRoles,
     utilityRoles,
-    captainAtkMultiplier: extractCaptainMultiplier(captainText, 'atk'),
-    captainHpMultiplier: extractCaptainMultiplier(captainText, 'hp'),
+    captainAtkMultiplier: captainBoosts.captainAtkBoost,
+    captainHpMultiplier: captainBoosts.captainHpBoost,
     readableCaptainText: captainText.length > 0,
     hasCaptainCoverageTier,
     readableSpecialText: specialText.length > 0,
@@ -6093,113 +6093,6 @@ function extractCostUpperBound(text: string): number | null {
 
 function textMatchesClassScope(text: string, selectedClass: string): boolean {
   return textHasLabelToken(text, selectedClass);
-}
-
-function extractCaptainMultiplier(text: string, stat: 'atk' | 'hp'): number {
-  const defaultCaptainText = extractDefaultCaptainBoostText(text);
-  const pattern = new RegExp(`\\b${stat}\\b[^.;]*?\\bby\\s+(\\d+(?:\\.\\d+)?)x`, 'gi');
-
-  return extractDefaultCaptainBoostClauses(defaultCaptainText).reduce((highest, clause) => {
-    return [...clause.matchAll(pattern)].reduce((clauseHighest, match) => {
-      if (isSelfOnlyCaptainBoostMatch(match[0])) {
-        return clauseHighest;
-      }
-
-      const value = Number(match[1]);
-      return Number.isFinite(value) && value > clauseHighest ? value : clauseHighest;
-    }, highest);
-  }, 0);
-}
-
-function extractDefaultCaptainBoostClauses(text: string): string[] {
-  return splitCaptainEffectClauses(text).filter(
-    (clause) =>
-      !isConditionalCaptainBoostClause(clause) &&
-      /\bboosts?\b/i.test(clause) &&
-      /\b(?:atk|hp)\b/i.test(clause) &&
-      /\bby\s+\d+(?:\.\d+)?x\b/i.test(clause),
-  );
-}
-
-function splitCaptainEffectClauses(text: string): string[] {
-  return splitCaptainSentences(text)
-    .flatMap((clause) =>
-      isConditionalCaptainBoostClause(clause)
-        ? [clause]
-        : clause.split(CAPTAIN_EFFECT_CLAUSE_SEPARATOR),
-    )
-    .map((clause) => clause.trim())
-    .filter(Boolean);
-}
-
-function splitCaptainSentences(text: string): string[] {
-  const clauses: string[] = [];
-  let current = '';
-
-  for (let index = 0; index < text.length; index += 1) {
-    const character = text[index];
-    const previousCharacter = text[index - 1] ?? '';
-    const nextCharacter = text[index + 1] ?? '';
-    const isDecimalPoint =
-      character === '.' && /\d/.test(previousCharacter) && /\d/.test(nextCharacter);
-
-    if ((character === '.' && !isDecimalPoint) || character === ';') {
-      clauses.push(current);
-      current = '';
-      continue;
-    }
-
-    current += character;
-  }
-
-  clauses.push(current);
-
-  return clauses;
-}
-
-function isConditionalCaptainBoostClause(clause: string): boolean {
-  return /^(?:(?:and|or|also|additionally|furthermore|then|otherwise)\b,?\s*)*(?:if|when)\b/i.test(
-    clause.trim(),
-  );
-}
-
-function extractDefaultCaptainBoostText(text: string): string {
-  const branches = extractCaptainBranches(text);
-
-  if (!branches.length) {
-    return text;
-  }
-
-  const defaultBranches = branches
-    .filter((branch) => DEFAULT_CAPTAIN_BRANCH_LABELS.has(branch.label))
-    .map((branch) => branch.text)
-    .filter(Boolean);
-
-  return defaultBranches.length ? defaultBranches.join('. ') : (branches[0]?.text ?? text);
-}
-
-function extractCaptainBranches(text: string): Array<{ label: string; text: string }> {
-  const matches = [...text.matchAll(CAPTAIN_BRANCH_PATTERN)];
-
-  return matches
-    .map((match, index) => {
-      const nextMatch = matches[index + 1] ?? null;
-      const start = (match.index ?? 0) + match[0].length;
-      const end = nextMatch?.index ?? text.length;
-
-      return {
-        label: String(match[1] ?? '').toLowerCase(),
-        text: text.slice(start, end).trim(),
-      };
-    })
-    .filter((branch) => branch.text.length > 0);
-}
-
-function isSelfOnlyCaptainBoostMatch(matchText: string): boolean {
-  return (
-    /\b(?:atk|hp)\b[^,.;]{0,80}\b(?:this character|self)\b/i.test(matchText) ||
-    /\bown\s+(?:atk|hp)\b/i.test(matchText)
-  );
 }
 
 function textHasAtkBoost(text: string): boolean {

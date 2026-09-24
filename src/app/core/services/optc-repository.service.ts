@@ -40,6 +40,7 @@ import {
 import {
   applyOverrideToCharacterDetailRecord,
   applyOverrideToCharacterListItem,
+  type LocalCharacterOverrideDatasetCaptain,
 } from './character-overrides.utils';
 import {
   buildCharacterTagMatchIndex,
@@ -1724,6 +1725,7 @@ export class OptcRepositoryService {
     const manifest = await this.getDatasetManifest();
     const installedPacks = new Map(manifest.packs.map((pack) => [pack.key, pack]));
     const overridesByCharacterId = this.characterOverrides.overridesByCharacterId();
+    const datasetCaptainById = await this.loadOverriddenDatasetCaptains(rows, overridesByCharacterId);
 
     const decoratedRows: CharacterListItem[] = [];
 
@@ -1790,11 +1792,80 @@ export class OptcRepositoryService {
       };
 
       decoratedRows.push(
-        applyOverrideToCharacterListItem(record, overridesByCharacterId.get(record.id) ?? null),
+        applyOverrideToCharacterListItem(
+          record,
+          overridesByCharacterId.get(record.id) ?? null,
+          datasetCaptainById.get(record.id),
+        ),
       );
     }
 
     return decoratedRows;
+  }
+
+  /**
+   * 869f63gqd. The dataset's own captain text for every overridden row, so a Local edit that left
+   * the captain text alone keeps the Captain boosts the dataset shipped instead of re-reading them.
+   *
+   * A list query selects no `detail_json`, which is the whole reason this exists: a detail query
+   * already carries it and is read from the row, and only the rest cost one lookup, for the
+   * overridden ids alone.
+   */
+  private async loadOverriddenDatasetCaptains(
+    rows: SqlRow[],
+    overridesByCharacterId: ReadonlyMap<number, unknown>,
+  ): Promise<Map<number, LocalCharacterOverrideDatasetCaptain>> {
+    const captainsById = new Map<number, LocalCharacterOverrideDatasetCaptain>();
+    const unreadIds: number[] = [];
+
+    for (const row of rows) {
+      const characterId = Number(row['id']);
+
+      if (!overridesByCharacterId.has(characterId)) {
+        continue;
+      }
+
+      if (row['detail_json'] === undefined) {
+        unreadIds.push(characterId);
+      } else {
+        captainsById.set(characterId, this.readDatasetCaptain(row['detail_json'], characterId));
+      }
+    }
+
+    if (unreadIds.length) {
+      const placeholders = unreadIds.map(() => '?').join(', ');
+      const detailRows = await this.selectAll(
+        `
+          SELECT character_id, detail_json
+          FROM character_details
+          WHERE character_id IN (${placeholders})
+        `,
+        unreadIds,
+      );
+
+      for (const row of detailRows) {
+        const characterId = Number(row['character_id']);
+
+        captainsById.set(characterId, this.readDatasetCaptain(row['detail_json'], characterId));
+      }
+    }
+
+    return captainsById;
+  }
+
+  private readDatasetCaptain(
+    detailJson: string | number | null | undefined,
+    characterId: number,
+  ): LocalCharacterOverrideDatasetCaptain {
+    const detail = this.normalizeCharacterDetail(
+      this.parseJson<CharacterDetail>(detailJson, this.emptyDetail(characterId)),
+      characterId,
+    );
+
+    return {
+      captainAbility: detail.captainAbility,
+      captainAbilityVariants: detail.captainAbilityVariants,
+    };
   }
 
   private async decorateCharacterDetailRows(rows: SqlRow[]): Promise<CharacterDetailRecord[]> {

@@ -1,6 +1,6 @@
 # TypeScript strictness: every flag, and why it is where it is
 
-**Status:** recorded 2026-09-14 · [869f17h5m](https://app.clickup.com/t/90121749478/869f17h5m)
+**Status:** recorded 2026-09-14 · [869f17h5m](https://app.clickup.com/t/90121749478/869f17h5m) · re-measured and corrected 2026-09-25 · [869f1zxuy](https://app.clickup.com/t/90121749478/869f1zxuy)
 
 Turning a strictness flag on in a codebase this size produces an error count, and
 the number is meaningful: it measures how many unchecked assumptions exist today.
@@ -55,19 +55,22 @@ worth more than the fix itself:
   `undefined`, so whoever implements the budget has to decide what an absent
   Captain means rather than inheriting the assumption.
 
-**Scoped to `tsconfig.app.json`, deliberately.** Nothing type-checks
-`tsconfig.spec.json` — `dead-code:check` runs against the app config alone — so
-putting the flag in the shared base would light up 202 errors in editors with no
-lane that owns them.
+**Scoped to `tsconfig.app.json`, deliberately.** Spec files are type-checked:
+`ng test`, the `angular` lane of `npm run verify:local`, builds them through
+`tsconfig.spec.json` and fails on a type error. Putting the flag in the shared
+base would therefore turn the 228 errors it finds in specs into a red `angular`
+lane — see [below](#nouncheckedindexedaccess-in-the-spec-files--228-errors-deferred).
 
 ## Off, with the measured cost
 
 | Flag | Scope | Cost to turn on | Position |
 | --- | --- | :--: | --- |
-| `exactOptionalPropertyTypes` | app | **106 errors** | deferred |
-| `noUncheckedIndexedAccess` | spec files | **202 errors** | deferred with the whole question of type-checking specs |
+| `exactOptionalPropertyTypes` | app | **117 errors** in 34 files | deferred |
+| `noUncheckedIndexedAccess` | spec files | **228 errors** in 28 files | deferred |
 
-### `exactOptionalPropertyTypes` — 106 errors, deferred
+Both counts re-measured 2026-09-25 with the commands in *How to re-measure*.
+
+### `exactOptionalPropertyTypes` — 117 errors, deferred
 
 It distinguishes *absent* from *present and undefined*. That is the right
 distinction for this codebase, and it is the type-level form of the open question
@@ -79,17 +82,31 @@ the character model in particular — rather than adding a check at one read. Th
 is a change to what the types *mean*, and it deserves its own pass instead of
 riding along with an index-safety one.
 
-Measured against the tree **after** the 62 fixes, so the number is current: `106`.
+Measured against the tree **after** the 62 fixes: `106` on 2026-09-14.
+Re-measured 2026-09-25: **117 errors in 34 files**, all of them the flag's own
+diagnostics (TS2379, TS2375, TS2412 and their neighbours). The position is
+unchanged.
 
-### Type-checking the spec files — 202 errors, and a prior question
+### `noUncheckedIndexedAccess` in the spec files — 228 errors, deferred
 
-No lane type-checks `tsconfig.spec.json` today. That is pre-existing and not
-something this flag introduced; the 202 is what it would cost to adopt
-`noUncheckedIndexedAccess` there *if* spec type-checking were adopted first.
+**Spec files are type-checked, and already were when this file said nothing
+checked them.** `ng test` — the `angular` lane of `npm run verify:local` — builds
+every spec through `tsconfig.spec.json`, and the Angular compiler plugin fails the
+run on a type error before a single test starts. Measured 2026-09-25 by planting
+one in a copy of a spec:
 
-The prior question is whether specs should be type-checked at all, given that a
-spec is verified by running it. Nobody has decided that, and this file does not
-decide it either — it records the number so the decision is not made blind.
+```text
+✘ [ERROR] TS2322: Type 'string' is not assignable to type 'number'. [plugin angular-compiler]
+```
+
+The old sentence came from `dead-code:check`, which does read the app config
+alone — true of that check, and not of the specs.
+
+So the question this section used to record, whether specs should be type-checked
+at all, was already answered by the build. What remains is this one flag:
+`tsconfig.spec.json` compiles with **0** errors today and **228 in 28 files** with
+`noUncheckedIndexedAccess` (202 on 2026-09-14). Adopting it there is deferred, and
+the number is recorded so that decision is not made blind.
 
 ## How to re-measure
 
@@ -108,6 +125,19 @@ Command status: manual/illustrative.
 echo '{ "extends": "./tsconfig.app.json", "compilerOptions": { "exactOptionalPropertyTypes": true } }' > tsconfig.measure.json
 npx tsc -p tsconfig.measure.json --noEmit --pretty false | grep -c 'error TS'
 rm tsconfig.measure.json
+```
+
+Write the throwaway file **beside** `tsconfig.app.json`. One written anywhere else
+moves `rootDir`, every file then fails TS6059 before any semantic check runs, and
+the count that prints is not the flag's — measured on 2026-09-25 as 11.
+
+For the spec files, pass the flag on the command line instead:
+
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
+```bash
+npx tsc -p tsconfig.spec.json --noEmit --pretty false | grep -c 'error TS'
+npx tsc -p tsconfig.spec.json --noEmit --pretty false --noUncheckedIndexedAccess | grep -c 'error TS'
 ```
 
 Do not measure with `tsc -p tsconfig.json`: the root config is references-only

@@ -558,7 +558,9 @@ function buildLeveledBattleModeCard(
 
 function buildStructuredCard(
   titleKey: string,
-  value: Record<string, unknown> | null,
+  // A plain-text Captain Shift (`swapData`, 90 units) has no structure to lay out, and renders
+  // no card - the same as before the model admitted the string.
+  value: Record<string, unknown> | string | null,
 ): DetailDisplayCard | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return null;

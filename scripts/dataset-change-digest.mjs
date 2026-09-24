@@ -432,14 +432,27 @@ function summarizeCaptainChange(baseCharacter, headCharacter, classification) {
   };
 }
 
-function summarizeCharacters(baseCharacters, headCharacters) {
-  const addedIds = sortedNumberKeys(headCharacters).filter((id) => !baseCharacters.has(id));
-  const removedIds = sortedNumberKeys(baseCharacters).filter((id) => !headCharacters.has(id));
-  const changedIds = sortedNumberKeys(headCharacters).filter(
-    (id) =>
-      baseCharacters.has(id) &&
-      stableStringify(baseCharacters.get(id)) !== stableStringify(headCharacters.get(id)),
-  );
+/**
+ * Every character the two snapshots disagree on, in full.
+ *
+ * 869f1zxuy. The report below keeps counts and at most `maxExamples` of each list, which is right
+ * for a reviewer and useless to anything that has to act on every one: the release workflow submits
+ * each added or changed character's page to IndexNow, and v0.5.0..v0.5.1 alone changed 117.
+ */
+function diffCharacterIds(baseCharacters, headCharacters) {
+  return {
+    added: sortedNumberKeys(headCharacters).filter((id) => !baseCharacters.has(id)),
+    removed: sortedNumberKeys(baseCharacters).filter((id) => !headCharacters.has(id)),
+    changed: sortedNumberKeys(headCharacters).filter(
+      (id) =>
+        baseCharacters.has(id) &&
+        stableStringify(baseCharacters.get(id)) !== stableStringify(headCharacters.get(id)),
+    ),
+  };
+}
+
+function summarizeCharacters(baseCharacters, headCharacters, characterIds) {
+  const { added: addedIds, removed: removedIds, changed: changedIds } = characterIds;
   const examples = {
     added: [],
     removed: [],
@@ -685,7 +698,12 @@ function hasMeaningfulChanges(report) {
   );
 }
 
-export async function buildDatasetChangeDigest({
+export async function buildDatasetChangeDigest(options = {}) {
+  return (await buildDigest(options)).report;
+}
+
+/** The report, plus the full character id lists it only counts - see `diffCharacterIds`. */
+async function buildDigest({
   baseRef,
   headRef,
   baseDir,
@@ -708,6 +726,7 @@ export async function buildDatasetChangeDigest({
     readSnapshot(baseReader, baseRef ?? baseDir ?? 'base', SQL),
     readSnapshot(headReader, headRef ?? headDir ?? 'head', SQL),
   ]);
+  const characterIds = diffCharacterIds(base.seed.characters, head.seed.characters);
   const report = {
     schemaVersion: DATASET_CHANGE_DIGEST_SCHEMA_VERSION,
     generatedAt,
@@ -722,7 +741,7 @@ export async function buildDatasetChangeDigest({
       sourceVersion: head.manifest.sourceVersion ?? null,
     },
     manifest: summarizeManifest(base.manifest, head.manifest),
-    characters: summarizeCharacters(base.seed.characters, head.seed.characters),
+    characters: summarizeCharacters(base.seed.characters, head.seed.characters, characterIds),
     ships: summarizeShips(base.seed.ships, head.seed.ships),
     abilityCatalog: summarizeAbilityCatalog(base.abilityCatalog, head.abilityCatalog),
     preview: summarizePreview(base.preview, head.preview),
@@ -731,7 +750,7 @@ export async function buildDatasetChangeDigest({
   report.warnings = buildWarnings(report);
   report.status = hasMeaningfulChanges(report) ? (report.warnings.length ? 'warning' : 'changed') : 'unchanged';
 
-  return report;
+  return { report, characterIds };
 }
 
 function formatSigned(value) {
@@ -939,6 +958,9 @@ function parseArgs(argv) {
       case '--json-output':
         options.jsonOutputPath = readValue();
         break;
+      case '--changed-ids-output':
+        options.changedIdsOutputPath = readValue();
+        break;
       case '--help':
       case '-h':
         options.help = true;
@@ -955,7 +977,10 @@ function usage() {
   return `Usage: npm run dataset:digest -- --base-ref <sha> --head-ref <sha> --output <digest.md> --json-output <digest.json>
 
 Alternative for fixtures/local generated directories:
-  node scripts/dataset-change-digest.mjs --base-dir <dir> --head-dir <dir> [--output digest.md] [--json-output digest.json]`;
+  node scripts/dataset-change-digest.mjs --base-dir <dir> --head-dir <dir> [--output digest.md] [--json-output digest.json]
+
+Either form also takes --changed-ids-output <ids.json>: every added, removed and changed character
+id in full, where the digest itself keeps counts and at most ${maxExamples} examples.`;
 }
 
 export async function runCli(argv = process.argv.slice(2)) {
@@ -969,7 +994,7 @@ export async function runCli(argv = process.argv.slice(2)) {
     throw new Error('Provide either --base-ref and --head-ref, or --base-dir and --head-dir.');
   }
 
-  const report = await buildDatasetChangeDigest({
+  const { report, characterIds } = await buildDigest({
     baseRef: options.baseRef,
     headRef: options.headRef,
     baseDir: options.baseDir ? path.resolve(options.baseDir) : undefined,
@@ -982,6 +1007,19 @@ export async function runCli(argv = process.argv.slice(2)) {
     const outputPath = path.resolve(options.jsonOutputPath);
     await mkdir(path.dirname(outputPath), { recursive: true });
     await writeFile(outputPath, `${JSON.stringify(report, null, 2)}\n`);
+  }
+
+  /*
+   * A file of its own rather than a field in the JSON above, so the digest's existing outputs stay
+   * exactly what they were. The release workflow reads it to submit changed character pages.
+   */
+  if (options.changedIdsOutputPath) {
+    const outputPath = path.resolve(options.changedIdsOutputPath);
+    await mkdir(path.dirname(outputPath), { recursive: true });
+    await writeFile(
+      outputPath,
+      `${JSON.stringify({ base: report.base, head: report.head, characters: characterIds }, null, 2)}\n`,
+    );
   }
 
   if (options.outputPath) {
