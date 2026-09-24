@@ -52,8 +52,10 @@ import {
   sanitizeCrewForgeProfilesImportPayload,
 } from '../../pages/crew-forge/crew-forge-profiles-transfer.utils';
 import {
+  ALL_DATA_TRANSFER_SCOPES,
   buildAllDataTransferPayload,
   type AllDataTransferPayload,
+  type AllDataTransferScope,
 } from '../../pages/settings/all-data-transfer.utils';
 import {
   buildFavoriteShipsTransferPayload,
@@ -185,6 +187,13 @@ export class UserDataTransferService {
   ): Promise<AllDataApplySummary> {
     await this.ready();
 
+    /*
+     * 869f63gpg. Every scope is parsed BEFORE anything is written. A restore clears the device
+     * first, and a scope whose parser threw after that left it empty - nothing restored, nothing
+     * uploaded. A backup that does not parse now fails here, with the device untouched.
+     */
+    this.assertEveryScopeParses(payload);
+
     if (strategy === 'restore') {
       await this.clearSyncScopedData();
     }
@@ -192,7 +201,20 @@ export class UserDataTransferService {
     const summary: AllDataApplySummary = {};
 
     if (payload.favorites !== undefined) {
-      summary.favorites = await this.importFavoritesPayload(payload.favorites as unknown);
+      /*
+       * A player with no favourite characters is carried as `{ characters: [] }`, which is valid
+       * here. `importFavoritesPayload` still rejects it, correctly, for an empty FILE picked in
+       * Settings - so the empty case is answered in this path rather than by relaxing the parser.
+       */
+      summary.favorites = this.isEmptyFavoritesPayload(payload.favorites)
+        ? {
+            addedCount: 0,
+            alreadyFavoritedCount: 0,
+            duplicatesRemoved: 0,
+            matchedCount: 0,
+            unknownCharacterCount: 0,
+          }
+        : await this.importFavoritesPayload(payload.favorites as unknown);
     }
 
     if (payload.favoriteShips !== undefined) {
@@ -644,5 +666,45 @@ export class UserDataTransferService {
     });
 
     return nextFavoriteShipIds;
+  }
+
+  /*
+   * 869f63gpg. Each entry is the parser its importer runs first; the sanitizers after them never
+   * throw, so these are the whole of what can reject a payload's shape. Typed over the declared scope
+   * list, so a scope added later without a parser here is a compile error rather than a restore that
+   * can clear the device and then fail - the same guard `SCOPE_CLONERS` gives the builder.
+   */
+  private assertEveryScopeParses(payload: AllDataTransferPayload): void {
+    const scopeParsers: Record<AllDataTransferScope, (value: unknown) => unknown> = {
+      favorites: (value) =>
+        this.isEmptyFavoritesPayload(value) ? null : this.optcbxImport.parseExportPayload(value),
+      favoriteShips: parseFavoriteShipsImportPayloadValue,
+      savedTeams: parseSavedTeamsImportPayloadValue,
+      savedRumbleTeams: parseSavedRumbleTeamsImportPayloadValue,
+      savedEnemies: parseSavedEnemiesImportPayloadValue,
+      characterBoxes: parseCharacterBoxesImportPayloadValue,
+      characterOverrides: parseCharacterOverridesImportPayloadValue,
+      crewForgeProfiles: parseCrewForgeProfilesImportPayloadValue,
+      savedRumbleOpponents: parseSavedRumbleOpponentsImportPayloadValue,
+      boostedCharacterIds: parseBoostedCharactersTransferPayload,
+    };
+
+    for (const scope of ALL_DATA_TRANSFER_SCOPES) {
+      const value = payload[scope];
+
+      if (value !== undefined) {
+        scopeParsers[scope](value);
+      }
+    }
+  }
+
+  /* The shape a backup gives a player with no favourite characters. */
+  private isEmptyFavoritesPayload(value: unknown): boolean {
+    return (
+      typeof value === 'object' &&
+      value !== null &&
+      Array.isArray((value as { characters?: unknown }).characters) &&
+      (value as { characters: unknown[] }).characters.length === 0
+    );
   }
 }
