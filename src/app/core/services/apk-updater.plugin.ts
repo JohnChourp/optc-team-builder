@@ -7,6 +7,14 @@ export interface ApkDownloadProgress {
   total: number;
 }
 
+/**
+ * 869f6tczy. The codes `install` rejects with when the file it was handed cannot be
+ * installed as it is. Both mean "download it again", which is why they are codes rather
+ * than message text.
+ */
+export const APK_MISSING = 'APK_MISSING';
+export const APK_DIGEST_MISMATCH = 'APK_DIGEST_MISMATCH';
+
 export interface ApkDownloadResult {
   /** Absolute path of the finished file inside the app's cache directory. */
   path: string;
@@ -34,8 +42,14 @@ export interface ApkUpdaterPlugin {
     expectedBytes?: number;
   }): Promise<ApkDownloadResult>;
 
-  /** Opens the system package installer for a downloaded file. */
-  install(options: { path: string }): Promise<void>;
+  /**
+   * Opens the system package installer for a downloaded file.
+   *
+   * Rejects with {@link APK_MISSING} when the file is gone, and - when `sha256` is given -
+   * hashes the file natively first and rejects with {@link APK_DIGEST_MISMATCH}, deleting
+   * it, when it no longer matches.
+   */
+  install(options: { path: string; sha256?: string }): Promise<void>;
 
   /**
    * Whether this app may request package installs. From Android 8 the manifest

@@ -559,6 +559,18 @@ export class AppComponent {
       return;
     }
 
+    /*
+     * 869f6tczy. The APK is already on disk, so there is no download left to agree to: the
+     * tap hands it to Android's installer, which asks for its own confirmation. The alert
+     * below would offer "about 207 MB to download" for a download that is not going to
+     * happen.
+     */
+    if (this.nativeUpdateService.readyToInstall()) {
+      void this.nativeUpdateService.downloadAndInstall();
+
+      return;
+    }
+
     const isNativeUpdate = this.nativeUpdateService.availableUpdate() !== null;
     // 869f13d5u. The alert is where the player actually agrees to the download, so it is the
     // one place the size has to appear - the banner behind it can be read past, this cannot.
