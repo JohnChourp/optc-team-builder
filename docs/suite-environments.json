@@ -270,7 +270,7 @@
       "environments": [
         "node"
       ],
-      "specCount": 2
+      "specCount": 3
     },
     {
       "id": "dataset-measurements",
@@ -790,7 +790,7 @@
       "environments": [
         "node"
       ],
-      "specCount": 1
+      "specCount": 2
     },
     {
       "id": "source-data",

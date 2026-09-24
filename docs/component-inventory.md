@@ -1,6 +1,6 @@
 # The components that actually render something
 
-**Status:** recorded 2026-09-15 · [869f17h7q](https://app.clickup.com/t/90121749478/869f17h7q)
+**Status:** recorded 2026-09-15 · [869f17h7q](https://app.clickup.com/t/90121749478/869f17h7q) · prose re-measured 2026-09-25 · [869f1zxuy](https://app.clickup.com/t/90121749478/869f1zxuy)
 
 Most of this application's component declarations render nothing. This is the
 list of the ones that do — small enough to read in a minute, and nothing
@@ -10,19 +10,21 @@ enumerated it before.
 
 | Kind | Count | Renders anything? |
 | --- | ---: | :--: |
-| Leaf style panels | 247 | no — one stylesheet each |
+| Leaf style panels | 248 | no — one stylesheet each |
 | Composing style-panel hosts | 15 | no — imports and a nesting template |
-| **Rendering components** | **39** | **yes** |
-| **Total `@Component` declarations** | **301** | |
+| **Rendering components** | **40** | **yes** |
+| **Total `@Component` declarations** | **303** | |
 
-**The often-quoted figure is 53, and it is wrong.** 53 is `300 − 247`, which
-silently counts the 15 composing hosts as real — and a composer renders nothing
-either. The three numbers above are produced by the checks, not by hand: see
-[the style-panel pattern](style-panel-pattern.md) for the 247 and the 15.
+**The often-quoted figure is 53, and it is wrong.** 53 was `300 − 247` when this
+was recorded, which silently counts the 15 composing hosts as real — and a
+composer renders nothing either. The three numbers above are produced by the
+checks, not by hand: see [the style-panel pattern](style-panel-pattern.md) for the
+248 and the 15. They were 247 and 39 on 2026-09-15; the 40th rendering component
+is `WhatsNewTextComponent`, added with the What's new pop-up (869f13gam).
 
 ## Reach is the part worth getting right
 
-**22 of the 39 appear in no template at all.** They are routed pages, reached by
+**22 of the 40 appear in no template at all.** They are routed pages, reached by
 the router through `loadComponent`. A check that only looked for `<app-thing>`
 tags would report them as dead code, which is exactly the mistake this project
 has recorded four times under *unrendered is not dead*.
@@ -36,10 +38,13 @@ currently zero.
 
 Once this list exists, other questions become answerable instead of speculative:
 
-- **Which components are shared?** 15 of 39 live under `shared/`, and those are
+- **Which components are shared?** 16 of 40 live under `shared/`, and those are
   the ones where a change reaches more than one screen.
-- **Which have no spec?** The `Spec` column. Four do not, and they are visible
-  rather than buried in a coverage percentage.
+- **Which have no spec?** The `Spec` column. None do, as of 2026-09-25. Four did
+  when this was recorded: `SeoContentPage` gained its spec in 869f13c6b, and
+  `SupportedPage`, `CaptainTeamConditionStatusComponent` and
+  `TeamCoverageSummaryComponent` theirs in 869f1zxuy. A new one without a spec
+  shows here as **no** rather than being buried in a coverage percentage.
 - **Which carry a style-panel chain?** The last column, which is how the
   structural cost in [the style-panel doc](style-panel-pattern.md) attaches to a
   real screen.
@@ -72,12 +77,12 @@ drifts and when a component is reachable by neither a route nor a template.
 | `SavedTeamsPage` | page | route | yes | yes |
 | `SeoContentPage` | page | route | yes | - |
 | `SettingsPage` | page | route | yes | - |
-| `SupportedPage` | page | route | **no** | - |
+| `SupportedPage` | page | route | yes | - |
 | `TermsOfServicePage` | page | route | yes | - |
 | `AbilityFilterRailComponent` | shared | 7 templates | yes | - |
 | `AbilityRequirementPickerComponent` | shared | 4 templates | yes | yes |
 | `AbilityTagSetPickerComponent` | shared | 8 templates | yes | yes |
-| `CaptainTeamConditionStatusComponent` | shared | 4 templates | **no** | - |
+| `CaptainTeamConditionStatusComponent` | shared | 4 templates | yes | - |
 | `CharacterAbilityGroupsComponent` | shared | 3 templates | yes | - |
 | `CharacterFacetFilterComponent` | shared | 7 templates | yes | yes |
 | `CharacterFilterRowComponent` | shared | 3 templates | yes | - |
@@ -86,7 +91,7 @@ drifts and when a component is reachable by neither a route nor a template.
 | `CharacterTagSetPickerComponent` | shared | 5 templates | yes | - |
 | `ShipPickerComponent` | shared | 3 templates | yes | yes |
 | `SpecialAbilityPickerComponent` | shared | 1 template | yes | - |
-| `TeamCoverageSummaryComponent` | shared | 4 templates | **no** | - |
+| `TeamCoverageSummaryComponent` | shared | 4 templates | yes | - |
 | `ToolbarBackButtonComponent` | shared | 5 templates | yes | - |
 | `WhatsNewModalComponent` | shared | 1 template | yes | - |
 | `WhatsNewTextComponent` | shared | 1 template | yes | - |

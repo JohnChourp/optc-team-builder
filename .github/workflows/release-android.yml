@@ -408,6 +408,70 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5
 
+      # 869f1zxuy. A release deploys from this job, and deploy-pages.yml's IndexNow job
+      # submits only the priority set, so a character page a release changed was never
+      # submitted when it changed. These steps submit the priority set plus the page of
+      # every character added or changed since the previous release tag.
+      #
+      # After the deploy on purpose: submitting before the URLs are live tells a crawler
+      # to fetch the previous build. `continue-on-error` on each step because the release
+      # has shipped by now - neither a digest failure nor an IndexNow outage may fail
+      # this job, which would also skip the production smoke that needs it to succeed.
+      - name: Find the characters this release changed
+        id: changed-characters
+        continue-on-error: true
+        timeout-minutes: 5
+        env:
+          RELEASE_TAG: ${{ needs.release.outputs.release-tag }}
+        run: |
+          set -euo pipefail
+
+          # The checkout is shallow and has no tags. The previous release is the tag
+          # before this one in version order - for all 203 releases so far, the same tag
+          # release-and-tag.sh names with `git describe` - and only its commit is fetched.
+          # awk reads to the end rather than exiting at the match, so under pipefail no
+          # stage upstream can be cut off mid-write.
+          previous_tag="$(git ls-remote --tags --refs origin 'v*' \
+            | sed 's#^.*refs/tags/##' \
+            | sort -V \
+            | awk -v current="${RELEASE_TAG}" '$0 == current { found = 1; print previous } !found { previous = $0 } END { if (!found) exit 1 }')"
+
+          if [[ -z "${previous_tag}" ]]; then
+            echo "No release tag precedes ${RELEASE_TAG}; only the priority set will be submitted." >&2
+            exit 1
+          fi
+
+          git fetch --no-tags --depth=1 origin "refs/tags/${previous_tag}:refs/tags/${previous_tag}"
+
+          npm run --silent dataset:digest -- \
+            --base-ref "${previous_tag}" \
+            --head-ref HEAD \
+            --changed-ids-output indexnow-changed-ids.json
+
+          echo "previous-tag=${previous_tag}" >> "${GITHUB_OUTPUT}"
+
+      # The key, endpoint and sitemap handling are submit-indexnow.mjs's own, exactly as in
+      # deploy-pages.yml; the sitemap is the one this job just built and deployed. Without
+      # the changed-ids file the script submits the priority set alone.
+      - name: Submit changed URLs to IndexNow
+        id: indexnow
+        continue-on-error: true
+        timeout-minutes: 5
+        env:
+          INDEXNOW_CHANGED_IDS_FILE: ${{ steps.changed-characters.outcome == 'success' && 'indexnow-changed-ids.json' || '' }}
+        run: npm run seo:indexnow
+
+      - name: Summarize IndexNow submission
+        env:
+          PREVIOUS_TAG: ${{ steps.changed-characters.outputs.previous-tag }}
+        run: |
+          {
+            echo "### IndexNow"
+            echo "- Characters changed since ${PREVIOUS_TAG:-the previous release}: ${{ steps.changed-characters.outcome }}"
+            echo "- Submission: ${{ steps.indexnow.outcome }}"
+            echo "- A failure here does not affect the release or its deploy, which already succeeded."
+          } >> "${GITHUB_STEP_SUMMARY}"
+
   post-dispatch-production-smoke:
     needs:
       - release

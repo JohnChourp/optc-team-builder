@@ -110,7 +110,7 @@ and when a `test:` script is not a lane.
 | `dataset:ability-tags` | documented · maintainer-validation-guide.md, post-merge-smoke-pack.md | a documented manual step |
 | `dataset:binary` | npm script · build, build:pages, start | `build`, `build:pages`, `start` |
 | `dataset:consumers` | script file · generate-dataset-consumers.mjs | whatever generate-dataset-consumers.mjs drives |
-| `dataset:digest` | workflow · dataset-change-digest.yml | the dataset-change-digest.yml workflow |
+| `dataset:digest` | workflow · dataset-change-digest.yml, release-android.yml | the dataset-change-digest.yml, release-android.yml workflow |
 | `dataset:enemy-vocabulary` | script file · generate-enemy-vocabulary.mjs | whatever generate-enemy-vocabulary.mjs drives |
 | `dataset:measure` | script file · check-dataset-measurements.mjs, measure-dataset-facts.mjs | whatever check-dataset-measurements.mjs, measure-dataset-facts.mjs drives |
 | `dataset:measurements` | npm script · test:dataset-measurements | `test:dataset-measurements` |
@@ -169,7 +169,7 @@ and when a `test:` script is not a lane.
 | `security:app-config` | npm script · build:pages, test:security-config | `build:pages`, `test:security-config` |
 | `security:csp` | script file · check-csp-policy.spec.ts, ci-check-routing.mjs | whatever check-csp-policy.spec.ts, ci-check-routing.mjs drives |
 | `seo:audit` | npm script · build:pages | `build:pages` |
-| `seo:indexnow` | workflow · deploy-pages.yml | the deploy-pages.yml workflow |
+| `seo:indexnow` | workflow · deploy-pages.yml, release-android.yml | the deploy-pages.yml, release-android.yml workflow |
 | `seo:pages` | npm script · build:pages | `build:pages` |
 | `seo:public-assets` | npm script · test:public-asset-shadowing | `test:public-asset-shadowing` |
 | `server:drive-sync` | documented · README.md | a documented manual step |
