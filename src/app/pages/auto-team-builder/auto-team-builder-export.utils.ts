@@ -42,7 +42,11 @@ import {
   normalizeAbilityRequirementTurns,
   resolveNonNegativeInteger,
 } from '../../core/services/ability-requirement-draft.utils';
-import { normalizeEnemyMechanicRequirements } from '../../core/services/enemy-mechanic-draft.utils';
+import {
+  appendAbilityRequirementsFromEnemyMechanics,
+  normalizeEnemyMechanicRequirements,
+  splitManualAbilityRequirementsFromEnemyMechanics,
+} from '../../core/services/enemy-mechanic-draft.utils';
 import {
   cloneBattleRequirements,
   normalizeBattleRequirementsWithLegacyFallback,
@@ -1202,7 +1206,26 @@ export function sanitizeAutoTeamSelectionImportPayload(
   );
 
   if (!requiredCharacterGroups.length && battleScopedRequiredAbilities.length) {
-    const migrated = expandRequiredAbilitiesToCharacterGroups(battleScopedRequiredAbilities);
+    /*
+     * 869f6td1y. A preset without battles gets battle 1 from these groups, so derive them the way
+     * the loader derives a stored enemy's: its own abilities first, then the ones its mechanics
+     * imply. Built from `requiredAbilities` alone, a preset listing only its own abilities lost
+     * every mechanic requirement - battle 1 held `apply_delay` where the loader also asks for
+     * `remove_enemy_barrier`. `splitManual…` first, because an April-2026 export already lists
+     * them and they must not count twice. A preset WITH battles is applied from those, so it
+     * keeps the migration it always had and the warning count it always had.
+     */
+    const migrated = expandRequiredAbilitiesToCharacterGroups(
+      payload.filters.battleRequirements?.length
+        ? battleScopedRequiredAbilities
+        : appendAbilityRequirementsFromEnemyMechanics(
+            splitManualAbilityRequirementsFromEnemyMechanics(
+              battleScopedRequiredAbilities,
+              enemyMechanics,
+            ),
+            enemyMechanics,
+          ),
+    );
     requiredCharacterGroups.push(...migrated.groups);
     adjustedAbilityCount += migrated.truncatedCount;
   }
