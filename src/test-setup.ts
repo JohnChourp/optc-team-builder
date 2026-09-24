@@ -1,7 +1,15 @@
 import { afterEach, beforeEach, vi } from 'vitest';
 
 import { resetFormattingLanguageForTests } from './app/core/i18n/app-locale-format';
+import { dismissPlayerFileNotice } from './app/core/services/player-file-delivery.utils';
 import { App as capacitorApp } from './test-mocks/capacitor-app';
+import {
+  CACHE_EXPORT_URI,
+  Directory as capacitorDirectory,
+  Encoding as capacitorEncoding,
+  Filesystem as capacitorFilesystem,
+  Share as capacitorShare,
+} from './test-mocks/capacitor-files';
 import { socialLogin } from './test-mocks/social-login';
 
 vi.mock('@capgo/capacitor-social-login', () => ({
@@ -12,6 +20,16 @@ vi.mock('@capgo/capacitor-social-login', () => ({
 // services under test share a single `App` object (see ./test-mocks/capacitor-app).
 vi.mock('@capacitor/app', () => ({
   App: capacitorApp,
+}));
+
+// The two plugins an export uses in the Android app (see ./test-mocks/capacitor-files).
+vi.mock('@capacitor/filesystem', () => ({
+  Directory: capacitorDirectory,
+  Encoding: capacitorEncoding,
+  Filesystem: capacitorFilesystem,
+}));
+vi.mock('@capacitor/share', () => ({
+  Share: capacitorShare,
 }));
 
 // Re-arm the shared `@capacitor/app` mock to known defaults before every test so
@@ -25,6 +43,10 @@ beforeEach(() => {
   capacitorApp.addListener.mockResolvedValue({ remove: vi.fn() });
   capacitorApp.minimizeApp.mockReset();
   capacitorApp.minimizeApp.mockResolvedValue(undefined);
+  capacitorFilesystem.writeFile.mockReset();
+  capacitorFilesystem.writeFile.mockResolvedValue({ uri: CACHE_EXPORT_URI });
+  capacitorShare.share.mockReset();
+  capacitorShare.share.mockResolvedValue({ activityType: '' });
 });
 
 /*
@@ -54,4 +76,6 @@ beforeEach(() => {
  */
 afterEach(() => {
   resetFormattingLanguageForTests();
+  // 869f63gqg. The export notice is module state for the same reason, and leaks the same way.
+  dismissPlayerFileNotice();
 });

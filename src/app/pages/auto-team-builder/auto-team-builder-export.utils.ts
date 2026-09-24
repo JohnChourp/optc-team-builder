@@ -53,6 +53,10 @@ import {
   MAX_REQUIRED_CHARACTER_GROUPS,
 } from '../../core/services/required-character-groups.utils';
 import { type SavedTeamsTransferPayload } from '../saved-teams/saved-teams-transfer.utils';
+import {
+  givePlayerFile,
+  JSON_EXPORT_MIME_TYPE,
+} from '../../core/services/player-file-delivery.utils';
 
 type AutoTeamExportRole = AutoBuildResult['slots'][number]['role'];
 type AutoTeamExportLeaderAssignment = 'captain' | 'friendCaptain' | 'dual' | null;
@@ -1838,24 +1842,15 @@ function downloadJsonFile(
     return;
   }
 
-  const objectUrl = urlReference.createObjectURL(
-    new Blob([JSON.stringify(payload, null, 2)], {
-      type: 'application/json;charset=utf-8',
-    }),
+  void givePlayerFile(
+    {
+      filename,
+      contents: JSON.stringify(payload, null, 2),
+      mimeType: JSON_EXPORT_MIME_TYPE,
+    },
+    documentReference,
+    urlReference,
   );
-  const anchor = documentReference.createElement('a');
-
-  anchor.href = objectUrl;
-  anchor.download = filename;
-  anchor.style.display = 'none';
-  documentReference.body.append(anchor);
-
-  try {
-    anchor.click();
-  } finally {
-    anchor.remove();
-    urlReference.revokeObjectURL(objectUrl);
-  }
 }
 
 export function downloadAutoTeamExport(

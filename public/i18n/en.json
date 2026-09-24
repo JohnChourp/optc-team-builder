@@ -282,5 +282,8 @@
   "offline": {
     "title": "You are offline",
     "copy": "Your characters, teams, boxes and both builders keep working. Google sign-in, Drive sync and images you have not opened before need a connection."
+  },
+  "playerFile": {
+    "chooseDestination": "Choose where to save or send the export file."
   }
 }

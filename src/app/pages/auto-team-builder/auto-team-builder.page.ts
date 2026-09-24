@@ -207,10 +207,12 @@ import {
 import { copyTextToClipboard } from '../../shared/clipboard/clipboard-copy.utils';
 import { Capacitor } from '@capacitor/core';
 import packageJson from '../../../../package.json';
+import { buildSavedTeamsTransferPayload } from '../saved-teams/saved-teams-transfer.utils';
+import { downloadSavedTeamsExport } from '../saved-teams/saved-teams-export.utils';
 import {
-  buildSavedTeamsTransferPayload,
-  downloadSavedTeamsExport,
-} from '../saved-teams/saved-teams-transfer.utils';
+  givePlayerFile,
+  JSON_EXPORT_MIME_TYPE,
+} from '../../core/services/player-file-delivery.utils';
 import {
   AutoTeamCompareImportError,
   buildAutoTeamCompareDiff,
@@ -7085,24 +7087,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       return;
     }
 
-    const objectUrl = URL.createObjectURL(
-      new Blob([JSON.stringify(catalog, null, 2)], {
-        type: 'application/json;charset=utf-8',
-      }),
-    );
-    const anchor = document.createElement('a');
-
-    anchor.href = objectUrl;
-    anchor.download = 'optc-auto-builder-abilities.json';
-    anchor.style.display = 'none';
-    document.body.append(anchor);
-
-    try {
-      anchor.click();
-    } finally {
-      anchor.remove();
-      URL.revokeObjectURL(objectUrl);
-    }
+    void givePlayerFile({
+      filename: 'optc-auto-builder-abilities.json',
+      contents: JSON.stringify(catalog, null, 2),
+      mimeType: JSON_EXPORT_MIME_TYPE,
+    });
   }
 
   public downloadTeamJson(): void {

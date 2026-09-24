@@ -12,6 +12,10 @@ import {
   cloneRequiredCharacterGroups,
   expandRequiredAbilitiesToCharacterGroups,
 } from "../../core/services/required-character-groups.utils";
+import {
+  givePlayerFile,
+  JSON_EXPORT_MIME_TYPE,
+} from "../../core/services/player-file-delivery.utils";
 
 export interface SavedEnemiesTransferPayload {
   schemaVersion: 1;
@@ -544,22 +548,13 @@ export function downloadSavedEnemiesExport(
     return;
   }
 
-  const objectUrl = urlReference.createObjectURL(
-    new Blob([JSON.stringify(payload, null, 2) + "\n"], {
-      type: "application/json;charset=utf-8",
-    }),
+  void givePlayerFile(
+    {
+      filename: buildSavedEnemiesExportFilename(payload.exportedAt),
+      contents: JSON.stringify(payload, null, 2) + "\n",
+      mimeType: JSON_EXPORT_MIME_TYPE,
+    },
+    documentReference,
+    urlReference,
   );
-  const anchor = documentReference.createElement("a");
-
-  anchor.href = objectUrl;
-  anchor.download = buildSavedEnemiesExportFilename(payload.exportedAt);
-  anchor.style.display = "none";
-  documentReference.body.append(anchor);
-
-  try {
-    anchor.click();
-  } finally {
-    anchor.remove();
-    urlReference.revokeObjectURL(objectUrl);
-  }
 }
