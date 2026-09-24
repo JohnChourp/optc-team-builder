@@ -53,7 +53,7 @@ installed. That is why the iOS platform row is *best effort* while the engine is
 | **Web** | **verified** | deployed on every push to `main`, with a post-deploy service-worker freshness check and scheduled synthetics against the live site |
 | **Android APK** | supported | built and signed on every release, sideloaded rather than on Google Play, self-updating. **No automated UI test runs on a device or emulator** — the APK is proven to *build* automatically and proven to *work* by hand |
 | **iOS via PWA** | best effort | the installed web app is the intended path. The engine is covered; **installing to the home screen, storage eviction and service-worker lifetime on iOS have never been exercised** |
-| **iOS native app** | not supported | no App Store build exists and none is planned. **The `ios/` project was dropped on 2026-09-20**, after the pbxproj write it held the Android release hostage to was removed first. See [the iOS footprint](ios-platform-footprint.md); restoring it is `npx cap add ios` |
+| **iOS native app** | not supported | no App Store build exists and none is planned. **The ios/ project was dropped on 2026-09-20**, after the pbxproj write it held the Android release hostage to was removed first. See [the iOS footprint](ios-platform-footprint.md); restoring it is `npx cap add ios` |
 
 ## A single failing browser run decides nothing
 

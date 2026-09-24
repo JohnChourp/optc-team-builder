@@ -182,7 +182,7 @@
       "environments": [
         "node"
       ],
-      "specCount": 2
+      "specCount": 3
     },
     {
       "id": "ci-routing",
@@ -530,7 +530,7 @@
       "environments": [
         "node"
       ],
-      "specCount": 1
+      "specCount": 2
     },
     {
       "id": "overlay-contrast",

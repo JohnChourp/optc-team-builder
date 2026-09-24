@@ -1,5 +1,6 @@
 import { Injectable, Optional, computed, signal } from '@angular/core';
 
+import { pendingFlagStorageKeys } from '../data/browser-storage-keys.data';
 import {
   BUILT_IN_CREW_FORGE_IMAGE_PROFILES,
   BUILT_IN_CREW_FORGE_IMAGE_PROFILE_IDS,
@@ -102,6 +103,14 @@ const AUTO_TEAM_BUILDER_DEFAULT_WORKER_PREFERENCE: AutoTeamBuilderWorkerPreferen
   mode: 'auto',
   manualCount: 7,
 };
+/**
+ * 869f63gug. The keys whose write raises "Local changes pending", read from the storage-key
+ * register instead of listed here. The hand-kept list named six keys, so saved Rumble opponents,
+ * the boost list and Crew Forge profiles travelled in every backup and never raised the flag.
+ */
+const LOCAL_CHANGE_PENDING_KEYS: ReadonlySet<string> = new Set(
+  pendingFlagStorageKeys().map((record) => record.key),
+);
 
 export type AutoTeamBuilderWorkerMode = 'auto' | 'manual';
 
@@ -232,19 +241,30 @@ export class UserStateService {
   ) {}
 
   public async ready(): Promise<void> {
-    await Promise.all([
-      this.readyFavoriteCharacterIds(),
-      this.readyFavoriteShipIds(),
-      this.readyRecentCharacterIds(),
-      this.readyCharacterBoxes(),
-      this.readySavedTeams(),
-      this.readySavedEnemies(),
-      this.readySavedRumbleTeams(),
-      this.readyCrewForgeImageProfiles(),
-      this.readyAutoTeamBuilderWorkerPreference(),
-      this.readyBuilderIntroDismissed(),
-      this.readyGameRegionPreference(),
-    ]);
+    /*
+     * 869f63gug. One loader per hydration domain, typed as a complete record: a domain added to
+     * `UserStateHydrationDomain` without a loader here is a compile error. The hand-kept list this
+     * replaced had left two out (869f63gq1) - saved Rumble opponents and the boost list loaded only
+     * with the Rumble or Auto Team Builder page, so a session that opened neither exported them as
+     * empty and a reviewed Drive Merge wrote the empty lists over the device's and uploaded them.
+     */
+    const loaders: Record<UserStateHydrationDomain, () => Promise<void>> = {
+      favorites: () => this.readyFavoriteCharacterIds(),
+      favoriteShips: () => this.readyFavoriteShipIds(),
+      recents: () => this.readyRecentCharacterIds(),
+      characterBoxes: () => this.readyCharacterBoxes(),
+      savedTeams: () => this.readySavedTeams(),
+      savedEnemies: () => this.readySavedEnemies(),
+      savedRumbleTeams: () => this.readySavedRumbleTeams(),
+      crewForgeImageProfiles: () => this.readyCrewForgeImageProfiles(),
+      savedRumbleOpponents: () => this.readySavedRumbleOpponents(),
+      boostedCharacterIds: () => this.readyBoostedCharacterIds(),
+      autoTeamBuilderWorkerPreference: () => this.readyAutoTeamBuilderWorkerPreference(),
+      builderIntroDismissed: () => this.readyBuilderIntroDismissed(),
+      gameRegionPreference: () => this.readyGameRegionPreference(),
+    };
+
+    await Promise.all(Object.values(loaders).map((load) => load()));
   }
 
   public async readyFavoriteCharacterIds(): Promise<void> {
@@ -1543,17 +1563,7 @@ export class UserStateService {
   }
 
   private async markSyncScopedLocalChange(key: string): Promise<void> {
-    if (
-      !this.driveSyncState ||
-      ![
-        FAVORITES_KEY,
-        FAVORITE_SHIPS_KEY,
-        CHARACTER_BOXES_KEY,
-        SAVED_TEAMS_KEY,
-        SAVED_ENEMIES_KEY,
-        SAVED_RUMBLE_TEAMS_KEY,
-      ].includes(key)
-    ) {
+    if (!this.driveSyncState || !LOCAL_CHANGE_PENDING_KEYS.has(key)) {
       return;
     }
 

@@ -6,6 +6,11 @@ import {
   type AutoTeamBuilderType,
 } from '../models/auto-team-builder.models';
 import {
+  captainValueInRange,
+  hasCaptainCostOrRarityScope,
+  readCaptainClauseRanges,
+} from '../grammar/captain-boost-grammar';
+import {
   type CharacterCaptainAbilityVariant,
   type CharacterDetailRecord,
   type CharacterListItem,
@@ -852,8 +857,15 @@ function resolveCaptainCoverageClause(
     }),
   );
 
-  const hasTargetScope =
-    isUniversal || isDominantType || hasTypeScope || hasClassScope || hasCharacterTagScope;
+  /*
+   * 869f63gqz. Cost and rarity, read by the same grammar the build reads them with. Accepting the
+   * clause was never enough on its own: with no range here a cost-only clause had no scope, went
+   * `neutral`, and #458 Sengoku's "Cost 20 or less" Captain listed 2,009 cards as 0 boosted.
+   */
+  const { costRange, rarityRange } = readCaptainClauseRanges(normalizedClause);
+  const hasRangeScope = costRange !== undefined || rarityRange !== undefined;
+  const hasCategoryScope = isDominantType || hasTypeScope || hasClassScope || hasCharacterTagScope;
+  const hasTargetScope = isUniversal || hasCategoryScope || hasRangeScope;
 
   if (!hasTargetScope) {
     return {
@@ -866,12 +878,18 @@ function resolveCaptainCoverageClause(
   const typeMatches = hasTypeScope ? matchingTypes.length > 0 : false;
   const classMatches = hasClassScope ? matchingClasses.length > 0 : false;
   const tagMatches = hasCharacterTagScope ? matchingTags.length > 0 : false;
+  // A range narrows the characters a clause names and is never an alternative to them - the
+  // tier filter's rule (`matchesTierCharacterConditionsInner`). A range-only clause is the range.
+  const meetsRanges =
+    captainValueInRange(target.cost, costRange) && captainValueInRange(target.stars, rarityRange);
   const covered =
-    isUniversal ||
-    (isDominantType && resolveCharacterTypeTokens(target.type).length > 0) ||
-    typeMatches ||
-    classMatches ||
-    tagMatches;
+    meetsRanges &&
+    (isUniversal ||
+      (isDominantType && resolveCharacterTypeTokens(target.type).length > 0) ||
+      typeMatches ||
+      classMatches ||
+      tagMatches ||
+      (hasRangeScope && !hasCategoryScope));
 
   return {
     text: normalizedClause,
@@ -1005,6 +1023,7 @@ function isCaptainBoostScopeClause(clause: string): boolean {
     !SELF_SCOPE_PATTERN.test(normalizedClause) &&
     !FALLBACK_OTHER_SCOPE_PATTERN.test(normalizedClause) &&
     (boostClauseHasUniversalScope(normalizedClause) ||
+      hasCaptainCostOrRarityScope(normalizedClause) ||
       boostClauseHasDominantTypeScope(normalizedClause) ||
       extractAllowedTypesFromBoostClause(normalizedClause).length > 0 ||
       extractAllowedClassesFromBoostClause(normalizedClause).length > 0 ||

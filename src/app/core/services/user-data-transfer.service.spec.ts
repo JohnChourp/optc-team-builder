@@ -161,6 +161,7 @@ describe('UserDataTransferService', () => {
       savedEnemiesCount: 1,
       savedRumbleTeamsCount: 0,
       savedTeamsCount: 1,
+      boostedCharacterCount: 0,
     });
   });
 });

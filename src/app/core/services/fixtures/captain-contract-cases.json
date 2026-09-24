@@ -633,6 +633,251 @@
           "matches": false
         }
       ]
+    },
+    {
+      "id": "cost-scoped",
+      "name": "Cost Scoped Captain",
+      "captainAbility": "Reduces Special Cooldown of all characters by 2 turns at the start of the fight, boosts ATK of Cost 20 or less characters by 3x",
+      "expectedGeneratedBoosts": {
+        "captainAtkBoost": 3,
+        "captainHpBoost": 0,
+        "captainAverageBoost": 1.5
+      },
+      "expectedCoverageTiers": [
+        {
+          "tier": 1,
+          "kind": "baseline",
+          "scope": "subset",
+          "atkBoost": 3,
+          "characterConditions": {
+            "universal": false,
+            "types": [],
+            "classes": [],
+            "characterTags": [],
+            "costRange": {
+              "max": 20
+            }
+          },
+          "teamConditions": [],
+          "fieldConditions": [],
+          "triggerConditions": []
+        }
+      ],
+      "runtimeTargets": [
+        {
+          "label": "boosts the highest cost in range",
+          "target": {
+            "id": 910901,
+            "type": "QCK",
+            "classes": ["Shooter", "Driven"],
+            "characterTags": [],
+            "cost": 20
+          },
+          "expected": {
+            "matches": true,
+            "boosts": {
+              "atk": 3,
+              "hp": 0
+            },
+            "chips": []
+          }
+        },
+        {
+          "label": "rejects one cost over the range",
+          "target": {
+            "id": 910902,
+            "type": "QCK",
+            "classes": ["Shooter", "Driven"],
+            "characterTags": [],
+            "cost": 21
+          },
+          "expected": {
+            "matches": false,
+            "boosts": {
+              "atk": 0,
+              "hp": 0
+            },
+            "chips": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "rarity-tiered",
+      "name": "Rarity Tiered Captain",
+      "captainAbility": "Boosts ATK of Rarity 4 or 4+ characters by 1.75x, boosts ATK of Rarity 5 or 5+ characters by 2x and boosts ATK of Rarity 6 or 6+ characters by 2.25x.",
+      "expectedGeneratedBoosts": {
+        "captainAtkBoost": 2.25,
+        "captainHpBoost": 0,
+        "captainAverageBoost": 1.125
+      },
+      "expectedCoverageTiers": [
+        {
+          "tier": 1,
+          "kind": "baseline",
+          "scope": "subset",
+          "atkBoost": 1.75,
+          "characterConditions": {
+            "universal": false,
+            "types": [],
+            "classes": [],
+            "characterTags": [],
+            "rarityRange": {
+              "min": 4,
+              "max": 4
+            }
+          },
+          "teamConditions": [],
+          "fieldConditions": [],
+          "triggerConditions": []
+        },
+        {
+          "tier": 2,
+          "kind": "unconditional-top",
+          "scope": "subset",
+          "atkBoost": 2,
+          "characterConditions": {
+            "universal": false,
+            "types": [],
+            "classes": [],
+            "characterTags": [],
+            "rarityRange": {
+              "min": 5,
+              "max": 5
+            }
+          },
+          "teamConditions": [],
+          "fieldConditions": [],
+          "triggerConditions": []
+        },
+        {
+          "tier": 3,
+          "kind": "unconditional-top",
+          "scope": "subset",
+          "atkBoost": 2.25,
+          "characterConditions": {
+            "universal": false,
+            "types": [],
+            "classes": [],
+            "characterTags": [],
+            "rarityRange": {
+              "min": 6,
+              "max": 6
+            }
+          },
+          "teamConditions": [],
+          "fieldConditions": [],
+          "triggerConditions": []
+        }
+      ],
+      "runtimeTargets": [
+        {
+          "label": "boosts a rarity 5 by its own tier",
+          "target": {
+            "id": 911001,
+            "type": "QCK",
+            "classes": ["Shooter", "Driven"],
+            "characterTags": [],
+            "stars": 5
+          },
+          "expected": {
+            "matches": true,
+            "boosts": {
+              "atk": 2,
+              "hp": 0
+            },
+            "chips": []
+          }
+        },
+        {
+          "label": "rejects a rarity no tier names",
+          "target": {
+            "id": 911002,
+            "type": "QCK",
+            "classes": ["Shooter", "Driven"],
+            "characterTags": [],
+            "stars": 3
+          },
+          "expected": {
+            "matches": false,
+            "boosts": {
+              "atk": 0,
+              "hp": 0
+            },
+            "chips": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "cost-range-atk-hp",
+      "name": "Cost Range ATK And HP Captain",
+      "captainAbility": "Boosts ATK, HP and RCV of Cost 50-55 characters by 1.5x",
+      "expectedGeneratedBoosts": {
+        "captainAtkBoost": 1.5,
+        "captainHpBoost": 1.5,
+        "captainAverageBoost": 1.5
+      },
+      "expectedCoverageTiers": [
+        {
+          "tier": 1,
+          "kind": "baseline",
+          "scope": "subset",
+          "atkBoost": 1.5,
+          "hpBoost": 1.5,
+          "characterConditions": {
+            "universal": false,
+            "types": [],
+            "classes": [],
+            "characterTags": [],
+            "costRange": {
+              "min": 50,
+              "max": 55
+            }
+          },
+          "teamConditions": [],
+          "fieldConditions": [],
+          "triggerConditions": []
+        }
+      ],
+      "runtimeTargets": [
+        {
+          "label": "boosts the lowest cost in range",
+          "target": {
+            "id": 911101,
+            "type": "QCK",
+            "classes": ["Shooter", "Driven"],
+            "characterTags": [],
+            "cost": 50
+          },
+          "expected": {
+            "matches": true,
+            "boosts": {
+              "atk": 1.5,
+              "hp": 1.5
+            },
+            "chips": []
+          }
+        },
+        {
+          "label": "rejects one cost under the range",
+          "target": {
+            "id": 911102,
+            "type": "QCK",
+            "classes": ["Shooter", "Driven"],
+            "characterTags": [],
+            "cost": 49
+          },
+          "expected": {
+            "matches": false,
+            "boosts": {
+              "atk": 0,
+              "hp": 0
+            },
+            "chips": []
+          }
+        }
+      ]
     }
   ]
 }

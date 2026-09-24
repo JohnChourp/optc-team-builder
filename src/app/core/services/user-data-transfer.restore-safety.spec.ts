@@ -125,6 +125,7 @@ function createHarness(options: { favoriteIds?: number[] } = {}) {
     clearAllSavedRumbleTeams: clearer('savedRumbleTeams', () => undefined),
     clearAllCrewForgeImageProfiles: clearer('crewForgeProfiles', () => undefined),
     clearAllSavedRumbleOpponents: clearer('savedRumbleOpponents', () => undefined),
+    clearBoostedCharacterIds: clearer('boostedCharacterIds', () => undefined),
     mergeImportedTeams: vi.fn(async (incoming: SavedTeam[]) => {
       const result = mergeById(savedTeams(), incoming);
       savedTeams.set(result.merged);

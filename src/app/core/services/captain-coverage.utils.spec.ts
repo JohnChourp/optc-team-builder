@@ -28,6 +28,8 @@ describe('resolveCaptainCoverage', () => {
       });
 
       for (const runtimeTarget of contractCase.runtimeTargets ?? []) {
+        // Cost and rarity are optional per target; the cost and rarity cases set them.
+        const { cost, stars } = runtimeTarget.target as { cost?: number; stars?: number };
         const coverage = resolveCaptainCoverage(
           captain,
           createCharacter({
@@ -35,6 +37,8 @@ describe('resolveCaptainCoverage', () => {
             type: runtimeTarget.target.type,
             classes: runtimeTarget.target.classes,
             characterTags: runtimeTarget.target.characterTags,
+            cost,
+            stars,
           }),
           { coverageMode: 'simpleBoostScope' },
         );
@@ -1051,6 +1055,7 @@ function createCharacter(
     classes?: string[];
     cost?: number;
     id: number;
+    stars?: number;
     type?: string;
   },
 ): CharacterDetailRecord {
@@ -1066,7 +1071,7 @@ function createCharacter(
     classes,
     primaryClass: classes[0] ?? 'Fighter',
     secondaryClass: classes[1] ?? null,
-    stars: 5,
+    stars: overrides.stars ?? 5,
     cost: overrides.cost ?? 55,
     combo: 4,
     captainHpBoost: 0,

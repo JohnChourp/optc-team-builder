@@ -23,7 +23,7 @@ through the available GitHub plan/API path.
 | Area | Paths | Current reviewer | Unreviewed-change risk |
 | --- | --- | --- | --- |
 | GitHub workflow and PR policy | `.github/` | `@JohnChourp` | A workflow, PR template, or traceability regression can weaken merge checks or hide missing ClickUp/evidence links. |
-| Native and release automation | `android/`, `ios/`, `scripts/release-and-tag.sh`, `scripts/setup-release-signing.sh`, `scripts/bump-version.sh`, release workflows | `@JohnChourp` | Release commits, signing setup, versioning, or Android/iOS metadata can break production release handling. |
+| Native and release automation | `android/`, `scripts/release-and-tag.sh`, `scripts/setup-release-signing.sh`, `scripts/bump-version.sh`, release workflows | `@JohnChourp` | Release commits, signing setup, versioning, or Android/iOS metadata can break production release handling. |
 | OPTC DB release detector and provenance | `scripts/check-optc-release-needed.mjs`, `scripts/lib/release-trigger-*.mjs`, `scripts/fixtures/release-check/`, `scripts/release-provenance-report.mjs`, `scripts/fixtures/release-provenance/` | `@JohnChourp` | The scheduled detector can dispatch releases incorrectly, skip needed updates, lose failure evidence, or fail to verify release artifact provenance. |
 | Release readiness | `scripts/release-readiness-report.mjs`, `scripts/fixtures/release-readiness/` | `@JohnChourp` | Release sign-off summaries can misclassify blockers, waivers, or required evidence. |
 | Performance guardrails | `scripts/perf-*.mjs`, performance workflows | `@JohnChourp` | Browser budget regressions can stop being measured or can fail without actionable evidence. |
