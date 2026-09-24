@@ -151,16 +151,39 @@ function normalizeEnemyImageDataUrl(value: unknown): string | null {
 function normalizeEntityIdSegment(value: string): string {
   return value
     .trim()
+    .normalize("NFKC")
     .toLowerCase()
     .replace(/["']/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/[^\p{L}\p{M}\p{N}]+/gu, "-")
     .replace(/^-+|-+$/g, "");
 }
 
-function buildImportedEnemyId(name: string): string {
+/* FNV-1a over the code points, in base 36 - stable on every device; an id, not a checksum. */
+function buildStableTextHash(value: string): string {
+  let hash = 0x811c9dc5;
+
+  for (const character of value) {
+    hash ^= character.codePointAt(0) ?? 0;
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+
+  return hash.toString(36);
+}
+
+/*
+ * 869f6td37. The slug kept only a-z and 0-9, so EVERY Greek or Japanese name - and every blank
+ * one - became `enemy-skill-untitled`, and the second such import overwrote the first. It now keeps
+ * the letters (with their combining marks) and digits of any script, NFKC-normalised and
+ * lower-cased. For an ASCII name that is exactly the slug it always was, so an enemy imported
+ * before keeps its identity. A name with no letter or digit at all takes a hash of the enemy it
+ * describes: two such enemies stay two, and the same file imported twice still updates one.
+ */
+function buildImportedEnemyId(name: string, enemy: Record<string, unknown>): string {
   const normalizedNameSegment = normalizeEntityIdSegment(name);
 
-  return `enemy-skill-${normalizedNameSegment || "untitled"}`;
+  return normalizedNameSegment
+    ? `enemy-skill-${normalizedNameSegment}`
+    : `enemy-skill-untitled-${buildStableTextHash(JSON.stringify(enemy))}`;
 }
 
 function normalizeRequiredAbilities(value: unknown): SavedEnemy["requiredAbilities"] {
@@ -372,7 +395,7 @@ export function parseSavedEnemiesImportPayloadValue(
       exportedAt,
       enemies: [
         {
-          id: buildImportedEnemyId(normalizedEnemyName),
+          id: buildImportedEnemyId(normalizedEnemyName, enemy),
           name: normalizedEnemyName,
           notes: typeof enemy["notes"] === "string" ? enemy["notes"] : "",
           rawEnemyText: normalizeRawEnemyText(enemy["rawEnemyText"]),
