@@ -50,7 +50,7 @@ import { toBrowserStoragePersistenceError } from './browser-storage-error.utils'
 import { DriveSyncStateService } from './drive-sync-state.service';
 import { PreferencesAdapterService } from './preferences-adapter.service';
 import {
-  deriveAbilityRequirementsFromEnemyMechanics,
+  appendAbilityRequirementsFromEnemyMechanics,
   normalizeEnemyMechanicRequirements,
 } from './enemy-mechanic-draft.utils';
 import {
@@ -2440,13 +2440,17 @@ export class UserStateService {
      *
      * An enemy with mechanics and no manual ability was fine, which is why it went unnoticed - the
      * fallback had nothing to short-circuit on.
+     *
+     * 869f6td1y. The reader's own abilities go first, in the order every surface shares: the list is
+     * capped at six groups and the cap cuts from the end. An import reaches this derivation too -
+     * the sanitizer leaves out the groups a file does not carry - so a file and storage agree.
      */
-    return expandRequiredAbilitiesToCharacterGroups([
-      ...deriveAbilityRequirementsFromEnemyMechanics(
+    return expandRequiredAbilitiesToCharacterGroups(
+      appendAbilityRequirementsFromEnemyMechanics(
+        this.normalizeRequiredAbilities(enemy.requiredAbilities),
         normalizeEnemyMechanicRequirements(enemy.enemyMechanics ?? []),
       ),
-      ...this.normalizeRequiredAbilities(enemy.requiredAbilities),
-    ]).groups;
+    ).groups;
   }
 
   private normalizeRequiredAbilities(

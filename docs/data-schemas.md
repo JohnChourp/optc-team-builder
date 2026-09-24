@@ -249,6 +249,11 @@ Import/export supports the saved enemies transfer payload:
 }
 ```
 
+An import keeps only the required character groups and battle requirements a file carries. The ones
+it leaves out are derived exactly as they are when a stored enemy loads: the manual abilities first,
+then the ones the enemy mechanics imply, at most six groups
+([869f6td1y](https://app.clickup.com/t/90121749478/869f6td1y)).
+
 ## Saved Teams
 
 The saved-team format lifecycle is governed by

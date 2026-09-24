@@ -813,14 +813,15 @@ describe('UserStateService saved teams', () => {
       group.abilities.map((ability) => ability.abilityKey),
     );
 
-    expect(groupKeys).toEqual(['remove_paralysis', 'ignore_normal_attack_only']);
+    // 869f6td1y. The manual ability first, the order the editor always used.
+    expect(groupKeys).toEqual(['ignore_normal_attack_only', 'remove_paralysis']);
     expect(
       (result.battleRequirements ?? []).flatMap((battle) =>
         battle.requiredCharacterGroups.flatMap((group) =>
           group.abilities.map((ability) => ability.abilityKey),
         ),
       ),
-    ).toEqual(['remove_paralysis', 'ignore_normal_attack_only']);
+    ).toEqual(['ignore_normal_attack_only', 'remove_paralysis']);
   });
 
   it('still expands mechanics when the enemy has no manual ability at all', async () => {

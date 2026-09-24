@@ -4,14 +4,8 @@ import {
   normalizeAbilityRequirementEffectValue,
   normalizeAbilityRequirementSourceScope,
 } from "../../core/models/auto-team-builder-ability.models";
-import {
-  cloneBattleRequirements,
-  normalizeBattleRequirementsWithLegacyFallback,
-} from "../../core/services/auto-team-builder-battle.utils";
-import {
-  cloneRequiredCharacterGroups,
-  expandRequiredAbilitiesToCharacterGroups,
-} from "../../core/services/required-character-groups.utils";
+import { cloneBattleRequirements } from "../../core/services/auto-team-builder-battle.utils";
+import { cloneRequiredCharacterGroups } from "../../core/services/required-character-groups.utils";
 
 export interface SavedEnemiesTransferPayload {
   schemaVersion: 1;
@@ -210,13 +204,12 @@ function normalizeRequiredAbilities(value: unknown): SavedEnemy["requiredAbiliti
 
 function normalizeRequiredCharacterGroups(
   value: unknown,
-  fallbackRequiredAbilities: SavedEnemy["requiredAbilities"],
-): SavedEnemy["requiredCharacterGroups"] {
+): NonNullable<SavedEnemy["requiredCharacterGroups"]> {
   if (!Array.isArray(value)) {
-    return expandRequiredAbilitiesToCharacterGroups(fallbackRequiredAbilities).groups;
+    return [];
   }
 
-  const groups = cloneRequiredCharacterGroups(
+  return cloneRequiredCharacterGroups(
     value.flatMap((entry, index) => {
       if (!isRecord(entry)) {
         return [];
@@ -233,10 +226,6 @@ function normalizeRequiredCharacterGroups(
       ];
     }),
   );
-
-  return groups.length > 0
-    ? groups
-    : expandRequiredAbilitiesToCharacterGroups(fallbackRequiredAbilities).groups;
 }
 
 function normalizeEnemyMechanics(value: unknown): SavedEnemy["enemyMechanics"] {
@@ -472,7 +461,11 @@ export function sanitizeSavedEnemiesImportPayload(
     const enemyMechanics = normalizeEnemyMechanics(enemy["enemyMechanics"]);
     const requiredCharacterGroups = normalizeRequiredCharacterGroups(
       enemy["requiredCharacterGroups"],
-      requiredAbilities,
+    );
+    const battleRequirements = cloneBattleRequirements(
+      Array.isArray(enemy["battleRequirements"])
+        ? (enemy["battleRequirements"] as SavedEnemy["battleRequirements"])
+        : undefined,
     );
     const sanitizedEnemy: SavedEnemy = {
       id: normalizedEnemyId,
@@ -492,14 +485,15 @@ export function sanitizeSavedEnemiesImportPayload(
         mapValue: (value) => value.toLowerCase(),
       }),
       requiredAbilities,
-      requiredCharacterGroups,
-      battleRequirements: normalizeBattleRequirementsWithLegacyFallback({
-        battles: Array.isArray(enemy["battleRequirements"])
-          ? (enemy["battleRequirements"] as SavedEnemy["battleRequirements"])
-          : undefined,
-        requiredCharacterGroups,
-        enemyMechanics,
-      }),
+      /*
+       * 869f6td1y. Only the groups and battles the file carries. The ones it leaves out are derived
+       * by the loader's own `normalizeSavedEnemy`, which `mergeImportedEnemies` runs next, from the
+       * manual abilities AND the mechanics. Building them here from the manual abilities alone
+       * stored an April-2026 or single-enemy file without the requirements its mechanics imply,
+       * for good: stored groups are never derived again.
+       */
+      ...(requiredCharacterGroups.length ? { requiredCharacterGroups } : {}),
+      ...(battleRequirements.length ? { battleRequirements } : {}),
       enemyMechanics,
       requireAllSelectedTypesInTeam: Boolean(enemy["requireAllSelectedTypesInTeam"]),
       requireAllSelectedClassesPerCharacter: Boolean(
