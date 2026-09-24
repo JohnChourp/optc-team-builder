@@ -31,6 +31,36 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.6.5',
+    date: '2026-09-24',
+    userVisible: true,
+    headline: {
+      en: 'Google Drive sync no longer empties your device, and Crew Forge tells you when its cut-off is too strict',
+      el: 'Το Sync με Google Drive δεν αδειάζει πια τη συσκευή σου, και το Crew Forge σου λέει πότε το όριό του είναι πολύ αυστηρό',
+    },
+    summaryEn:
+      "If you had no favourite characters, choosing Merge or Replace this device in Google Drive sync on the Account screen could empty this device. Everything it keeps was cleared - saved teams, enemies, character boxes and Rumble opponents among them - nothing came back from Drive, and nothing was uploaded either. The app now checks the whole backup before it changes anything on the device: a backup with no favourites is treated as exactly that, and a backup it cannot read leaves your data as it was. Separately, a screenshot import on Crew Forge now tells you how many slots had a best match that your profile's cut-off turned down, so a cut-off set too high no longer just looks like a worse import. And if you use a screen reader, the Character Tags and Ability filters buttons now read out what they show - how many tags and groups you picked - not only their name.",
+    summaryEl:
+      'Αν δεν είχες αγαπημένους χαρακτήρες, η επιλογή Merge ή Αντικατάσταση συσκευής στο Sync με Google Drive, στην οθόνη Λογαριασμός, μπορούσε να αδειάσει αυτή τη συσκευή. Όλα όσα κρατά σβήνονταν - ανάμεσά τους αποθηκευμένες ομάδες, εχθροί, boxes χαρακτήρων και αντίπαλοι του Rumble - τίποτα δεν επέστρεφε από το Drive, και τίποτα δεν ανέβαινε. Η εφαρμογή ελέγχει πλέον ολόκληρο το backup πριν αλλάξει οτιδήποτε στη συσκευή: ένα backup χωρίς αγαπημένους αντιμετωπίζεται ακριβώς έτσι, και ένα backup που δεν διαβάζεται αφήνει τα δεδομένα σου όπως ήταν. Χωριστά, ένα import από screenshot στο Crew Forge σου λέει τώρα πόσα slots είχαν καλύτερη αντιστοίχιση που απέρριψε το όριο του προφίλ σου, οπότε ένα όριο ρυθμισμένο πολύ ψηλά δεν μοιάζει πια απλώς με χειρότερο import. Και αν χρησιμοποιείς αναγνώστη οθόνης, τα κουμπιά Character Tags και Ability filters διαβάζουν πλέον αυτό που δείχνουν - πόσα tags και groups διάλεξες - και όχι μόνο το όνομά τους.',
+    added: [],
+    improved: [
+      {
+        en: "After a screenshot import on **Crew Forge**, the **Recognized slots** section now says how many slots had a best match that your profile's cut-off turned down. Those slots sit at the top of the list below it, so you can pick the right character - and if it keeps happening, you know to lower the cut-off in the profile.",
+        el: 'Μετά από ένα import από screenshot στο **Crew Forge**, η ενότητα **Αναγνωρισμένα slots** λέει πλέον πόσα slots είχαν καλύτερη αντιστοίχιση που απέρριψε το όριο του προφίλ σου. Αυτά τα slots βρίσκονται στην κορυφή της λίστας από κάτω, οπότε μπορείς να διαλέξεις τον σωστό χαρακτήρα - κι αν συμβαίνει συνέχεια, ξέρεις ότι πρέπει να χαμηλώσεις το όριο στο προφίλ.',
+      },
+      {
+        en: 'With a **screen reader**, the **Character Tags** filter button on **Characters**, **Character Boxes**, **Auto Team Builder**, **Auto Team Rumble Builder** and **Rumble Characters**, and the **Ability filters** and **Character Tags** buttons on **Captain Coverage**, now read out what they show - for example how many tags and groups you picked - instead of only their name.',
+        el: 'Με **αναγνώστη οθόνης**, το κουμπί φίλτρου **Character Tags** στους **Χαρακτήρες**, στα **Boxes χαρακτήρων**, στο **Auto Team Builder**, στο **Auto Team Rumble Builder** και στους **Rumble χαρακτήρες**, καθώς και τα κουμπιά **Ability filters** και **Character Tags** στο **Captain Coverage**, διαβάζουν πλέον αυτό που δείχνουν - για παράδειγμα πόσα tags και groups διάλεξες - και όχι μόνο το όνομά τους.',
+      },
+    ],
+    fixed: [
+      {
+        en: 'On the **Account** screen, **Google Drive sync** no longer empties this device when you have no favourite characters. Choosing **Merge** or **Replace this device** could clear everything it keeps - saved teams, enemies, character boxes, Rumble teams and opponents among them - with nothing restored and nothing uploaded. The whole backup is now checked before anything on the device changes, and a backup that cannot be read leaves your data exactly as it was.',
+        el: 'Στην οθόνη **Λογαριασμός**, το **Sync με Google Drive** δεν αδειάζει πια αυτή τη συσκευή όταν δεν έχεις αγαπημένους χαρακτήρες. Η επιλογή **Merge** ή **Αντικατάσταση συσκευής** μπορούσε να σβήσει όλα όσα κρατά - ανάμεσά τους αποθηκευμένες ομάδες, εχθρούς, boxes χαρακτήρων, ομάδες και αντιπάλους του Rumble - χωρίς να επανέλθει ή να ανέβει τίποτα. Πλέον ολόκληρο το backup ελέγχεται πριν αλλάξει οτιδήποτε στη συσκευή, και ένα backup που δεν διαβάζεται αφήνει τα δεδομένα σου ακριβώς όπως ήταν.',
+      },
+    ],
+  },
+  {
     version: '0.6.4',
     date: '2026-09-22',
     userVisible: true,
