@@ -33,7 +33,7 @@ flowchart TD
 | Import and normalization | `scripts/import-optc-data.mjs`, `scripts/lib/optc-dataset.mjs`, `scripts/data/` | Task audits when import rules, corrections, or generated-data policy changes |
 | Generated dataset | `public/assets/data/optc-manifest.json`, `optc-seed.sql` (shipped as the build-time `optc-seed.sqlite.gz`, see `docs/dataset-delivery.md`), `optc-preview.json`, `optc-auto-builder-abilities.json`, `optc-unresolved-images.json` | Evidence index entries for tasks that regenerate, validate, or explain dataset changes |
 | Runtime consumers | `src/app/core/services/optc-repository.service.ts`, Captain Coverage services, Auto Team Builder services, Saved Enemy and picker flows | Audits that explain user-visible behavior, QA, and duplicate-prevention context |
-| Captain contracts | `src/app/core/services/fixtures/captain-contract-cases.json`, `scripts/import-optc-data.spec.ts`, `scripts/lib/captain-ability-coverage.spec.ts`, runtime captain specs | Captain coverage audits and task notes when parser, generated tiers, or runtime matching drift |
+| Captain contracts | `src/app/core/grammar/captain-boost-grammar.ts` (the one Captain-boost grammar, imported by the build and the app), `src/app/core/services/fixtures/captain-contract-cases.json`, `scripts/import-optc-data.spec.ts`, `scripts/lib/captain-ability-coverage.spec.ts`, `scripts/lib/captain-grammar-parity.spec.ts`, runtime captain specs | Captain coverage audits and task notes when parser, generated tiers, or runtime matching drift |
 | Release detection | `scripts/check-optc-release-needed.mjs`, `scripts/check-optc-upstream-monitor.mjs`, `scripts/release-detector-status.mjs`, `scripts/release-decision-history.mjs`, `scripts/release-provenance-report.mjs`, `scripts/fixtures/release-check/`, `scripts/fixtures/release-provenance/` | `../../optc-team-builder-brain/OPTC_DB_AUTO_RELEASE_RUNBOOK.md` and release-trigger/provenance audits |
 | Workflow and artifacts | `.github/workflows/check-optc-db-release.yml`, `.github/workflows/release-android.yml` | `../../optc-team-builder-brain/audits/evidence-index.md` plus task-scoped `live-artifacts/<task-id>/` summaries |
 
@@ -60,7 +60,11 @@ runtime assumptions about generated records.
 Captain ability behavior is shared across parser output, generated coverage
 tiers, and runtime matching. The contract matrix in
 `src/app/core/services/fixtures/captain-contract-cases.json` keeps those layers
-on the same representative cases.
+on the same representative cases. The rules that read a Captain boost and its
+cost or rarity scope are not copied between the layers any more: the build and
+the app both import `src/app/core/grammar/captain-boost-grammar.ts`, and
+`scripts/lib/captain-grammar-parity.spec.ts` checks the whole committed seed
+through both paths.
 
 The cheap gate is `npm run test:captain-contracts`. Add focused Angular specs
 from the captain rows in the

@@ -3,6 +3,7 @@ import {
   type AutoBuildCaptainAbilityCoverageMode,
   type AutoTeamBuilderType,
 } from '../models/auto-team-builder.models';
+import { captainValueInRange } from '../grammar/captain-boost-grammar';
 import {
   type CaptainCoverageTeamCondition,
   type CharacterCaptainAbilityCoverageTier,
@@ -660,8 +661,8 @@ function matchesTierCharacterConditionsInner(
     return false;
   }
 
-  const meetsCostRange = targetMeetsRange(target.cost, conditions.costRange);
-  const meetsRarityRange = targetMeetsRange(target.stars, conditions.rarityRange);
+  const meetsCostRange = captainValueInRange(target.cost, conditions.costRange);
+  const meetsRarityRange = captainValueInRange(target.stars, conditions.rarityRange);
 
   // Cost and rarity narrow the characters a tier names; they are never an alternative to them.
   // #4110/#4111 Tier 2 boosts "Driven and Slasher characters ... if they are a Cost 40 or less
@@ -717,17 +718,6 @@ function matchesTierCharacterConditionsInner(
   return (
     (conditions.costRange !== undefined && meetsCostRange) ||
     (conditions.rarityRange !== undefined && meetsRarityRange)
-  );
-}
-
-function targetMeetsRange(
-  value: number,
-  range: { min?: number; max?: number } | undefined,
-): boolean {
-  return (
-    range === undefined ||
-    ((range.min === undefined || value >= range.min) &&
-      (range.max === undefined || value <= range.max))
   );
 }
 
