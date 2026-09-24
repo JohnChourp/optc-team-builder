@@ -1183,8 +1183,22 @@ export class SettingsPage implements OnInit {
       );
     }
 
+    /*
+     * 869f63gqt. The Drive hint only where Drive sync can run. A build without the Google
+     * client id - today the Android app - cannot sign in, so it points at the export instead.
+     */
     details.push(
-      this.i18n.translate('management.inventoryCapture.feedback.driveHint', undefined, 'settings'),
+      this.googleAccountAvailable()
+        ? this.i18n.translate(
+            'management.inventoryCapture.feedback.driveHint',
+            undefined,
+            'settings',
+          )
+        : this.i18n.translate(
+            'management.inventoryCapture.feedback.exportHint',
+            undefined,
+            'settings',
+          ),
     );
 
     return {

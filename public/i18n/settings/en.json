@@ -20,10 +20,12 @@
   "account": {
     "avatarAlt": "{{ name }} Google profile image",
     "eyebrow": "Google account",
+    "openSettings": "Open Settings",
     "signedOutCopy": "Sign in to connect your Google account and manage Drive sync from this profile page.",
     "signedOutTitle": "Log in to your account",
     "title": "Account",
-    "unavailableCopy": "Google sign-in is not configured for this build."
+    "unavailableCopy": "This version of the Android app cannot sign in to Google, so Google Drive sync does not run here. Your data stays on this device. To move it to another device, use Export all data in Settings, then Import all data on the other one.",
+    "unavailableTitle": "Google sign-in is not available here"
   },
   "analytics": {
     "title": "Analytics & cookies",
@@ -59,8 +61,7 @@
       "restore": "Restore from Drive",
       "signIn": "Sign in with Google",
       "signOut": "Sign out",
-      "syncNow": "Sync now",
-      "unavailable": "Google sync unavailable"
+      "syncNow": "Sync now"
     },
     "feedback": {
       "title": "Drive sync status"
@@ -393,6 +394,7 @@
         "errorTitle": "Inventory import failed",
         "previewReady": "Review ready from {{fileName}}.",
         "driveHint": "You can now use Google Drive sync to back up this updated local inventory state.",
+        "exportHint": "Use Export all data to keep a copy of this updated inventory that you can import on another device.",
         "stats": {
           "addedShips": "Added {{count}} ships to favorite ships.",
           "alreadyFavoritedShips": "{{count}} ships were already in favorite ships.",

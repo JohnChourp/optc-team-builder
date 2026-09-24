@@ -97,6 +97,7 @@
     "firstRunTransfer": {
       "title": "This install is empty",
       "body": "Nothing is saved here yet. If you have used OPTC Team Builder somewhere else - in a browser, or in another install of the app - your teams and boxes are still there: they live in that browser's storage, and nothing can read it from here. Bring them across with Google Drive sync, or with a file you exported from Settings.",
+      "bodyFileOnly": "Nothing is saved here yet. If you have used OPTC Team Builder somewhere else - in a browser, or in another install of the app - your teams and boxes are still there: they live in that browser's storage, and nothing can read it from here. Bring them across with a file you exported from Settings.",
       "drive": "Set up Drive sync",
       "import": "Import a file",
       "dismiss": "Start fresh"
@@ -114,15 +115,16 @@
     },
     "account": {
       "actions": {
-        "signIn": "Sign in with Google",
-        "unavailable": "Google sign-in unavailable"
+        "openSettings": "Open Settings",
+        "signIn": "Sign in with Google"
       },
       "avatarAlt": "{{ name }} Google profile image",
       "signedInEyebrow": "Signed in",
       "signedOutCopy": "Sign in to manage your profile and Google Drive backup from one place.",
       "signedOutEyebrow": "Google account",
       "signedOutTitle": "Log in for Drive sync",
-      "unavailableCopy": "Google sign-in is not configured for this build."
+      "unavailableCopy": "Google sign-in is not available in this version of the Android app. To move your teams, boxes and everything else to another device, use Export all data and Import all data in Settings.",
+      "unavailableTitle": "Your data stays on this device"
     },
     "highlights": {
       "ariaLabel": "OPTC Team Builder highlights",
