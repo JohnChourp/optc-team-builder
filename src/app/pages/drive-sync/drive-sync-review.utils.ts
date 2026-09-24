@@ -397,7 +397,12 @@ function buildReviewSection<T>(
 ): DriveSyncReviewSection {
   const localItems = indexItems(config.getItems(localPayload), config.rowKey);
   const driveItems = indexItems(config.getItems(drivePayload), config.rowKey);
-  const keys = [...new Set([...localItems.keys(), ...driveItems.keys()])].filter(Boolean).sort();
+  /*
+   * 869f6td2j. Not sorted: rows keep this device's order, then what only Drive has, in Drive's
+   * order. The payload is rebuilt in row order, so sorting by id brought Saved Teams back
+   * oldest-first and favourites by number after every reviewed sync.
+   */
+  const keys = [...new Set([...localItems.keys(), ...driveItems.keys()])].filter(Boolean);
   const rows = keys.map((key) => {
     const deviceItem = localItems.get(key) ?? null;
     const driveItem = driveItems.get(key) ?? null;
