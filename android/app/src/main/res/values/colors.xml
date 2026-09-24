@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 869f6tcz0. The dark-only app's own background, the same #070b17 as its Ionic theme. -->
+    <color name="app_background">#070B17</color>
+</resources>
