@@ -182,7 +182,7 @@
       "environments": [
         "node"
       ],
-      "specCount": 2
+      "specCount": 3
     },
     {
       "id": "ci-routing",

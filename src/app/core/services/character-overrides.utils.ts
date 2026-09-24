@@ -4,6 +4,7 @@ import {
   type CharacterListItem,
   type LocalCharacterOverride,
 } from '../models/optc.models';
+import { resolveCaptainBoosts } from '../grammar/captain-boost-grammar';
 import { normalizeHtmlToText } from './html-text.utils';
 
 export interface LocalCharacterOverrideInput {
@@ -59,20 +60,6 @@ const OBJECT_OR_NULL_DETAIL_KEYS = [
   'superClass',
   'rumbleData',
 ] as const;
-const CAPTAIN_BRANCH_PATTERN =
-  /\b(always active|standard captain|powered up captain|rampage captain)\s*:\s*/gi;
-const CAPTAIN_EFFECT_CLAUSE_SEPARATOR =
-  /,\s+(?=(?:and\s+)?(?:boosts?|reduces?|makes?|changes?|increases?|restores?|deals?|cuts?|lowers?|decreases?|sets?|adds?)\b)|\s+\band\s+(?=(?:boosts?|reduces?|makes?|changes?|increases?|restores?|deals?|cuts?|lowers?|decreases?|sets?|adds?)\b)/gi;
-const DEFAULT_CAPTAIN_BRANCH_LABELS = new Set(['always active', 'standard captain']);
-const PREFERRED_DEFAULT_CAPTAIN_VARIANT_KEYS = [
-  'base',
-  'captain',
-  'description',
-  'level0',
-  'llbbase',
-  'level1',
-];
-
 function deepClone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
@@ -151,147 +138,6 @@ function createEmptyCharacterDetail(characterId: number): CharacterDetail {
 
 function cloneCharacterDetail(detail: CharacterDetail): CharacterDetail {
   return deepClone(detail);
-}
-
-function resolveCaptainBoosts(detail: CharacterDetail): {
-  captainHpBoost: number;
-  captainAtkBoost: number;
-  captainAverageBoost: number;
-} {
-  const captainText = resolveDefaultCaptainAbilityText(detail);
-  const defaultCaptainText = extractDefaultCaptainBoostText(captainText);
-  const captainHpBoost = extractHighestBoost(defaultCaptainText, 'hp');
-  const captainAtkBoost = extractHighestBoost(defaultCaptainText, 'atk');
-
-  return {
-    captainHpBoost,
-    captainAtkBoost,
-    captainAverageBoost: (captainHpBoost + captainAtkBoost) / 2,
-  };
-}
-
-function resolveDefaultCaptainAbilityText(detail: CharacterDetail): string {
-  const preferredVariant = PREFERRED_DEFAULT_CAPTAIN_VARIANT_KEYS.map((key) =>
-    detail.captainAbilityVariants.find((variant) => variant.key.toLowerCase() === key),
-  ).find(Boolean);
-  const fallbackVariant = detail.captainAbilityVariants.find((variant) => variant.text);
-
-  return (preferredVariant?.text ?? fallbackVariant?.text ?? detail.captainAbility ?? '').trim();
-}
-
-function extractDefaultCaptainBoostText(text: string): string {
-  const normalizedText = normalizeCaptainBoostText(text);
-  const branches = extractCaptainBranches(normalizedText);
-
-  if (!branches.length) {
-    return normalizedText;
-  }
-
-  const defaultBranches = branches
-    .filter((branch) => DEFAULT_CAPTAIN_BRANCH_LABELS.has(branch.label))
-    .map((branch) => branch.text)
-    .filter(Boolean);
-
-  return defaultBranches.length
-    ? defaultBranches.join('. ')
-    : (branches[0]?.text ?? normalizedText);
-}
-
-function extractCaptainBranches(text: string): Array<{ label: string; text: string }> {
-  const matches = [...text.matchAll(CAPTAIN_BRANCH_PATTERN)];
-
-  return matches
-    .map((match, index) => {
-      const nextMatch = matches[index + 1] ?? null;
-      const start = (match.index ?? 0) + match[0].length;
-      const end = nextMatch?.index ?? text.length;
-
-      return {
-        label: String(match[1] ?? '').toLowerCase(),
-        text: text.slice(start, end).trim(),
-      };
-    })
-    .filter((branch) => branch.text.length > 0);
-}
-
-function extractHighestBoost(text: string, stat: 'atk' | 'hp'): number {
-  const pattern = new RegExp(`\\b${stat}\\b[^.;]*?\\bby\\s+(\\d+(?:\\.\\d+)?)x`, 'gi');
-
-  return extractDefaultCaptainBoostClauses(text).reduce((highest, clause) => {
-    return [...clause.matchAll(pattern)].reduce((clauseHighest, match) => {
-      if (isSelfOnlyCaptainBoostMatch(match[0])) {
-        return clauseHighest;
-      }
-
-      const value = Number(match[1]);
-      return Number.isFinite(value) && value > clauseHighest ? value : clauseHighest;
-    }, highest);
-  }, 0);
-}
-
-function extractDefaultCaptainBoostClauses(text: string): string[] {
-  return splitCaptainEffectClauses(text).filter(
-    (clause) =>
-      !isConditionalCaptainBoostClause(clause) &&
-      /\bboosts?\b/i.test(clause) &&
-      /\b(?:atk|hp)\b/i.test(clause) &&
-      /\bby\s+\d+(?:\.\d+)?x\b/i.test(clause),
-  );
-}
-
-function splitCaptainEffectClauses(text: string): string[] {
-  return splitCaptainSentences(text)
-    .flatMap((clause) =>
-      isConditionalCaptainBoostClause(clause)
-        ? [clause]
-        : clause.split(CAPTAIN_EFFECT_CLAUSE_SEPARATOR),
-    )
-    .map((clause) => clause.trim())
-    .filter(Boolean);
-}
-
-function splitCaptainSentences(text: string): string[] {
-  const clauses: string[] = [];
-  let current = '';
-
-  for (let index = 0; index < text.length; index += 1) {
-    const character = text[index];
-    const previousCharacter = text[index - 1] ?? '';
-    const nextCharacter = text[index + 1] ?? '';
-    const isDecimalPoint =
-      character === '.' && /\d/.test(previousCharacter) && /\d/.test(nextCharacter);
-
-    if ((character === '.' && !isDecimalPoint) || character === ';') {
-      clauses.push(current);
-      current = '';
-      continue;
-    }
-
-    current += character;
-  }
-
-  clauses.push(current);
-
-  return clauses;
-}
-
-function isConditionalCaptainBoostClause(clause: string): boolean {
-  return /^(?:(?:and|or|also|additionally|furthermore|then|otherwise)\b,?\s*)*(?:if|when)\b/i.test(
-    clause.trim(),
-  );
-}
-
-function isSelfOnlyCaptainBoostMatch(matchText: string): boolean {
-  const normalizedText = normalizeCaptainBoostText(matchText);
-
-  return (
-    /\b(?:atk|hp)\b[^,.;]{0,80}\b(?:this character|self)\b/i.test(normalizedText) ||
-    /\bown\s+(?:atk|hp)\b/i.test(normalizedText)
-  );
-}
-
-function normalizeCaptainBoostText(text: string): string {
-  return normalizeHtmlToText(text);
 }
 
 export function normalizeCharacterDetailInput(
@@ -449,7 +295,7 @@ export function applyOverrideToCharacterListItem(
     starsLabel: String(override.stars),
     cost: override.cost,
     combo: override.combo,
-    ...resolveCaptainBoosts(override.detail),
+    ...resolveCaptainBoosts(override.detail, normalizeHtmlToText),
     stats: {
       min: {
         hp: override.minHp,

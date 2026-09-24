@@ -1,4 +1,8 @@
 import { normalizeHtmlToText } from './html-text.mjs';
+import {
+  hasCaptainCostOrRarityScope,
+  readCaptainClauseRanges,
+} from '../../src/app/core/grammar/captain-boost-grammar.ts';
 
 const AUTO_TEAM_BUILDER_TYPES = ['DEX', 'STR', 'QCK', 'PSY', 'INT'];
 const AUTO_TEAM_BUILDER_CLASSES = [
@@ -56,12 +60,6 @@ const SELF_ACTIVATION_RIDER_PATTERN =
 const START_OF_FIGHT_EFFECT_PATTERN =
   /\b(?:at|from)\s+(?:the\s+)?start\s+of\s+(?:the\s+)?(?:fight|quest|adventure)\b/i;
 const BRACKETED_LABEL_PATTERN = /\[([^\]]+)\]/g;
-const COST_SUBSET_PATTERN =
-  /\bcost\s+(?:\d+\s+or\s+(?:more|less|higher|lower)|\d+\s*-\s*\d+|\d+)\s+characters?\b/i;
-const COST_RANGE_PATTERN = /\bcost\s+(\d+)\s*-\s*(\d+)\s+characters?\b/i;
-const COST_EXACT_PATTERN = /\bcost\s+(\d+)\s+characters?\b/i;
-const RARITY_SUBSET_PATTERN =
-  /\brarity\s+(?:\d+\s+or\s+(?:more|less|higher|lower|\d+\+))\s+characters?\b/i;
 const ATK_CLAUSE_PATTERN = /\batk\b/i;
 const HP_CLAUSE_PATTERN = /\bhp\b/i;
 const ATK_HP_BOOSTED_STAT_PATTERN =
@@ -136,8 +134,7 @@ function resolveCaptainClauseScope(clause) {
   }
 
   if (
-    COST_SUBSET_PATTERN.test(normalizedClause) ||
-    RARITY_SUBSET_PATTERN.test(normalizedClause) ||
+    hasCaptainCostOrRarityScope(normalizedClause) ||
     boostClauseHasDominantTypeScope(normalizedClause) ||
     extractAllowedTypesFromCoverageClause(normalizedClause).length > 0 ||
     extractAllowedClassesFromCoverageClause(normalizedClause).length > 0 ||
@@ -315,8 +312,7 @@ function isCaptainBoostScopeClause(clause) {
     !SELF_SCOPE_PATTERN.test(normalizedClause) &&
     (boostClauseHasUniversalScope(normalizedClause) ||
       FALLBACK_OTHER_SCOPE_PATTERN.test(normalizedClause) ||
-      COST_SUBSET_PATTERN.test(normalizedClause) ||
-      RARITY_SUBSET_PATTERN.test(normalizedClause) ||
+      hasCaptainCostOrRarityScope(normalizedClause) ||
       boostClauseHasDominantTypeScope(normalizedClause) ||
       extractAllowedTypesFromCoverageClause(normalizedClause).length > 0 ||
       extractAllowedClassesFromCoverageClause(normalizedClause).length > 0 ||
@@ -502,11 +498,6 @@ const HP_THRESHOLD_PATTERN = /\bHP\s+is\s+(below|above)\s+(\d+)\s*%/i;
 const DEFEATED_ENEMY_PATTERN = /\bdefeated\s+an?\s+enemy\s+last\s+turn\b/i;
 const REQUIRES_CAPTAIN_PATTERN = /\b(?:this character is your Captain|if you have this character as your Captain)\b/i;
 const FOR_N_TURNS_PATTERN = /\bfor\s+(\d+)\s+turns?\b/i;
-const COST_MIN_PATTERN = /\bcost\s+(\d+)\s+or\s+(?:more|higher)\s+characters?\b/i;
-const COST_MAX_PATTERN = /\bcost\s+(\d+)\s+or\s+(?:less|lower)\s+characters?\b/i;
-const RARITY_MIN_PATTERN = /\brarity\s+(\d+)\s+or\s+(?:more|higher)\s+characters?\b/i;
-const RARITY_MAX_PATTERN = /\brarity\s+(\d+)\s+or\s+(?:less|lower)\s+characters?\b/i;
-const RARITY_TIERED_PATTERN = /\brarity\s+(\d+)\s+or\s+\1\+\s+characters?\b/i;
 // Produces an ordered list of tiers (1-indexed) describing distinct (conditions → effects) bundles
 // in the captain ability. Tier 1 is the baseline — clauses that apply with the broadest scope (or
 // the "all other characters" fallback). Tier 2 is the unconditional top tier (subset boost without
@@ -1619,70 +1610,14 @@ function resolveTierCharacterConditions(clauses) {
       }
     }
 
-    const costRange = clause.match(COST_RANGE_PATTERN);
-    if (costRange !== null) {
-      conditions.costRange = {
-        ...(conditions.costRange ?? {}),
-        min: Number(costRange[1]),
-        max: Number(costRange[2]),
-      };
-    } else {
-      // "Cost N characters" (exact, no qualifier) — equivalent to a closed range [N, N].
-      // Only applied when no other cost qualifier already matched, to avoid double-counting
-      // patterns like "Cost N or more" / "Cost A-B" which contain "Cost N" as a substring.
-      const costExact = clause.match(COST_EXACT_PATTERN);
-      const hasOtherCostMatch =
-        COST_MIN_PATTERN.test(clause) || COST_MAX_PATTERN.test(clause);
-      if (costExact !== null && !hasOtherCostMatch) {
-        const exact = Number(costExact[1]);
-        conditions.costRange = {
-          ...(conditions.costRange ?? {}),
-          min: exact,
-          max: exact,
-        };
-      }
+    // Cost and rarity are read by the shared grammar, which the app's coverage check reads too;
+    // the fold over this tier's earlier clauses is the one this loop always did.
+    const ranges = readCaptainClauseRanges(clause, conditions);
+    if (ranges.costRange !== undefined) {
+      conditions.costRange = ranges.costRange;
     }
-    const costMin = clause.match(COST_MIN_PATTERN);
-    const costMax = clause.match(COST_MAX_PATTERN);
-    if (costMin !== null) {
-      conditions.costRange = {
-        ...(conditions.costRange ?? {}),
-        min: Number(costMin[1]),
-      };
-    }
-    if (costMax !== null) {
-      conditions.costRange = {
-        ...(conditions.costRange ?? {}),
-        max: Number(costMax[1]),
-      };
-    }
-
-    const rarityTiered = clause.match(RARITY_TIERED_PATTERN);
-    if (rarityTiered !== null) {
-      // "Rarity N or N+ characters" — exact-tier (both base and trained Rarity N units).
-      // The "+" suffix is OPTC's trained-rarity marker; the boost still scopes to that single
-      // rarity level (a Rarity 5 unit does not get the Rarity 4 tier's boost).
-      const exact = Number(rarityTiered[1]);
-      conditions.rarityRange = {
-        ...(conditions.rarityRange ?? {}),
-        min: exact,
-        max: exact,
-      };
-    } else {
-      const rarityMin = clause.match(RARITY_MIN_PATTERN);
-      const rarityMax = clause.match(RARITY_MAX_PATTERN);
-      if (rarityMin !== null) {
-        conditions.rarityRange = {
-          ...(conditions.rarityRange ?? {}),
-          min: Number(rarityMin[1]),
-        };
-      }
-      if (rarityMax !== null) {
-        conditions.rarityRange = {
-          ...(conditions.rarityRange ?? {}),
-          max: Number(rarityMax[1]),
-        };
-      }
+    if (ranges.rarityRange !== undefined) {
+      conditions.rarityRange = ranges.rarityRange;
     }
   }
 
