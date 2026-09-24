@@ -241,6 +241,13 @@ export class UserStateService {
       this.readySavedEnemies(),
       this.readySavedRumbleTeams(),
       this.readyCrewForgeImageProfiles(),
+      /*
+       * 869f63gq1. Both travel in every backup, and both used to load only when the Rumble or the
+       * Auto Team Builder page did. A session that had opened neither exported them as empty, and a
+       * reviewed Drive merge then wrote the empty lists over the device's and uploaded them.
+       */
+      this.readySavedRumbleOpponents(),
+      this.readyBoostedCharacterIds(),
       this.readyAutoTeamBuilderWorkerPreference(),
       this.readyBuilderIntroDismissed(),
       this.readyGameRegionPreference(),

@@ -191,7 +191,10 @@ export function buildDriveSyncReviewDraft(
   };
 }
 
-/** Scopes with no review section, taken from whichever side the action makes authoritative. */
+/**
+ * Scopes with no review section, taken from whichever side the action makes authoritative - or,
+ * on a Merge, combined by `CARRIED_SCOPE_MERGERS`.
+ */
 function collectCarriedScopes(
   localPayload: AllDataTransferPayload,
   drivePayload: AllDataTransferPayload,
@@ -212,7 +215,10 @@ function collectCarriedScopes(
      */
     const preferred = action === 'replace-local' ? drivePayload : localPayload;
     const fallback = action === 'replace-local' ? localPayload : drivePayload;
-    const value = preferred[scope] ?? fallback[scope];
+    const value =
+      action === 'merge-and-upload'
+        ? mergeCarriedScope(scope as CarriedScope, localPayload[scope], drivePayload[scope])
+        : (preferred[scope] ?? fallback[scope]);
 
     if (value !== undefined) {
       assignScope(carried, scope, cloneValue(value));
@@ -220,6 +226,56 @@ function collectCarriedScopes(
   }
 
   return carried;
+}
+
+/** The scopes a review has no section for, so no row where the reader could choose. */
+type CarriedScope = Exclude<AllDataTransferScope, DriveSyncReviewSectionKey>;
+
+/**
+ * 869f63gq1. How a Merge combines a carried scope that BOTH sides hold.
+ *
+ * Every carried scope used to be taken whole from the device, so a Merge deleted
+ * what only Drive had: an opponent saved on the reader's other phone left this
+ * device AND the backup the Merge uploaded, while the unreviewed Merge in
+ * Settings kept it. Saved items now merge by id - the device's copy wins a
+ * clash, and what only Drive had is appended in Drive's order. Typed over every
+ * carried scope, so a scope that loses its review section has to say how it
+ * merges.
+ */
+const CARRIED_SCOPE_MERGERS: {
+  [Scope in CarriedScope]: (
+    device: NonNullable<AllDataTransferPayload[Scope]>,
+    drive: NonNullable<AllDataTransferPayload[Scope]>,
+  ) => NonNullable<AllDataTransferPayload[Scope]>;
+} = {
+  crewForgeProfiles: (device, drive) => ({
+    ...device,
+    profiles: mergeById(device.profiles, drive.profiles),
+  }),
+  savedRumbleOpponents: (device, drive) => ({
+    ...device,
+    opponents: mergeById(device.opponents, drive.opponents),
+  }),
+  /* 869f1q90b. A boost list describes ONE event, so two are never merged: the device's stands. */
+  boostedCharacterIds: (device) => device,
+};
+
+function mergeCarriedScope(scope: CarriedScope, device: unknown, drive: unknown): unknown {
+  if (device === undefined || drive === undefined) {
+    return device ?? drive;
+  }
+
+  /* TypeScript cannot tie `scope` to its own merger - the one cast SCOPE_CLONERS needs too. */
+  return (CARRIED_SCOPE_MERGERS[scope] as (device: unknown, drive: unknown) => unknown)(
+    device,
+    drive,
+  );
+}
+
+function mergeById<T extends { id: string }>(deviceItems: T[], driveItems: T[]): T[] {
+  const deviceIds = new Set(deviceItems.map((item) => item.id));
+
+  return [...deviceItems, ...driveItems.filter((item) => !deviceIds.has(item.id))];
 }
 
 function assignScope(
