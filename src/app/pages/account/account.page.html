@@ -213,6 +213,12 @@
                   localSyncScopeSummary().savedRumbleOpponentsCount
                 )
               }}</span>
+              <span>{{
+                getSummaryCountLabel(
+                  'boostedCharacters',
+                  localSyncScopeSummary().boostedCharacterCount
+                )
+              }}</span>
             </div>
 
             <div class="drive-sync-panel">
@@ -245,6 +251,9 @@
                     'savedRumbleOpponents',
                     remoteSummary.savedRumbleOpponentsCount
                   )
+                }}</span>
+                <span>{{
+                  getSummaryCountLabel('boostedCharacters', remoteSummary.boostedCharacterCount)
                 }}</span>
               } @else {
                 <span>{{ getRemoteSummaryState() }}</span>

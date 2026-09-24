@@ -242,7 +242,8 @@
       "savedEnemies": "{{count}} saved enemies",
       "savedRumbleTeams": "{{count}} saved Rumble teams",
       "savedTeams": "{{count}} saved teams",
-      "savedRumbleOpponents": "{{count}} saved Rumble opponents"
+      "savedRumbleOpponents": "{{count}} saved Rumble opponents",
+      "boostedCharacters": "{{count}} boosted characters"
     },
     "allData": {
       "copy": "Export a full device backup bundle or import a smart backup that can contain all data, only one section, or even a single favorites, ships, character boxes, character overrides, saved teams, or saved enemies export.",
