@@ -18,4 +18,5 @@ import { vi } from 'vitest';
 export const App = {
   getInfo: vi.fn().mockResolvedValue({ version: '1.0.0' }),
   addListener: vi.fn().mockResolvedValue({ remove: vi.fn() }),
+  minimizeApp: vi.fn().mockResolvedValue(undefined),
 };

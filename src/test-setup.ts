@@ -23,6 +23,8 @@ beforeEach(() => {
   capacitorApp.getInfo.mockResolvedValue({ version: '1.0.0' });
   capacitorApp.addListener.mockReset();
   capacitorApp.addListener.mockResolvedValue({ remove: vi.fn() });
+  capacitorApp.minimizeApp.mockReset();
+  capacitorApp.minimizeApp.mockResolvedValue(undefined);
 });
 
 /*

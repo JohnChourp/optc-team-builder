@@ -3,7 +3,7 @@ import { Inject, Injectable, InjectionToken, type Signal, computed, signal } fro
 import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 
-import { ApkUpdater, type ApkUpdaterPlugin } from './apk-updater.plugin';
+import { APK_DIGEST_MISMATCH, APK_MISSING, ApkUpdater, type ApkUpdaterPlugin } from './apk-updater.plugin';
 import { UPDATE_SIZE_WORTH_SAYING_BYTES, formatUpdateSize } from './update-payload-size.utils';
 
 export interface NativeAppUpdate {
@@ -15,6 +15,11 @@ export interface NativeAppUpdate {
   apkFileName?: string;
   /** Asset size from the release API — authoritative, unlike a CDN header. */
   apkBytes?: number;
+  /**
+   * 869f6tczy. The SHA-256 the release API publishes for the asset, checked natively
+   * before the file is installed. Absent when the release publishes none.
+   */
+  apkSha256?: string;
 }
 
 /** Lifecycle of an in-app APK download, mirroring the web update phases. */
@@ -122,6 +127,25 @@ export class NativeUpdateService {
       : null;
   });
 
+  /** 869f6tczy. The APK already on disk, and the version it holds. */
+  private readonly downloadedApkSignal = signal<{ version: string; path: string } | null>(null);
+
+  /**
+   * 869f6tczy. True while the pending update's APK is on disk and waiting to be installed,
+   * so the banner's action hands it straight to Android's installer - which asks for its
+   * own confirmation - instead of asking the player to agree to a download that will not
+   * happen.
+   */
+  public readonly readyToInstall: Signal<boolean> = computed(() => {
+    const downloaded = this.downloadedApkSignal();
+
+    return (
+      this.phaseSignal() === 'ready' &&
+      downloaded !== null &&
+      downloaded.version === this.availableSignal()?.version
+    );
+  });
+
   private started = false;
   private progressListener: { remove: () => Promise<void> } | null = null;
   private lastEmittedProgress = 0;
@@ -217,6 +241,36 @@ export class NativeUpdateService {
       return;
     }
 
+    /*
+     * 869f6tczy. The bytes for this version are already on disk, so install them. This
+     * tap used to fetch the whole ~207 MB again - measured, 414 MB for one update - because
+     * the path lived in a local variable, gone by the time the player came back from
+     * allowing "Install unknown apps", or from cancelling Android's installer, and tapped
+     * again.
+     */
+    const downloaded = this.downloadedApkSignal();
+
+    if (downloaded?.version === update.version) {
+      this.downloadErrorSignal.set(null);
+      this.emitProgress(1);
+      this.phaseSignal.set('ready');
+
+      try {
+        await this.installApk(downloaded.path, update);
+
+        return;
+      } catch (error) {
+        if (!isStaleApkError(error)) {
+          this.markFailed(error);
+
+          return;
+        }
+
+        // Gone from the cache, or no longer the bytes the release published: fetch it again.
+        this.downloadedApkSignal.set(null);
+      }
+    }
+
     this.downloadErrorSignal.set(null);
     this.lastEmittedProgress = 0;
     this.downloadProgressSignal.set(0);
@@ -231,41 +285,52 @@ export class NativeUpdateService {
         ...(update.apkBytes ? { expectedBytes: update.apkBytes } : {}),
       });
 
+      // Kept before the install step, so the next tap installs these bytes.
+      this.downloadedApkSignal.set({ version: update.version, path: result.path });
       // The bar stays mounted and full once the bytes are on disk; installing is a
       // separate, user-confirmed step in Android's own installer UI.
       this.emitProgress(1);
       this.phaseSignal.set('ready');
 
-      const permission = await this.apkUpdater.canInstall();
-
-      if (!permission.granted) {
-        // Nothing to install into until the user allows this source, so send them
-        // straight to the screen that grants it.
-        await this.apkUpdater.openInstallSettings();
-
-        return;
-      }
-
-      await this.apkUpdater.install({ path: result.path });
+      await this.installApk(result.path, update);
     } catch (error) {
-      this.downloadErrorSignal.set(error instanceof Error ? error.message : String(error));
-      /*
-       * `failed`, not `idle`. Reverting to idle re-offered the update as though
-       * nothing had happened, and the reader had no way to tell a failure from a
-       * banner they had simply not pressed yet.
-       */
-      this.phaseSignal.set('failed');
-      this.downloadProgressSignal.set(0);
-      this.lastEmittedProgress = 0;
-      /*
-       * The release page is now something the reader CHOOSES from the failed
-       * banner, not something that happens to them. Opening a browser
-       * unannounced, straight after a download died, reads as the app doing
-       * something else entirely.
-       */
+      this.markFailed(error);
     } finally {
       await this.stopListeningForProgress();
     }
+  }
+
+  /** Hands a downloaded APK to Android's installer, or first to the screen that allows it. */
+  private async installApk(path: string, update: NativeAppUpdate): Promise<void> {
+    const permission = await this.apkUpdater.canInstall();
+
+    if (!permission.granted) {
+      // Nothing to install into until the user allows this source, so send them
+      // straight to the screen that grants it.
+      await this.apkUpdater.openInstallSettings();
+
+      return;
+    }
+
+    await this.apkUpdater.install({ path, ...(update.apkSha256 ? { sha256: update.apkSha256 } : {}) });
+  }
+
+  private markFailed(error: unknown): void {
+    this.downloadErrorSignal.set(error instanceof Error ? error.message : String(error));
+    /*
+     * `failed`, not `idle`. Reverting to idle re-offered the update as though
+     * nothing had happened, and the reader had no way to tell a failure from a
+     * banner they had simply not pressed yet.
+     */
+    this.phaseSignal.set('failed');
+    this.downloadProgressSignal.set(0);
+    this.lastEmittedProgress = 0;
+    /*
+     * The release page is now something the reader CHOOSES from the failed
+     * banner, not something that happens to them. Opening a browser
+     * unannounced, straight after a download died, reads as the app doing
+     * something else entirely.
+     */
   }
 
   private async listenForProgress(): Promise<void> {
@@ -364,6 +429,7 @@ export class NativeUpdateService {
         size?: number;
         content_type?: string;
         browser_download_url?: string;
+        digest?: string;
       }[];
     };
     const version = this.normalizeVersion(data.tag_name);
@@ -377,6 +443,8 @@ export class NativeUpdateService {
         asset.content_type === 'application/vnd.android.package-archive' ||
         (asset.name ?? '').toLowerCase().endsWith('.apk'),
     );
+    // 869f6tczy. GitHub publishes every asset's SHA-256 as `digest: "sha256:<hex>"`.
+    const apkSha256 = /^sha256:([0-9a-f]{64})$/iu.exec(apk?.digest ?? '')?.[1]?.toLowerCase();
 
     return {
       version,
@@ -386,6 +454,7 @@ export class NativeUpdateService {
             apkUrl: apk.browser_download_url,
             apkFileName: apk.name ?? `optc-team-builder-${version}.apk`,
             ...(typeof apk.size === 'number' && apk.size > 0 ? { apkBytes: apk.size } : {}),
+            ...(apkSha256 ? { apkSha256 } : {}),
           }
         : {}),
     };
@@ -444,4 +513,11 @@ export class NativeUpdateService {
     this.snoozedUntil = 0;
     this.snoozedVersion = null;
   }
+}
+
+/** 869f6tczy. How the plugin says a remembered APK cannot be installed as it is. */
+function isStaleApkError(error: unknown): boolean {
+  const code = (error as { code?: unknown } | null | undefined)?.code;
+
+  return code === APK_MISSING || code === APK_DIGEST_MISMATCH;
 }

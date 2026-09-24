@@ -25,8 +25,17 @@ export function parseCapacitorConfig(source) {
     const providers = [...body.matchAll(/^\s*(\w+):\s*(true|false),?$/gmu)]
       .map(([, provider, enabled]) => ({ provider, enabled: enabled === 'true' }))
       .sort((a, b) => a.provider.localeCompare(b.provider));
+    /*
+     * 869f6tcz0. A plugin can be configured by a value rather than by switching providers
+     * on: `SystemBars: { style: "DARK" }` enables nothing and says how the shell looks.
+     * Recorded as it is written, so the record carries it and the check below can tell it
+     * from a plugin configured with nothing at all.
+     */
+    const settings = Object.fromEntries(
+      [...body.matchAll(/^\s*(\w+):\s*["']([^"']*)["'],?$/gmu)].map(([, key, value]) => [key, value]),
+    );
 
-    plugins.push({ name, providers });
+    plugins.push({ name, providers, ...(Object.keys(settings).length > 0 ? { settings } : {}) });
   }
 
   return { appId: scalar('appId'), appName: scalar('appName'), webDir: scalar('webDir'), plugins };
@@ -90,7 +99,12 @@ export function checkNativeSurface(surface) {
     const enabled = plugin.providers.filter((p) => p.enabled).map((p) => p.provider);
 
     if (plugin.providers.length === 0) {
-      problems.push(`${plugin.name} is configured with no providers, so the record cannot say what it enables.`);
+      if (!plugin.settings) {
+        problems.push(
+          `${plugin.name} is configured with no providers and no settings, so the record cannot say what it enables.`,
+        );
+      }
+
       continue;
     }
 
