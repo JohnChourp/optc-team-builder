@@ -45,14 +45,28 @@ export interface TeamCoverageSummary {
 export interface TeamCoverageInput {
   captain: CharacterDetailRecord | null | undefined;
   friendCaptain: CharacterDetailRecord | null | undefined;
+  /** The six seats in order - Captain, Friend Captain, then the four subs - empty ones included. */
   members: ReadonlyArray<CharacterListItem | null | undefined>;
 }
+
+/**
+ * 869f6td4c. A team needs no Friend Captain (owner, 2026-09-08), so Captain + four subs is a
+ * complete team - the way the status line already reads it through `optionalSlotIndexes: [1]`.
+ * This counted to six instead, and hid the whole panel for that team on all four screens.
+ */
+const TEAM_SEAT_COUNT = 6;
+const FRIEND_CAPTAIN_SEAT_INDEX = 1;
 
 export function resolveTeamCoverageSummary(input: TeamCoverageInput): TeamCoverageSummary {
   const nonNullMembers = input.members.filter(
     (member): member is CharacterListItem => member !== null && member !== undefined,
   );
-  const isComplete = nonNullMembers.length === 6;
+  const isComplete =
+    input.members.length === TEAM_SEAT_COUNT &&
+    input.members.every(
+      (member, seatIndex) =>
+        (member !== null && member !== undefined) || seatIndex === FRIEND_CAPTAIN_SEAT_INDEX,
+    );
 
   const captainTiers = getCaptainCoverageTiers(input.captain);
   const friendTiers = getCaptainCoverageTiers(input.friendCaptain);
