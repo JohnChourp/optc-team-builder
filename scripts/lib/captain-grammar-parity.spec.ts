@@ -3,11 +3,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 
+import { resolveCaptainCoverage } from '../../src/app/core/services/captain-coverage.utils';
 import {
   applyOverrideToCharacterListItem,
   createLocalCharacterOverrideFromRecord,
 } from '../../src/app/core/services/character-overrides.utils';
 import { type CharacterDetailRecord } from '../../src/app/core/models/optc.models';
+import { extractCoverageTiers } from './captain-ability-coverage.mjs';
 import { buildDatasetDatabaseBytes, loadSqlJs } from './dataset-binary.mjs';
 import { resolveCharacterCaptainBoosts } from './optc-dataset.mjs';
 
@@ -159,5 +161,213 @@ describe('captain grammar parity over the shipped dataset', () => {
         createLocalCharacterOverrideFromRecord(law!.record),
       ).captainAtkBoost,
     ).toBe(4);
+  });
+});
+
+interface ValueRange {
+  min?: number;
+  max?: number;
+}
+
+interface RangeClause {
+  captainIds: number[];
+  clause: string;
+  costRange?: ValueRange;
+  rarityRange?: ValueRange;
+  types: string[];
+  classes: string[];
+  characterTags: string[];
+  dominantType: boolean;
+}
+
+const TYPES = ['STR', 'DEX', 'QCK', 'PSY', 'INT'];
+const CLASSES = ['Fighter', 'Slasher', 'Striker', 'Shooter', 'Free Spirit', 'Driven', 'Cerebral', 'Powerhouse', 'Evolver', 'Booster'];
+
+/** Written out rather than imported: the oracle must not be the function under test. */
+function inRange(value: number, range: ValueRange | undefined): boolean {
+  return (
+    range === undefined ||
+    ((range.min === undefined || value >= range.min) && (range.max === undefined || value <= range.max))
+  );
+}
+
+/** Both edges of a range, one step outside each, and a value inside an open end. */
+function edgeValues(range: ValueRange | undefined, fallback: number): number[] {
+  if (range === undefined) {
+    return [fallback];
+  }
+
+  const values = new Set<number>();
+
+  if (range.min !== undefined) {
+    values.add(range.min - 1);
+    values.add(range.min);
+  } else {
+    values.add(1);
+  }
+
+  if (range.max !== undefined) {
+    values.add(range.max);
+    values.add(range.max + 1);
+  } else {
+    values.add((range.min ?? 0) + 20);
+  }
+
+  return [...values].filter((value) => value >= 0);
+}
+
+function collectRangeClauses(): RangeClause[] {
+  const byClause = new Map<string, RangeClause>();
+
+  for (const { record } of seedCharacters) {
+    for (const entry of record.detail.captainAbilityCoverage?.entries ?? []) {
+      for (const tier of entry.tiers) {
+        if (!tier.characterConditions.costRange && !tier.characterConditions.rarityRange) {
+          continue;
+        }
+
+        for (const clause of tier.clauses) {
+          // The build's own reading of this one clause, so a tier that folds two clauses into
+          // one range (#4313 Tier 2 reads Cost 40 AND Cost 39 or lower) is checked clause by
+          // clause, the way the app reads it.
+          const [built] = extractCoverageTiers(clause).filter(
+            (candidate: { characterConditions: { costRange?: ValueRange; rarityRange?: ValueRange } }) =>
+              candidate.characterConditions.costRange || candidate.characterConditions.rarityRange,
+          );
+
+          if (!built) {
+            continue;
+          }
+
+          const existing = byClause.get(clause);
+
+          if (existing) {
+            existing.captainIds.push(record.id);
+            continue;
+          }
+
+          byClause.set(clause, {
+            captainIds: [record.id],
+            clause,
+            costRange: built.characterConditions.costRange,
+            rarityRange: built.characterConditions.rarityRange,
+            types: built.characterConditions.types,
+            classes: built.characterConditions.classes,
+            characterTags: built.characterConditions.characterTags,
+            dominantType: built.characterConditions.dominantType === true,
+          });
+        }
+      }
+    }
+  }
+
+  return [...byClause.values()];
+}
+
+function createTarget(
+  id: number,
+  shape: { cost: number; stars: number; type: string; classes: string[] },
+): CharacterDetailRecord {
+  return {
+    ...seedCharacters[0]!.record,
+    id,
+    name: `Target ${id}`,
+    type: shape.type,
+    classes: shape.classes,
+    primaryClass: shape.classes[0] ?? '',
+    secondaryClass: shape.classes[1] ?? null,
+    cost: shape.cost,
+    stars: shape.stars,
+  };
+}
+
+function createCaptain(clause: string): CharacterDetailRecord {
+  return {
+    ...seedCharacters[0]!.record,
+    id: 990001,
+    name: 'Parity Captain',
+    searchText: '',
+    detail: {
+      ...seedCharacters[0]!.record.detail,
+      captainAbility: clause,
+      captainAbilityVariants: [],
+      captainAbilityCoverage: undefined,
+    },
+  };
+}
+
+describe('captain cost and rarity scope parity over the shipped dataset', () => {
+  /*
+   * 869f63gqz. The build has read "Cost 20 or less characters" as a scope since 869dc7dj5 and the
+   * app never did, so Captain Coverage listed #458 Sengoku's 2,009 matching cards as 0 boosted.
+   * Every shipped tier clause that carries a cost or rarity range is read by both paths here: the
+   * build's (`extractCoverageTiers`, which wrote the tier) and the app's (`resolveCaptainCoverage`,
+   * which decides who is boosted). The app must boost exactly the characters inside the range the
+   * build read, at both edges of it, and only those of them the clause's category names.
+   */
+  it('checks a real, non-empty set of cost and rarity clauses', () => {
+    const clauses = collectRangeClauses();
+
+    expect(clauses.length).toBeGreaterThan(30);
+    expect(clauses.some((clause) => clause.costRange)).toBe(true);
+    expect(clauses.some((clause) => clause.rarityRange)).toBe(true);
+    expect(clauses.some((clause) => clause.types.length + clause.classes.length > 0)).toBe(true);
+    expect(clauses.find((clause) => clause.captainIds.includes(458))?.costRange).toEqual({ max: 20 });
+  });
+
+  it('boosts exactly the characters inside every range the build read', () => {
+    const disagreements: string[] = [];
+    let checked = 0;
+    let boosted = 0;
+
+    for (const rangeClause of collectRangeClauses()) {
+      const captain = createCaptain(rangeClause.clause);
+      const hasCategory =
+        rangeClause.dominantType ||
+        rangeClause.types.length + rangeClause.classes.length + rangeClause.characterTags.length > 0;
+      const namedShape = {
+        type: rangeClause.types[0] ?? 'STR',
+        classes: rangeClause.classes.length ? [rangeClause.classes[0]!] : ['Fighter'],
+        characterTags: rangeClause.characterTags.slice(0, 1),
+      };
+      // A character the clause's category does not name - only meaningful when it names one.
+      const unnamedShape = {
+        type: TYPES.find((type) => !rangeClause.types.includes(type))!,
+        classes: [CLASSES.find((characterClass) => !rangeClause.classes.includes(characterClass))!],
+        characterTags: [] as string[],
+      };
+      const shapes = hasCategory && !rangeClause.dominantType ? [namedShape, unnamedShape] : [namedShape];
+
+      for (const cost of edgeValues(rangeClause.costRange, 30)) {
+        for (const stars of edgeValues(rangeClause.rarityRange, 5)) {
+          for (const shape of shapes) {
+            const expected =
+              inRange(cost, rangeClause.costRange) &&
+              inRange(stars, rangeClause.rarityRange) &&
+              shape === namedShape;
+            const coverage = resolveCaptainCoverage(
+              captain,
+              createTarget(990002 + checked, { cost, stars, type: shape.type, classes: shape.classes }),
+              { coverageMode: 'fullAbilityCoverage', targetCharacterTags: shape.characterTags },
+            );
+
+            checked += 1;
+            boosted += coverage.matches ? 1 : 0;
+
+            if (coverage.matches !== expected) {
+              disagreements.push(
+                `#${rangeClause.captainIds[0]} "${rangeClause.clause}" cost ${cost} rarity ${stars} ${shape.type}/${shape.classes.join(',')}: build ${expected} app ${coverage.matches}`,
+              );
+            }
+          }
+        }
+      }
+    }
+
+    expect(disagreements).toEqual([]);
+    // Both verdicts occur, or the comparison proved nothing.
+    expect(checked).toBeGreaterThan(100);
+    expect(boosted).toBeGreaterThan(30);
+    expect(checked - boosted).toBeGreaterThan(30);
   });
 });
