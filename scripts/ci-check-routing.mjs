@@ -1117,13 +1117,24 @@ function isImportPipelinePath(filePath) {
     filePath === 'scripts/generate-import-pipeline.mjs' ||
     filePath === 'scripts/generate-import-pipeline.spec.ts' ||
     filePath === 'scripts/lib/import-pipeline.mjs' ||
-    filePath === 'docs/import-pipeline.json'
+    filePath === 'docs/import-pipeline.json' ||
+    /* 869f63gtp. The upstream file register the same document carries, and its two specs. */
+    filePath === 'scripts/lib/upstream-file-register.mjs' ||
+    filePath === 'scripts/upstream-file-register.spec.ts' ||
+    filePath === 'scripts/upstream-file-register-nightly.spec.ts'
   );
 }
 
-/* 869f138r4. Non-terminating: the importer and the hand-maintained data it reads. */
+/*
+ * 869f138r4. Non-terminating: the importer and the hand-maintained data it reads - and, 869f63gtp,
+ * the nightly release check, whose upstream-register finding is specified in this lane.
+ */
 function touchesImportPipelineSources(filePath) {
-  return filePath === 'scripts/import-optc-data.mjs' || filePath.startsWith('scripts/data/');
+  return (
+    filePath === 'scripts/import-optc-data.mjs' ||
+    filePath.startsWith('scripts/data/') ||
+    filePath === 'scripts/check-optc-release-needed.mjs'
+  );
 }
 
 /* 869f138qw. Terminating: the pack contract generator, its reader, and the document it writes. */
@@ -2067,6 +2078,11 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
 
     if (isImportPipelinePath(filePath)) {
       addScriptSuite(scriptSuites, 'import-pipeline');
+      /* 869f63gtp. The nightly release check reads the register's library too. */
+      if (filePath === 'scripts/lib/upstream-file-register.mjs') {
+        categories.add('release-check');
+        addScriptSuite(scriptSuites, 'release-check');
+      }
       continue;
     }
 

@@ -137,6 +137,21 @@ screen where they can be corrected. EN + EL.
 `scripts/data/`, which script reads it. Generated, so it moves with the importer rather than
 lagging it.
 
+**Every upstream file is registered - 869f63gtp.** `upstreamFiles` in the same document lists every
+file in upstream's `common/data` (32 when it was written) with its size, its last upstream change
+and its status: `read`, extracted from the importer's own source and never retyped; `pending`,
+adopted by open work that names itself; `deliberately-unread`, with the reason - seven are
+executable functions over the reference calculator's battle state and four are tooling or a
+duplicate of a file the importer reads; or `never-evaluated`, which says that nobody has judged the
+file rather than let silence imply a decision. The classifications live in
+`scripts/lib/upstream-file-register.mjs`. `npm run dataset:pipeline -- --check` fails when the
+register and the importer disagree: a file the importer reads that the listing lacks, a listed
+file nobody classified, a classified file the importer reads after all, or a classification for a
+file upstream no longer has. The listing is refreshed, with network, by
+`npm run dataset:pipeline -- --refresh-upstream`. The nightly release check lists upstream again and
+reports - never blocking a release - a file the register does not classify, which is how
+`flags.js`, `drops.js` and `banners.js` each appeared upstream and sat unread with nobody told.
+
 **The format question is closed and recorded.** The seed is a SQL text dump because it is diffable
 and about twenty scripts read it as text; what *ships* is a gzipped SQLite database built from it at
 build time - [869f138q7](https://app.clickup.com/t/90121749478/869f138q7), reasoning in

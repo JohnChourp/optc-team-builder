@@ -479,7 +479,7 @@
       "environments": [
         "node"
       ],
-      "specCount": 1
+      "specCount": 3
     },
     {
       "id": "ionic-host-property",

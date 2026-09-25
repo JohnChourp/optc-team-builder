@@ -13,8 +13,13 @@ import {
   resolveImportSource,
 } from './import-optc-data.mjs';
 import { releaseTriggerPolicy } from './lib/release-trigger-policy.mjs';
+import {
+  compareUpstreamListingWithRegister,
+  fetchUpstreamDataListing,
+} from './lib/upstream-file-register.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
+const upstreamFileRegisterPath = fileURLToPath(new URL('../docs/import-pipeline.json', import.meta.url));
 
 const requestHeaders = {
   'User-Agent': 'optc-team-builder-release-check',
@@ -744,6 +749,7 @@ export function buildReleaseTriggerReport({
     releaseCheck: releaseCheckResult,
     sourceContract: releaseCheckResult?.sourceContract ?? null,
     upstreamFetch: releaseCheckResult?.upstreamFetch ?? null,
+    upstreamFileRegister: releaseCheckResult?.upstreamFileRegister ?? null,
     comparison: releaseCheckResult
       ? {
           source: releaseCheckResult.source,
@@ -905,6 +911,10 @@ export function formatReleaseTriggerSummary(report) {
     );
   }
 
+  if (report.upstreamFileRegister) {
+    lines.push(`- Upstream file register (never blocks a release): ${formatUpstreamFileRegister(report.upstreamFileRegister)}`);
+  }
+
   lines.push(
     '',
     '### Step outcomes',
@@ -921,6 +931,24 @@ export function formatReleaseTriggerSummary(report) {
   );
 
   return lines.join('\n');
+}
+
+/** 869f63gtp. One line a maintainer can act on: which files, and what to do with them. */
+export function formatUpstreamFileRegister(finding) {
+  if (finding.status === 'drift') {
+    return [
+      finding.unclassifiedFiles.length > 0
+        ? `unclassified upstream file(s) ${finding.unclassifiedFiles.join(', ')} - classify them in scripts/lib/upstream-file-register.mjs`
+        : null,
+      finding.missingFiles.length > 0
+        ? `registered file(s) upstream no longer has: ${finding.missingFiles.join(', ')}`
+        : null,
+    ]
+      .filter(Boolean)
+      .join('; ');
+  }
+
+  return finding.reason ? `${finding.status} (${finding.reason})` : finding.status;
 }
 
 function buildRequestHeaders() {
@@ -1344,6 +1372,60 @@ async function readRemoteSourceFile({ filePath, source, relativePath, policy, fe
   });
 }
 
+/**
+ * 869f63gtp. A NON-BLOCKING finding: files upstream's `common/data` has that the register in
+ * `docs/import-pipeline.json` does not classify, and registered files upstream no longer has.
+ *
+ * `flags.js`, `drops.js` and then `banners.js` each appeared upstream and sat unread and unnoticed;
+ * this is the nightly look that would have named them. It never changes whether a release is
+ * needed and never throws - a listing that cannot be fetched is reported as `unavailable` - and a
+ * replay of captured files skips it, because a replay must not reach the network.
+ */
+export async function checkUpstreamFileRegister({
+  source,
+  fetchImpl = fetch,
+  registerPath = upstreamFileRegisterPath,
+  replay = false,
+  timeoutMs = releaseTriggerPolicy.upstreamFetch.timeoutMs,
+} = {}) {
+  const finding = { blocking: false, unclassifiedFiles: [], missingFiles: [] };
+
+  if (replay) {
+    return { ...finding, status: 'skipped', reason: 'replayed upstream files carry no listing' };
+  }
+
+  try {
+    const register = JSON.parse(await readFile(registerPath, 'utf8'))?.upstreamFiles;
+
+    if (!register || register.repository !== source.repository) {
+      return {
+        ...finding,
+        status: 'skipped',
+        reason: `the register describes ${register?.repository ?? 'no repository'}, not ${source.repository}`,
+      };
+    }
+
+    const listing = await fetchUpstreamDataListing({
+      repository: source.repository,
+      ref: source.ref,
+      fetchImpl: (url, init) => fetchImpl(url, { ...init, signal: AbortSignal.timeout(timeoutMs) }),
+    });
+    const { unclassifiedFiles, missingFiles } = compareUpstreamListingWithRegister({
+      listedNames: listing.files.map((file) => file.name),
+      register,
+    });
+
+    return {
+      ...finding,
+      status: unclassifiedFiles.length > 0 || missingFiles.length > 0 ? 'drift' : 'passed',
+      unclassifiedFiles,
+      missingFiles,
+    };
+  } catch (error) {
+    return { ...finding, status: 'unavailable', reason: safeErrorMessage(error) };
+  }
+}
+
 export async function checkOptcReleaseNeeded(options = {}) {
   const resolvedOptions = resolveReleaseCheckOptions(options);
   const source = resolveImportSource(resolvedOptions.source ?? releaseTriggerPolicy.defaultSource);
@@ -1373,14 +1455,23 @@ export async function checkOptcReleaseNeeded(options = {}) {
     throw error;
   }
 
-  return buildReleaseCheckResult({
-    source,
-    localSourceVersion: localSnapshot.sourceVersion,
-    remoteSourceVersion: remoteSnapshot.sourceVersion,
-    localCharacterIds: localSnapshot.characterIds,
-    remoteCharacters: remoteSnapshot.characters,
-    sourceContract: remoteSnapshot.sourceContract,
-  });
+  return {
+    ...buildReleaseCheckResult({
+      source,
+      localSourceVersion: localSnapshot.sourceVersion,
+      remoteSourceVersion: remoteSnapshot.sourceVersion,
+      localCharacterIds: localSnapshot.characterIds,
+      remoteCharacters: remoteSnapshot.characters,
+      sourceContract: remoteSnapshot.sourceContract,
+    }),
+    upstreamFileRegister: await checkUpstreamFileRegister({
+      source,
+      fetchImpl: resolvedOptions.fetchImpl ?? fetch,
+      registerPath: resolvedOptions.upstreamFileRegisterPath ?? upstreamFileRegisterPath,
+      replay: Boolean(resolvedOptions.remoteVersionPath),
+      timeoutMs: normalizeUpstreamFetchPolicy(resolvedOptions.upstreamFetchPolicy).timeoutMs,
+    }),
+  };
 }
 
 function formatHumanResult(result) {
