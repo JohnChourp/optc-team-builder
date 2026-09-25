@@ -183,6 +183,8 @@ export class CharacterCatalogCacheService {
   private buildSearchText(character: CharacterListItem): string {
     return [
       character.searchText ?? '',
+      // 869f63gkm. The names players use for the unit, read by the same rule as its name.
+      character.searchAliases ?? '',
       character.id,
       character.name,
       character.type,

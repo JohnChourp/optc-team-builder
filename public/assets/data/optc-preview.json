@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-24T22:25:32.537Z",
+  "generatedAt": "2026-09-25T08:18:03.747Z",
   "characters": [
     {
       "id": 1,
@@ -40,36 +40,12 @@
         }
       ],
       "evolvesFrom": [],
-      "dropSources": [
-        {
-          "group": "Fortnight",
-          "stage": "Smoker's Great Pursuit",
-          "dropId": "event9",
-          "slot": "challengeData",
-          "global": true
-        },
-        {
-          "group": "Fortnight",
-          "stage": "Adrift!? Humming Brook",
-          "dropId": "event19",
-          "slot": "challengeData",
-          "global": true
-        },
-        {
-          "group": "Fortnight",
-          "stage": "Supersonic Duck Squadron!",
-          "dropId": "event21",
-          "slot": "challengeData",
-          "global": true
-        },
-        {
-          "group": "Fortnight",
-          "stage": "Wapol's Revenge",
-          "dropId": "event42",
-          "slot": "challengeData",
-          "global": true
-        }
-      ],
+      "dropSources": [],
+      "acquisition": {
+        "flags": [],
+        "shops": [],
+        "banners": []
+      },
       "searchText": "monkey d. luffy str fighter",
       "regionArtwork": {
         "exactLocal": false,
@@ -88,6 +64,7 @@
       "families": [
         "Monkey D. Luffy"
       ],
+      "searchAliases": "",
       "detail": {
         "characterId": 1,
         "captainAbility": null,
@@ -204,48 +181,6 @@
           "global": true
         },
         {
-          "group": "Fortnight",
-          "stage": "Candy the Maiden-Hearted",
-          "dropId": "event20",
-          "slot": "challengeData",
-          "global": true
-        },
-        {
-          "group": "Fortnight",
-          "stage": "Crocodile: Life on the Inside",
-          "dropId": "event23",
-          "slot": "challengeData",
-          "global": true
-        },
-        {
-          "group": "Fortnight",
-          "stage": "Domino's Special Security",
-          "dropId": "event24",
-          "slot": "challengeData",
-          "global": true
-        },
-        {
-          "group": "Fortnight",
-          "stage": "Chief Jailer Sadie",
-          "dropId": "event25",
-          "slot": "challengeData",
-          "global": true
-        },
-        {
-          "group": "Fortnight",
-          "stage": "Sky Night Ganfor",
-          "dropId": "event34",
-          "slot": "challengeData",
-          "global": true
-        },
-        {
-          "group": "Fortnight",
-          "stage": "Tom's Workers",
-          "dropId": "event41",
-          "slot": "challengeData",
-          "global": true
-        },
-        {
           "group": "Special",
           "stage": "Straw Hat Pirates!",
           "dropId": "",
@@ -260,6 +195,13 @@
           "global": true
         }
       ],
+      "acquisition": {
+        "flags": [
+          "rr"
+        ],
+        "shops": [],
+        "banners": []
+      },
       "searchText": "monkey d. luffy - gum-gum pistol str fighter",
       "regionArtwork": {
         "exactLocal": false,
@@ -278,6 +220,7 @@
       "families": [
         "Monkey D. Luffy"
       ],
+      "searchAliases": "monkey d. luffy gum-gum carabine",
       "detail": {
         "characterId": 2,
         "captainAbility": "Boosts ATK of all characters by 1.5x",
@@ -426,43 +369,14 @@
       "evolvesFrom": [
         2
       ],
-      "dropSources": [
-        {
-          "group": "Fortnight",
-          "stage": "Smoker's Great Pursuit",
-          "dropId": "event9",
-          "slot": "challengeData",
-          "global": true
-        },
-        {
-          "group": "Fortnight",
-          "stage": "Perona's Wonder Garden",
-          "dropId": "event16",
-          "slot": "challengeData",
-          "global": true
-        },
-        {
-          "group": "Fortnight",
-          "stage": "Adrift!? Humming Brook",
-          "dropId": "event19",
-          "slot": "challengeData",
-          "global": true
-        },
-        {
-          "group": "Fortnight",
-          "stage": "Supersonic Duck Squadron!",
-          "dropId": "event21",
-          "slot": "challengeData",
-          "global": true
-        },
-        {
-          "group": "Fortnight",
-          "stage": "Brother Soul! Afro Luffy!",
-          "dropId": "event26",
-          "slot": "challengeData",
-          "global": true
-        }
-      ],
+      "dropSources": [],
+      "acquisition": {
+        "flags": [
+          "rr"
+        ],
+        "shops": [],
+        "banners": []
+      },
       "searchText": "monkey d. luffy - gum-gum bazooka str fighter",
       "regionArtwork": {
         "exactLocal": false,
@@ -481,6 +395,7 @@
       "families": [
         "Monkey D. Luffy"
       ],
+      "searchAliases": "",
       "detail": {
         "characterId": 3,
         "captainAbility": "Boosts ATK of all characters by 1.5x",
@@ -609,8 +524,8 @@
           "toId": 1387,
           "materials": [
             {
-              "characterId": 1387,
-              "token": null
+              "characterId": null,
+              "token": "1387-skull"
             },
             {
               "characterId": 267,
@@ -622,36 +537,14 @@
       "evolvesFrom": [
         3
       ],
-      "dropSources": [
-        {
-          "group": "Fortnight",
-          "stage": "Shandia - Dreams of a Homeland!",
-          "dropId": "event27",
-          "slot": "challengeData",
-          "global": true
-        },
-        {
-          "group": "Fortnight",
-          "stage": "Camie and Hachi's Takoyaki Stand!",
-          "dropId": "event30",
-          "slot": "challengeData",
-          "global": true
-        },
-        {
-          "group": "Fortnight",
-          "stage": "Wapol's Revenge",
-          "dropId": "event42",
-          "slot": "challengeData",
-          "global": true
-        },
-        {
-          "group": "Fortnight",
-          "stage": "Lightning Speed! Strawhat Crew's Surprise Visit",
-          "dropId": "event43",
-          "slot": "challengeData",
-          "global": true
-        }
-      ],
+      "dropSources": [],
+      "acquisition": {
+        "flags": [
+          "rr"
+        ],
+        "shops": [],
+        "banners": []
+      },
       "searchText": "monkey d. luffy - gear 2 str fighter free spirit",
       "regionArtwork": {
         "exactLocal": false,
@@ -670,6 +563,7 @@
       "families": [
         "Monkey D. Luffy"
       ],
+      "searchAliases": "g2",
       "detail": {
         "characterId": 4,
         "captainAbility": "Boosts ATK of [STR] characters by 2x and ATK of all others by 1.5x",
@@ -894,34 +788,6 @@
           "global": true
         },
         {
-          "group": "Fortnight",
-          "stage": "Cobymeppo's Proving Ground!",
-          "dropId": "event8",
-          "slot": "challengeData",
-          "global": true
-        },
-        {
-          "group": "Fortnight",
-          "stage": "Domino's Special Security",
-          "dropId": "event24",
-          "slot": "challengeData",
-          "global": true
-        },
-        {
-          "group": "Fortnight",
-          "stage": "Chief Jailer Sadie",
-          "dropId": "event25",
-          "slot": "challengeData",
-          "global": true
-        },
-        {
-          "group": "Fortnight",
-          "stage": "Sky Night Ganfor",
-          "dropId": "event34",
-          "slot": "challengeData",
-          "global": true
-        },
-        {
           "group": "Special",
           "stage": "Straw Hat Pirates!",
           "dropId": "",
@@ -936,6 +802,13 @@
           "global": true
         }
       ],
+      "acquisition": {
+        "flags": [
+          "rr"
+        ],
+        "shops": [],
+        "banners": []
+      },
       "searchText": "roronoa zoro dex slasher",
       "regionArtwork": {
         "exactLocal": false,
@@ -954,6 +827,7 @@
       "families": [
         "Roronoa Zoro"
       ],
+      "searchAliases": "",
       "detail": {
         "characterId": 5,
         "captainAbility": "Boosts ATK of [DEX] characters by 1.5x",
@@ -1105,15 +979,14 @@
       "evolvesFrom": [
         5
       ],
-      "dropSources": [
-        {
-          "group": "Special",
-          "stage": "Battle Royale! Oars",
-          "dropId": "",
-          "slot": "challengeData",
-          "global": true
-        }
-      ],
+      "dropSources": [],
+      "acquisition": {
+        "flags": [
+          "rr"
+        ],
+        "shops": [],
+        "banners": []
+      },
       "searchText": "roronoa zoro - three thousand worlds dex slasher driven",
       "regionArtwork": {
         "exactLocal": false,
@@ -1132,6 +1005,7 @@
       "families": [
         "Roronoa Zoro"
       ],
+      "searchAliases": "roronoa zoro moulinet infernal",
       "detail": {
         "characterId": 6,
         "captainAbility": "Boosts ATK of [DEX] characters by 1.5x",
@@ -1280,6 +1154,13 @@
         5
       ],
       "dropSources": [],
+      "acquisition": {
+        "flags": [
+          "rr"
+        ],
+        "shops": [],
+        "banners": []
+      },
       "searchText": "roronoa zoro - pound phoenix dex slasher driven",
       "regionArtwork": {
         "exactLocal": false,
@@ -1298,6 +1179,7 @@
       "families": [
         "Roronoa Zoro"
       ],
+      "searchAliases": "roronoa zoro calibre",
       "detail": {
         "characterId": 7,
         "captainAbility": "Boosts ATK of [DEX] characters by 1.5x",
@@ -1428,8 +1310,8 @@
           "toId": 1388,
           "materials": [
             {
-              "characterId": 1388,
-              "token": null
+              "characterId": null,
+              "token": "1388-skull"
             },
             {
               "characterId": 267,
@@ -1442,15 +1324,14 @@
         6,
         7
       ],
-      "dropSources": [
-        {
-          "group": "Fortnight",
-          "stage": "Camie and Hachi's Takoyaki Stand!",
-          "dropId": "event30",
-          "slot": "challengeData",
-          "global": true
-        }
-      ],
+      "dropSources": [],
+      "acquisition": {
+        "flags": [
+          "rr"
+        ],
+        "shops": [],
+        "banners": []
+      },
       "searchText": "roronoa zoro - ashura ichibugin dex slasher driven",
       "regionArtwork": {
         "exactLocal": false,
@@ -1469,6 +1350,7 @@
       "families": [
         "Roronoa Zoro"
       ],
+      "searchAliases": "roronoa zoro brume argentée",
       "detail": {
         "characterId": 8,
         "captainAbility": "Boosts ATK and HP of [DEX] characters by 2x",
@@ -1703,13 +1585,6 @@
           "global": true
         },
         {
-          "group": "Fortnight",
-          "stage": "Lightning Speed! Strawhat Crew's Surprise Visit",
-          "dropId": "event43",
-          "slot": "challengeData",
-          "global": true
-        },
-        {
           "group": "Special",
           "stage": "Straw Hat Pirates!",
           "dropId": "",
@@ -1724,6 +1599,13 @@
           "global": true
         }
       ],
+      "acquisition": {
+        "flags": [
+          "rr"
+        ],
+        "shops": [],
+        "banners": []
+      },
       "searchText": "nami int striker",
       "regionArtwork": {
         "exactLocal": false,
@@ -1742,6 +1624,7 @@
       "families": [
         "Nami"
       ],
+      "searchAliases": "",
       "detail": {
         "characterId": 9,
         "captainAbility": "Reduces damage received from [INT] enemies by 20%",
@@ -1880,29 +1763,14 @@
       "evolvesFrom": [
         9
       ],
-      "dropSources": [
-        {
-          "group": "Fortnight",
-          "stage": "Dr. Hogback's Lab of the Dead",
-          "dropId": "event15",
-          "slot": "challengeData",
-          "global": true
-        },
-        {
-          "group": "Special",
-          "stage": "Girls of Summer Paradise",
-          "dropId": "",
-          "slot": "challengeData",
-          "global": true
-        },
-        {
-          "group": "Special",
-          "stage": "Girls of Summer Paradise",
-          "dropId": "",
-          "slot": "challengeData",
-          "global": true
-        }
-      ],
+      "dropSources": [],
+      "acquisition": {
+        "flags": [
+          "rr"
+        ],
+        "shops": [],
+        "banners": []
+      },
       "searchText": "nami - tornado tempo int striker cerebral",
       "regionArtwork": {
         "exactLocal": false,
@@ -1921,6 +1789,7 @@
       "families": [
         "Nami"
       ],
+      "searchAliases": "",
       "detail": {
         "characterId": 10,
         "captainAbility": "Boosts ATK of [INT] characters by 1.5x",
@@ -2068,6 +1937,13 @@
         9
       ],
       "dropSources": [],
+      "acquisition": {
+        "flags": [
+          "rr"
+        ],
+        "shops": [],
+        "banners": []
+      },
       "searchText": "nami - mirage tempo int striker cerebral",
       "regionArtwork": {
         "exactLocal": false,
@@ -2086,6 +1962,7 @@
       "families": [
         "Nami"
       ],
+      "searchAliases": "nami miragetempo",
       "detail": {
         "characterId": 11,
         "captainAbility": "Boosts ATK of [INT] characters by 1.5x",
@@ -2224,8 +2101,8 @@
           "toId": 1389,
           "materials": [
             {
-              "characterId": 1389,
-              "token": null
+              "characterId": null,
+              "token": "1389-skull"
             },
             {
               "characterId": 267,
@@ -2238,22 +2115,14 @@
         10,
         11
       ],
-      "dropSources": [
-        {
-          "group": "Fortnight",
-          "stage": "Perona's Wonder Garden",
-          "dropId": "event16",
-          "slot": "challengeData",
-          "global": true
-        },
-        {
-          "group": "Fortnight",
-          "stage": "Brother Soul! Afro Luffy!",
-          "dropId": "event26",
-          "slot": "challengeData",
-          "global": true
-        }
-      ],
+      "dropSources": [],
+      "acquisition": {
+        "flags": [
+          "rr"
+        ],
+        "shops": [],
+        "banners": []
+      },
       "searchText": "nami - thunderbolt tempo int striker cerebral",
       "regionArtwork": {
         "exactLocal": false,
@@ -2272,6 +2141,7 @@
       "families": [
         "Nami"
       ],
+      "searchAliases": "nami fulguro tempo",
       "detail": {
         "characterId": 12,
         "captainAbility": "Boosts ATK and HP of [INT] characters by 1.5x",
@@ -2553,6 +2423,13 @@
           "global": true
         }
       ],
+      "acquisition": {
+        "flags": [
+          "rr"
+        ],
+        "shops": [],
+        "banners": []
+      },
       "searchText": "usopp psy shooter",
       "regionArtwork": {
         "exactLocal": false,
@@ -2571,6 +2448,7 @@
       "families": [
         "Usopp"
       ],
+      "searchAliases": "",
       "detail": {
         "characterId": 13,
         "captainAbility": "Boosts ATK of Shooter characters by 1.2x",
@@ -2797,15 +2675,14 @@
       "evolvesFrom": [
         13
       ],
-      "dropSources": [
-        {
-          "group": "Special",
-          "stage": "Battle Royale! Oars",
-          "dropId": "",
-          "slot": "challengeData",
-          "global": true
-        }
-      ],
+      "dropSources": [],
+      "acquisition": {
+        "flags": [
+          "rr"
+        ],
+        "shops": [],
+        "banners": []
+      },
       "searchText": "usopp - tabasco star psy shooter",
       "regionArtwork": {
         "exactLocal": false,
@@ -2824,6 +2701,7 @@
       "families": [
         "Usopp"
       ],
+      "searchAliases": "usopp etoile piquante",
       "detail": {
         "characterId": 14,
         "captainAbility": "Boosts ATK of [PSY] characters by 1.5x",
@@ -3045,22 +2923,15 @@
           "dropId": "rookie4",
           "slot": "Usopp",
           "global": true
-        },
-        {
-          "group": "Fortnight",
-          "stage": "Cobymeppo's Proving Ground!",
-          "dropId": "event8",
-          "slot": "challengeData",
-          "global": true
-        },
-        {
-          "group": "Special",
-          "stage": "Proof of \"The World's Strongest\"",
-          "dropId": "",
-          "slot": "challengeData",
-          "global": true
         }
       ],
+      "acquisition": {
+        "flags": [
+          "rr"
+        ],
+        "shops": [],
+        "banners": []
+      },
       "searchText": "usopp - usopp golden pound psy shooter",
       "regionArtwork": {
         "exactLocal": false,
@@ -3079,6 +2950,7 @@
       "families": [
         "Usopp"
       ],
+      "searchAliases": "usopp usopp-pilon doré gpu",
       "detail": {
         "characterId": 15,
         "captainAbility": "Boosts ATK of [PSY] characters by 1.5x",
@@ -3275,8 +3147,8 @@
           "toId": 1446,
           "materials": [
             {
-              "characterId": 1446,
-              "token": null
+              "characterId": null,
+              "token": "1446-skull"
             },
             {
               "characterId": 267,
@@ -3289,15 +3161,14 @@
         14,
         15
       ],
-      "dropSources": [
-        {
-          "group": "Fortnight",
-          "stage": "Shandia - Dreams of a Homeland!",
-          "dropId": "event27",
-          "slot": "challengeData",
-          "global": true
-        }
-      ],
+      "dropSources": [],
+      "acquisition": {
+        "flags": [
+          "rr"
+        ],
+        "shops": [],
+        "banners": []
+      },
       "searchText": "sogeking psy shooter",
       "regionArtwork": {
         "exactLocal": false,
@@ -3316,6 +3187,7 @@
       "families": [
         "Usopp"
       ],
+      "searchAliases": "sniperking usopp",
       "detail": {
         "characterId": 16,
         "captainAbility": "Boosts ATK and HP of [PSY] characters by 1.5x",
@@ -3718,6 +3590,13 @@
           "global": true
         }
       ],
+      "acquisition": {
+        "flags": [
+          "rr"
+        ],
+        "shops": [],
+        "banners": []
+      },
       "searchText": "sanji qck fighter",
       "regionArtwork": {
         "exactLocal": false,
@@ -3737,6 +3616,7 @@
         "Vinsmoke Sanji",
         "Sanji"
       ],
+      "searchAliases": "",
       "detail": {
         "characterId": 17,
         "captainAbility": "Boosts ATK of [QCK] characters by 1.5x",
@@ -3888,6 +3768,13 @@
         17
       ],
       "dropSources": [],
+      "acquisition": {
+        "flags": [
+          "rr"
+        ],
+        "shops": [],
+        "banners": []
+      },
       "searchText": "sanji - plastic surgery shot qck fighter powerhouse",
       "regionArtwork": {
         "exactLocal": false,
@@ -3907,6 +3794,7 @@
         "Vinsmoke Sanji",
         "Sanji"
       ],
+      "searchAliases": "sanji tir esthétique",
       "detail": {
         "characterId": 18,
         "captainAbility": "Boosts HP of [QCK] characters by 1.5x",
@@ -4054,6 +3942,13 @@
         17
       ],
       "dropSources": [],
+      "acquisition": {
+        "flags": [
+          "rr"
+        ],
+        "shops": [],
+        "banners": []
+      },
       "searchText": "chef sanji - hot rock stew qck fighter powerhouse",
       "regionArtwork": {
         "exactLocal": false,
@@ -4073,6 +3968,7 @@
         "Vinsmoke Sanji",
         "Sanji"
       ],
+      "searchAliases": "chef sanji ragoût bouillonnant",
       "detail": {
         "characterId": 19,
         "captainAbility": "Boosts ATK of [QCK] characters by 1.5x",
@@ -4203,8 +4099,8 @@
           "toId": 1447,
           "materials": [
             {
-              "characterId": 1447,
-              "token": null
+              "characterId": null,
+              "token": "1447-skull"
             },
             {
               "characterId": 267,
@@ -4218,6 +4114,13 @@
         19
       ],
       "dropSources": [],
+      "acquisition": {
+        "flags": [
+          "rr"
+        ],
+        "shops": [],
+        "banners": []
+      },
       "searchText": "sanji - diable jambe qck fighter powerhouse",
       "regionArtwork": {
         "exactLocal": false,
@@ -4237,6 +4140,7 @@
         "Vinsmoke Sanji",
         "Sanji"
       ],
+      "searchAliases": "sanji jambe du diable",
       "detail": {
         "characterId": 20,
         "captainAbility": "Boosts ATK and HP of [QCK] characters by 1.5x",
@@ -4582,6 +4486,13 @@
           "global": true
         }
       ],
+      "acquisition": {
+        "flags": [
+          "rr"
+        ],
+        "shops": [],
+        "banners": []
+      },
       "searchText": "tony tony chopper psy fighter",
       "regionArtwork": {
         "exactLocal": false,
@@ -4600,6 +4511,7 @@
       "families": [
         "Tony Tony Chopper"
       ],
+      "searchAliases": "",
       "detail": {
         "characterId": 21,
         "captainAbility": "Boosts RCV of [PSY] characters by 1.2x",
@@ -4707,8 +4619,8 @@
           "toId": 1448,
           "materials": [
             {
-              "characterId": 1448,
-              "token": null
+              "characterId": null,
+              "token": "1448-skull"
             },
             {
               "characterId": 267,
@@ -4720,22 +4632,14 @@
       "evolvesFrom": [
         21
       ],
-      "dropSources": [
-        {
-          "group": "Fortnight",
-          "stage": "Camie and Hachi's Takoyaki Stand!",
-          "dropId": "event30",
-          "slot": "challengeData",
-          "global": true
-        },
-        {
-          "group": "Fortnight",
-          "stage": "Lightning Speed! Strawhat Crew's Surprise Visit",
-          "dropId": "event43",
-          "slot": "challengeData",
-          "global": true
-        }
-      ],
+      "dropSources": [],
+      "acquisition": {
+        "flags": [
+          "rr"
+        ],
+        "shops": [],
+        "banners": []
+      },
       "searchText": "tony tony chopper - heavy point psy fighter free spirit",
       "regionArtwork": {
         "exactLocal": false,
@@ -4754,6 +4658,7 @@
       "families": [
         "Tony Tony Chopper"
       ],
+      "searchAliases": "tony tony chopper weight boost",
       "detail": {
         "characterId": 22,
         "captainAbility": "Boosts RCV of [PSY] characters by 1.5x",
@@ -4955,6 +4860,13 @@
         21
       ],
       "dropSources": [],
+      "acquisition": {
+        "flags": [
+          "rr"
+        ],
+        "shops": [],
+        "banners": []
+      },
       "searchText": "tony tony chopper - brain point int fighter cerebral",
       "regionArtwork": {
         "exactLocal": false,
@@ -4973,6 +4885,7 @@
       "families": [
         "Tony Tony Chopper"
       ],
+      "searchAliases": "tony tony chopper brain boost",
       "detail": {
         "characterId": 23,
         "captainAbility": "Boosts RCV of [INT] characters by 1.5x",
@@ -5088,6 +5001,13 @@
           "global": true
         }
       ],
+      "acquisition": {
+        "flags": [
+          "rr"
+        ],
+        "shops": [],
+        "banners": []
+      },
       "searchText": "tony tony chopper - arm point str fighter powerhouse",
       "regionArtwork": {
         "exactLocal": false,
@@ -5106,6 +5026,7 @@
       "families": [
         "Tony Tony Chopper"
       ],
+      "searchAliases": "tony tony chopper arm boost",
       "detail": {
         "characterId": 24,
         "captainAbility": "Boosts RCV of [STR] characters by 1.5x",

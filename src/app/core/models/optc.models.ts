@@ -217,6 +217,13 @@ export interface CharacterRecord {
   id: number;
   name: string;
   searchText?: string;
+  /**
+   * 869f63gkm. The names players use for this unit - community nicknames and upstream's French
+   * names, Latin script only - from upstream's `common/data/aliases.js`, lower-cased and joined by
+   * spaces. Every character search matches it with `searchText`, through the same normaliser, and
+   * nothing displays it. Kept out of `searchText` so what the builders read there does not change.
+   */
+  searchAliases?: string;
   isIncomplete: boolean;
   type: string;
   classes: string[];
@@ -301,7 +308,10 @@ export interface CharacterDetailRecord extends CharacterListItem {
 export interface CharacterEvolutionMaterial {
   /** The material's character id, when it is a character. */
   characterId: number | null;
-  /** The upstream token when it is not - `"ink"`, `"skullQCK"`. Never both, never neither. */
+  /**
+   * The upstream token when it is not - `"ink"`, `"skullQCK"`, or a unit's own skull, `"4000-skull"`
+   * (869f63gm1: that one was stored as character 4000 until then). Never both, never neither.
+   */
   token: string | null;
 }
 
@@ -318,6 +328,23 @@ export interface CharacterDropSource {
   global: boolean;
 }
 
+/**
+ * 869f63gm1. How a unit is obtained besides a drop, as upstream records it, each list in upstream's
+ * order. Only positive facts: empty lists mean nothing is recorded, never that it cannot be had.
+ */
+export interface CharacterAcquisition {
+  /**
+   * `flags.js` keys: `rr` (Rare Recruit), `lrr` (limited) and its kind - `tmlrr`, `kclrr`, `pflrr`,
+   * `slrr`, `superlrr`, `annilrr` - then `promo`, `special` (Login Bonus), `shop` (Rayleigh's shop)
+   * and `tmshop` (the Treasure Map's).
+   */
+  flags: string[];
+  /** `shops.js` lists that sell it: `Ray`, `Medal`, `TM`, `Rumble`, `Kizuna`, `PKA`. */
+  shops: string[];
+  /** `banners.js` lists that pull it: `FP`, the Friend Point banner. */
+  banners: string[];
+}
+
 export interface CharacterProgression {
   characterId: number;
   maxSockets: number | null;
@@ -326,6 +353,7 @@ export interface CharacterProgression {
   evolvesTo: CharacterEvolutionBranch[];
   evolvesFrom: number[];
   dropSources: CharacterDropSource[];
+  acquisition: CharacterAcquisition;
 }
 
 interface LocalCharacterOverrideImages {

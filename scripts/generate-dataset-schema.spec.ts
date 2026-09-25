@@ -171,9 +171,11 @@ describe('the committed document', () => {
     const document = JSON.parse(await readFile('docs/dataset-schema.json', 'utf8'));
 
     /* The numbers the task got wrong, pinned to what the artifact says. */
-    expect(document.tableCount).toBe(6);
+    // 869f63gm1 added `character_acquisition`: how a unit is obtained besides a drop.
+    expect(document.tableCount).toBe(7);
     expect(document.createIndexStatements).toBe(0);
     expect(document.tables.map((table: { name: string }) => table.name)).toEqual([
+      'character_acquisition',
       'character_details',
       'character_drops',
       'character_evolutions',

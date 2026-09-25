@@ -10,7 +10,8 @@
  * Five things are enforced, and deliberately nothing more:
  *
  *  1. **every milestone names a stage the dataset actually carries**, matched on the exact
- *     `(group, stage)` pair from `character_drops` - 787 of them across 14 groups;
+ *     `(group, stage)` pair from `character_drops` - 724 of them across 14 groups (788 until
+ *     869f63gm1, which stopped counting 64 stages that listed only a skull or a score threshold);
  *  2. **ids are unique**, because the reachability list is keyed by them;
  *  3. **every entry is dated**, and not in the future - an undated requirement cannot be judged
  *     stale;

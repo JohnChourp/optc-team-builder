@@ -1816,11 +1816,15 @@ function filterCharacterRowsForQuery(
   // 869f63gkm. The search clause is the service's LAST, so its parameter is read last. Imported,
   // never re-typed, like the facet clauses above: the normalised clause is what the registered
   // `optc_search_text` function answers in the real database.
+  // 869f63gkm. Both clauses read the search text and the community names as one text.
+  const searchableText = (row: TestSqlRow) =>
+    `${String(row['search_text'] ?? '')} ${String(row['search_aliases'] ?? '')}`;
+
   if (query.includes(CHARACTER_SEARCH_TEXT_LIKE_CLAUSE)) {
     const searchTerm = String(params[paramIndex] ?? '');
 
     filteredRows = filteredRows.filter((row) =>
-      normalizeCharacterSearchText(String(row['search_text'] ?? '')).includes(searchTerm),
+      normalizeCharacterSearchText(searchableText(row)).includes(searchTerm),
     );
   } else if (query.includes(CHARACTER_SEARCH_LITERAL_LIKE_CLAUSE)) {
     const searchTerm = String(params[paramIndex] ?? '')
@@ -1828,9 +1832,7 @@ function filterCharacterRowsForQuery(
       .toLowerCase();
 
     filteredRows = filteredRows.filter((row) =>
-      String(row['search_text'] ?? '')
-        .toLowerCase()
-        .includes(searchTerm),
+      searchableText(row).toLowerCase().includes(searchTerm),
     );
   }
 
