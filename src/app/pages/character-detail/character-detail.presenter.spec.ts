@@ -441,13 +441,12 @@ describe('character-detail presenter', () => {
       llbresilience: [{ attribute: '[DEX]', percentage: 40, type: 'damage' }],
     });
 
+    // 869f63gz7. The Grand Party fields are their own card now - character-detail-grand-party.spec.ts.
     expect(rumbleCard?.entries.map((entry) => entry.title)).toEqual([
       'Passive',
       'Special',
       'LLB Passive',
       'LLB Special',
-      'GP Passive',
-      'GP Special',
       'Resilience',
       'LLB Resilience',
     ]);
