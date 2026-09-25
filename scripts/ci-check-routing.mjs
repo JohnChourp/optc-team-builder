@@ -1689,6 +1689,9 @@ function isDatasetMeasurementPath(filePath) {
     filePath === 'scripts/measure-dataset-facts.mjs' ||
     filePath === 'scripts/check-dataset-measurements.mjs' ||
     filePath === 'scripts/check-dataset-measurements.spec.ts' ||
+    filePath === 'scripts/check-dataset-measurements-write.spec.ts' ||
+    // Its spec pins where the release moves the figures, so a change to the release routes here too.
+    filePath === 'scripts/release-and-tag.sh' ||
     filePath === 'scripts/lib/dataset-measurements.mjs' ||
     filePath.startsWith('public/assets/data/')
   );

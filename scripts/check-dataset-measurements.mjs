@@ -13,8 +13,15 @@
  *
  * The prose is never rewritten by anything here. The brain's own culture is that the REASON is what
  * a future reader acts on; this protects the number, not the paragraph.
+ *
+ * Owner, 2026-09-25 (wave-11 close): the NUMBER may move on its own, at release. An unattended
+ * release that added characters left this lane red on `main` until somebody edited the figures by
+ * hand, so `--write` - which `scripts/release-and-tag.sh` runs right after it re-measures - moves
+ * the number inside each out-of-step marker to the measured value. It changes nothing else: not a
+ * word of the paragraph, not a number outside a marker, not a marker whose metric is unknown. It
+ * prints every figure it moved, so a person can still reread the paragraph around it.
  */
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { pathToFileURL } from 'node:url';
@@ -179,6 +186,60 @@ export function inspectDatasetMeasurements({ appRoot = process.cwd(), roots = ['
   return { checkedMarkers, checkedFiles, findings, ok: findings.length === 0 };
 }
 
+/**
+ * Moves every out-of-step marked figure to the value the measurements file records, and nothing
+ * else. It reads the FILE, not the dataset, because the release re-measures first; a marker whose
+ * metric the file does not record is left exactly as it is, for the check to report.
+ *
+ * A figure keeps its own style: `4,622` becomes `4,626`, `4622` becomes `4626`.
+ */
+export function rewriteDatasetMeasurementMarkers({ appRoot = process.cwd(), roots = ['src', 'scripts', 'docs'] } = {}) {
+  const recorded = flattenMeasurements(readMeasurementsFile({ appRoot }));
+  const moved = [];
+
+  for (const root of roots) {
+    for (const file of listSourceFiles(path.join(appRoot, root))) {
+      const source = readFileSync(file, 'utf8');
+
+      if (!source.includes('[@dataset ')) {
+        continue;
+      }
+
+      const relativePath = path.relative(appRoot, file).split(path.sep).join('/');
+      const rewritten = source.replace(MEASUREMENT_MARKER_PATTERN, (marker, quotedText, metric, offset) => {
+        const expected = recorded[metric];
+        const quoted = Number(quotedText.replace(/,/gu, ''));
+
+        if (typeof expected !== 'number' || quoted === expected) {
+          return marker;
+        }
+
+        moved.push({
+          file: relativePath,
+          line: source.slice(0, offset).split('\n').length,
+          metric,
+          from: quoted,
+          to: expected,
+        });
+
+        // The pattern also takes a comma that only punctuates the prose, between the figure and
+        // the marker. It stays where it was. (No example here: this file is scanned for markers.)
+        const trailing = quotedText.match(/,*$/u)[0];
+        const digits = quotedText.slice(0, quotedText.length - trailing.length);
+        const figure = digits.includes(',') ? expected.toLocaleString('en-US') : String(expected);
+
+        return figure + trailing + marker.slice(quotedText.length);
+      });
+
+      if (rewritten !== source) {
+        writeFileSync(file, rewritten);
+      }
+    }
+  }
+
+  return moved;
+}
+
 export function formatDatasetMeasurementResult(result) {
   if (result.ok) {
     return `[dataset:measurements] ${result.checkedMarkers} quoted figure(s) in ${result.checkedFiles} file(s) match the measured dataset.`;
@@ -201,12 +262,14 @@ export function formatDatasetMeasurementResult(result) {
 }
 
 function parseArgs(argv) {
-  const options = { appRoot: process.cwd() };
+  const options = { appRoot: process.cwd(), write: false };
 
   for (let index = 0; index < argv.length; index += 1) {
     if (argv[index] === '--app-root') {
       options.appRoot = argv[index + 1] ?? options.appRoot;
       index += 1;
+    } else if (argv[index] === '--write') {
+      options.write = true;
     }
   }
 
@@ -214,7 +277,20 @@ function parseArgs(argv) {
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
-  const result = inspectDatasetMeasurements(parseArgs(process.argv.slice(2)));
+  const options = parseArgs(process.argv.slice(2));
+
+  if (options.write) {
+    const moved = rewriteDatasetMeasurementMarkers(options);
+
+    for (const figure of moved) {
+      console.log(`[dataset:measurements] moved ${figure.file}:${figure.line} ${figure.metric}: ${figure.from} -> ${figure.to}`);
+    }
+
+    console.log(`[dataset:measurements] moved ${moved.length} quoted figure(s); reread the paragraph around each.`);
+  }
+
+  // After --write this still checks, so whatever it could not fix stops the caller.
+  const result = inspectDatasetMeasurements(options);
 
   console.log(formatDatasetMeasurementResult(result));
 

@@ -383,6 +383,20 @@ node "${PROJECT_ROOT}/scripts/generate-unresolved-clauses.mjs" --app-root "${PRO
 echo "[release] Re-measuring the dataset figures quoted in source comments." >&2
 node "${PROJECT_ROOT}/scripts/measure-dataset-facts.mjs" --app-root "${PROJECT_ROOT}"
 
+# Owner, 2026-09-25 (wave-11 close). Until then a release that added characters left three lanes
+# red on main: nothing here regenerated docs/dataset-schema.json or docs/offline-pack-contract.json,
+# and the figures source comments quote with `[@dataset ...]` markers stayed at the old roster. A
+# rehearsal of 0.7.0 against the live upstream read 74 of 77. Both documents are generated from what
+# the import just wrote, so they are regenerated with it. Only the marked NUMBERS move, never the
+# words around them; each moved figure is printed so a person can reread its paragraph. --write still
+# checks afterwards and exits non-zero on anything it cannot fix, which stops the release here rather
+# than after it has committed a tree that is red on main.
+echo "[release] Regenerating the dataset schema and the offline pack contract." >&2
+npm run dataset:schema
+npm run packs:contract
+echo "[release] Moving the figures quoted in source comments to the new measurements." >&2
+node "${PROJECT_ROOT}/scripts/check-dataset-measurements.mjs" --app-root "${PROJECT_ROOT}" --write
+
 echo "[release] Checking spec pins against the regenerated dataset." >&2
 node "${PROJECT_ROOT}/scripts/check-dataset-spec-pins.mjs" --app-root "${PROJECT_ROOT}"
 
