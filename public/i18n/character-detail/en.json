@@ -37,7 +37,8 @@
     "stars": "Stars",
     "superSpecialEffect": "Super special effect",
     "target": "Targeting",
-    "type": "Type"
+    "type": "Type",
+    "uses": "Uses"
   },
   "loading": "Loading offline character record...",
   "status": {
@@ -70,7 +71,8 @@
     "progression": "Getting and improving this unit",
     "investment": "Investment",
     "evolution": "Evolution",
-    "dropSources": "Where it drops"
+    "dropSources": "Where it drops",
+    "grandParty": "Grand Party"
   },
   "superSpecial": {
     "criteriaLabel": "Criteria",
@@ -89,6 +91,27 @@
       "enemyApplies": "when an enemy applies {{status}}",
       "fires": "fires the supported character's {{effect}} by itself",
       "neverFires": "never fires the supported character's {{effect}} by itself"
+    }
+  },
+  "grandParty": {
+    "leaderSkill": "Leader Skill",
+    "burst": "Burst",
+    "burstCondition": "Burst Condition",
+    "condition": {
+      "defeatCrew": "After {{count}} crew members are defeated",
+      "defeatEnemies": "After {{count}} enemies are defeated",
+      "specialCrew": "After your crew uses {{count}} Rumble Specials",
+      "specialEnemies": "After the enemies use {{count}} Rumble Specials",
+      "timeAfter": "After {{count}} seconds",
+      "timeExactly": "At exactly {{count}} seconds",
+      "damageTimes": "After dealing damage {{count}} times",
+      "damageDealt": "After dealing {{count}} damage",
+      "damageTaken": "After taking {{count}} damage",
+      "hitsTaken": "After taking {{count}} hits",
+      "debuffsTaken": "After receiving {{count}} debuffs",
+      "attacksLanded": "After landing {{count}} {{attack}} attacks",
+      "debuffLanded": "After landing {{attribute}} {{count}} times",
+      "actions": "After {{count}} {{action}} actions"
     }
   },
   "stats": {

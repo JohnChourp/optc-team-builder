@@ -9,6 +9,7 @@ import {
 } from '../../core/services/captain-coverage-tier-view.utils';
 import { formatBoolean, formattingLanguage } from '../../core/i18n/app-locale-format';
 import { normalizeHtmlToText } from '../../core/services/html-text.utils';
+import { readGrandPartyConditions } from './grand-party-condition.utils';
 import {
   readSupportAutoPlus,
   type SupportAutoPlusReading,
@@ -39,8 +40,8 @@ export type DetailDisplayToken =
   | { text: string; key?: undefined; params?: undefined };
 
 /**
- * 869f63gz3. A sentence the app writes in the reader's language - an Auto+ instruction - with an
- * optional label before it ("Auto+: ...").
+ * 869f63gz3 / 869f63gz7. A sentence the app writes in the reader's language - an Auto+ instruction,
+ * a Grand Party Burst Condition - with an optional label before it ("Auto+: ...").
  */
 export interface DetailDisplayLine {
   labelKey?: string;
@@ -132,8 +133,6 @@ const RUMBLE_LEVELED_SECTION_CONFIGS = [
   { key: 'special', title: 'Special' },
   { key: 'llbability', title: 'LLB Passive' },
   { key: 'llbspecial', title: 'LLB Special' },
-  { key: 'gpability', title: 'GP Passive' },
-  { key: 'gpspecial', title: 'GP Special' },
 ] as const;
 
 export function buildCharacterDetailViewModel(
@@ -230,13 +229,13 @@ export function buildRumbleCardModel(
     ...buildRumbleStaticSectionEntries('Resilience', rumbleData['resilience']),
     ...buildRumbleStaticSectionEntries('LLB Resilience', rumbleData['llbresilience']),
   ];
-  const gpConditionEntries = buildStructuredEntries('GP Condition', rumbleData['gpcondition']);
 
+  // The three Grand Party fields are their own card - `buildGrandPartyCardModel`.
   const extraEntries = Object.entries(rumbleData)
     .filter(([key]) => !RUMBLE_KNOWN_KEYS.has(key))
     .flatMap(([key, value]) => buildStructuredEntries(humanizeKey(key), value));
 
-  entries.push(...leveledEntries, ...staticEntries, ...gpConditionEntries, ...extraEntries);
+  entries.push(...leveledEntries, ...staticEntries, ...extraEntries);
 
   if (!rows.length && !texts.length && !lists.length && !entries.length) {
     return null;
@@ -250,6 +249,78 @@ export function buildRumbleCardModel(
     entries,
     chips: [],
   };
+}
+
+/**
+ * 869f63gz7. Grand Party: three Rumble teams under one GP Leader, whose Leader Skill buffs the crew
+ * and whose Burst fires once its condition is met - most often after two crew members are defeated.
+ *
+ * Its three fields used to sit inside the Rumble card under hard-coded English titles, with the Burst
+ * Condition printed as raw `Count` / `Type` / `Team` rows. They are their own card now, titled the
+ * way upstream labels them (Leader Skill, Burst, Burst Condition), with the condition in words in
+ * the reader's language (`grand-party-condition.utils.ts`). The effects themselves read as the Rumble
+ * card's do.
+ */
+export function buildGrandPartyCardModel(
+  rumbleData: Record<string, unknown> | null,
+): DetailDisplayCard | null {
+  if (!isRecord(rumbleData)) {
+    return null;
+  }
+
+  const conditionLines = buildGrandPartyConditionLines(rumbleData['gpcondition']);
+  const entries: DetailDisplayEntry[] = [
+    ...buildRumbleMaxSectionEntry('Leader Skill', rumbleData['gpability'], 'grandParty.leaderSkill'),
+    ...buildRumbleMaxSectionEntry('Burst', rumbleData['gpspecial'], 'grandParty.burst'),
+    ...(conditionLines.length
+      ? [
+          {
+            titleKey: 'grandParty.burstCondition',
+            rows: [],
+            texts: [],
+            lists: [],
+            chips: [],
+            lines: conditionLines,
+          },
+        ]
+      : []),
+  ];
+
+  return entries.length
+    ? {
+        titleKey: 'sections.grandParty',
+        rows: [],
+        texts: [],
+        lists: [],
+        entries,
+        chips: [],
+      }
+    : null;
+}
+
+/**
+ * One line per condition, in words. A shape the formatter does not know is shown as readable
+ * `Key: value` text rather than dropped - the same fallback every other Rumble field uses.
+ */
+function buildGrandPartyConditionLines(value: unknown): DetailDisplayLine[] {
+  return readGrandPartyConditions(value).flatMap((reading): DetailDisplayLine[] => {
+    if (reading.key === null) {
+      const text = summarizeUnknownValue(reading.value);
+
+      return text ? [{ tokens: [{ text }] }] : [];
+    }
+
+    return [
+      {
+        tokens: [
+          {
+            key: `grandParty.condition.${reading.key}`,
+            params: { ...reading.names, count: formatNumber(reading.count) },
+          },
+        ],
+      },
+    ];
+  });
 }
 
 export function resolveRumbleBasedOnId(rumbleData: Record<string, unknown> | null): number | null {
@@ -572,6 +643,7 @@ function buildBattleModesGroup(
   const { detail } = character;
   const cards: DetailDisplayCard[] = [];
   const rumbleCard = buildRumbleCardModel(detail.rumbleData, basedOnCharacterName);
+  const grandPartyCard = buildGrandPartyCardModel(detail.rumbleData);
   const superTandemCard = buildLeveledBattleModeCard(
     'sections.superTandemData',
     detail.superTandemData ?? null,
@@ -584,6 +656,10 @@ function buildBattleModesGroup(
 
   if (rumbleCard) {
     cards.push(rumbleCard);
+  }
+
+  if (grandPartyCard) {
+    cards.push(grandPartyCard);
   }
 
   if (superTandemCard) {
@@ -898,13 +974,17 @@ function flattenStructuredValue(
   });
 }
 
-function buildRumbleMaxSectionEntry(title: string, value: unknown): DetailDisplayEntry[] {
+function buildRumbleMaxSectionEntry(
+  title: string,
+  value: unknown,
+  titleKey?: string,
+): DetailDisplayEntry[] {
   if (!Array.isArray(value)) {
     return [];
   }
 
   const maxEntry = [...value].reverse().find((entry) => buildRumbleLevelEntry(title, entry));
-  const builtEntry = buildRumbleLevelEntry(title, maxEntry);
+  const builtEntry = buildRumbleLevelEntry(title, maxEntry, titleKey);
 
   return builtEntry ? [builtEntry] : [];
 }
@@ -931,7 +1011,11 @@ function buildRumbleStaticSectionEntries(title: string, value: unknown): DetailD
     : [];
 }
 
-function buildRumbleLevelEntry(title: string, value: unknown): DetailDisplayEntry | null {
+function buildRumbleLevelEntry(
+  title: string,
+  value: unknown,
+  titleKey?: string,
+): DetailDisplayEntry | null {
   const record = asRecord(value);
 
   if (!record) {
@@ -945,6 +1029,11 @@ function buildRumbleLevelEntry(title: string, value: unknown): DetailDisplayEntr
     rows.push(createRow('fields.cooldown', formatScalar(record['cooldown']) ?? ''));
   }
 
+  // 869f63gz7. How many times a Grand Party Burst can be used - its one scalar besides the effects.
+  if (record['uses'] !== undefined && record['uses'] !== null) {
+    rows.push(createRow('fields.uses', formatScalar(record['uses']) ?? ''));
+  }
+
   const effects = Array.isArray(record['effects'])
     ? record['effects']
         .map((effect) => formatRumbleEffect(effect))
@@ -956,7 +1045,7 @@ function buildRumbleLevelEntry(title: string, value: unknown): DetailDisplayEntr
   }
 
   Object.entries(record)
-    .filter(([key]) => key !== 'cooldown' && key !== 'effects')
+    .filter(([key]) => key !== 'cooldown' && key !== 'uses' && key !== 'effects')
     .forEach(([key, entryValue]) => {
       if (isScalar(entryValue)) {
         const formattedValue = formatScalar(entryValue);
@@ -995,7 +1084,7 @@ function buildRumbleLevelEntry(title: string, value: unknown): DetailDisplayEntr
   }
 
   return {
-    title,
+    ...(titleKey ? { titleKey } : { title }),
     rows,
     texts: [],
     lists,

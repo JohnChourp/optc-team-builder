@@ -448,7 +448,10 @@
                   @for (card of group.cards; track $index) {
                     <article
                       class="glass-card detail-card"
-                      [class.detail-card--rumble]="card.titleKey === 'sections.rumbleData'"
+                      [class.detail-card--rumble]="
+                        card.titleKey === 'sections.rumbleData' ||
+                        card.titleKey === 'sections.grandParty'
+                      "
                     >
                       <div class="detail-card__head">
                         <h2>
@@ -603,8 +606,8 @@
                               }
 
                               <!--
-                                869f63gz3. Sentences the app writes in the reader's language: a support's
-                                Auto+ instructions.
+                                869f63gz3 / 869f63gz7. Sentences the app writes in the reader's language:
+                                a support's Auto+ instructions, a Grand Party Burst Condition.
                               -->
                               @if (entry.lines?.length) {
                                 <section class="detail-list-block" data-test="character-detail-lines">
