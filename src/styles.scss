@@ -19,6 +19,7 @@
   color-scheme: dark;
   font-family: 'Outfit', sans-serif;
   --app-bottom-bar-extra-offset: 0px;
+  // Only until the footer is measured: AppComponent then keeps it equal to the bar, which wraps (869f63gnc).
   --app-footer-bar-height: 34px;
   --app-page-shell-padding-bottom: 32px;
   --app-mobile-sheet-height: calc(100vh - 16px);

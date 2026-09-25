@@ -8,7 +8,9 @@
   min-height: 100%;
 }
 
-.glass-card {
+// Scoped to this page (869f6td0f): this panel is a global stylesheet once it loads, and a bare
+// `.glass-card` here restyled every card in the app while Crew Forge stayed open.
+.crew-forge-shell .glass-card {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 28px;
   background:
