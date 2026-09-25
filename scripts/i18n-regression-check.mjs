@@ -108,6 +108,9 @@ export const CRITICAL_TRANSLATION_CASES = [
       'appUpdate.downloadedNative',
       'appUpdate.downloadStalled',
       'appUpdate.progressLabel',
+      // 869f63gqg. The only thing that tells a player in the Android app what the share sheet
+      // an export opens is for.
+      'playerFile.chooseDestination',
     ],
   },
 ];

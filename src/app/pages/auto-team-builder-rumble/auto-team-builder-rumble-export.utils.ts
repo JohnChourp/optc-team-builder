@@ -4,6 +4,10 @@ import {
   type RumbleTeamResult,
   type RumbleTeamSlot,
 } from '../../core/models/auto-team-builder-rumble.models';
+import {
+  givePlayerFile,
+  JSON_EXPORT_MIME_TYPE,
+} from '../../core/services/player-file-delivery.utils';
 
 export interface RumbleBuilderSettingsExportPayload {
   schemaVersion: 2;
@@ -343,22 +347,13 @@ function downloadJsonFile(
     return;
   }
 
-  const objectUrl = urlReference.createObjectURL(
-    new Blob([JSON.stringify(payload, null, 2)], {
-      type: 'application/json;charset=utf-8',
-    }),
+  void givePlayerFile(
+    {
+      filename,
+      contents: JSON.stringify(payload, null, 2),
+      mimeType: JSON_EXPORT_MIME_TYPE,
+    },
+    documentReference,
+    urlReference,
   );
-  const anchor = documentReference.createElement('a');
-
-  anchor.href = objectUrl;
-  anchor.download = filename;
-  anchor.style.display = 'none';
-  documentReference.body.append(anchor);
-
-  try {
-    anchor.click();
-  } finally {
-    anchor.remove();
-    urlReference.revokeObjectURL(objectUrl);
-  }
 }

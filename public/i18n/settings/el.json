@@ -20,10 +20,12 @@
   "account": {
     "avatarAlt": "Εικόνα Google profile για {{ name }}",
     "eyebrow": "Google account",
+    "openSettings": "Άνοιγμα Ρυθμίσεων",
     "signedOutCopy": "Συνδέσου για να ενώσεις το Google account και να διαχειρίζεσαι το Drive sync από αυτή τη σελίδα profile.",
     "signedOutTitle": "Σύνδεση στον λογαριασμό",
     "title": "Λογαριασμός",
-    "unavailableCopy": "Η σύνδεση Google δεν έχει ρυθμιστεί σε αυτό το build."
+    "unavailableCopy": "Αυτή η έκδοση της εφαρμογής Android δεν μπορεί να συνδεθεί στο Google, οπότε το Google Drive sync δεν λειτουργεί εδώ. Τα δεδομένα σου μένουν σε αυτή τη συσκευή. Για να τα μεταφέρεις σε άλλη συσκευή, χρησιμοποίησε την «Εξαγωγή όλων» στις Ρυθμίσεις και μετά την «Εισαγωγή όλων» στην άλλη.",
+    "unavailableTitle": "Η σύνδεση Google δεν είναι διαθέσιμη εδώ"
   },
   "analytics": {
     "title": "Analytics και cookies",
@@ -59,8 +61,7 @@
       "restore": "Restore από Drive",
       "signIn": "Sign in with Google",
       "signOut": "Αποσύνδεση",
-      "syncNow": "Sync τώρα",
-      "unavailable": "Το Google sync δεν είναι διαθέσιμο"
+      "syncNow": "Sync τώρα"
     },
     "feedback": {
       "title": "Κατάσταση Drive sync"
@@ -393,6 +394,7 @@
         "errorTitle": "Το inventory import απέτυχε",
         "previewReady": "Το preview είναι έτοιμο από το {{fileName}}.",
         "driveHint": "Μπορείς τώρα να χρησιμοποιήσεις το Google Drive sync για backup αυτού του ενημερωμένου τοπικού inventory state.",
+        "exportHint": "Με την «Εξαγωγή όλων» κρατάς ένα αντίγραφο αυτού του ενημερωμένου inventory, που μπορείς να εισαγάγεις σε άλλη συσκευή.",
         "stats": {
           "addedShips": "Προστέθηκαν {{count}} ships στα favorite ships.",
           "alreadyFavoritedShips": "{{count}} ships υπήρχαν ήδη στα favorite ships.",

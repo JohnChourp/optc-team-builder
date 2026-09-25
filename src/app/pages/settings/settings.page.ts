@@ -61,6 +61,10 @@ import {
   type StorageQuotaEstimate,
 } from './storage-diagnostics.utils';
 import {
+  givePlayerFile,
+  JSON_EXPORT_MIME_TYPE,
+} from '../../core/services/player-file-delivery.utils';
+import {
   UserStateService,
   type AutoTeamBuilderWorkerMode,
 } from '../../core/services/user-state.service';
@@ -91,11 +95,11 @@ import {
 } from '../saved-enemies/saved-enemies-transfer.utils';
 import {
   buildSavedTeamsTransferPayload,
-  downloadSavedTeamsExport,
   parseSavedTeamsImportPayload,
   resolveSavedTeamsImportDiagnostic,
   type SavedTeamsImportError,
 } from '../saved-teams/saved-teams-transfer.utils';
+import { downloadSavedTeamsExport } from '../saved-teams/saved-teams-export.utils';
 import {
   downloadAllDataExport,
   parseAllDataImportCandidate,
@@ -503,24 +507,15 @@ export class SettingsPage implements OnInit {
       // keeps this file's COUNTS-ONLY promise true.
       recentErrors: this.errorLog.diagnosticsEntries(),
     });
-    const objectUrl = urlRef.createObjectURL(
-      new Blob([JSON.stringify(payload, null, 2) + '\n'], {
-        type: 'application/json;charset=utf-8',
-      }),
+    void givePlayerFile(
+      {
+        filename: buildStorageDiagnosticsFilename(payload.generatedAt),
+        contents: JSON.stringify(payload, null, 2) + '\n',
+        mimeType: JSON_EXPORT_MIME_TYPE,
+      },
+      documentRef,
+      urlRef,
     );
-    const anchor = documentRef.createElement('a');
-
-    anchor.href = objectUrl;
-    anchor.download = buildStorageDiagnosticsFilename(payload.generatedAt);
-    anchor.style.display = 'none';
-    documentRef.body.appendChild(anchor);
-
-    try {
-      anchor.click();
-    } finally {
-      documentRef.body.removeChild(anchor);
-      urlRef.revokeObjectURL(objectUrl);
-    }
   }
 
   public async ngOnInit(): Promise<void> {
@@ -1188,8 +1183,22 @@ export class SettingsPage implements OnInit {
       );
     }
 
+    /*
+     * 869f63gqt. The Drive hint only where Drive sync can run. A build without the Google
+     * client id - today the Android app - cannot sign in, so it points at the export instead.
+     */
     details.push(
-      this.i18n.translate('management.inventoryCapture.feedback.driveHint', undefined, 'settings'),
+      this.googleAccountAvailable()
+        ? this.i18n.translate(
+            'management.inventoryCapture.feedback.driveHint',
+            undefined,
+            'settings',
+          )
+        : this.i18n.translate(
+            'management.inventoryCapture.feedback.exportHint',
+            undefined,
+            'settings',
+          ),
     );
 
     return {

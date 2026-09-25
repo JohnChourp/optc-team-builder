@@ -13,9 +13,9 @@ import {
 import { type CharacterDetailRecord, type SavedTeam, type ShipRecord } from '../../core/models/optc.models';
 import {
   buildSavedTeamShareCode,
-  buildSavedTeamShareUrl,
   buildSavedTeamsTransferPayload,
 } from '../saved-teams/saved-teams-transfer.utils';
+import { buildSavedTeamShareUrl } from '../saved-teams/saved-teams-export.utils';
 import {
   buildAutoTeamExportPayload,
   buildAutoTeamSelectionExportPayload,
