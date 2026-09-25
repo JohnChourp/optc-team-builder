@@ -254,6 +254,10 @@ export interface CharacterDetail {
   superSpecialCriteriaText: string | null;
   superSpecialNotes: string | null;
   superSpecialCriteria: NormalizedSuperSpecialCriteria | null;
+  /**
+   * Keys the importer derives from the card name. Since 869f63grj they decide "same character" only
+   * for a unit with no `families`; super-criteria, name matching and the SEO pages read them.
+   */
   partyConflictKeys: string[];
   characterTags?: string[];
   builderAbilities: NormalizedBuilderAbility[];

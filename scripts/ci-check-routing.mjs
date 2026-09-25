@@ -947,7 +947,8 @@ function isRouteSitemapCoveragePath(filePath) {
 function isPublishedTeamsPath(filePath) {
   return (
     filePath === 'scripts/check-published-teams.mjs' ||
-    filePath === 'scripts/check-published-teams.spec.ts'
+    filePath === 'scripts/check-published-teams.spec.ts' ||
+    filePath === 'scripts/check-published-teams-same-character.spec.ts'
   );
 }
 

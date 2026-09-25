@@ -5,7 +5,6 @@ import {
   MINIMUM_RATIONALE_LENGTH,
   parsePublishedTeams,
   readCharacterIds,
-  readConflictKeys,
   SUB_SLOT_INDEXES,
   validatePublishedTeams,
 } from './check-published-teams.mjs';
@@ -72,8 +71,8 @@ describe('published teams guard', () => {
   });
 
   /*
-   * The conflict rule the dataset encodes: keys are name-derived, so two cards of one character
-   * cannot both sit in the SUB slots. Characters 1 and 2 are two Luffys here.
+   * The same-character rule: two cards of one character cannot both sit in the SUB slots.
+   * Characters 1 and 2 are two Luffys here.
    */
   it('MUTATION - two subs sharing a conflict key go red', () => {
     const result = check([team({ slots: [3, 4, 1, 2, 5, 6] })]);
@@ -168,14 +167,6 @@ describe('published teams guard', () => {
       const sql = "INSERT INTO characters (id, name) VALUES (\n  4618, 'Someone');";
 
       expect(readCharacterIds({ sql })).toEqual(new Set([4618]));
-    });
-
-    it('pulls party conflict keys out of a detail row', () => {
-      const sql =
-        'INSERT INTO character_details (character_id, detail_json)\n' +
-        `        VALUES (1, '{"partyConflictKeys":["monkey d. luffy","luffy"]}');`;
-
-      expect(readConflictKeys({ sql }).get(1)).toEqual(['monkey d. luffy', 'luffy']);
     });
 
     it('reads slot arrays and a shared curatedOn constant out of the source', () => {
