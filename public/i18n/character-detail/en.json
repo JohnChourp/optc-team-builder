@@ -106,6 +106,7 @@
     "socketSlots": "Socket slots",
     "specialCooldown": "Special cooldown (base to max)",
     "evolvesFrom": "Evolves from",
+    "sameCaptainAbility": "Same Captain Ability · cost {{cost}}",
     "evolvesInto": "Evolves into, and what it costs",
     "dropsFrom": "Drops from"
   },

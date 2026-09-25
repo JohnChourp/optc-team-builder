@@ -106,6 +106,7 @@
     "socketSlots": "Θέσεις για sockets",
     "specialCooldown": "Cooldown του special (από βασικό σε max)",
     "evolvesFrom": "Προέρχεται από",
+    "sameCaptainAbility": "Ίδιο Captain Ability · cost {{cost}}",
     "evolvesInto": "Εξελίσσεται σε, και τι κοστίζει",
     "dropsFrom": "Πέφτει από"
   },

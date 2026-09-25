@@ -33,6 +33,7 @@ import { buildDisagreementReport } from '../../shared/disagreement/disagreement-
 import {
   buildProgressionCards,
   collectProgressionCharacterIds,
+  resolveCheaperSameCaptainAbilityForms,
   type ProgressionDisplayCard,
 } from './character-progression.presenter';
 import { UserStateService } from '../../core/services/user-state.service';
@@ -366,6 +367,9 @@ export class CharacterDetailPage implements OnInit {
    * 869f1935z. The evolution chain names other characters, so their names are resolved in ONE
    * query rather than per entry - a branching evolution with materials can reference five units,
    * and the detail page already pays for two round trips before this one.
+   *
+   * 869f63gn4. The same one query now brings their details too, so an earlier form that keeps the
+   * identical Captain Ability at a lower cost can say so - still one round trip, not two.
    */
   private async loadProgression(character: CharacterDetailRecord | null): Promise<void> {
     this.progressionCards.set([]);
@@ -382,12 +386,20 @@ export class CharacterDetailPage implements OnInit {
 
     const relatedIds = collectProgressionCharacterIds(progression);
     const related = relatedIds.length
-      ? await this.repository.getCharactersByIds(relatedIds)
+      ? await this.repository.getDetailedCharactersByIds(relatedIds)
       : [];
     const namesById = new Map(related.map((entry) => [entry.id, entry.name]));
+    const earlierForms = new Set(progression.evolvesFrom);
 
     this.progressionCards.set(
-      buildProgressionCards(progression, (characterId) => namesById.get(characterId) ?? null),
+      buildProgressionCards(
+        progression,
+        (characterId) => namesById.get(characterId) ?? null,
+        resolveCheaperSameCaptainAbilityForms(
+          character,
+          related.filter((entry) => earlierForms.has(entry.id)),
+        ),
+      ),
     );
   }
 
