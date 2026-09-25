@@ -172,7 +172,7 @@
     "test:accessible-names": "vitest run scripts/check-ionic-accessible-names.spec.ts && npm run a11y:accessible-names",
     "test:modal-labels": "vitest run scripts/check-modal-dialog-labels.spec.ts && npm run a11y:modal-labels",
     "test:build-stamp": "vitest run scripts/check-build-stamp.spec.ts",
-    "test:native-surface": "vitest run scripts/generate-native-surface.spec.ts scripts/generate-native-surface-system-bars.spec.ts && node ./scripts/generate-native-surface.mjs --check",
+    "test:native-surface": "vitest run scripts/generate-native-surface.spec.ts scripts/generate-native-surface-system-bars.spec.ts scripts/generate-native-surface-webview.spec.ts && node ./scripts/generate-native-surface.mjs --check",
     "test:overlay-contrast": "vitest run scripts/check-ionic-overlay-contrast.spec.ts && npm run theme:overlay-contrast",
     "test:overlay-register": "vitest run scripts/check-manual-overlay-register.spec.ts && npm run data:overlay-register",
     "test:packs-contract": "vitest run scripts/generate-offline-pack-contract.spec.ts && npm run packs:contract -- --check",
