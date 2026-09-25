@@ -11,7 +11,8 @@
     "resetOverride": "Reset local changes",
     "savedTeamCount": "In {{count}} of your saved teams",
     "seeCaptainBoosts": "See who this Captain boosts",
-    "summary": "Cost {{cost}} • {{stars}}★ unit"
+    "summary": "Cost {{cost}} • {{stars}}★ unit",
+    "supportOnly": "Support only: this character can only be placed in a Support slot, never in the crew."
   },
   "fields": {
     "captainNotes": "Captain notes",
@@ -105,6 +106,7 @@
     "socketSlots": "Socket slots",
     "specialCooldown": "Special cooldown (base to max)",
     "evolvesFrom": "Evolves from",
+    "sameCaptainAbility": "Same Captain Ability · cost {{cost}}",
     "evolvesInto": "Evolves into, and what it costs",
     "dropsFrom": "Drops from"
   },
