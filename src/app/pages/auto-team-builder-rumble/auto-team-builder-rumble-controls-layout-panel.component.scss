@@ -8,8 +8,11 @@
     linear-gradient(180deg, #101512 0%, #11161a 44%, #0b1115 100%);
 }
 
-.glass-card {
-  border: 1px solid rgba(255, 255, 255, 0.08);
+// Scoped to this page (869f6td0f): this panel is a global stylesheet once it loads, and a bare
+// `.glass-card` here restyled every card in the app while Rumble stayed open. It sets no `border`:
+// the global rule already draws this exact one, and at this specificity a `border` would erase the
+// coloured `border-color` of `.state-card--error` and the `.import-feedback-card--*` states below.
+.rumble-builder-shell .glass-card {
   border-radius: 24px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.03)),
