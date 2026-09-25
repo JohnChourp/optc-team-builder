@@ -159,7 +159,8 @@
       },
       "subConflict": "Ο ίδιος χαρακτήρας βρίσκεται ήδη στο team.",
       "subOverBudget": "Καμία ελεύθερη θέση δεν χωράει αυτόν τον χαρακτήρα μέσα στο όριο κόστους.",
-      "subSlotsFull": "Και οι τέσσερις θέσεις sub είναι πιασμένες."
+      "subSlotsFull": "Και οι τέσσερις θέσεις sub είναι πιασμένες.",
+      "supportOnly": "Μόνο για Support. Μπαίνει σε Support slot, ποτέ στο πλήρωμα."
     },
     "captainRequired": "Επίλεξε Captain",
     "copy": "Διάλεξε Captain, Friend Captain και τέσσερα subs με συνολικό όριο κόστους. Το κόστος του Friend Captain δεν μετράει.",
@@ -185,7 +186,8 @@
     "slots": {
       "captain": "Captain",
       "friendCaptain": "Friend Captain",
-      "sub": "Sub {{index}}"
+      "sub": "Sub {{index}}",
+      "supportOnly": "Μόνο για Support, όχι μέλος του πληρώματος"
     },
     "title": "Χτίσιμο από Captain",
     "viewSlotDetails": "Άνοιξε τον χαρακτήρα {{name}}",

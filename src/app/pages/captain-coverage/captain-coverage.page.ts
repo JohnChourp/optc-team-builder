@@ -87,6 +87,7 @@ import {
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
 import { formattingLanguage } from '../../core/i18n/app-locale-format';
+import { isSupportOnlyCharacter } from '../../core/grammar/support-only-character';
 import { AppI18nService } from '../../core/services/app-i18n.service';
 import { CharacterCatalogCacheService } from '../../core/services/character-catalog-cache.service';
 import {
@@ -226,8 +227,11 @@ interface CaptainCoverageCardView {
   subSlotBlockedReason: CaptainCoverageSubSlotBlockedReason | null;
 }
 
-/** The three distinct reasons a character cannot take a sub slot. */
-type CaptainCoverageSubSlotBlockedReason = 'conflict' | 'budget' | 'full';
+/**
+ * The distinct reasons a character cannot take a sub slot. `supportOnly` (869f6td4p) is checked
+ * first: no crew slot takes such a character, so a free slot or a budget would not help.
+ */
+type CaptainCoverageSubSlotBlockedReason = 'supportOnly' | 'conflict' | 'budget' | 'full';
 
 /**
  * The filter changes that empty the result list and put a loader in its place,
@@ -1065,6 +1069,11 @@ export class CaptainCoveragePage implements OnInit {
       return;
     }
 
+    // 869f6td4p. No seat takes a Support-only character; the card already says so.
+    if (this.isSupportOnlyTeamCharacter(character)) {
+      return;
+    }
+
     if (!this.canAssignTeamSlotCharacter(index, character)) {
       return;
     }
@@ -1098,7 +1107,11 @@ export class CaptainCoveragePage implements OnInit {
   public assignCharacterFromResult(card: CaptainCoverageCardView): void {
     const slotIndex = card.assignableSlotIndex;
 
-    if (slotIndex === null || !this.canAssignTeamSlotCharacter(slotIndex, card.character)) {
+    if (
+      slotIndex === null ||
+      this.isSupportOnlyTeamCharacter(card.character) ||
+      !this.canAssignTeamSlotCharacter(slotIndex, card.character)
+    ) {
       return;
     }
 
@@ -1254,7 +1267,9 @@ export class CaptainCoveragePage implements OnInit {
       const captainAbilities = detailAbilities.filter(
         (ability) => ability.source === 'captainAbility',
       );
-      const subSlotAssignment = this.resolveSubSlotAssignment(character, selectedConflictKeys);
+      const subSlotAssignment = isSupportOnlyCharacter(characterDetail)
+        ? { index: null, blockedReason: 'supportOnly' as const }
+        : this.resolveSubSlotAssignment(character, selectedConflictKeys);
 
       cards.push({
         character,
@@ -1705,6 +1720,8 @@ export class CaptainCoveragePage implements OnInit {
    */
   public addToTeamBlockedLabel(card: CaptainCoverageCardView): string {
     switch (card.subSlotBlockedReason) {
+      case 'supportOnly':
+        return this.t('team.actions.supportOnly');
       case 'conflict':
         return this.t('team.actions.subConflict');
       case 'budget':
@@ -1857,6 +1874,19 @@ export class CaptainCoveragePage implements OnInit {
     // A free slot that refused the character can only have refused it on cost;
     // no free slot at all is the plain "team is full" case.
     return { index: null, blockedReason: sawFreeSlot ? 'budget' : 'full' };
+  }
+
+  /**
+   * 869f6td4p. Whether a team seat holds - or would take - a Support-only character. The slots are
+   * list items, which carry no detail, so the rule is read from the detail loaded for every id.
+   *
+   * A saved or restored team from before this rule can hold one: it is marked on its slot, never
+   * removed, because the team is the reader's.
+   */
+  public isSupportOnlyTeamCharacter(character: Pick<CharacterListItem, 'id'> | null): boolean {
+    return character
+      ? isSupportOnlyCharacter(this.allCharacterDetailsById().get(character.id))
+      : false;
   }
 
   private resolveSelectedTeamSlotDetails(): Array<CharacterDetailRecord | null> {

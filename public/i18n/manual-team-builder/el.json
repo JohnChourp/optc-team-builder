@@ -105,6 +105,7 @@
     "loading": "Φόρτωση matching χαρακτήρων...",
     "searchPlaceholder": "Αναζήτηση χαρακτήρων για fixed team",
     "subConflict": "Υπάρχει ήδη στο πλήρωμά σου. Ένα sub δεν μπορεί να επαναλαμβάνει τον Captain ή άλλο sub.",
+    "supportOnly": "Μόνο για Support. Μπαίνει σε Support slot, ποτέ στο πλήρωμα.",
     "titleWithRole": "Ανάθεση {{label}}"
   },
   "captainHelper": {
@@ -125,7 +126,8 @@
   "drag": {
     "clearZone": "Σύρε filled slot εδώ για να καθαριστεί",
     "invalidConflict": "Το drop μπλοκαρίστηκε γιατί ο χαρακτήρας {{name}} υπάρχει ήδη στο πλήρωμά σου. Ένα sub δεν μπορεί να επαναλαμβάνει τον Captain ή άλλο sub.",
-    "invalidCost": "Το drop μπλοκαρίστηκε γιατί η ομάδα θα ξεπεράσει max cost {{max}}."
+    "invalidCost": "Το drop μπλοκαρίστηκε γιατί η ομάδα θα ξεπεράσει max cost {{max}}.",
+    "invalidSupportOnly": "Το drop μπλοκαρίστηκε γιατί ο χαρακτήρας {{name}} είναι μόνο για Support. Μπαίνει σε Support slot, ποτέ στο πλήρωμα."
   },
   "quickStart": {
     "captain": {
@@ -237,6 +239,10 @@
     "subConflict": {
       "copy": "Επαναλαμβάνεται σε: {{slots}}. Ο Captain και τα τέσσερα subs πρέπει να είναι διαφορετικοί χαρακτήρες· μόνο ο Friend Captain μπορεί να ταιριάζει με άλλο slot.",
       "title": "Επαναλαμβανόμενος χαρακτήρας στο πλήρωμα"
+    },
+    "supportOnly": {
+      "copy": "Μόνο για Support: {{slots}}. Ένας χαρακτήρας μόνο για Support δεν έχει Captain Ability ούτε special, οπότε κανένα slot του πληρώματος δεν τον δέχεται.",
+      "title": "Χαρακτήρας μόνο για Support στο πλήρωμα"
     }
   },
   "title": "Manual Team Builder"

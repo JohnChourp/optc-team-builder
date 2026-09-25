@@ -37,6 +37,21 @@ Character rows are normalized from upstream unit/detail data plus manual overlay
 - `partyConflictKeys` are keys derived from the card name. They decide "same character" only for a unit with no `families`; super-criteria and name matching in the Auto Team Builder, and the SEO pages' related characters, read them
 - `characterTags` drive tag filters and captain coverage requirements
 - `builderAbilities` are canonical ability entries used by Auto Team Builder and Captain Coverage filters
+- a **Support-only** character (869f6td4p) has `supportData` and no Captain Ability (no
+  `captainAbility` text and no `captainAbilityVariants` text) and no `specialText`. The official
+  Global letter of 2026-04-16 says such characters "do not have any Specials, Captain Abilities,
+  Co-Op Captain Abilities, or Pirate Rumble Combat Stats" and can only be added to a Support slot.
+  The rule is `src/app/core/grammar/support-only-character.ts`, read at runtime from the record the
+  app already holds - the importer is unchanged and no column says it. No crew slot takes one -
+  Captain, Friend Captain and subs alike - on Manual Team Builder, Captain Coverage and the Auto
+  Team Builder's manual picks, and each says why; they stay in every list and the Character screen
+  says what they are for (marked, never hidden). A saved team that already holds one is kept exactly
+  as stored: Manual Team Builder names the seat in its validation panel, Captain Coverage marks the
+  seat, and the Auto Team Builder marks the pick and never requires it, so the build leaves it out.
+  The census is `supportOnlyCharacters` in `src/app/core/data/dataset-measurements.json`, counted
+  with the same function - 6 when this was written (2026-09-25). The Auto Team Builder never picked
+  one by itself (its candidate pool keeps only units with Captain, special or sailor text), and the
+  Rumble pool leaves them out too, since their Rumble data carries no ability and no special.
 
 For normal upstream records, `detail.characterId` must match the row `id`.
 Reserved manual overlay records (`id >= 900000`) may instead store an existing
@@ -200,6 +215,18 @@ that and cost real bytes in a database [869f138q7](https://app.clickup.com/t/901
 had just spent a wave shrinking. **The answer is no, and the number is written here so it is not
 asked a fourth time.** Re-check with `npm run perf:dataset` if the row count ever changes by an
 order of magnitude.
+
+**869f63gkm, 2026-09-25: the search now pays for a JavaScript call per row it reaches.** Search
+compares words, not punctuation, so the loader registers `optc_search_text`
+(`src/app/core/grammar/character-search-text.ts`) with SQLite on both load paths and the repository
+reads `optc_search_text(c.search_text) LIKE ...`. `npm run perf:dataset` times that clause now,
+loading the same grammar file, because timing the bare `LIKE` the app no longer runs would stay
+green over a search that had become slow. Measured on an M4 Pro, 20 repeats: `searchAverageMs`
+**0.29 → 1.36**, `combinedAverageMs` **0.90 → 0.78**. The second went DOWN because the repository
+puts the search clause last and SQLite evaluates the terms in the order written: first, the
+function ran on all 4,622 rows of a type-and-class search (5.4 ms); last, on the 310 the facets let
+through. A search with no other filter reaches most of the table and costs about 4.5 ms here -
+still a fraction of a frame, and no reason for an index.
 
 **Where do they run?** All of them on the main thread, in `optc-repository.service.ts`. The app's
 three Web Workers exist for the long CPU passes — Auto Team Builder's search, its Rumble variant,

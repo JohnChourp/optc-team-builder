@@ -16,6 +16,8 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
+import { isSupportOnlyCharacterDetail } from '../../src/app/core/grammar/support-only-character.ts';
+
 export const MEASUREMENTS_SCHEMA_VERSION = 1;
 export const SEED_PATH = 'public/assets/data/optc-seed.sql';
 export const MEASUREMENTS_PATH = 'src/app/core/data/dataset-measurements.json';
@@ -98,6 +100,7 @@ export function measureDataset({ appRoot = process.cwd(), sql } = {}) {
   }
 
   let detailRows = 0;
+  let supportOnlyCharacters = 0;
   let teamConditions = 0;
   let triggerConditions = 0;
   let fieldConditions = 0;
@@ -120,6 +123,14 @@ export function measureDataset({ appRoot = process.cwd(), sql } = {}) {
       detail = JSON.parse(unescapeSqlString(match[2]));
     } catch {
       continue;
+    }
+
+    /*
+     * 869f6td4p. Support data, and no Captain Ability and no special: a unit that can only go in a
+     * Support slot. Counted with the app's own rule, so the census and the refusal cannot disagree.
+     */
+    if (isSupportOnlyCharacterDetail(detail)) {
+      supportOnlyCharacters += 1;
     }
 
     for (const entry of detail?.captainAbilityCoverage?.entries ?? []) {
@@ -155,6 +166,7 @@ export function measureDataset({ appRoot = process.cwd(), sql } = {}) {
     charactersWithOneClass,
     charactersWithNoClasses,
     detailRows,
+    supportOnlyCharacters,
     teamConditions,
     triggerConditions,
     fieldConditions,

@@ -159,7 +159,8 @@
       },
       "subConflict": "The same character is already in the team.",
       "subOverBudget": "No free slot fits this character within the cost budget.",
-      "subSlotsFull": "All four sub slots are taken."
+      "subSlotsFull": "All four sub slots are taken.",
+      "supportOnly": "Support only. It can go in a Support slot, never in the crew."
     },
     "captainRequired": "Select Captain",
     "copy": "Choose a Captain, Friend Captain, and four subs against a total cost budget. Friend Captain cost is not counted.",
@@ -185,7 +186,8 @@
     "slots": {
       "captain": "Captain",
       "friendCaptain": "Friend Captain",
-      "sub": "Sub {{index}}"
+      "sub": "Sub {{index}}",
+      "supportOnly": "Support only, not a crew member"
     },
     "title": "Build from a Captain",
     "viewSlotDetails": "Open {{name}}",

@@ -2,6 +2,11 @@ import { Injectable, signal, type Signal } from '@angular/core';
 import type { Database, SqlJsStatic } from 'sql.js';
 
 import {
+  CHARACTER_SEARCH_TEXT_SQL_FUNCTION,
+  matchesCharacterSearchTerm,
+  toCharacterSearchTerm,
+} from '../grammar/character-search-text';
+import {
   DEFAULT_AUTO_TEAM_CANDIDATE_LIMIT,
   type AutoBuildCandidateQueryOptions,
 } from '../models/auto-team-builder.models';
@@ -37,6 +42,7 @@ import {
   matchesCharacterFacet,
   normalizeCharacterFacetSelection,
 } from './character-facet-filter.utils';
+import { compareCharacterNamesNoCase } from './character-name-order.utils';
 import {
   applyOverrideToCharacterDetailRecord,
   applyOverrideToCharacterListItem,
@@ -69,6 +75,17 @@ const FALLBACK_CHARACTER_IMAGE = 'assets/placeholders/character-card.svg';
 const INVALID_CLASS_PATTERN = /^Class\d+$/i;
 const SHIP_THUMBNAIL_PACK_ID = 'ship-thumbnails';
 const SHIP_THUMBNAIL_PACK_KEY = 'shipThumbnails';
+
+/**
+ * 869f63gkm. The search clause: words, not punctuation. `optc_search_text` is
+ * `normalizeCharacterSearchText`, registered by the loader on both of its paths, and the parameter
+ * is the term's normalised form - so this compares exactly what the in-memory path compares.
+ * Exported so the specs' fake SQL recognises the clause the service really emits.
+ */
+export const CHARACTER_SEARCH_TEXT_LIKE_CLAUSE = `${CHARACTER_SEARCH_TEXT_SQL_FUNCTION}(c.search_text) LIKE '%' || ? || '%'`;
+
+/** The clause a query with no letter or digit (`&`) keeps, unchanged from before 869f63gkm. */
+export const CHARACTER_SEARCH_LITERAL_LIKE_CLAUSE = "c.search_text LIKE '%' || ? || '%'";
 /**
  * How many rows are decorated between two `await yieldToMainThread()` calls, so a
  * full-catalogue decoration does not hold the main thread for one long task.
@@ -163,6 +180,10 @@ function buildDetailedCharacterOrderByClause(
     return buildCharacterBoostOrderByClause(alias, 'captain_average_boost', idOrder);
   }
 
+  /*
+   * 869f6td2q. `compareCharacterNamesNoCase` is the in-memory twin of these two clauses; the two
+   * must always describe the same order, or a list reorders itself when the path serving it changes.
+   */
   if (sortMode === 'nameAsc') {
     return `${alias}.name COLLATE NOCASE ASC, ${buildCharacterIdOrderByClause(alias, idOrder)}`;
   }
@@ -1025,8 +1046,10 @@ export class OptcRepositoryService {
       query.regionPreference ?? this.userState.activeRegionFilter(),
     );
 
+    // 869f63gkm. One term for both paths, so the SQL and in-memory searches read the same words.
+    const searchTerm = toCharacterSearchTerm(query.searchTerm);
+
     if (overridesByCharacterId.size === 0) {
-      const normalizedSearchTerm = query.searchTerm.trim().toLowerCase();
       const allowedCharacterIds = [
         ...new Set(
           (query.allowedCharacterIds ?? []).filter(
@@ -1044,11 +1067,6 @@ export class OptcRepositoryService {
       const whereClauses: string[] = [];
       const queryParams: Array<string | number> = [];
       const costRange = normalizeDetailedCharacterCostRange(query.costRange);
-
-      if (normalizedSearchTerm.length > 0) {
-        whereClauses.push(`c.search_text LIKE '%' || ? || '%'`);
-        queryParams.push(normalizedSearchTerm);
-      }
 
       for (const facetClause of [
         buildCharacterFacetSqlClause('type', typeFacet),
@@ -1086,6 +1104,23 @@ export class OptcRepositoryService {
       if (costRange.max !== null) {
         whereClauses.push('c.cost <= ?');
         queryParams.push(costRange.max);
+      }
+
+      /*
+       * 869f63gkm. The search goes LAST. `optc_search_text` - registered on both load paths - is a
+       * JavaScript call per row, and SQLite evaluates these terms in the order written: first, it
+       * ran on all 4,622 rows of a type-and-class search (5.4 ms); last, on the 310 that passed
+       * the facets (0.7 ms, against 1.0 ms for the old bare LIKE). An all-punctuation query keeps
+       * the clause it always had.
+       */
+      if (searchTerm) {
+        if (searchTerm.normalized.length > 0) {
+          whereClauses.push(CHARACTER_SEARCH_TEXT_LIKE_CLAUSE);
+          queryParams.push(searchTerm.normalized);
+        } else {
+          whereClauses.push(CHARACTER_SEARCH_LITERAL_LIKE_CLAUSE);
+          queryParams.push(searchTerm.literal);
+        }
       }
 
       const orderByClause = buildDetailedCharacterOrderByClause(
@@ -1162,7 +1197,10 @@ export class OptcRepositoryService {
           return false;
         }
 
-        if (!this.matchesSearchTerm(record, query.searchTerm)) {
+        if (
+          searchTerm &&
+          !matchesCharacterSearchTerm(this.buildSearchableRecordText(record), searchTerm)
+        ) {
           return false;
         }
 
@@ -1984,34 +2022,22 @@ export class OptcRepositoryService {
         return left.id - right.id;
       }
 
+      // 869f6td2q. The twin of the SQL path's `COLLATE NOCASE` above, so saving one local
+      // override no longer reorders Character Boxes.
       if (sortMode === 'nameAsc') {
-        const nameDifference = left.name.localeCompare(right.name, undefined, {
-          sensitivity: 'base',
-        });
+        const nameDifference = compareCharacterNamesNoCase(left.name, right.name);
 
         return nameDifference || compareCharacterIds(left.id, right.id, idOrder);
       }
 
       if (sortMode === 'nameDesc') {
-        const nameDifference = right.name.localeCompare(left.name, undefined, {
-          sensitivity: 'base',
-        });
+        const nameDifference = compareCharacterNamesNoCase(right.name, left.name);
 
         return nameDifference || compareCharacterIds(left.id, right.id, idOrder);
       }
 
       return compareCharacterIds(left.id, right.id, idOrder);
     });
-  }
-
-  private matchesSearchTerm(record: CharacterRecord, searchTerm: string): boolean {
-    const normalizedSearchTerm = searchTerm.trim().toLowerCase();
-
-    if (!normalizedSearchTerm.length) {
-      return true;
-    }
-
-    return this.buildSearchableRecordText(record).includes(normalizedSearchTerm);
   }
 
   /**

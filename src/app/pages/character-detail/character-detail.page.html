@@ -53,6 +53,12 @@
                     })
                   }}
                 </p>
+                <!-- 869f6td4p. No Captain Ability and no special: it goes in a Support slot only. -->
+                @if (supportOnly()) {
+                  <p class="section-copy" data-test="character-support-only">
+                    {{ t('hero.supportOnly') }}
+                  </p>
+                }
                 <!-- 869f13c8r. How many of this reader's saved teams use this character; hidden at 0. -->
                 @if (savedTeamCount() > 0) {
                   <p class="section-copy" data-test="character-saved-team-count">
@@ -411,7 +417,15 @@
                               </span>
                               <ul>
                                 @for (item of list.items; track $index) {
-                                  <li>{{ item }}</li>
+                                  <li>
+                                    {{ item }}
+                                    <!-- 869f63gn4. "Same Captain Ability · cost 40" on an earlier form. -->
+                                    @if (list.notes?.[$index]; as note) {
+                                      <small class="detail-list-block__note">
+                                        {{ t(note.key, note.params) }}
+                                      </small>
+                                    }
+                                  </li>
                                 }
                               </ul>
                             </section>

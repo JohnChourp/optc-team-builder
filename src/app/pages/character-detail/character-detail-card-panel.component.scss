@@ -67,6 +67,14 @@
   line-height: 1.55;
 }
 
+/* 869f63gn4. The line under an earlier form that leads identically for less cost. */
+.detail-list-block__note {
+  display: block;
+  color: var(--ion-color-warning);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
 .detail-text,
 .detail-list-block {
   gap: 6px;
