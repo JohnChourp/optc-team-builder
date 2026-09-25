@@ -1,5 +1,14 @@
 import { App } from '@capacitor/app';
-import { Component, DestroyRef, afterNextRender, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  type ElementRef,
+  ViewChild,
+  afterNextRender,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AlertController, IonIcon, IonRouterOutlet } from '@ionic/angular';
 import { IonApp } from '@ionic/angular/ion-app';
@@ -36,6 +45,7 @@ import {
 } from './core/services/player-file-delivery.utils';
 import { describePlayerFileNotice } from './core/services/player-file-notice.utils';
 import { ToolbarBackNavigationService } from './core/services/toolbar-back-navigation.service';
+import { followFooterBarHeight } from './layout/footer-bar-height.utils';
 
 interface BeforeInstallPromptEvent extends Event {
   readonly userChoice: Promise<{
@@ -259,7 +269,7 @@ const defaultSeo: RouteSeoData = {
       ></ion-toast>
 
       <footer class="app-footer-meta">
-        <div class="app-footer-meta__inner">
+        <div class="app-footer-meta__inner" #footerBar>
           <a
             class="app-credit-badge"
             href="https://github.com/JohnChourp/optc-team-builder"
@@ -288,6 +298,7 @@ const defaultSeo: RouteSeoData = {
   styleUrl: './app.component.scss',
 })
 export class AppComponent {
+  @ViewChild('footerBar', { static: true }) private readonly footerBar?: ElementRef<HTMLElement>;
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
   private readonly title = inject(Title);
@@ -507,6 +518,7 @@ export class AppComponent {
     void this.loadAppVersion();
     afterNextRender(() => {
       this.scheduleCatalogWarmup();
+      this.trackFooterBarHeight();
     });
 
     this.router.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((event) => {
@@ -702,6 +714,23 @@ export class AppComponent {
     }
 
     runtime.setTimeout(warmup, 750);
+  }
+
+  /**
+   * 869f63gnc. The floating banners sit on top of the footer by `--app-footer-bar-height`, and the
+   * footer now wraps on a narrow phone or at a large text size, so the variable follows the bar's
+   * measured height instead of the one-line guess in `src/styles.scss`.
+   */
+  private trackFooterBarHeight(): void {
+    const bar = this.footerBar?.nativeElement;
+
+    if (!bar || typeof document === 'undefined') {
+      return;
+    }
+
+    const stop = followFooterBarHeight(bar, document.documentElement);
+
+    (this.destroyRef as Partial<DestroyRef>).onDestroy?.(stop);
   }
 
   private initializeInstallPrompt(): void {

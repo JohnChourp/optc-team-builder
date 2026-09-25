@@ -84,7 +84,7 @@ describe('parseCoverageRows', () => {
      * rule that ended the table at the first non-pipe line silently dropped the
      * eight rows after it - and still reported OK.
      */
-    expect(parseCoverageRows(MAP).length).toBe(32);
+    expect(parseCoverageRows(MAP).length).toBe(33);
   });
 });
 

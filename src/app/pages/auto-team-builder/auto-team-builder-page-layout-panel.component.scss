@@ -3,6 +3,8 @@
   gap: 18px;
 }
 
+// `.glass-card` has no padding, so each card brings its own. 869f6td0f added the five after
+// `.result-card`: the compare, preview, report and ship cards had never had any.
 .hero-card,
 .controls-card,
 .coverage-card,
@@ -10,7 +12,12 @@
 .loading-card,
 .save-team-card,
 .summary-card,
-.result-card {
+.result-card,
+.compare-launch-card,
+.compare-card,
+.preview-card,
+.report-card,
+.result-ship-card {
   padding: 20px;
 }
 

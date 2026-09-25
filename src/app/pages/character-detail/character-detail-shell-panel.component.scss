@@ -23,6 +23,15 @@
   border-color: rgba(123, 242, 176, 0.45);
 }
 
+/*
+ * 869f6td0f. This card's only padding used to come from the Account page's panel, so it had none
+ * unless Account had been opened first. Scoped to this page because `.transfer-feedback` is also a
+ * class on Account and Settings, and this panel is a global stylesheet once it loads.
+ */
+.detail-shell .transfer-feedback {
+  padding: 16px;
+}
+
 .group-section {
   display: grid;
   gap: 10px;
