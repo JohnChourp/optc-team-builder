@@ -27,7 +27,7 @@ import {
   buildRumbleBuffFocusWeightMap,
   normalizeRumbleBuffFocus,
 } from './auto-team-builder-rumble-focus.utils';
-import { resolveCharacterPartyConflictKeys } from './auto-team-builder.utils';
+import { resolveCharacterSameCharacterKeys } from './character-party-conflict-keys.utils';
 
 type UnknownRecord = Record<string, unknown>;
 type OpponentCounterAttribute = RumbleBuffFocusStat | string;
@@ -2124,7 +2124,7 @@ export class RumbleTeamBuilderEngine {
   }
 
   private resolveConflictKeys(character: CharacterDetailRecord): string[] {
-    const keys = resolveCharacterPartyConflictKeys(character);
+    const keys = resolveCharacterSameCharacterKeys(character);
 
     return keys.length ? [...new Set(keys)] : [`character:${character.id}`];
   }

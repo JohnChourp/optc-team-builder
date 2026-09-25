@@ -40522,6 +40522,16 @@ function loadGeneratedSeedCharactersById(): Map<number, CharacterDetailRecord> {
     const name = values[1];
     const type = values[3];
     const primaryClass = values[4];
+    // 869f63grj. Read by column name: the repository hands every record its families.
+    const familiesJson =
+      values[
+        sql
+          .slice(insertIndex + characterMarker.length, valuesIndex)
+          .replace(/\)\s*$/u, '')
+          .split(',')
+          .map((column) => column.trim())
+          .indexOf('families_json')
+      ];
 
     if (
       !Number.isInteger(characterId) ||
@@ -40573,6 +40583,7 @@ function loadGeneratedSeedCharactersById(): Map<number, CharacterDetailRecord> {
           thumbnailJapan: null,
         }),
         detail: detailsById.get(characterId),
+        families: typeof familiesJson === 'string' ? (JSON.parse(familiesJson) as string[]) : undefined,
       }),
     );
     searchIndex = parsedTuple.endIndex + 1;
@@ -42771,6 +42782,7 @@ function createCharacterRecord(
     },
     imageUrl: overrides.imageUrl ?? 'assets/placeholders/character-card.svg',
     detailImageUrl: overrides.detailImageUrl ?? 'assets/placeholders/character-card.svg',
+    ...(overrides.families ? { families: overrides.families } : {}),
     detail: {
       characterId: overrides.id,
       captainAbility: overrides.detail?.captainAbility ?? null,

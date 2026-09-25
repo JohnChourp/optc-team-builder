@@ -11,11 +11,13 @@
  *
  *  1. **every character id exists in the dataset**, so a team can always be imported;
  *  2. **every team names a stage the dataset carries**, matched on the exact `(group, stage)` pair;
- *  3. **no two SUB slots share a `partyConflictKeys` entry.** The dataset's conflict keys are
- *     name-derived, and a character always carries its own - so the rule applies to the four sub
- *     slots and **never** to the two leader seats, where the same character is legal twice. That
- *     exception is the owner's, confirmed on 2026-09-03, and getting it backwards here would ship
- *     a team the app itself would reject;
+ *  3. **no sub repeats the Captain or another sub**, by the app's own same-character rule -
+ *     `src/app/core/grammar/same-character-keys.ts`, the one copy the app reads too, fed from the
+ *     same seed and the same override file (869f63grj). It used to read the dataset's name-derived
+ *     `partyConflictKeys` and compare the four subs only, which was a weaker rule than the app
+ *     enforces. The Friend Captain seat is **never** constrained, and the Captain and Friend Captain
+ *     may be the same character. That exception is the owner's, confirmed on 2026-09-03, and
+ *     getting it backwards here would ship a team the app itself would reject;
  *  4. **six slots**, ids unique where they must be, and dated;
  *  5. **a substantive rationale**, because a team with no checkable reason is an opinion about
  *     play and this file is not entitled to ship those;
@@ -28,20 +30,26 @@ import process from 'node:process';
 import ts from 'typescript';
 
 import { readDatasetStages, stageKey } from './check-content-ladder.mjs';
+import { buildDatasetDatabaseBytes, loadSqlJs } from './lib/dataset-binary.mjs';
+import {
+  readPartyConflictOverrides,
+  resolveSameCharacterKeys,
+} from '../src/app/core/grammar/same-character-keys.ts';
 import { pathToFileURL } from 'node:url';
 
 export const SEED_PATH = 'public/assets/data/optc-seed.sql';
 export const TEAMS_PATH = 'src/app/core/data/published-teams.data.ts';
+export const OVERRIDES_PATH = 'scripts/data/party-conflict-overrides.json';
 
 export const MINIMUM_RATIONALE_LENGTH = 60;
 export const TEAM_SLOT_COUNT = 6;
 /** Slots 2 to 5. The two leader seats are deliberately excluded - see the header. */
 export const SUB_SLOT_INDEXES = [2, 3, 4, 5];
+/** The Captain. A sub may not repeat it, while the Friend Captain (slot 1) may. */
+export const CAPTAIN_SLOT_INDEX = 0;
 
 const CHARACTER_ROW_PATTERN =
   /INSERT INTO characters \([^)]*\) VALUES \(\s*(\d+),/gu;
-const DETAIL_ROW_PATTERN =
-  /INSERT INTO character_details \(character_id, detail_json\)\s*VALUES \(\s*(\d+),\s*'((?:[^']|'')*)'\s*\);/gu;
 
 /** Every character id the dataset carries. */
 export function readCharacterIds({ appRoot = process.cwd(), sql } = {}) {
@@ -59,25 +67,54 @@ export function readCharacterIds({ appRoot = process.cwd(), sql } = {}) {
   return ids;
 }
 
-/** `partyConflictKeys` per character, for the sub-slot rule. */
-export function readConflictKeys({ appRoot = process.cwd(), sql } = {}) {
+function parseJsonOr(value, fallback) {
+  try {
+    return typeof value === 'string' ? JSON.parse(value) : fallback;
+  } catch {
+    // Unparseable rows belong to the dataset integrity checks, not this one.
+    return fallback;
+  }
+}
+
+/**
+ * The same-character keys of every character in the seed, by the app's own rule.
+ *
+ * The seed is opened as the database the app opens (`buildDatasetDatabaseBytes`), and each row
+ * gives the rule what the repository gives it at runtime: the name, the `families_json` column and
+ * the detail's `partyConflictKeys`, with the override file's scripts copy - byte-identical to the
+ * app's, which `npm run data:overlay-register` enforces.
+ */
+export async function readSameCharacterKeys({ appRoot = process.cwd(), sql, overrides } = {}) {
   const source = sql ?? readFileSync(path.join(appRoot, SEED_PATH), 'utf8');
+  const overrideMap =
+    overrides ??
+    readPartyConflictOverrides(
+      JSON.parse(readFileSync(path.join(appRoot, OVERRIDES_PATH), 'utf8')),
+    );
+  const SQL = await loadSqlJs();
+  const database = new SQL.Database(buildDatasetDatabaseBytes(SQL, source));
   const keys = new Map();
 
-  DETAIL_ROW_PATTERN.lastIndex = 0;
+  try {
+    const [result] = database.exec(`
+      SELECT c.id, c.name, c.families_json, d.detail_json
+      FROM characters c
+      LEFT JOIN character_details d ON d.character_id = c.id
+    `);
 
-  let match;
+    for (const [id, name, familiesJson, detailJson] of result?.values ?? []) {
+      const detail = parseJsonOr(detailJson, {});
+      const character = {
+        id: Number(id),
+        name: String(name ?? ''),
+        families: parseJsonOr(familiesJson, []),
+        detail: { partyConflictKeys: detail?.partyConflictKeys ?? [] },
+      };
 
-  while ((match = DETAIL_ROW_PATTERN.exec(source)) !== null) {
-    try {
-      const detail = JSON.parse(match[2].replace(/''/gu, "'"));
-
-      if (Array.isArray(detail?.partyConflictKeys)) {
-        keys.set(Number(match[1]), detail.partyConflictKeys);
-      }
-    } catch {
-      // Unparseable rows belong to the dataset integrity checks, not this one.
+      keys.set(character.id, resolveSameCharacterKeys(character, overrideMap));
     }
+  } finally {
+    database.close();
   }
 
   return keys;
@@ -280,13 +317,14 @@ export function validatePublishedTeams({
     }
 
     /*
-     * The sub-slot conflict rule, and ONLY the sub slots. In this game the Friend Captain is
-     * borrowed from another player, so the same character may legally hold both leader seats -
-     * applying the name-derived conflict keys there would reject a legal team.
+     * The same-character rule, as `maySlotHoldCharacter` applies it: no sub may repeat the Captain
+     * or another sub. The Friend Captain seat is left out entirely - it is borrowed from another
+     * player, so the same character may legally hold both leader seats, and applying the rule
+     * there would reject a legal team.
      */
-    const subKeys = new Map();
+    const crewKeys = new Map();
 
-    for (const index of SUB_SLOT_INDEXES) {
+    for (const index of [CAPTAIN_SLOT_INDEX, ...SUB_SLOT_INDEXES]) {
       const characterId = slots[index];
 
       if (typeof characterId !== 'number') {
@@ -294,21 +332,26 @@ export function validatePublishedTeams({
       }
 
       for (const key of conflictKeys.get(characterId) ?? []) {
-        const existing = subKeys.get(key);
+        const existing = crewKeys.get(key);
 
-        if (existing !== undefined && existing !== characterId) {
+        if (existing?.index === CAPTAIN_SLOT_INDEX) {
           errors.push(
-            `${label} has characters ${existing} and ${characterId} in sub slots, and they share ` +
-              `the conflict key "${key}". The app would reject this team.`,
+            `${label} has character ${characterId} in a sub slot, and it is the same character as ` +
+              `the Captain ${existing.characterId} ("${key}"). A sub may not repeat the Captain.`,
           );
-        } else if (existing === characterId) {
+        } else if (existing !== undefined && existing.characterId !== characterId) {
+          errors.push(
+            `${label} has characters ${existing.characterId} and ${characterId} in sub slots, and ` +
+              `they share the conflict key "${key}". The app would reject this team.`,
+          );
+        } else if (existing !== undefined) {
           errors.push(
             `${label} has character ${characterId} in two sub slots. A character conflicts with ` +
               'itself everywhere except the two leader seats.',
           );
         }
 
-        subKeys.set(key, characterId);
+        crewKeys.set(key, { characterId, index });
       }
     }
   }
@@ -320,7 +363,7 @@ export function formatResult(result, characterCount) {
   if (result.ok) {
     return (
       `[published-teams] ${result.entryCount} team(s) checked against ${characterCount} characters; ` +
-      'every id exists, every stage is real, and no two subs conflict.'
+      'every id exists, every stage is real, and no sub repeats the Captain or another sub.'
     );
   }
 
@@ -330,12 +373,12 @@ export function formatResult(result, characterCount) {
   ].join('\n');
 }
 
-function main() {
+async function main() {
   const appRoot = process.cwd();
   const sql = readFileSync(path.join(appRoot, SEED_PATH), 'utf8');
   const stages = readDatasetStages({ sql });
   const characterIds = readCharacterIds({ sql });
-  const conflictKeys = readConflictKeys({ sql });
+  const conflictKeys = await readSameCharacterKeys({ appRoot, sql });
   const { entries, found } = parsePublishedTeams({ appRoot });
   const result = validatePublishedTeams({ entries, found, stages, characterIds, conflictKeys });
 
@@ -347,5 +390,8 @@ function main() {
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
-  main();
+  main().catch((error) => {
+    process.stderr.write(`${error?.stack ?? error}\n`);
+    process.exitCode = 1;
+  });
 }

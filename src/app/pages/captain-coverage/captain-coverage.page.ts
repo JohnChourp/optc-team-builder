@@ -89,8 +89,8 @@ import { UserStateService } from '../../core/services/user-state.service';
 import { formattingLanguage } from '../../core/i18n/app-locale-format';
 import { AppI18nService } from '../../core/services/app-i18n.service';
 import { CharacterCatalogCacheService } from '../../core/services/character-catalog-cache.service';
-import { resolveCharacterPartyConflictKeys } from '../../core/services/auto-team-builder.utils';
 import {
+  resolveCharacterSameCharacterKeys,
   resolveOccupiedPartyConflictKeys,
   TEAM_FRIEND_CAPTAIN_SLOT_INDEX,
 } from '../../core/services/character-party-conflict-keys.utils';
@@ -1795,7 +1795,7 @@ export class CaptainCoveragePage implements OnInit {
     character: CharacterListItem,
     selectedConflictKeys: Set<string>,
   ): boolean {
-    return resolveCharacterPartyConflictKeys(character).some((conflictKey) =>
+    return resolveCharacterSameCharacterKeys(character).some((conflictKey) =>
       selectedConflictKeys.has(conflictKey),
     );
   }
