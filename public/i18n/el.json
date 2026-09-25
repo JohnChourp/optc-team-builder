@@ -28,10 +28,6 @@
       "untitledEnemy": "Εχθρός χωρίς τίτλο",
       "untitledCrew": "Πλήρωμα χωρίς τίτλο",
       "untitledRumbleTeam": "Rumble ομάδα χωρίς τίτλο"
-    },
-    "languages": {
-      "el": "Ελληνικά",
-      "en": "English"
     }
   },
   "characterAbilityGroups": {
@@ -211,7 +207,6 @@
       "savedSync": "Αποθήκευση & Sync"
     },
     "languageSwitcherAriaLabel": "Εναλλαγή γλώσσας",
-    "languageSwitchTo": "Αλλαγή γλώσσας σε {{ language }}",
     "manualTeamBuilder": "Manual Team Builder",
     "menuTitle": "Μενού",
     "navigationAriaLabel": "Κύρια πλοήγηση",

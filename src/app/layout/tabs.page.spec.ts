@@ -23,7 +23,8 @@ describe('TabsPage', () => {
     expect(template).toContain("'tabs.navigationAriaLabel' | transloco");
     expect(template).toContain('class="tabs-menu__footer"');
     expect(template).toContain("'tabs.languageSwitcherAriaLabel' | transloco");
-    expect(template).toContain("'tabs.languageSwitchTo'");
+    // 869f63gnt. Each language button is named by its own text; no "Switch to" label overrides it.
+    expect(template).not.toContain("'tabs.languageSwitchTo'");
     expect(template).not.toContain('"tabs.menuCopy" | transloco');
     expect(template).not.toContain('<ion-tab-bar');
   });
@@ -110,8 +111,8 @@ describe('TabsPage', () => {
     expect(component.indexOf('public readonly settingsNavItem')).toBeGreaterThan(
       component.indexOf('public readonly navigationGroups'),
     );
-    expect(component).toContain("{ id: 'en', flag: '🇬🇧' }");
-    expect(component).toContain("{ id: 'el', flag: '🇬🇷' }");
+    expect(component).toContain("{ en: '🇬🇧', el: '🇬🇷' }");
+    expect(component).toContain('APP_I18N_AVAILABLE_LANGUAGES.map(');
     expect(component).toContain('this.i18n.setLanguage(language)');
     expect(component).not.toContain("'tabs.offline'");
   });
