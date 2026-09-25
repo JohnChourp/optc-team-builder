@@ -465,11 +465,11 @@
                       <article class="drive-review-row">
                         <div class="drive-review-row__identity">
                           @if (getReviewRowImage(row); as imageUrl) {
-                            <img [src]="imageUrl" [alt]="row.label" loading="lazy" />
+                            <img [src]="imageUrl" [alt]="reviewText(t, row.label)" loading="lazy" />
                           }
                           <div>
-                            <strong>{{ row.label }}</strong>
-                            <span>{{ row.detail }}</span>
+                            <strong>{{ reviewText(t, row.label) }}</strong>
+                            <span>{{ reviewText(t, row.detail) }}</span>
                           </div>
                         </div>
 

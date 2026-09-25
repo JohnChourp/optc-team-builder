@@ -225,6 +225,7 @@ import {
   buildAutoTeamCompareSnapshotFromImportedSeed,
   buildAutoTeamCompareSnapshotFromSavedTeam,
   collectAutoTeamCompareSeedCharacterIds,
+  isAutoTeamCompareUnnamedTeamKey,
   parseAutoTeamCompareImportPayload,
   type AutoTeamCompareDiff,
   type AutoTeamCompareImportedSeed,
@@ -4343,7 +4344,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
     if (snapshot) {
       return this.t('compare.snapshotSummary', {
-        name: snapshot.label,
+        // 869f6td68. A team with no name of its own is named in the reader's language.
+        name: snapshot.labelKey ? this.t(snapshot.labelKey) : snapshot.label,
         filled: snapshot.metrics.find((metric) => metric.key === 'filledSlots')?.value ?? 0,
       });
     }
@@ -5456,6 +5458,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
     return {
       label: label || this.t('compare.import.restoredPayload'),
+      labelKey: isAutoTeamCompareUnnamedTeamKey(value['labelKey']) ? value['labelKey'] : null,
       shipId: normalizeCompareSessionPositiveInteger(value['shipId']),
       ship: isRecord(value['ship']) ? (value['ship'] as unknown as ShipRecord) : null,
       slotIds,

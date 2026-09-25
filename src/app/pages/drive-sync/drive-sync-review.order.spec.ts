@@ -66,10 +66,11 @@ describe('a reviewed Drive sync keeps the order the reader built (869f6td2j)', (
     const draft = buildDriveSyncReviewDraft(same, same, 'merge-and-upload');
     const teamRows = draft.sections.find((section) => section.key === 'savedTeams')?.rows ?? [];
 
+    // 869f6td68. A row's name is its own text, or a phrase to translate - these teams have names.
     expect(teamRows.map((row) => [row.label, row.status])).toEqual([
-      ['Newest crew (Sep 21)', 'kept'],
-      ['Middle crew (Sep 15)', 'kept'],
-      ['Oldest crew (Sep 9)', 'kept'],
+      [{ text: 'Newest crew (Sep 21)' }, 'kept'],
+      [{ text: 'Middle crew (Sep 15)' }, 'kept'],
+      [{ text: 'Oldest crew (Sep 9)' }, 'kept'],
     ]);
     expect(teamIds(buildReviewedAllDataPayload(draft, STAMP))).toEqual([
       NEWEST.id,

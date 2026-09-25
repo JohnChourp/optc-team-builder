@@ -855,6 +855,12 @@
     "sideBShort": "B",
     "loading": "Φορτώνονται team data...",
     "snapshotSummary": "{{name}} · {{filled}} γεμάτα slots",
+    "unnamedTeam": {
+      "current": "Τρέχουσα ομάδα του Auto Team Builder",
+      "importedGenerated": "Εισαγμένη ομάδα του Auto Team Builder",
+      "importedSaved": "Εισαγμένη αποθηκευμένη ομάδα",
+      "saved": "Αποθηκευμένη ομάδα"
+    },
     "changed": "Άλλαξε",
     "same": "Ίδιο",
     "emptySlot": "Κενό",

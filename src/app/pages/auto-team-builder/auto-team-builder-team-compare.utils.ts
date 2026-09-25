@@ -33,8 +33,34 @@ import {
 export type AutoTeamCompareSource = 'current' | 'saved' | 'imported';
 export type AutoTeamCompareSide = 'a' | 'b';
 
+/**
+ * 869f6td68. What Compare calls a team that has no name of its own: keys in the page's scope.
+ *
+ * These were English words, and the summary line puts the name inside a translated sentence, so
+ * the Greek UI read "Current generated team · 3 γεμάτα slots". A team its player named keeps that
+ * name. For one without, `label` still holds the English words - an imported team's snapshot id is
+ * built from them and must not change with the language - and nothing shows them: the page
+ * translates `labelKey` whenever it is set.
+ */
+export const AUTO_TEAM_COMPARE_UNNAMED_TEAM_KEYS = {
+  current: 'compare.unnamedTeam.current',
+  importedGenerated: 'compare.unnamedTeam.importedGenerated',
+  importedSaved: 'compare.unnamedTeam.importedSaved',
+  saved: 'compare.unnamedTeam.saved',
+} as const;
+
+export type AutoTeamCompareUnnamedTeamKey =
+  (typeof AUTO_TEAM_COMPARE_UNNAMED_TEAM_KEYS)[keyof typeof AUTO_TEAM_COMPARE_UNNAMED_TEAM_KEYS];
+
+/** For a seed read back from session storage: only one of the four keys is ever trusted. */
+export function isAutoTeamCompareUnnamedTeamKey(value: unknown): value is AutoTeamCompareUnnamedTeamKey {
+  return (Object.values(AUTO_TEAM_COMPARE_UNNAMED_TEAM_KEYS) as unknown[]).includes(value);
+}
+
 export interface AutoTeamCompareImportedSeed {
   label: string;
+  /** 869f6td68. Set for a team with no name of its own - see `AUTO_TEAM_COMPARE_UNNAMED_TEAM_KEYS`. */
+  labelKey?: AutoTeamCompareUnnamedTeamKey | null;
   shipId: number | null;
   ship?: ShipRecord | null;
   slotIds: Array<number | null>;
@@ -57,6 +83,8 @@ export interface AutoTeamCompareMetricSnapshot {
 export interface AutoTeamCompareSnapshot {
   id: string;
   label: string;
+  /** 869f6td68. What to show instead of `label` for a team with no name of its own. */
+  labelKey: AutoTeamCompareUnnamedTeamKey | null;
   source: AutoTeamCompareSource;
   slots: AutoTeamCompareSlotSnapshot[];
   shipId: number | null;
@@ -171,8 +199,11 @@ function normalizeSlotIds(values: unknown): Array<number | null> {
 }
 
 function buildSeedFromSavedTeam(team: SavedTeam): AutoTeamCompareImportedSeed {
+  const name = team.name.trim();
+
   return {
-    label: team.name.trim() || 'Imported saved team',
+    label: name || 'Imported saved team',
+    labelKey: name ? null : AUTO_TEAM_COMPARE_UNNAMED_TEAM_KEYS.importedSaved,
     shipId: normalizePositiveInteger(team.shipId),
     ship: null,
     slotIds: normalizeSlotIds(team.slots),
@@ -204,6 +235,7 @@ function buildSeedFromAutoTeamExport(
 
   return {
     label: 'Imported generated team',
+    labelKey: AUTO_TEAM_COMPARE_UNNAMED_TEAM_KEYS.importedGenerated,
     shipId: normalizePositiveInteger(payload.shipSelection?.ship.id),
     ship: payload.shipSelection?.ship ?? null,
     slotIds,
@@ -357,6 +389,7 @@ export function buildAutoTeamCompareSnapshotFromCurrent(
   return buildAutoTeamCompareSnapshot({
     id: 'current',
     label: 'Current generated team',
+    labelKey: AUTO_TEAM_COMPARE_UNNAMED_TEAM_KEYS.current,
     source: 'current',
     slotIds: AUTO_BUILD_MANUAL_SLOT_ROLES.map((role) => slotMap.get(role)?.id ?? null),
     characterMap: new Map([...slotMap.values()].map((character) => [character.id, character])),
@@ -372,9 +405,12 @@ export function buildAutoTeamCompareSnapshotFromSavedTeam(
   ship: ShipRecord | null,
   catalogItems: readonly AutoBuildAbilityCatalogItem[],
 ): AutoTeamCompareSnapshot {
+  const name = team.name.trim();
+
   return buildAutoTeamCompareSnapshot({
     id: team.id,
-    label: team.name.trim() || 'Saved team',
+    label: name || 'Saved team',
+    labelKey: name ? null : AUTO_TEAM_COMPARE_UNNAMED_TEAM_KEYS.saved,
     source: 'saved',
     slotIds: normalizeSlotIds(team.slots),
     characterMap,
@@ -393,6 +429,7 @@ export function buildAutoTeamCompareSnapshotFromImportedSeed(
   return buildAutoTeamCompareSnapshot({
     id: `imported:${seed.label}:${seed.slotIds.join(',')}`,
     label: seed.label,
+    labelKey: seed.labelKey ?? null,
     source: 'imported',
     slotIds: seed.slotIds,
     characterMap: mergeCharacterMaps(characterMap, seed.characters ?? []),
@@ -420,6 +457,7 @@ function mergeCharacterMaps(
 function buildAutoTeamCompareSnapshot(options: {
   id: string;
   label: string;
+  labelKey: AutoTeamCompareUnnamedTeamKey | null;
   source: AutoTeamCompareSource;
   slotIds: Array<number | null>;
   characterMap: ReadonlyMap<number, CharacterDetailRecord>;
@@ -441,6 +479,7 @@ function buildAutoTeamCompareSnapshot(options: {
   return {
     id: options.id,
     label: options.label,
+    labelKey: options.labelKey,
     source: options.source,
     slots,
     shipId: options.shipId,

@@ -180,6 +180,20 @@
         "summary": "{{kept}} κρατιούνται από αυτή τη συσκευή, {{taken}} έρχονται από το Drive.",
         "lost": "{{count}} θα χαθούν από αυτή τη συσκευή. Αυτό δεν αναιρείται.",
         "replaceLocal": "Ό,τι υπάρχει σε αυτή τη συσκευή αντικαθίσταται από το αντίγραφο του Drive."
+      },
+      "rowLabels": {
+        "ship": "Καράβι #{{id}}",
+        "character": "Χαρακτήρας #{{id}}",
+        "characterBox": "Box χαρακτήρων",
+        "savedTeam": "Αποθηκευμένη ομάδα",
+        "savedRumbleTeam": "Αποθηκευμένη ομάδα Rumble",
+        "savedEnemy": "Αποθηκευμένος εχθρός"
+      },
+      "rowDetails": {
+        "characters": "{{count}} χαρακτήρες",
+        "slots": "{{count}} θέσεις",
+        "teams": "{{count}} ομάδες",
+        "abilitiesAndMechanics": "{{abilities}} abilities και {{mechanics}} mechanics"
       }
     }
   },

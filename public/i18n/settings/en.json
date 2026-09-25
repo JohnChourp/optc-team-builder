@@ -180,6 +180,20 @@
         "summary": "{{kept}} kept from this device, {{taken}} taken from Drive.",
         "lost": "{{count}} will be gone from this device. This cannot be undone.",
         "replaceLocal": "Everything on this device is replaced by the Drive copy."
+      },
+      "rowLabels": {
+        "ship": "Ship #{{id}}",
+        "character": "Character #{{id}}",
+        "characterBox": "Character box",
+        "savedTeam": "Saved team",
+        "savedRumbleTeam": "Saved Rumble team",
+        "savedEnemy": "Saved enemy"
+      },
+      "rowDetails": {
+        "characters": "{{count}} characters",
+        "slots": "{{count}} slots",
+        "teams": "{{count}} teams",
+        "abilitiesAndMechanics": "{{abilities}} abilities, {{mechanics}} mechanics"
       }
     }
   },
