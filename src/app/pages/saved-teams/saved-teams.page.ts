@@ -35,6 +35,7 @@ import {
   downloadOutline,
   funnelOutline,
   linkOutline,
+  mapOutline,
   peopleOutline,
   searchOutline,
   shareSocialOutline,
@@ -111,6 +112,10 @@ import {
 } from './saved-teams-transfer.utils';
 import { buildSavedTeamShareUrl, downloadSavedTeamsExport } from './saved-teams-export.utils';
 import { SavedTeamsStylePanelsComponent } from './saved-teams-style-panels.component';
+import {
+  checkTreasureMapPlan,
+  groupTreasureMapConflictsByTeam,
+} from './treasure-map-plan.utils';
 
 interface SavedTeamPreviewCard {
   abilityIdentitySets: Record<SavedTeamAbilityOrigin, Set<string>>;
@@ -223,6 +228,28 @@ interface SavedTeamAbilityFilterSection {
   supportText: string;
   title: string;
   triggerLabel: string;
+}
+
+/** 869f63gy7. One repeated unit, as shown next to a team of the Treasure Map plan. */
+interface SavedTeamTreasureMapConflict {
+  characterId: number;
+  unitName: string;
+  /** The other teams sharing it, joined for one sentence; empty when only this team repeats it. */
+  otherTeamNames: string;
+  usesInTeam: number;
+}
+
+interface SavedTeamTreasureMapRow {
+  conflicts: SavedTeamTreasureMapConflict[];
+  isAmbush: boolean;
+  name: string;
+  teamId: string;
+}
+
+interface SavedTeamTreasureMapPlan {
+  repeatedUnitCount: number;
+  rows: SavedTeamTreasureMapRow[];
+  teamCount: number;
 }
 
 const SAVED_TEAM_ABILITY_ORIGINS: SavedTeamAbilityOrigin[] = ['leader', 'crew'];
@@ -370,6 +397,65 @@ export class SavedTeamsPage implements OnInit {
       teamCards.every((teamCard) => this.selectedTeamIdSet().has(teamCard.team.id))
     );
   });
+  /**
+   * 869f63gy7. Whether the Treasure Map check is open, and which selected team is the Ambush team.
+   * Page-local and never persisted: the plan is whatever is selected right now.
+   */
+  private readonly treasureMapCheckOpen = signal(false);
+  private readonly treasureMapAmbushTeamId = signal<string | null>(null);
+  /**
+   * The selected teams checked as one Treasure Map plan - see `treasure-map-plan.utils.ts`.
+   *
+   * `null` while the check is closed or nothing is selected. It follows the selection live, so a
+   * repeat shows the moment a team is ticked. The units are the ones each card shows, by id.
+   */
+  public readonly treasureMapPlan = computed<SavedTeamTreasureMapPlan | null>(() => {
+    if (!this.treasureMapCheckOpen()) {
+      return null;
+    }
+
+    const selectedTeamIds = this.selectedTeamIdSet();
+    const teamCards = this.filteredSavedTeamCards().filter((teamCard) =>
+      selectedTeamIds.has(teamCard.team.id),
+    );
+
+    if (!teamCards.length) {
+      return null;
+    }
+
+    const check = checkTreasureMapPlan(
+      teamCards.map((teamCard) => ({
+        id: teamCard.team.id,
+        slots: teamCard.slots.map((slot) => slot?.id ?? null),
+      })),
+      this.treasureMapAmbushTeamId(),
+    );
+    const conflictsByTeam = groupTreasureMapConflictsByTeam(check);
+    const teamNames = new Map(teamCards.map((teamCard) => [teamCard.team.id, teamCard.team.name]));
+    const unitNames = new Map(
+      teamCards.flatMap((teamCard) =>
+        teamCard.slots.flatMap((slot) => (slot ? [[slot.id, slot.name] as const] : [])),
+      ),
+    );
+
+    return {
+      repeatedUnitCount: check.repeatedUnits.length,
+      teamCount: teamCards.length,
+      rows: teamCards.map((teamCard) => ({
+        teamId: teamCard.team.id,
+        name: teamCard.team.name,
+        isAmbush: check.ambushTeamId === teamCard.team.id,
+        conflicts: (conflictsByTeam.get(teamCard.team.id) ?? []).map((conflict) => ({
+          characterId: conflict.characterId,
+          unitName: unitNames.get(conflict.characterId) ?? '',
+          otherTeamNames: conflict.otherTeamIds
+            .map((teamId) => teamNames.get(teamId) ?? '')
+            .join(', '),
+          usesInTeam: conflict.usesInTeam,
+        })),
+      })),
+    };
+  });
   public readonly abilityFilterSections = computed<SavedTeamAbilityFilterSection[]>(() => [
     this.buildAbilityFilterSection('leader'),
     this.buildAbilityFilterSection('crew'),
@@ -418,6 +504,7 @@ export class SavedTeamsPage implements OnInit {
   public readonly captainCoverageIcon = shieldCheckmarkOutline;
   public readonly manualBuilderIcon = peopleOutline;
   public readonly abilityFilterIcon = funnelOutline;
+  public readonly treasureMapIcon = mapOutline;
   public constructor(
     private readonly userState: UserStateService,
     private readonly repository: OptcRepositoryService,
@@ -552,6 +639,16 @@ export class SavedTeamsPage implements OnInit {
     this.selectedTeamIds.set([]);
   }
 
+  /** 869f63gy7. Opens or closes the Treasure Map check over the selected teams. */
+  public toggleTreasureMapCheck(): void {
+    this.treasureMapCheckOpen.update((open) => !open);
+  }
+
+  /** At most one Ambush team: marking another moves the mark, marking the same one clears it. */
+  public toggleTreasureMapAmbushTeam(teamId: string): void {
+    this.treasureMapAmbushTeamId.update((current) => (current === teamId ? null : teamId));
+  }
+
   public exportSelectedTeams(): void {
     if (!this.hasSelection()) {
       return;
@@ -664,6 +761,8 @@ export class SavedTeamsPage implements OnInit {
 
   public resetPage(): void {
     this.selectedTeamIds.set([]);
+    this.treasureMapCheckOpen.set(false);
+    this.treasureMapAmbushTeamId.set(null);
     this.clearAllAbilityFilters();
     this.closeAbilityTagSetPicker();
     this.editModalOpen.set(false);

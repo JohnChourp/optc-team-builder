@@ -242,5 +242,17 @@
   "totalFiltered": "{{count}} matching of {{total}} total",
   "enemyLinks": {
     "label": "Built for:"
+  },
+  "treasureMap": {
+    "open": "Check as a Treasure Map plan",
+    "title": "Treasure Map plan check",
+    "copy": "A Treasure Map run takes five teams plus an Ambush team, all from one box. A unit can be used only once, except in a Friend Captain seat and in the Ambush team. This check assumes you own one copy of each unit.",
+    "count": "Teams in this check: {{count}}. A plan is 5 teams plus an Ambush team - mark the Ambush team below.",
+    "ambush": "Ambush team",
+    "ambushAria": "Ambush team: {{name}}",
+    "none": "No repeated units: each unit is used once outside the Friend Captain seats and the Ambush team.",
+    "repeated": "Units used more than once: {{count}}. Each one is marked next to the teams that share it.",
+    "alsoIn": "{{name}} - also in {{teams}}",
+    "inTeam": "{{name}} - {{count}} times in this team"
   }
 }
