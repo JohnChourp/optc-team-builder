@@ -735,6 +735,8 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
           [
             candidate.character.id.toString(),
             candidate.character.name,
+            // 869f63gkm. The names players use for the unit, read by the same rule as its name.
+            candidate.character.searchAliases ?? '',
             candidate.character.type,
             ...candidate.character.classes,
           ].join(' '),

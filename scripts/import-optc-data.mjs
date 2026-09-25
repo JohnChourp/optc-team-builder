@@ -48,11 +48,13 @@ import {
 import { normalizeRumbleUnits } from './lib/rumble-data-normalizer.mjs';
 import {
   attachProgressionData,
+  normalizeAcquisition,
   normalizeDropSources,
   normalizeEvolutions,
   normalizeSpecialCooldowns,
 } from './lib/optc-upstream-progression.mjs';
 import { parseSuperSpecialCriteria } from './lib/super-special-criteria.mjs';
+import { normalizeCharacterSearchText } from '../src/app/core/grammar/character-search-text.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -1668,6 +1670,74 @@ export function normalizeCharacterForms(units) {
   return formsById;
 }
 
+/**
+ * 869f63gkm. Whether an alias is written in Latin script: at least one letter, and every letter
+ * Latin. `aliases.js` lists a Japanese name, a French name and then community names per unit; only
+ * the Latin ones are kept - the Japanese names cost about three times the bytes, for names this
+ * app's players rarely type.
+ */
+export function isLatinScriptAlias(value) {
+  let hasLetter = false;
+
+  for (const character of String(value)) {
+    if (!/\p{L}/u.test(character)) {
+      continue;
+    }
+
+    if (!/\p{Script=Latin}/u.test(character)) {
+      return false;
+    }
+
+    hasLetter = true;
+  }
+
+  return hasLetter;
+}
+
+/**
+ * 869f63gkm. The names players use for a unit, from upstream `common/data/aliases.js` - "V2 Legend
+ * Rayleigh", "Story Katakuri", "Marshall D. Teach" - as the text stored in `search_aliases`:
+ * lower-cased, space-separated, in upstream's order. `''` when there is none.
+ *
+ * Latin script only (`isLatinScriptAlias`). An alias is also left out when the unit's own search
+ * text, or a longer alias kept beside it, already contains it once both are read the way a search
+ * reads them (`normalizeCharacterSearchText`, the app's own rule): every query it would find is
+ * found already, so it would cost bytes and find nothing new.
+ */
+export function resolveCharacterSearchAliases(aliasEntry, searchText = '') {
+  if (!Array.isArray(aliasEntry)) {
+    return '';
+  }
+
+  const candidates = aliasEntry
+    .map((alias, index) => ({
+      alias: typeof alias === 'string' ? alias.trim().toLowerCase() : '',
+      index,
+    }))
+    .filter(({ alias }) => alias.length > 0 && isLatinScriptAlias(alias))
+    .map((candidate) => ({ ...candidate, words: normalizeCharacterSearchText(candidate.alias) }))
+    .filter(({ words }) => words.length > 0);
+  const covered = [normalizeCharacterSearchText(String(searchText ?? ''))];
+  const kept = [];
+
+  // Longest first, so an alias another alias contains is dropped whichever one upstream lists first.
+  for (const candidate of [...candidates].sort(
+    (left, right) => right.words.length - left.words.length || left.index - right.index,
+  )) {
+    if (covered.some((text) => text.includes(candidate.words))) {
+      continue;
+    }
+
+    covered.push(candidate.words);
+    kept.push(candidate);
+  }
+
+  return kept
+    .sort((left, right) => left.index - right.index)
+    .map(({ alias }) => alias)
+    .join(' ');
+}
+
 export function normalizeCharacters(
   units,
   details,
@@ -1676,6 +1746,7 @@ export function normalizeCharacters(
   tagsById = {},
   flagsById = {},
   familiesById = {},
+  aliasesById = {},
 ) {
   const rumbleById = new Map(normalizeRumbleUnits(rumbleUnits).map((entry) => [entry.id, entry]));
   const normalizedUnitEntries = buildNormalizedUnitEntries(units);
@@ -1709,6 +1780,12 @@ export function normalizeCharacters(
         tagsById?.[characterId] ?? tagsById?.[String(characterId)] ?? [],
       );
       const captainBoosts = resolveCharacterCaptainBoosts(normalizedDetail);
+      const searchText = createCharacterSearchText({
+        name,
+        type,
+        classes,
+        aliases: normalizedDetail.characterTags,
+      });
 
       return {
         id: characterId,
@@ -1730,12 +1807,9 @@ export function normalizeCharacters(
         maxRcv,
         growth,
         ...captainBoosts,
-        searchText: createCharacterSearchText({
-          name,
-          type,
-          classes,
-          aliases: normalizedDetail.characterTags,
-        }),
+        searchText,
+        /* 869f63gkm. Searched with the name, never displayed, and kept apart from `searchText`. */
+        searchAliases: resolveCharacterSearchAliases(aliasesById[characterId], searchText),
         regionArtwork: {
           exactLocal: Boolean(assets.exactLocal),
           thumbnailGlobal: Boolean(assets.thumbnailGlobal),
@@ -1877,6 +1951,9 @@ async function main() {
     dropsWindow,
     flagsWindow,
     familiesWindow,
+    shopsWindow,
+    bannersWindow,
+    aliasesWindow,
     rumble,
     sourceVersion,
     imageOverrides,
@@ -1910,6 +1987,18 @@ async function main() {
      * disagreed with this file on 18,449 unit pairs. Plain data like the files above.
      */
     evaluateLegacyFile('common/data/families.js', selectedSource),
+    /*
+     * 869f63gm1. How a unit is obtained besides a drop: the shops that sell it and the Friend Point
+     * banner. With the acquisition keys of `flags.js` above, they give a positive answer for most
+     * of the units `drops.js` says nothing about. Plain data like the files above.
+     */
+    evaluateLegacyFile('common/data/shops.js', selectedSource),
+    evaluateLegacyFile('common/data/banners.js', selectedSource),
+    /*
+     * 869f63gkm. The names players use for a unit - community nicknames, French and Japanese names -
+     * which search never found. Plain data inside one function that assigns `window.aliases`.
+     */
+    evaluateLegacyFile('common/data/aliases.js', selectedSource),
     fetchJson(buildSourceFileUrl(selectedSource, 'common/data/rumble.json'), selectedSource),
     fetchVersion(selectedSource),
     loadCharacterImageOverrides(),
@@ -1972,6 +2061,7 @@ async function main() {
           tagsWindow.tags ?? {},
           flagsWindow.flags ?? {},
           familiesWindow.families ?? {},
+          aliasesWindow.aliases ?? {},
         ),
         manualExactLocalPaths,
       ),
@@ -1981,6 +2071,11 @@ async function main() {
       cooldowns: normalizeSpecialCooldowns(cooldownsWindow.cooldowns),
       evolutions: normalizeEvolutions(evolutionsWindow.evolutions),
       dropSources: normalizeDropSources(dropsWindow.drops),
+      acquisition: normalizeAcquisition({
+        flags: flagsWindow.flags,
+        shops: shopsWindow.shops,
+        banners: bannersWindow.banners,
+      }),
     },
   );
   const abilityCorrections = await loadBuilderAbilityCorrections(builderAbilityCorrectionsPath);

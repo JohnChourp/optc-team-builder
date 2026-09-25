@@ -13,6 +13,7 @@ import {
 import { type AutoBuildAbilityCatalog } from '../models/auto-team-builder-ability.models';
 import {
   type CaptainCoverageTierKind,
+  type CharacterAcquisition,
   type CharacterAssets,
   type CharacterCaptainAbilityScope,
   type CharacterDetail,
@@ -78,15 +79,23 @@ const SHIP_THUMBNAIL_PACK_ID = 'ship-thumbnails';
 const SHIP_THUMBNAIL_PACK_KEY = 'shipThumbnails';
 
 /**
+ * 869f63gkm. What a character search reads: the search text and, after a space, the names players
+ * use for the unit (`search_aliases`, upstream's `aliases.js`). One text, so an alias and a name
+ * are always compared by the same rule - and in one function call per row, not two. The in-memory
+ * searches append `searchAliases` to what they read in the same way.
+ */
+const CHARACTER_SEARCHABLE_TEXT_SQL = "c.search_text || ' ' || c.search_aliases";
+
+/**
  * 869f63gkm. The search clause: words, not punctuation. `optc_search_text` is
  * `normalizeCharacterSearchText`, registered by the loader on both of its paths, and the parameter
  * is the term's normalised form - so this compares exactly what the in-memory path compares.
  * Exported so the specs' fake SQL recognises the clause the service really emits.
  */
-export const CHARACTER_SEARCH_TEXT_LIKE_CLAUSE = `${CHARACTER_SEARCH_TEXT_SQL_FUNCTION}(c.search_text) LIKE '%' || ? || '%'`;
+export const CHARACTER_SEARCH_TEXT_LIKE_CLAUSE = `${CHARACTER_SEARCH_TEXT_SQL_FUNCTION}(${CHARACTER_SEARCHABLE_TEXT_SQL}) LIKE '%' || ? || '%'`;
 
-/** The clause a query with no letter or digit (`&`) keeps, unchanged from before 869f63gkm. */
-export const CHARACTER_SEARCH_LITERAL_LIKE_CLAUSE = "c.search_text LIKE '%' || ? || '%'";
+/** The clause a query with no letter or digit (`&`) keeps: compared as typed, as before 869f63gkm. */
+export const CHARACTER_SEARCH_LITERAL_LIKE_CLAUSE = `(${CHARACTER_SEARCHABLE_TEXT_SQL}) LIKE '%' || ? || '%'`;
 /**
  * How many rows are decorated between two `await yieldToMainThread()` calls, so a
  * full-catalogue decoration does not hold the main thread for one long task.
@@ -750,6 +759,32 @@ function parseJsonArray<T>(value: unknown): T[] {
 }
 
 /**
+ * 869f63gm1. A `character_acquisition` row: `{ flags, shops, banners }`, each a list of upstream
+ * keys. Anything missing or malformed reads as an empty list - "nothing recorded" - and a
+ * non-string entry is dropped rather than shown.
+ */
+function parseCharacterAcquisition(value: unknown): CharacterAcquisition {
+  let parsed: unknown = null;
+
+  if (typeof value === 'string' && value.length > 0) {
+    try {
+      parsed = JSON.parse(value);
+    } catch {
+      parsed = null;
+    }
+  }
+
+  const record =
+    parsed !== null && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : {};
+  const keys = (field: string): string[] =>
+    Array.isArray(record[field])
+      ? (record[field] as unknown[]).filter((entry): entry is string => typeof entry === 'string')
+      : [];
+
+  return { flags: keys('flags'), shops: keys('shops'), banners: keys('banners') };
+}
+
+/**
  * `undefined` is admitted because that is what indexing a `SqlRow` yields for an
  * absent column under `noUncheckedIndexedAccess`, and the body has always
  * treated it exactly as `null`. Only the signature was untrue.
@@ -920,7 +955,8 @@ export class OptcRepositoryService {
           region_release_json,
           families_json,
           assets_json,
-          search_text
+          search_text,
+          search_aliases
         FROM characters
         ORDER BY stars DESC, id DESC
       `,
@@ -1161,6 +1197,7 @@ export class OptcRepositoryService {
             c.families_json,
             c.assets_json,
             c.search_text,
+            c.search_aliases,
             d.detail_json
           FROM characters c
           LEFT JOIN character_details d ON d.character_id = c.id
@@ -1261,6 +1298,7 @@ export class OptcRepositoryService {
           c.families_json,
           c.assets_json,
           c.search_text,
+          c.search_aliases,
           d.detail_json
         FROM characters c
         LEFT JOIN character_details d ON d.character_id = c.id
@@ -1280,15 +1318,16 @@ export class OptcRepositoryService {
 
   /**
    * 869f1935z. One character's progression: socket slots, special cooldown, both evolution
-   * directions and every drop source.
+   * directions and every drop source - and, since 869f63gm1, how else it is obtained.
    *
    * A separate query on purpose. `getCharacterById` is also used to resolve a Rumble `basedOn`
    * unit and runs in list contexts; these payloads are per-character arrays that nothing but the
    * detail surface reads.
    *
-   * A missing `character_evolutions` or `character_drops` row means the upstream graph does not
-   * mention this character - "nothing recorded", NOT "not farmable". The difference is the whole
-   * point: a confident "there is no way to get this" is as wrong as a bad stage recommendation.
+   * A missing `character_evolutions`, `character_drops` or `character_acquisition` row means the
+   * upstream data does not mention this character - "nothing recorded", NOT "not farmable". The
+   * difference is the whole point: a confident "there is no way to get this" is as wrong as a bad
+   * stage recommendation.
    */
   public async getCharacterProgression(characterId: number): Promise<CharacterProgression | null> {
     const rows = await this.selectAll(
@@ -1300,10 +1339,12 @@ export class OptcRepositoryService {
           c.special_cooldown_min,
           e.evolves_to_json,
           e.evolves_from_json,
-          p.sources_json
+          p.sources_json,
+          a.sources_json AS acquisition_json
         FROM characters c
         LEFT JOIN character_evolutions e ON e.character_id = c.id
         LEFT JOIN character_drops p ON p.character_id = c.id
+        LEFT JOIN character_acquisition a ON a.character_id = c.id
         WHERE c.id = ?
       `,
       [characterId],
@@ -1323,6 +1364,8 @@ export class OptcRepositoryService {
       evolvesTo: parseJsonArray<CharacterEvolutionBranch>(row['evolves_to_json']),
       evolvesFrom: parseJsonArray<number>(row['evolves_from_json']),
       dropSources: parseJsonArray<CharacterDropSource>(row['sources_json']),
+      // 869f63gm1. No row, or a malformed one, is "nothing recorded" - empty lists, never a negative.
+      acquisition: parseCharacterAcquisition(row['acquisition_json']),
     };
   }
 
@@ -1489,6 +1532,7 @@ export class OptcRepositoryService {
             c.families_json,
             c.assets_json,
             c.search_text,
+            c.search_aliases,
             d.detail_json
           FROM characters c
           LEFT JOIN character_details d ON d.character_id = c.id
@@ -1603,7 +1647,8 @@ export class OptcRepositoryService {
           region_release_json,
           families_json,
           assets_json,
-          search_text
+          search_text,
+          search_aliases
         FROM characters
         WHERE id IN (${placeholders})
       `,
@@ -1651,6 +1696,7 @@ export class OptcRepositoryService {
           c.families_json,
           c.assets_json,
           c.search_text,
+          c.search_aliases,
           d.detail_json
         FROM characters c
         LEFT JOIN character_details d ON d.character_id = c.id
@@ -1867,6 +1913,8 @@ export class OptcRepositoryService {
         id: Number(row['id']),
         name: String(row['name']),
         searchText: this.resolveSearchText(row),
+        // 869f63gkm. The names players use; every search reads them with the text, none shows them.
+        searchAliases: String(row['search_aliases'] ?? ''),
         isIncomplete: Number(row['is_incomplete']) === 1,
         type: String(row['type']),
         primaryClass: String(row['primary_class']),
@@ -2047,6 +2095,7 @@ export class OptcRepositoryService {
           c.families_json,
           c.assets_json,
           c.search_text,
+          c.search_aliases,
           d.detail_json
         FROM characters c
         LEFT JOIN character_details d ON d.character_id = c.id
@@ -2445,6 +2494,8 @@ export class OptcRepositoryService {
   private buildSearchableRecordText(record: CharacterRecord): string {
     return [
       record.searchText ?? '',
+      // 869f63gkm. The community names, as the SQL path reads them.
+      record.searchAliases ?? '',
       record.id,
       record.name,
       record.type,

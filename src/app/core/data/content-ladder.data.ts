@@ -8,8 +8,9 @@
  * player level, stamina or unlock. A drop source carries five fields - `group`, `stage`, `dropId`,
  * `slot`, `global` - and `slot` is a drop slot number, not a difficulty.
  *
- * **Stage names are not.** `character_drops` yields **787 distinct (group, stage) pairs across 14
- * groups**, so a curated ladder does not invent a parallel list of content; it attaches
+ * **Stage names are not.** `character_drops` yields **724 distinct (group, stage) pairs across 14
+ * groups** (788 until 869f63gm1: 64 stages listed only a unit's skull or a score threshold, never a
+ * unit), so a curated ladder does not invent a parallel list of content; it attaches
  * requirements to names the dataset already carries. `scripts/check-content-ladder.mjs` binds every
  * entry below to a real one, which is what makes a hand-maintained file survivable: a stage renamed
  * upstream turns a lane **red** instead of quietly becoming a lie.

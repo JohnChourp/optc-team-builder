@@ -71,11 +71,12 @@ async function main() {
   /*
    * 869f63gkm. The app's search compares words, not punctuation: its loader registers
    * `optc_search_text` - the very function below, loaded from the app's own grammar file - and the
-   * repository's LIKE reads `optc_search_text(c.search_text)`. The search timings below time that
-   * clause, because timing the bare `search_text LIKE` the app no longer runs would stay green over
-   * a search that had become slow. `luffy` and `monkey` are their own normalised form, and the
-   * combined query puts the search last, as the repository does, so the function runs only on the
-   * rows the type and class have already let through.
+   * repository's LIKE reads `optc_search_text(c.search_text || ' ' || c.search_aliases)`, the
+   * search text and the community names as one text. The search timings below time that clause,
+   * because timing a clause the app no longer runs would stay green over a search that had become
+   * slow. `luffy` and `monkey` are their own normalised form, and the combined query puts the
+   * search last, as the repository does, so the function runs only on the rows the type and class
+   * have already let through.
    */
   database.create_function(CHARACTER_SEARCH_TEXT_SQL_FUNCTION, (value) =>
     normalizeCharacterSearchText(typeof value === 'string' ? value : String(value ?? '')),
@@ -92,7 +93,7 @@ async function main() {
       `
         SELECT id, name, type
         FROM characters
-        WHERE ${CHARACTER_SEARCH_TEXT_SQL_FUNCTION}(search_text) LIKE '%' || ? || '%'
+        WHERE ${CHARACTER_SEARCH_TEXT_SQL_FUNCTION}(search_text || ' ' || search_aliases) LIKE '%' || ? || '%'
         ORDER BY id DESC
         LIMIT 50
       `,
@@ -121,7 +122,7 @@ async function main() {
         FROM characters
         WHERE type = ?
           AND classes_json LIKE ?
-          AND ${CHARACTER_SEARCH_TEXT_SQL_FUNCTION}(search_text) LIKE '%' || ? || '%'
+          AND ${CHARACTER_SEARCH_TEXT_SQL_FUNCTION}(search_text || ' ' || search_aliases) LIKE '%' || ? || '%'
         ORDER BY name COLLATE NOCASE ASC, id DESC
         LIMIT 25
       `,

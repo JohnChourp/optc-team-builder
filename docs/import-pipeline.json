@@ -170,8 +170,8 @@
     "listedAt": "2026-09-25",
     "fileCount": 32,
     "statusCounts": {
-      "read": 11,
-      "pending": 3,
+      "read": 14,
+      "pending": 0,
       "deliberately-unread": 11,
       "never-evaluated": 7,
       "unclassified": 0
@@ -184,8 +184,8 @@
         "name": "aliases.js",
         "bytes": 353153,
         "lastChanged": "2026-03-01T06:22:05Z",
-        "status": "pending",
-        "reason": "Adopted by 869f63gm1 (search by the names players use), whose importer change was open and unmerged when this row was written."
+        "status": "read",
+        "reason": null
       },
       {
         "name": "altspecials.js",
@@ -212,8 +212,8 @@
         "name": "banners.js",
         "bytes": 4056,
         "lastChanged": "2026-09-20T22:32:18Z",
-        "status": "pending",
-        "reason": "Adopted by 869f63gm1 (how to get a unit: the friend point banner), whose importer change was open and unmerged when this row was written."
+        "status": "read",
+        "reason": null
       },
       {
         "name": "capspecials.js",
@@ -366,8 +366,8 @@
         "name": "shops.js",
         "bytes": 4277,
         "lastChanged": "2026-09-25T04:02:24Z",
-        "status": "pending",
-        "reason": "Adopted by 869f63gm1 (how to get a unit: the shops that sell it), whose importer change was open and unmerged when this row was written."
+        "status": "read",
+        "reason": null
       },
       {
         "name": "specials.js",

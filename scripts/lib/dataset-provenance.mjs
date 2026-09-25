@@ -86,7 +86,8 @@ export const DERIVED_COLUMNS = Object.freeze({
   captain_average_boost: 'Derived from the two boosts above.',
   region_json: 'Which regions the app found artwork for; an app-side fact, not an upstream one.',
   assets_json: 'Resolved image paths per region; an app-side fact, not an upstream one.',
-  search_text: 'Built from name, type, classes and aliases by createCharacterSearchText.',
+  search_text:
+    "Built from name, type, classes and the character tags by createCharacterSearchText (a manual character adds its id and its own search aliases). Upstream's community names are the separate search_aliases column.",
 });
 
 /**
@@ -106,6 +107,10 @@ export const UPSTREAM_DECLARED_COLUMNS = Object.freeze({
   families_json: {
     source: 'families.js',
     note: 'The character(s) on the card, as upstream names them (869f63grj). They decide which cards are the same character, replacing a guess from the card name that disagreed with this file on 18,449 unit pairs; a unit upstream names no family for stores [] and is decided by its name.',
+  },
+  search_aliases: {
+    source: 'aliases.js, Latin script only',
+    note: "The names players use for a unit (869f63gkm) - community nicknames and upstream's French names - lower-cased, each once, leaving out one the unit's search text or another kept alias already contains. Searched with the name by every character search and never displayed; kept out of search_text so nothing that reads that column changes. Japanese names are left out: about three times the bytes, for names this app's players rarely type.",
   },
 });
 

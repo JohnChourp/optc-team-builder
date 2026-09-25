@@ -6,7 +6,18 @@
 
 .editor-field {
   display: grid;
+  /*
+   * A select sizes itself to its selected text. In the implicit `auto` column, all 10 classes
+   * made a select 705px wide in a 307px field on a phone, past the pop-up's edge; this column
+   * may shrink, so the select stays inside and its text ends in an ellipsis.
+   */
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
+}
+
+/* A value that is a sentence wraps: cut short, "unless no team fits" loses its meaning. */
+.editor-select--sentence::part(text) {
+  white-space: normal;
 }
 
 .editor-field span {

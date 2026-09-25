@@ -110,6 +110,7 @@ describe('buildEvolutionCard - the note on an earlier form', () => {
     evolvesTo: [],
     evolvesFrom: [259, 260],
     dropSources: [],
+    acquisition: { flags: [], shops: [], banners: [] },
   };
   const names = new Map([
     [259, 'Someone Else'],
@@ -148,6 +149,7 @@ describe('the Character screen', () => {
       evolvesTo: [],
       evolvesFrom: [260],
       dropSources: [],
+      acquisition: { flags: [], shops: [], banners: [] },
     };
     const repository = {
       getCharacterProgression: vi.fn(async () => progression),

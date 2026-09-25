@@ -1,4 +1,5 @@
 import {
+  type CharacterAcquisition,
   type CharacterDetailRecord,
   type CharacterDropSource,
   type CharacterProgression,
@@ -22,7 +23,22 @@ import { normalizeHtmlToText } from '../../core/services/html-text.utils';
  * majority of those are sugo-only rather than unobtainable. This never renders "not farmable"; it
  * renders nothing, and the section is omitted. A wrong "farm this stage" costs a player real
  * stamina, and a wrong "there is no way to get this" costs them the unit.
+ *
+ * 869f63gm1. That card is now **"How to get it"**, because upstream publishes the positive answers
+ * too: the Rare Recruit and its limited kinds (`flags.js`), the shops (`shops.js`) and the Friend
+ * Point banner (`banners.js`). The rule above is unchanged - every line is something upstream
+ * records, and a unit with nothing recorded still shows no card at all.
  */
+
+/**
+ * 869f63gm1. A line shown as a translated phrase rather than as its plain text - a way to get the
+ * unit, a unit's skull, a stage that is not on Global. Translated where it is shown, so the
+ * phrase follows the reader's language when they switch it.
+ */
+export interface ProgressionDisplayText {
+  key: string;
+  params?: Record<string, string | number>;
+}
 
 export interface ProgressionDisplayRow {
   labelKey: string;
@@ -38,6 +54,11 @@ export interface ProgressionDisplayNote {
 export interface ProgressionDisplayList {
   labelKey: string;
   items: string[];
+  /**
+   * 869f63gm1. Parallel to `items`: an entry is shown in place of its item, which stays as the
+   * plain fallback. Present only when at least one item has one.
+   */
+  texts?: Array<ProgressionDisplayText | null>;
   /** Parallel to `items`, present only when at least one item has a note. */
   notes?: Array<ProgressionDisplayNote | null>;
 }
@@ -50,6 +71,20 @@ export interface ProgressionDisplayCard {
 
 /** Resolves a character id to a display name; unknown ids come back as null, never as "#123". */
 export type CharacterNameResolver = (characterId: number) => string | null;
+
+/** A unit's own skull, as upstream names the evolver: `"4000-skull"`. */
+const UNIT_SKULL_TOKEN = /^(\d+)-skull$/u;
+
+/**
+ * 869f63gm1. The unit whose skull a token is - `"4000-skull"` is 4000 - or null for any other token
+ * (`"ink"`, the type skulls `"skullQCK"`). Upstream uses 189 such tokens, 863 times, always for the
+ * unit the evolution produces.
+ */
+export function resolveSkullCharacterId(token: string | null): number | null {
+  const match = UNIT_SKULL_TOKEN.exec(token ?? '');
+
+  return match ? Number(match[1]) : null;
+}
 
 /** Every character id this progression needs a name for, so the page can fetch them in one query. */
 export function collectProgressionCharacterIds(progression: CharacterProgression): number[] {
@@ -65,6 +100,13 @@ export function collectProgressionCharacterIds(progression: CharacterProgression
     for (const material of branch.materials) {
       if (material.characterId !== null) {
         ids.add(material.characterId);
+      }
+
+      // 869f63gm1. "Skull of Kaido" needs Kaido's name.
+      const skullOf = resolveSkullCharacterId(material.token);
+
+      if (skullOf !== null) {
+        ids.add(skullOf);
       }
     }
   }
@@ -82,7 +124,23 @@ function nameOf(characterId: number, resolveName: CharacterNameResolver): string
  * three useful stages into fifteen indistinguishable lines.
  */
 export function summarizeDropSources(sources: readonly CharacterDropSource[]): string[] {
-  const byStage = new Map<string, { group: string; stage: string; global: boolean }>();
+  return summarizeDropStages(sources).map(formatDropStage);
+}
+
+interface DropStageLine {
+  group: string;
+  stage: string;
+  global: boolean;
+}
+
+function formatDropStage(entry: DropStageLine): string {
+  return entry.global
+    ? `${entry.stage} (${entry.group})`
+    : `${entry.stage} (${entry.group}, JP only)`;
+}
+
+function summarizeDropStages(sources: readonly CharacterDropSource[]): DropStageLine[] {
+  const byStage = new Map<string, DropStageLine>();
 
   for (const source of sources) {
     const stage = source.stage || source.dropId;
@@ -99,9 +157,7 @@ export function summarizeDropSources(sources: readonly CharacterDropSource[]): s
     byStage.set(key, { group: source.group, stage, global: source.global });
   }
 
-  return [...byStage.values()].map((entry) =>
-    entry.global ? `${entry.stage} (${entry.group})` : `${entry.stage} (${entry.group}, JP only)`,
-  );
+  return [...byStage.values()];
 }
 
 function formatCooldown(progression: CharacterProgression): string | null {
@@ -149,15 +205,41 @@ export function buildInvestmentCard(
  * upstream list rather than being sorted into something unrecognisable.
  */
 export function summarizeMaterials(materials: readonly string[]): string[] {
+  return countMaterials(materials).map(([material, count]) =>
+    count > 1 ? `${material} ×${count}` : material,
+  );
+}
+
+function countMaterials(materials: readonly string[]): Array<[string, number]> {
   const counts = new Map<string, number>();
 
   for (const material of materials) {
     counts.set(material, (counts.get(material) ?? 0) + 1);
   }
 
-  return [...counts.entries()].map(([material, count]) =>
-    count > 1 ? `${material} ×${count}` : material,
-  );
+  return [...counts.entries()];
+}
+
+/**
+ * 869f63gm1. "Skull of Kaido" for Kaido's own skull, with its count when an evolution needs
+ * several - upstream asks for up to five. Null for any other material, which keeps its plain text.
+ */
+function skullText(
+  material: string,
+  count: number,
+  resolveName: CharacterNameResolver,
+): ProgressionDisplayText | null {
+  const characterId = resolveSkullCharacterId(material);
+
+  if (characterId === null) {
+    return null;
+  }
+
+  const name = nameOf(characterId, resolveName);
+
+  return count > 1
+    ? { key: 'progression.skullOfCount', params: { name, count } }
+    : { key: 'progression.skullOf', params: { name } };
 }
 
 /** What `resolveCheaperSameCaptainAbilityForms` reads: the cost and the Captain Ability. */
@@ -248,6 +330,12 @@ export function buildEvolutionCard(
         ? nameOf(material.characterId, resolveName)
         : (material.token ?? ''),
     );
+    const counted = countMaterials(materials.filter((entry) => entry.length > 0));
+    // 869f63gm1. A unit's own skull reads "Skull of <name>", never its raw token.
+    const texts = [
+      null,
+      ...counted.map(([material, count]) => skullText(material, count, resolveName)),
+    ];
 
     lists.push({
       labelKey: 'progression.evolvesInto',
@@ -257,29 +345,185 @@ export function buildEvolutionCard(
        */
       items: [
         nameOf(branch.toId, resolveName),
-        ...summarizeMaterials(materials.filter((entry) => entry.length > 0)),
+        ...counted.map(([material, count]) => (count > 1 ? `${material} ×${count}` : material)),
       ],
+      ...(texts.some((text) => text !== null) ? { texts } : {}),
     });
   }
 
   return lists.length > 0 ? { titleKey: 'sections.evolution', rows: [], lists } : null;
 }
 
-export function buildDropSourceCard(
-  progression: CharacterProgression,
-): ProgressionDisplayCard | null {
-  const stages = summarizeDropSources(progression.dropSources);
+/**
+ * 869f63gm1. The Rare Recruit a unit comes from, most specific first. Upstream marks a limited unit
+ * `rr` + `lrr` + its kind, so listing all three would say "Rare Recruit" of a unit the ordinary Rare
+ * Recruit never has: the kind wins, then `lrr`, then `rr`.
+ */
+const LIMITED_RECRUIT_TEXT_KEYS: Readonly<Record<string, string>> = {
+  tmlrr: 'progression.acquisition.treasureMapLimitedRareRecruit',
+  kclrr: 'progression.acquisition.kizunaClashLimitedRareRecruit',
+  pflrr: 'progression.acquisition.pirateFestivalLimitedRareRecruit',
+  slrr: 'progression.acquisition.supportLimitedRareRecruit',
+  superlrr: 'progression.acquisition.superLimitedRareRecruit',
+  annilrr: 'progression.acquisition.anniversaryLimitedRareRecruit',
+};
 
-  // No entry means nothing is recorded. Rendering an empty card would state the opposite.
-  if (stages.length === 0) {
-    return null;
+function resolveRecruitTexts(flags: readonly string[]): Array<[string, ProgressionDisplayText]> {
+  const kinds = Object.entries(LIMITED_RECRUIT_TEXT_KEYS)
+    .filter(([flag]) => flags.includes(flag))
+    .map(([flag, key]): [string, ProgressionDisplayText] => [flag, { key }]);
+
+  if (kinds.length > 0) {
+    return kinds;
   }
 
+  if (flags.includes('lrr')) {
+    return [['lrr', { key: 'progression.acquisition.limitedRareRecruit' }]];
+  }
+
+  return flags.includes('rr') ? [['rr', { key: 'progression.acquisition.rareRecruit' }]] : [];
+}
+
+/** `shops.js` keys with a name of their own; any other key reads "<key> Shop", as upstream shows it. */
+const SHOP_TEXT_KEYS: Readonly<Record<string, string>> = {
+  Ray: 'progression.acquisition.rayleighShop',
+  Medal: 'progression.acquisition.medalShop',
+  TM: 'progression.acquisition.treasureMapShop',
+  Rumble: 'progression.acquisition.rumbleShop',
+  Kizuna: 'progression.acquisition.kizunaShop',
+  PKA: 'progression.acquisition.pirateKingAdventuresShop',
+};
+
+/**
+ * The shops that sell the unit, each once: `shops.js` in upstream's order, then the two `flags.js`
+ * keys that name a shop - `shop` (upstream's "Rayleigh Shop Unit") and `tmshop` (its "Trade Port
+ * Unit", the Treasure Map's exchange). The flag and the list name the same shop, so they are one line.
+ */
+function resolveShops(acquisition: CharacterAcquisition): string[] {
+  const shops = [...acquisition.shops];
+
+  for (const [flag, shop] of [
+    ['shop', 'Ray'],
+    ['tmshop', 'TM'],
+  ] as const) {
+    if (acquisition.flags.includes(flag) && !shops.includes(shop)) {
+      shops.push(shop);
+    }
+  }
+
+  return shops;
+}
+
+function shopText(shop: string): ProgressionDisplayText {
+  const key = SHOP_TEXT_KEYS[shop];
+
+  return key ? { key } : { key: 'progression.acquisition.shopNamed', params: { name: shop } };
+}
+
+function bannerText(banner: string): ProgressionDisplayText {
+  return banner === 'FP'
+    ? { key: 'progression.acquisition.friendPointBanner' }
+    : { key: 'progression.acquisition.bannerNamed', params: { name: banner } };
+}
+
+/** `special` is upstream's "Login Bonus-only" in `filterOptions.js`; `promo` its "Promo-only". */
+const GIVEN_THROUGH_TEXT_KEYS: Readonly<Record<string, string>> = {
+  special: 'progression.acquisition.loginBonus',
+  promo: 'progression.acquisition.promoCode',
+};
+
+/** A list whose every line is a translated phrase; the item is the upstream key, as a fallback. */
+function textList(
+  labelKey: string,
+  entries: ReadonlyArray<[string, ProgressionDisplayText]>,
+): ProgressionDisplayList {
   return {
-    titleKey: 'sections.dropSources',
-    rows: [],
-    lists: [{ labelKey: 'progression.dropsFrom', items: stages }],
+    labelKey,
+    items: entries.map(([item]) => item),
+    texts: entries.map(([, text]) => text),
   };
+}
+
+/**
+ * 869f63gm1. "How to get it": every positive answer upstream records, shortest lists first and the
+ * stages - often a long list - last but one.
+ *
+ *  - **Recruited from** - the Rare Recruit, or its limited kind, and the Friend Point banner;
+ *  - **Sold in** - the shops;
+ *  - **Drops from** - the stages, as before;
+ *  - **Given through** - the Login Bonus, a promo code;
+ *  - **By evolving** - only when none of the above is recorded and the unit has an earlier form:
+ *    a unit that exists only as an evolution is obtained by evolving that form.
+ *
+ * Nothing recorded at all renders no card, exactly as the drop card it replaces did: silence, never
+ * "not obtainable".
+ */
+export function buildHowToGetCard(
+  progression: CharacterProgression,
+  resolveName: CharacterNameResolver,
+): ProgressionDisplayCard | null {
+  const { acquisition } = progression;
+  const lists: ProgressionDisplayList[] = [];
+  const recruitedFrom: Array<[string, ProgressionDisplayText]> = [
+    ...resolveRecruitTexts(acquisition.flags),
+    ...acquisition.banners.map((banner): [string, ProgressionDisplayText] => [
+      banner,
+      bannerText(banner),
+    ]),
+  ];
+
+  if (recruitedFrom.length > 0) {
+    lists.push(textList('progression.recruitedFrom', recruitedFrom));
+  }
+
+  const shops = resolveShops(acquisition);
+
+  if (shops.length > 0) {
+    lists.push(
+      textList(
+        'progression.soldIn',
+        shops.map((shop): [string, ProgressionDisplayText] => [shop, shopText(shop)]),
+      ),
+    );
+  }
+
+  const stages = summarizeDropStages(progression.dropSources);
+
+  if (stages.length > 0) {
+    // A stage not on Global says so in the reader's language; the rest are upstream's own names.
+    const texts = stages.map((entry) =>
+      entry.global
+        ? null
+        : {
+            key: 'progression.dropStageJapanOnly',
+            params: { stage: entry.stage, group: entry.group },
+          },
+    );
+
+    lists.push({
+      labelKey: 'progression.dropsFrom',
+      items: stages.map(formatDropStage),
+      ...(texts.some((text) => text !== null) ? { texts } : {}),
+    });
+  }
+
+  const givenThrough = Object.entries(GIVEN_THROUGH_TEXT_KEYS)
+    .filter(([flag]) => acquisition.flags.includes(flag))
+    .map(([flag, key]): [string, ProgressionDisplayText] => [flag, { key }]);
+
+  if (givenThrough.length > 0) {
+    lists.push(textList('progression.givenThrough', givenThrough));
+  }
+
+  if (lists.length === 0 && progression.evolvesFrom.length > 0) {
+    lists.push({
+      labelKey: 'progression.byEvolving',
+      items: progression.evolvesFrom.map((characterId) => nameOf(characterId, resolveName)),
+    });
+  }
+
+  // No entry means nothing is recorded. Rendering an empty card would state the opposite.
+  return lists.length > 0 ? { titleKey: 'sections.howToGet', rows: [], lists } : null;
 }
 
 export function buildProgressionCards(
@@ -294,6 +538,6 @@ export function buildProgressionCards(
   return [
     buildInvestmentCard(progression),
     buildEvolutionCard(progression, resolveName, sameCaptainAbilityCostById),
-    buildDropSourceCard(progression),
+    buildHowToGetCard(progression, resolveName),
   ].filter((card): card is ProgressionDisplayCard => card !== null);
 }

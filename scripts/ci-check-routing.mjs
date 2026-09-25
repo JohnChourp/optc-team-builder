@@ -270,7 +270,7 @@ export const SCRIPT_SUITES = {
   'source-data': {
     label: 'Source data validation tests',
     command:
-      'npx vitest run scripts/lib/dataset-integrity.spec.ts scripts/lib/optc-dataset.spec.ts scripts/lib/manual-character-overlay.spec.ts scripts/lib/manual-character-apply.spec.ts scripts/lib/manual-character-prune.spec.ts scripts/lib/party-conflict-keys.spec.ts scripts/lib/rumble-data-normalizer.spec.ts scripts/lib/super-special-criteria.spec.ts scripts/upsert-manual-character.spec.ts scripts/check-dataset-spec-pins.spec.ts scripts/optc-upstream-progression.spec.ts scripts/import-optc-families.spec.ts scripts/import-optc-source-commit.spec.ts scripts/import-optc-forms.spec.ts && npm run dataset:spec-pins',
+      'npx vitest run scripts/lib/dataset-integrity.spec.ts scripts/lib/optc-dataset.spec.ts scripts/lib/manual-character-overlay.spec.ts scripts/lib/manual-character-apply.spec.ts scripts/lib/manual-character-prune.spec.ts scripts/lib/party-conflict-keys.spec.ts scripts/lib/rumble-data-normalizer.spec.ts scripts/lib/super-special-criteria.spec.ts scripts/upsert-manual-character.spec.ts scripts/check-dataset-spec-pins.spec.ts scripts/optc-upstream-progression.spec.ts scripts/import-optc-families.spec.ts scripts/optc-upstream-false-units.spec.ts scripts/import-optc-acquisition.spec.ts scripts/import-optc-search-aliases.spec.ts scripts/import-optc-source-commit.spec.ts scripts/import-optc-forms.spec.ts && npm run dataset:spec-pins',
   },
   'perf-budget': {
     label: 'Performance budget script tests',
@@ -751,7 +751,9 @@ function isReleaseContractPath(filePath) {
   return (
     filePath === 'scripts/generate-release-contract.mjs' ||
     filePath === 'scripts/generate-release-contract.spec.ts' ||
+    filePath === 'scripts/generate-release-contract-app-config.spec.ts' ||
     filePath === 'scripts/lib/release-contract.mjs' ||
+    filePath === 'scripts/lib/app-config-targets.mjs' ||
     filePath === 'docs/release-contract.json' ||
     filePath === 'scripts/bump-version.sh' ||
     filePath === 'scripts/bump-version.spec.ts' ||
@@ -761,6 +763,15 @@ function isReleaseContractPath(filePath) {
     filePath === 'android/app/build.gradle' ||
     filePath === 'src/app/core/data/app-version.data.ts'
   );
+}
+
+/*
+ * 869f63gu4. Non-terminating: the contract also DERIVES which app-config.js each build gets
+ * from the writer, and writes that table into the secrets register. Both route elsewhere too.
+ * The workflows it reads already take the full plan.
+ */
+function touchesReleaseContractSources(filePath) {
+  return filePath === 'scripts/write-app-config.mjs' || filePath === 'docs/release-secrets-register.md';
 }
 
 /*
@@ -790,12 +801,38 @@ function isNativeSurfacePath(filePath) {
   return (
     filePath === 'scripts/generate-native-surface.mjs' ||
     filePath === 'scripts/generate-native-surface.spec.ts' ||
+    filePath === 'scripts/generate-native-surface-webview.spec.ts' ||
     filePath === 'scripts/lib/native-surface.mjs' ||
+    filePath === 'scripts/lib/webview-capabilities.mjs' ||
     filePath === 'docs/native-surface.json' ||
     filePath === 'capacitor.config.ts' ||
     filePath === 'android/variables.gradle' ||
     filePath === 'android/app/build.gradle' ||
     filePath === 'android/app/src/main/AndroidManifest.xml'
+  );
+}
+
+/*
+ * 869f63gu1. Non-terminating: the record's WebView capabilities are DERIVED from these, and
+ * each also belongs to the app, the Android shell or the release contract. The workflows and
+ * package.json it reads already take the full plan.
+ */
+function touchesNativeSurfaceSources(filePath) {
+  return (
+    filePath === 'scripts/lib/app-config-targets.mjs' ||
+    filePath === 'scripts/write-app-config.mjs' ||
+    filePath === 'android/app/src/main/res/values/styles.xml' ||
+    filePath === 'android/app/src/main/res/values/colors.xml' ||
+    filePath === 'android/app/src/main/res/xml/file_paths.xml' ||
+    filePath === 'android/app/src/main/java/com/john/optcteambuilder/MainActivity.java' ||
+    filePath === 'src/theme/variables.scss' ||
+    filePath === 'src/app/app.config.ts' ||
+    filePath === 'src/app/core/services/player-file-delivery.utils.ts' ||
+    filePath === 'src/app/core/services/android-back-button.service.ts' ||
+    filePath === 'src/app/core/data/app-site-url.data.ts' ||
+    filePath === 'src/app/pages/saved-teams/saved-teams-export.utils.ts' ||
+    filePath === 'src/app/shared/clipboard/clipboard-copy.utils.ts' ||
+    filePath.endsWith('-google-sign-in-gate.spec.ts')
   );
 }
 
@@ -1765,6 +1802,13 @@ function isSourceDataPath(filePath) {
     filePath === 'scripts/optc-upstream-progression.spec.ts' ||
     /* 869f63grj. The same kind of thing again: upstream's `families.js`, read into `families`. */
     filePath === 'scripts/import-optc-families.spec.ts' ||
+    /*
+     * 869f63gm1 / 869f63gkm. And again: skulls and score challenges that are not units, how a unit
+     * is obtained (`flags.js`, `shops.js`, `banners.js`), and its community names (`aliases.js`).
+     */
+    filePath === 'scripts/optc-upstream-false-units.spec.ts' ||
+    filePath === 'scripts/import-optc-acquisition.spec.ts' ||
+    filePath === 'scripts/import-optc-search-aliases.spec.ts' ||
     /* 869f63gtc. The commit every import reads at, and the source it refuses. */
     filePath === 'scripts/import-optc-source-commit.spec.ts' ||
     /* 869f63gv6. A dual or VS unit's forms, and what each keeps and drops. */
@@ -1945,6 +1989,14 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
 
     if (touchesSecurityConfigSources(filePath)) {
       addScriptSuite(scriptSuites, 'security-config');
+    }
+
+    if (touchesReleaseContractSources(filePath)) {
+      addScriptSuite(scriptSuites, 'release-contract');
+    }
+
+    if (touchesNativeSurfaceSources(filePath)) {
+      addScriptSuite(scriptSuites, 'native-surface');
     }
 
     if (touchesI18nNamespaces(filePath)) {

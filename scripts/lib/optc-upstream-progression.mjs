@@ -1,6 +1,7 @@
 /**
  * 869f1935z. The three upstream files the importer never read, normalized into per-character
- * lookups: `cooldowns.js`, `evolutions.js` and `drops.js`.
+ * lookups: `cooldowns.js`, `evolutions.js` and `drops.js`. 869f63gm1 added how a unit is obtained,
+ * from `flags.js`, `shops.js` and `banners.js` (`normalizeAcquisition`).
  *
  * They were left out because nothing needed them, and the feasibility audit
  * (`optc-team-builder-brain/audits/2026-09-13-869f127fy-ideas-feasibility.md`) measured what they
@@ -13,12 +14,22 @@
  * rather than three inline loops:
  *
  *  - **an evolver is not always a character.** `evolvers` mixes ids with string tokens - `"ink"`,
- *    `'skullINT'`, `'2138-skull'` - which are Rainbow Ink and the type skulls. Dropping them loses
- *    half of what an evolution costs; treating them as ids invents characters.
+ *    `'skullINT'`, `'2138-skull'` - which are Rainbow Ink, the type skulls and a unit's own skull.
+ *    Dropping them loses half of what an evolution costs; treating them as ids invents characters.
  *  - **a drop stage's slot keys are free text.** 164 distinct keys across the file, mixing `'1'`
  *    with `'1st Stage'`, `'30 Stamina'`, `'All Bosses'` and boss names, alongside scalar metadata
  *    (`name`, `dropID`, `thumb`, `global`, `nakama`, `completion`, `gamewith`). A slot is
  *    identified by its VALUE being an array of numbers, never by its key matching a pattern.
+ *
+ * 869f63gm1. Both rules above were written down and then broken by one line: `toCharacterId` read
+ * its value with `Number.parseInt`, which takes the digits a string STARTS with and ignores the
+ * rest. So `'1446-skull'` - the skull an evolution of #16 needs, dropping from a 3D2Y stage - was
+ * read as unit #1446, and a stage's `challengeData` (`[['1,400,000 Damage', ...]]`, rewards for a
+ * score) as unit #1. Measured on 2026-09-25 against the shipped seed: 269 of 5,008 drop entries
+ * were not drops of the unit at all, and on 198 characters the Character screen's drop card was
+ * built from nothing else; and all 863 unit-skull evolvers - 189 tokens, every one the target's own
+ * skull - were stored as "character <n>", so #2099's evolution read "5× #4000". An id is now a whole
+ * number and nothing else, and `challengeData` is metadata by name as well.
  */
 
 /** Stage metadata keys that are never a drop slot, whatever their value looks like. */
@@ -31,10 +42,28 @@ const STAGE_METADATA_KEYS = new Set([
   'completion',
   'gamewith',
   'notes',
+  /*
+   * 869f63gm1. A score challenge's thresholds and rewards: `[['600,000 Damage', '1x Green Elder'],
+   * ...]`. Refused by the id rule below as it is written today, and named here as well because a
+   * challenge written as bare numbers (`[5, 15, 25]`) would pass that rule and become three units.
+   */
+  'challengeData',
 ]);
 
+/** A unit id: a positive whole number, or the same written as digits (an object key). */
+const CHARACTER_ID_PATTERN = /^\d+$/u;
+
 function toCharacterId(value) {
-  const id = typeof value === 'number' ? value : Number.parseInt(String(value ?? ''), 10);
+  /*
+   * 869f63gm1. Never `Number.parseInt` on anything else: it reads `'1446-skull'` as 1446 and
+   * `['1,400,000 Damage', ...]` as 1, which is how a skull and a score threshold became units.
+   */
+  const id =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'string' && CHARACTER_ID_PATTERN.test(value)
+        ? Number(value)
+        : Number.NaN;
 
   return Number.isInteger(id) && id > 0 ? id : null;
 }
@@ -189,11 +218,105 @@ export function normalizeDropSources(dropsWindow) {
 }
 
 /**
- * Attaches the three lookups onto already-built character objects, in place of a fourth argument
+ * 869f63gm1. The `flags.js` keys that say how a unit is obtained: upstream's own "non-farmable"
+ * filter set in `filterOptions.js`, in its order, after `rr` - the Rare Recruit itself. A limited
+ * unit carries `rr` and `lrr` and then the kind (`tmlrr`, `kclrr` ...): upstream never sets `lrr`
+ * without `rr`, nor a kind without both.
+ *
+ * Left out on purpose: `global` (a region, already `region_release_json`), `rro` (a strict subset
+ * of `rr` - no unit carries it without `rr` - that upstream's pages never label), and `inkable`
+ * (what a unit can be evolved with, not how it is obtained).
+ */
+export const ACQUISITION_FLAG_KEYS = Object.freeze([
+  'rr',
+  'lrr',
+  'tmlrr',
+  'kclrr',
+  'pflrr',
+  'slrr',
+  'superlrr',
+  'annilrr',
+  'promo',
+  'special',
+  'shop',
+  'tmshop',
+]);
+
+function createEmptyAcquisition() {
+  return { flags: [], shops: [], banners: [] };
+}
+
+/**
+ * 869f63gm1. How each unit is obtained, as upstream records it - the answer `drops.js` alone gives
+ * for only a third of the units: its acquisition flags (`flags.js`), the shops that sell it
+ * (`shops.js`: Ray, Medal, TM, Rumble, Kizuna, PKA) and the banners that pull it (`banners.js`: the
+ * Friend Point banner). Returns `characterId -> { flags, shops, banners }` for every unit at least
+ * one of them names, each list in upstream's order and each value once.
+ *
+ * Only POSITIVE facts exist here. A unit none of the three files names has no entry, which means
+ * "nothing recorded" - never "not obtainable", for the reason `attachProgressionData` gives.
+ */
+export function normalizeAcquisition({ flags, shops, banners } = {}) {
+  const byId = new Map();
+  const entryFor = (characterId) => {
+    const entry = byId.get(characterId) ?? createEmptyAcquisition();
+
+    byId.set(characterId, entry);
+
+    return entry;
+  };
+
+  for (const [rawId, flagEntry] of Object.entries(flags ?? {})) {
+    const characterId = toCharacterId(rawId);
+
+    if (characterId === null || !flagEntry || typeof flagEntry !== 'object') {
+      continue;
+    }
+
+    const keys = ACQUISITION_FLAG_KEYS.filter((key) => Boolean(flagEntry[key]));
+
+    if (keys.length > 0) {
+      entryFor(characterId).flags.push(...keys);
+    }
+  }
+
+  for (const [field, lists] of [
+    ['shops', shops],
+    ['banners', banners],
+  ]) {
+    for (const [name, ids] of Object.entries(lists ?? {})) {
+      if (!Array.isArray(ids)) {
+        continue;
+      }
+
+      for (const value of ids) {
+        const characterId = toCharacterId(value);
+
+        if (characterId === null) {
+          continue;
+        }
+
+        const names = entryFor(characterId)[field];
+
+        if (!names.includes(name)) {
+          names.push(name);
+        }
+      }
+    }
+  }
+
+  return byId;
+}
+
+/**
+ * Attaches the lookups onto already-built character objects, in place of a fourth argument
  * to `createSqlSeed` - which `manual-character-apply.mjs` also calls, and which would then have to
  * carry data a manually added character never has.
  */
-export function attachProgressionData(characters, { cooldowns, evolutions, dropSources }) {
+export function attachProgressionData(
+  characters,
+  { cooldowns, evolutions, dropSources, acquisition = new Map() },
+) {
   return characters.map((character) => {
     const forward = evolutions.forward.get(character.id) ?? [];
     const reverse = evolutions.reverse.get(character.id) ?? [];
@@ -207,6 +330,7 @@ export function attachProgressionData(characters, { cooldowns, evolutions, dropS
       evolvesTo: forward,
       evolvesFrom: reverse,
       dropSources: drops,
+      acquisition: acquisition.get(character.id) ?? createEmptyAcquisition(),
     };
   });
 }
@@ -243,6 +367,11 @@ export const PROGRESSION_UPSTREAM_SOURCES = Object.freeze({
   dropSources: {
     upstream: 'drops.js <group>[].<slot>',
     table: 'character_drops',
+    column: 'sources_json',
+  },
+  acquisition: {
+    upstream: 'flags.js acquisition keys + shops.js + banners.js',
+    table: 'character_acquisition',
     column: 'sources_json',
   },
 });

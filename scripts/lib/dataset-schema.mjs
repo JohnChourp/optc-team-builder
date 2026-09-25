@@ -1,5 +1,5 @@
 /**
- * 869f138qt. The six tables the app queries, read out of the seed rather than described by hand.
+ * 869f138qt. The tables the app queries, read out of the seed rather than described by hand.
  *
  * `docs/data-schemas.md` documents the shapes the application reasons about - character records,
  * saved teams, enemy definitions. Nothing documented the layer beneath: what is actually in the

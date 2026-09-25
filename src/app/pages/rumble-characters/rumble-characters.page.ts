@@ -482,6 +482,8 @@ export class RumbleCharactersPage implements OnInit {
         character.id,
         character.name,
         character.searchText ?? '',
+        // 869f63gkm. The names players use for the unit, read by the same rule as its name.
+        character.searchAliases ?? '',
         character.type,
         ...character.classes,
         ...reasonChips,

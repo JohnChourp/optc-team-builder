@@ -190,6 +190,7 @@ export function createSqlSeed(characters, ships, manifest) {
     'DROP TABLE IF EXISTS character_details;',
     'DROP TABLE IF EXISTS character_evolutions;',
     'DROP TABLE IF EXISTS character_drops;',
+    'DROP TABLE IF EXISTS character_acquisition;',
     'DROP TABLE IF EXISTS character_forms;',
     'DROP TABLE IF EXISTS ships;',
     'DROP TABLE IF EXISTS meta;',
@@ -223,7 +224,8 @@ export function createSqlSeed(characters, ships, manifest) {
         region_release_json TEXT NOT NULL,
         assets_json TEXT NOT NULL,
         search_text TEXT NOT NULL,
-        families_json TEXT NOT NULL
+        families_json TEXT NOT NULL,
+        search_aliases TEXT NOT NULL DEFAULT ''
       );
     `,
     `
@@ -246,6 +248,17 @@ export function createSqlSeed(characters, ships, manifest) {
     `,
     `
       CREATE TABLE character_drops (
+        character_id INTEGER PRIMARY KEY,
+        sources_json TEXT NOT NULL
+      );
+    `,
+    /*
+     * 869f63gm1. How a unit is obtained besides a drop, as upstream records it:
+     * `{ "flags": [...], "shops": [...], "banners": [...] }`. Like the two tables above, a unit
+     * nothing records has no row.
+     */
+    `
+      CREATE TABLE character_acquisition (
         character_id INTEGER PRIMARY KEY,
         sources_json TEXT NOT NULL
       );
@@ -312,7 +325,7 @@ export function createSqlSeed(characters, ships, manifest) {
         min_hp, min_atk, min_rcv, max_hp, max_atk, max_rcv, growth,
         captain_hp_boost, captain_atk_boost, captain_average_boost,
         max_sockets, special_cooldown_max, special_cooldown_min, region_json, region_release_json,
-        assets_json, search_text, families_json
+        assets_json, search_text, families_json, search_aliases
       ) VALUES (
         ${sqlValue(character.id)},
         ${sqlValue(character.name)},
@@ -342,7 +355,8 @@ export function createSqlSeed(characters, ships, manifest) {
         ${sqlValue(JSON.stringify(character.regionRelease ?? createEmptyRegionRelease()))},
         ${sqlValue(JSON.stringify(character.assets))},
         ${sqlValue(character.searchText)},
-        ${sqlValue(JSON.stringify(character.families ?? []))}
+        ${sqlValue(JSON.stringify(character.families ?? []))},
+        ${sqlValue(character.searchAliases ?? '')}
       );
     `);
 
@@ -377,6 +391,23 @@ export function createSqlSeed(characters, ships, manifest) {
       statements.push(`
         INSERT INTO character_drops (character_id, sources_json)
         VALUES (${sqlValue(character.id)}, ${sqlValue(JSON.stringify(dropSources))});
+      `);
+    }
+
+    const acquisition = {
+      flags: character.acquisition?.flags ?? [],
+      shops: character.acquisition?.shops ?? [],
+      banners: character.acquisition?.banners ?? [],
+    };
+
+    if (
+      acquisition.flags.length > 0 ||
+      acquisition.shops.length > 0 ||
+      acquisition.banners.length > 0
+    ) {
+      statements.push(`
+        INSERT INTO character_acquisition (character_id, sources_json)
+        VALUES (${sqlValue(character.id)}, ${sqlValue(JSON.stringify(acquisition))});
       `);
     }
 

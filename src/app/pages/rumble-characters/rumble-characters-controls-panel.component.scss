@@ -18,6 +18,8 @@
 .quick-filter {
   position: relative;
   display: grid;
+  /* A select sizes itself to its selected text; this column may shrink, so all six roles cannot widen the filter. */
+  grid-template-columns: minmax(0, 1fr);
   flex: 1 1 170px;
   gap: 6px;
   min-width: 160px;

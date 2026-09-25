@@ -47,11 +47,6 @@ const EXECUTABLE =
  * is deleted - the register and the importer may not disagree.
  */
 export const UNREAD_UPSTREAM_FILES = Object.freeze({
-  'aliases.js': {
-    status: 'pending',
-    reason:
-      'Adopted by 869f63gm1 (search by the names players use), whose importer change was open and unmerged when this row was written.',
-  },
   'altspecials.js': { status: 'deliberately-unread', reason: EXECUTABLE },
   'availableClasses.js': {
     status: 'never-evaluated',
@@ -60,11 +55,6 @@ export const UNREAD_UPSTREAM_FILES = Object.freeze({
   'availableTags.js': {
     status: 'never-evaluated',
     reason: null,
-  },
-  'banners.js': {
-    status: 'pending',
-    reason:
-      'Adopted by 869f63gm1 (how to get a unit: the friend point banner), whose importer change was open and unmerged when this row was written.',
   },
   'capspecials.js': { status: 'deliberately-unread', reason: EXECUTABLE },
   'captains.js': { status: 'deliberately-unread', reason: EXECUTABLE },
@@ -106,11 +96,6 @@ export const UNREAD_UPSTREAM_FILES = Object.freeze({
       'Tooling: the JSON Schema upstream validates rumble.json against. It describes a file the importer reads and holds no data itself.',
   },
   'sailors.js': { status: 'deliberately-unread', reason: EXECUTABLE },
-  'shops.js': {
-    status: 'pending',
-    reason:
-      'Adopted by 869f63gm1 (how to get a unit: the shops that sell it), whose importer change was open and unmerged when this row was written.',
-  },
   'specials.js': { status: 'deliberately-unread', reason: EXECUTABLE },
   'zombies.js': {
     status: 'never-evaluated',

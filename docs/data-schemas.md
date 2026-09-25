@@ -7,7 +7,7 @@ This document records the canonical local data shapes used by OPTC Team Builder.
 The importer writes these files:
 
 - `optc-manifest.json`: dataset metadata, counts, schema version, source version, the upstream repository and commit the data was read at (`sourceRepository`, `sourceCommit`), and offline pack summaries.
-- `optc-seed.sql`: SQLite seed containing `characters`, `character_details`, `character_evolutions`, `character_drops`, `character_forms`, `ships`, and `meta`. The source of truth for the dataset; the app only executes it as a fallback. **Every table, column, type and row count is generated from it into [dataset-schema.json](dataset-schema.json)** by `npm run dataset:schema` (869f138qt) - this page documents the application shapes those rows become, that file documents the rows.
+- `optc-seed.sql`: SQLite seed containing `characters`, `character_details`, `character_evolutions`, `character_drops`, `character_acquisition`, `character_forms`, `ships`, and `meta`. The source of truth for the dataset; the app only executes it as a fallback. **Every table, column, type and row count is generated from it into [dataset-schema.json](dataset-schema.json)** by `npm run dataset:schema` (869f138qt) - this page documents the application shapes those rows become, that file documents the rows.
 - `optc-seed.sqlite.gz` (build output, not committed): the same rows as a gzipped SQLite database, built from `optc-seed.sql` by `npm run dataset:binary` before every build. This is what the app downloads and opens - see [dataset-delivery.md](dataset-delivery.md).
 - `optc-auto-builder-abilities.json`: ability catalog consumed by Auto Team Builder filters and saved enemy requirements. Written minified, and an index over `character_details` rather than a second set of facts - see [The catalogue is an index over the database](#the-catalogue-is-an-index-over-the-database--869f138qm).
 - `optc-unresolved-images.json`: characters that still need image coverage for the installed offline packs. Read by scripts only; not shipped.
@@ -36,6 +36,8 @@ Character rows are normalized from upstream unit/detail data plus manual overlay
 - `name`, `type`, `classes`, stars/cost/combo, stats, assets, and search text are stored on the list record
 - full ability and advanced metadata are stored in `detail_json`
 - `families` (the `families_json` column) is upstream's `common/data/families.js` list of the character(s) on each card, and decides which cards are the same character - the duplicate-character rule in `src/app/core/grammar/same-character-keys.ts` (869f63grj). `[]` means upstream names no family for the unit
+- `searchAliases` (the `search_aliases` column, 869f63gkm) is the names players use for the unit, from upstream's `common/data/aliases.js`: community nicknames and the French names, **Latin script only** (the Japanese names cost about three times the bytes, for names this app's players rarely type), lower-cased and space-separated, leaving out any the unit's search text or a longer alias already contains. Every character search reads it after the search text, through `normalizeCharacterSearchText` - the SQL clause is `optc_search_text(c.search_text || ' ' || c.search_aliases)` - and nothing displays it. It is a column of its own, not part of `search_text`, because the builders read `search_text` for more than search (super-criteria and name keys, the VS check) and must not see community names. `''` for a unit with none and for a manually added one; a manual character's own `searchAliases` still go into its search text, as before
+- the Character screen's **Getting and improving this unit** section reads three tables, loaded for one character on demand: `character_evolutions` (both directions), `character_drops` (the stages it drops from) and `character_acquisition` (869f63gm1: `{ "flags", "shops", "banners" }` - the `flags.js` acquisition keys `rr`, `lrr` and its kind `tmlrr`/`kclrr`/`pflrr`/`slrr`/`superlrr`/`annilrr`, `promo`, `special` (Login Bonus), `shop` and `tmshop`; the `shops.js` lists that sell the unit; the `banners.js` list that pulls it, `FP`). A unit none of them names has no row, which means "nothing recorded", never "not obtainable": the section's "How to get it" card says only what upstream records and is omitted otherwise. A drop slot holds unit ids and nothing else - a unit's skull (`"1446-skull"`) and a score challenge's `challengeData` are not units, which 269 drop entries and all 863 unit-skull evolvers were until 869f63gm1; an evolver `"<id>-skull"` is kept as a token and shown as "Skull of <name>"
 - `forms` (the `character_forms` table, 869f63gv6) are a dual or VS unit's forms, from upstream's `<id>-<n>` keys in `units.js` - 414 rows for 207 units when this was written, two each. Each keeps its name, type, classes, combo and stats; the fields every form row leaves empty (stars, cost, sockets, level cap, EXP, growth) are dropped, and the import fails if one ever carries a value. The kept and dropped fields are generated into [Dataset Provenance](#dataset-provenance). A unit without forms has no `forms` at all. See [Dual and VS forms](#dual-and-vs-forms--869f63gv6) for how the app counts them
 - `partyConflictKeys` are keys derived from the card name. They decide "same character" only for a unit with no `families`; super-criteria and name matching in the Auto Team Builder, and the SEO pages' related characters, read them
 - `characterTags` drive tag filters and captain coverage requirements
@@ -243,7 +245,7 @@ data change is reviewed, not `git diff` on an index.
 The seed inserts 13,860 rows and every catalogue query, facet filter and picker search runs against
 them through sql.js. **The row count moves with every release that imports characters** — it read
 9,303 when this was first measured — so treat the heading as the order of magnitude, not a constant.
-Today: 4,622 characters, 4,622 detail rows, 2,928 evolutions, 1,621 drops, 66 ships and 1 meta row. Three questions were worth answering with numbers rather than instinct.
+Today: 4,622 characters, 4,622 detail rows, 2,928 evolutions, 1,423 drops, 3,743 acquisition rows, 66 ships and 1 meta row (1,621 drops until 869f63gm1 stopped reading skulls and score thresholds as units). Three questions were worth answering with numbers rather than instinct.
 
 **Is anything indexed?** No. The schema declares **zero** `CREATE INDEX` statements. The only index
 that exists is the one SQLite gives for free: `characters.id` and `character_details.character_id`
@@ -275,6 +277,14 @@ puts the search clause last and SQLite evaluates the terms in the order written:
 function ran on all 4,622 rows of a type-and-class search (5.4 ms); last, on the 310 the facets let
 through. A search with no other filter reaches most of the table and costs about 4.5 ms here -
 still a fraction of a frame, and no reason for an index.
+
+**869f63gkm, again: the community names ride in the same call.** The clause now reads
+`optc_search_text(c.search_text || ' ' || c.search_aliases)` - one text, so an alias and a name are
+compared by one rule in one function call per row, not two. Measured the same way on 2026-09-25, 20
+repeats, twice each: `searchAverageMs` **1.49-1.52 → 1.60-1.67**, `combinedAverageMs` **0.84 →
+0.92**, `filterAverageMs` unchanged at 0.62-0.64. The shipped database grew **+45,488 B gzip**
+(2,323,702 → 2,369,190): `search_aliases` +23,794 B and `character_acquisition` +22,968 B, less
+1,272 B for the drop and evolution rows that stopped listing skulls and score thresholds as units.
 
 **Where do they run?** All of them on the main thread, in `optc-repository.service.ts`. The app's
 three Web Workers exist for the long CPU passes — Auto Team Builder's search, its Rumble variant,
@@ -662,8 +672,9 @@ _Generated by `npm run dataset:provenance` from the importer itself. Do not edit
 | `region_json` | derived | Which regions the app found artwork for; an app-side fact, not an upstream one. |
 | `region_release_json` | upstream | `flags.js .global` |
 | `assets_json` | derived | Resolved image paths per region; an app-side fact, not an upstream one. |
-| `search_text` | derived | Built from name, type, classes and aliases by createCharacterSearchText. |
+| `search_text` | derived | Built from name, type, classes and the character tags by createCharacterSearchText (a manual character adds its id and its own search aliases). Upstream's community names are the separate search_aliases column. |
 | `families_json` | upstream | `families.js` |
+| `search_aliases` | upstream | `aliases.js, Latin script only` |
 
 A dual or VS unit's forms are rows of `character_forms`, read from units.js <id>-<n> keys, one per form of a dual or VS unit. What each form row keeps:
 

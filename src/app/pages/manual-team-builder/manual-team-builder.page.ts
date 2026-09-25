@@ -1846,7 +1846,8 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
         if (
           searchTerm &&
           !matchesCharacterSearchTerm(
-            `${character.searchText ?? ''} ${character.name} ${character.id}`,
+            // 869f63gkm. With the names players use for the unit, read by the same rule.
+            `${character.searchText ?? ''} ${character.searchAliases ?? ''} ${character.name} ${character.id}`,
             searchTerm,
           )
         ) {

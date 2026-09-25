@@ -6,6 +6,8 @@
 
 .filter-card {
   display: grid;
+  /* A select sizes itself to its selected text; this column may shrink, so a long list cannot widen the card. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
   min-width: 0;
   padding: 14px;
