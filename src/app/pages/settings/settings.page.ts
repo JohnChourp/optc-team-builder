@@ -38,7 +38,11 @@ import {
   InventoryCaptureImportService,
   type InventoryCapturePreview,
 } from '../../core/services/inventory-capture-import.service';
-import { OptcbxImportService } from '../../core/services/optcbx-import.service';
+import {
+  OPTCBX_IMPORT_I18N_SCOPE,
+  OptcbxImportError,
+  OptcbxImportService,
+} from '../../core/services/optcbx-import.service';
 import {
   RUNTIME_MEDIA_MAX_ENTRIES,
   readRuntimeMediaUrls,
@@ -1217,6 +1221,11 @@ export class SettingsPage implements OnInit {
   private resolveInventoryCaptureError(
     error: InventoryCaptureImportError | Error | unknown,
   ): string {
+    // Before the `key` check below: that key is in the `characters` scope, not this page's.
+    if (error instanceof OptcbxImportError) {
+      return this.reportOptcbxImportError(error);
+    }
+
     if (error && typeof error === 'object' && 'key' in error && typeof error.key === 'string') {
       return this.i18n.translate(error.key, undefined, 'settings');
     }
@@ -1729,6 +1738,11 @@ export class SettingsPage implements OnInit {
   }
 
   private resolveAllDataImportError(error: unknown): string {
+    // A favourites file picked here reaches the OPTCbx parser; its key is not in this page's scope.
+    if (error instanceof OptcbxImportError) {
+      return this.reportOptcbxImportError(error);
+    }
+
     if (error && typeof error === 'object' && 'key' in error && typeof error.key === 'string') {
       return this.i18n.translate(error.key, undefined, 'settings');
     }
@@ -1858,11 +1872,29 @@ export class SettingsPage implements OnInit {
   }
 
   private resolveFavoritesImportError(error: unknown): string {
+    if (error instanceof OptcbxImportError) {
+      return this.reportOptcbxImportError(error);
+    }
+
     if (error instanceof Error && error.message.trim().length > 0) {
       return error.message;
     }
 
     return this.i18n.translate('import.errors.generic', undefined, 'characters');
+  }
+
+  /**
+   * 869f6td63. What a file the OPTCbx parser turned down owes the reader: its reason, in their
+   * language, with what to do.
+   *
+   * Three imports on this page reach that parser - Favorites, Import all data and the inventory
+   * capture - and each showed its English message as it was. Those words are kept in Recent
+   * problems below, the one place they are shown.
+   */
+  private reportOptcbxImportError(error: OptcbxImportError): string {
+    this.errorLog.record('import', error.name, error.message);
+
+    return this.i18n.translate(error.key, error.parameters, OPTCBX_IMPORT_I18N_SCOPE);
   }
 
   private async importFavoriteShips(file: File): Promise<void> {

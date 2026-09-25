@@ -495,7 +495,8 @@
       "kind": {
         "angular": "in a screen",
         "window": "in the page",
-        "rejection": "in a background task"
+        "rejection": "in a background task",
+        "import": "in a file import"
       },
       "privacy": "This list never leaves your device on its own. The diagnostics file above carries these entries without their text.",
       "show": "Show",
