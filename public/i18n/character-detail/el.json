@@ -11,7 +11,8 @@
     "resetOverride": "Επαναφορά τοπικών αλλαγών",
     "savedTeamCount": "Σε {{count}} από τις αποθηκευμένες ομάδες σου",
     "seeCaptainBoosts": "Δες ποιους ενισχύει αυτός ο Captain",
-    "summary": "Κόστος {{cost}} • {{stars}}★ unit"
+    "summary": "Κόστος {{cost}} • {{stars}}★ unit",
+    "supportOnly": "Μόνο για Support: αυτός ο χαρακτήρας μπαίνει μόνο σε Support slot, ποτέ στο πλήρωμα."
   },
   "fields": {
     "captainNotes": "Σημειώσεις Captain",
@@ -105,6 +106,7 @@
     "socketSlots": "Θέσεις για sockets",
     "specialCooldown": "Cooldown του special (από βασικό σε max)",
     "evolvesFrom": "Προέρχεται από",
+    "sameCaptainAbility": "Ίδιο Captain Ability · cost {{cost}}",
     "evolvesInto": "Εξελίσσεται σε, και τι κοστίζει",
     "dropsFrom": "Πέφτει από"
   },

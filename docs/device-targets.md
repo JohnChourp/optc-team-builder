@@ -26,7 +26,7 @@ Three link classes stay below the floor, deliberately and by name:
 
 | Selector | Size | Why |
 | --- | :-: | --- |
-| `.app-legal-nav__link` | ~41×12 | Privacy / Cookies / Terms, in the persistent footer bar |
+| `.app-legal-nav__link` | ~52×14 | Privacy / Cookies / Terms, in the persistent footer bar |
 | `.app-credit-badge` | 170×9 | the version and credit line, same bar |
 | `.policy-link` | ~150×20 | inline inside a sentence on Settings |
 
@@ -36,6 +36,15 @@ a permanent **+16px** of chrome, on every screen, to enlarge three links a reade
 rarely. Expanding the hit area instead is *worse*: the box would extend upward over page
 content — `document.elementFromPoint` directly above the bar returns a character image —
 so it would steal taps from the thing the reader is actually using.
+
+**Since 869f63gnc (2026-09-25) the links are readable, and the bar wraps.** They were 9px
+(`0.56rem`) on a row that scrolled sideways behind a hidden scrollbar, so at a 200% system
+text size Cookies and Terms left the screen with nothing to show it. They are 12px
+(`0.75rem`) now, and the row wraps instead: at the default text size it is still one ~28px
+line on phones from about 363px wide, and two lines (~41px) on a 360px phone or at a larger
+text size. The reasoning above is unchanged — the bar grows only when its text needs the
+room — and `--app-footer-bar-height` follows the measured bar, so the floating banners that
+sit on top of it never cover it.
 
 `.policy-link` is the textbook case of WCAG 2.5.8's own inline exemption: *a target in a
 sentence, constrained by the line-height of non-target text*.

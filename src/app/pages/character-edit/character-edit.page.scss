@@ -10,6 +10,16 @@
   gap: 1rem;
 }
 
+// 869f6td0f. `.glass-card` has no padding, and no card on this screen had any: the text touched
+// the border. The value is the image cards' own, and the loading card no longer needs another
+// page's stylesheet to be padded.
+.editor-card,
+.intro-card,
+.feedback-card,
+.loading-card {
+  padding: 1rem;
+}
+
 .form-grid {
   display: grid;
   gap: 0.9rem;
@@ -103,6 +113,13 @@
   .intro-card,
   .feedback-card {
     gap: 0.85rem;
+  }
+
+  .editor-card,
+  .intro-card,
+  .feedback-card,
+  .loading-card {
+    padding: 0.85rem;
   }
 
   .image-card {

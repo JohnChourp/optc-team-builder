@@ -1,5 +1,10 @@
 import type { Database, SqlJsStatic } from 'sql.js';
 
+import {
+  CHARACTER_SEARCH_TEXT_SQL_FUNCTION,
+  normalizeCharacterSearchText,
+} from '../grammar/character-search-text';
+
 /*
  * 869f138q7. How the app gets its database.
  *
@@ -224,7 +229,7 @@ export async function loadDatasetDatabase(
     const database = await openDatabaseFile(dependencies, dependencies.decompressionStream);
 
     if (database) {
-      return { database, source: 'database-file' };
+      return { database: registerDatasetSqlFunctions(database), source: 'database-file' };
     }
   } else {
     dependencies.warn(
@@ -233,7 +238,28 @@ export async function loadDatasetDatabase(
     );
   }
 
-  return { database: await buildDatabaseFromSeed(dependencies), source: 'seed-statements' };
+  return {
+    database: registerDatasetSqlFunctions(await buildDatabaseFromSeed(dependencies)),
+    source: 'seed-statements',
+  };
+}
+
+/**
+ * 869f63gkm. The app's own SQL functions, on whichever path built the database.
+ *
+ * A function registered on one path only would work on every visit that took it and fail with
+ * "no such function" on the other - and the fallback path is exactly the one nobody tries by hand.
+ * So both returns above go through here, and nothing else hands a database out.
+ *
+ * `optc_search_text` is `normalizeCharacterSearchText`, so the repository's `LIKE` compares words
+ * the same way every in-memory search does.
+ */
+function registerDatasetSqlFunctions(database: Database): Database {
+  database.create_function(CHARACTER_SEARCH_TEXT_SQL_FUNCTION, (value) =>
+    normalizeCharacterSearchText(typeof value === 'string' ? value : String(value ?? '')),
+  );
+
+  return database;
 }
 
 async function openDatabaseFile(

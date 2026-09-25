@@ -7,9 +7,11 @@
   gap: 10px;
 }
 
+// `.glass-card` has no padding, so each card brings its own (869f6td0f added Recently viewed).
 .catalog-summary,
 .controls-card,
-.loading-card {
+.loading-card,
+.recents-card {
   padding: 12px;
 }
 

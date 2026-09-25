@@ -101,6 +101,27 @@ describe('measureDataset', () => {
     expect(measured.charactersWithNoClasses).toBe(0);
   });
 
+  it('counts a Support-only character only when all three facts hold', async () => {
+    /*
+     * 869f6td4p. Support data, no Captain Ability and no special - each of the other three rows
+     * breaks exactly one of those, so a census that dropped any condition would count it.
+     */
+    const detail = (id: number, fields: Record<string, unknown>) =>
+      `INSERT INTO character_details (character_id, detail_json)\n      VALUES (${id}, '${JSON.stringify({ characterId: id, captainAbility: null, captainAbilityVariants: [], specialText: null, supportData: [], ...fields })}');`;
+    const support = [{ supportedCharactersText: 'Blade', levelDescriptions: ['Reduces Poison.'] }];
+    const appRoot = await makeAppRoot({
+      seed: [
+        SEED,
+        detail(1, { supportData: support }),
+        detail(2, { supportData: support, captainAbility: 'Boosts ATK of all characters by 2x' }),
+        detail(3, { supportData: support, specialText: 'Deals 5x damage' }),
+        detail(4, { captainAbilityVariants: [{ key: 'captain', label: 'Captain Ability', text: '' }] }),
+      ].join('\n'),
+    });
+
+    expect(measureDataset({ appRoot }).supportOnlyCharacters).toBe(1);
+  });
+
   it('flattens nested metrics to the dotted names a marker uses', () => {
     expect(flattenMeasurements({ a: 1, b: { c: 2 }, note: 'skip' })).toEqual({ a: 1, 'b.c': 2 });
   });
