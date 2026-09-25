@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 
+import { execFile } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { copyFile, mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { promisify } from 'node:util';
 import vm from 'node:vm';
 
 import {
@@ -98,8 +100,25 @@ export const dataImportSources = Object.freeze({
     rawBaseUrl: 'https://raw.githubusercontent.com/optc-db/optc-db.github.io/master',
     githubApiBase: 'https://api.github.com/repos/optc-db/optc-db.github.io',
     ref: 'master',
+    /*
+     * 869f63gtc. Both sources report `window.dbVersion = 36` - `version.js` has not changed since
+     * 2016-05-23 in either - so the version label cannot tell them apart, and an import from this
+     * one would roll the dataset back two years under the same label. `parseArgs` refuses it unless
+     * `--allow-stale-source` says the stale data is really wanted.
+     */
+    stale: Object.freeze({
+      since: '2024-08-14',
+      reason:
+        'optc-db/optc-db.github.io stopped changing on 2024-08-14 while 2Shankz/optc-db.github.io is live, and both report dbVersion 36, so an import from it would roll the dataset back two years under the same version label.',
+    }),
   }),
 });
+
+/** 869f63gtc. The one flag that lets a stale source through `parseArgs`. */
+export const STALE_SOURCE_FLAG = '--allow-stale-source';
+
+const COMMIT_SHA_PATTERN = /^[0-9a-f]{40}$/u;
+const execFileAsync = promisify(execFile);
 
 export const packDefinitions = [
   {
@@ -155,6 +174,100 @@ export function buildSourceFileUrl(source, relativePath) {
   return `${source.rawBaseUrl}/${relativePath}`;
 }
 
+/**
+ * 869f63gtc. A branch name moves; a commit does not. The importer resolves the source's branch to
+ * the commit it points at when the import starts, then reads EVERY file - the data files, the
+ * version file, the image listings - at that commit, so the files agree with each other and with the
+ * commit the manifest records, even when upstream pushes in the middle of an import.
+ */
+export function pinImportSourceToCommit(source, commit) {
+  if (!COMMIT_SHA_PATTERN.test(String(commit ?? ''))) {
+    throw new Error(
+      `Cannot pin ${source.repository} to "${commit}": expected a full 40-character commit sha.`,
+    );
+  }
+
+  return Object.freeze({
+    ...source,
+    ref: commit,
+    commit,
+    rawBaseUrl: `https://raw.githubusercontent.com/${source.repository}/${commit}`,
+  });
+}
+
+export function buildSourceCommitUrl(source, ref = source.ref) {
+  return `${source.githubApiBase}/commits/${encodeURIComponent(ref)}`;
+}
+
+async function listRemoteRefWithGit(source, ref) {
+  const { stdout } = await execFileAsync(
+    'git',
+    [
+      'ls-remote',
+      `https://github.com/${source.repository}.git`,
+      `refs/heads/${ref}`,
+      `refs/tags/${ref}`,
+    ],
+    { timeout: 30_000 },
+  );
+
+  return String(stdout).trim().split(/\s+/u)[0] ?? '';
+}
+
+/**
+ * 869f63gtc. The commit `ref` names in the source repository right now, or an error - never a
+ * guess. The GitHub API answers first; `git ls-remote` answers when the API cannot (its
+ * unauthenticated budget is 60 requests an hour, and the image listings spend six of them), because
+ * it does not count against that budget. With neither, the import stops: it records the commit it
+ * read, so it does not run without one.
+ */
+export async function resolveSourceCommit(
+  source,
+  { ref = source.ref, fetchImpl = fetch, listRemoteRef = listRemoteRefWithGit } = {},
+) {
+  if (COMMIT_SHA_PATTERN.test(ref)) {
+    return ref;
+  }
+
+  const failures = [];
+
+  try {
+    const response = await fetchImpl(buildSourceCommitUrl(source, ref), {
+      headers: { ...buildGithubRequestHeaders(), Accept: 'application/vnd.github.sha' },
+    });
+
+    if (response.ok) {
+      const sha = String(await response.text()).trim();
+
+      if (COMMIT_SHA_PATTERN.test(sha)) {
+        return sha;
+      }
+
+      failures.push(`the GitHub API answered "${sha.slice(0, 60)}", not a commit`);
+    } else {
+      failures.push(`the GitHub API answered ${response.status}`);
+    }
+  } catch (error) {
+    failures.push(`the GitHub API failed (${error?.message ?? error})`);
+  }
+
+  try {
+    const sha = String(await listRemoteRef(source, ref)).trim();
+
+    if (COMMIT_SHA_PATTERN.test(sha)) {
+      return sha;
+    }
+
+    failures.push(`git ls-remote found no branch or tag "${ref}"`);
+  } catch (error) {
+    failures.push(`git ls-remote failed (${error?.message ?? error})`);
+  }
+
+  throw new Error(
+    `Could not resolve ${source.repository}@${ref} to a commit: ${failures.join('; ')}. The import records the commit it read, so it does not run without one.`,
+  );
+}
+
 export function buildPackListingUrl(source, pack) {
   return `${source.githubApiBase}/contents/${pack.listingPath}?ref=${source.ref}`;
 }
@@ -168,6 +281,12 @@ export function parseArgs(args = process.argv.slice(2)) {
   const defaults = {
     downloadImages: 'none',
     source: '2shankz',
+    /*
+     * 869f63gtc. `--ref=<branch, tag or commit>` reads the source at that point instead of its
+     * branch head - the way to rebuild a dataset from the commit its manifest records.
+     */
+    ref: null,
+    allowStaleSource: false,
   };
 
   for (const arg of args) {
@@ -178,10 +297,27 @@ export function parseArgs(args = process.argv.slice(2)) {
 
     if (arg.startsWith('--source=')) {
       defaults.source = arg.split('=')[1];
+      continue;
+    }
+
+    if (arg.startsWith('--ref=')) {
+      defaults.ref = arg.slice('--ref='.length).trim() || null;
+      continue;
+    }
+
+    if (arg === STALE_SOURCE_FLAG) {
+      defaults.allowStaleSource = true;
     }
   }
 
-  resolveImportSource(defaults.source);
+  const source = resolveImportSource(defaults.source);
+
+  if (source.stale && !defaults.allowStaleSource) {
+    throw new Error(
+      `Refusing --source=${source.key}: ${source.stale.reason} Pass ${STALE_SOURCE_FLAG} if the stale data is really intended.`,
+    );
+  }
+
   return defaults;
 }
 
@@ -1612,15 +1748,26 @@ async function hashFile(targetPath) {
 }
 
 async function main() {
-  const { downloadImages, source: sourceKey } = parseArgs();
-  const selectedSource = resolveImportSource(sourceKey);
+  const { downloadImages, source: sourceKey, ref, allowStaleSource } = parseArgs();
+  const requestedSource = resolveImportSource(sourceKey);
+
+  if (requestedSource.stale && allowStaleSource) {
+    console.warn(
+      `[import-optc-data] WARNING: importing from a STALE source, as ${STALE_SOURCE_FLAG} asked. ${requestedSource.stale.reason}`,
+    );
+  }
+
+  /* 869f63gtc. Every file below is read at this one commit, and the manifest records it. */
+  const requestedRef = ref ?? requestedSource.ref;
+  const sourceCommit = await resolveSourceCommit(requestedSource, { ref: requestedRef });
+  const selectedSource = pinImportSourceToCommit(requestedSource, sourceCommit);
 
   await mkdir(dataDir, { recursive: true });
   await mkdir(offlineDir, { recursive: true });
   await mkdir(exactImagesDir, { recursive: true });
 
   console.log(
-    `Import source: ${selectedSource.label} (${selectedSource.repository}@${selectedSource.ref}).`,
+    `Import source: ${selectedSource.label} (${selectedSource.repository}@${requestedRef}, commit ${sourceCommit}).`,
   );
 
   const [
@@ -1807,6 +1954,7 @@ async function main() {
     sourceVersion,
     packStatuses,
     new Date().toISOString(),
+    { repository: selectedSource.repository, commit: sourceCommit },
   );
   const unresolvedCatalog = createUnresolvedCatalog(
     characters,
@@ -1858,7 +2006,7 @@ async function main() {
 
   if (keptGeneratedAt) {
     console.log(
-      `Dataset unchanged: generatedAt stays ${keptGeneratedAt} and the generated files are byte-identical, so installed clients download nothing.`,
+      `Dataset unchanged: generatedAt stays ${keptGeneratedAt}, the recorded source commit stays the one the data last changed at, and the generated files are byte-identical, so installed clients download nothing.`,
     );
   }
 

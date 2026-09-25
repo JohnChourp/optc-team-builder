@@ -115,12 +115,20 @@ Command status: manual/illustrative.
 npm run data:import:all
 ```
 
-Import everything from the upstream `optc-db` source instead of the default `2shankz` source:
+Every import resolves the source's `master` to a commit when it starts, reads every file at that one commit, and records both in `optc-manifest.json` as `sourceRepository` and `sourceCommit`. To rebuild a dataset from the commit its manifest records, pass that commit back with `--ref` (a branch or tag works too):
 
 Command status: manual/illustrative.
 <!-- docs-command: manual/illustrative -->
 ```bash
-npm run data:import:all -- --source=optc-db
+npm run data:import:all -- --ref=80610c7bb152f0aebe910a29a6904c54169971e4
+```
+
+The importer refuses `--source=optc-db`, the original `optc-db/optc-db.github.io`: its data stopped changing on 2024-08-14, and it reports the same `dbVersion 36` as the live `2shankz` source, so an import from it would roll the dataset back two years under the same version label. Pass `--allow-stale-source` only when that is really intended; the manifest then names the stale repository:
+
+Command status: manual/illustrative.
+<!-- docs-command: manual/illustrative -->
+```bash
+npm run data:import:all -- --source=optc-db --allow-stale-source
 ```
 
 The one-shot command above already includes every supported image pack. The lower-level single-pack modes still exist only if you want them:
@@ -162,7 +170,7 @@ You can combine the source selector with any image download mode, for example:
 Command status: manual/illustrative.
 <!-- docs-command: manual/illustrative -->
 ```bash
-npm run data:import:all -- --source=optc-db --download-images=thumbnails
+npm run data:import:all -- --source=2shankz --download-images=thumbnails
 ```
 
 If GitHub responds with `403` while listing image packs, export `GITHUB_TOKEN` or `GH_TOKEN` before running any `--download-images=...` import mode:

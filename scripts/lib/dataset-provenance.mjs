@@ -62,7 +62,12 @@ const ANY_INSERT_COLUMNS_PATTERN = /INSERT INTO (\w+) \(\s*([\s\S]*?)\s*\)\s*VAL
  * reads is what the check exists to catch.
  */
 export const DERIVED_COLUMNS = Object.freeze({
-  id: 'The upstream row index plus one, used as the stable character id.',
+  /*
+   * 869f63gtc. This said "the upstream row index plus one", which was the rule for the array
+   * `units.js` once was. The live file is an object keyed by id: its keys have gaps below the
+   * highest id, and a key with a suffix is a form of the unit before the hyphen, not a unit.
+   */
+  id: 'The key of the upstream units.js entry, which is the unit id: units.js is an object keyed by id, with gaps below the highest id, so the id is never a position. A key with a suffix (1983-1, 1983-2) is a form of the unit before the hyphen and never becomes a character of its own. Only the legacy array format used the row index plus one.',
   is_incomplete:
     'True when a MANUAL overlay character was added without full stats. Derived, never carried upstream, '
     + 'and set on no other path: the upstream importer always writes 0, so 0 of 4,622 shipped rows carry it '

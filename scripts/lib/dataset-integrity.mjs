@@ -177,6 +177,25 @@ function validateManifest(manifest, characters, ships, errors) {
     errors.push('manifest.sourceVersion is required.');
   }
 
+  /*
+   * 869f63gtc. Optional as a pair - a fixture or an older manifest carries neither - but never half
+   * a pair, and never a value that only looks recorded: a repository is `owner/name` and a commit is
+   * a full sha, because a short or empty one cannot be rebuilt from.
+   */
+  if ('sourceRepository' in manifest || 'sourceCommit' in manifest) {
+    if (!/^[\w.-]+\/[\w.-]+$/u.test(normalizeString(manifest.sourceRepository))) {
+      errors.push(
+        `manifest.sourceRepository must name an owner/repository, received ${String(manifest.sourceRepository)}.`,
+      );
+    }
+
+    if (!/^[0-9a-f]{40}$/u.test(normalizeString(manifest.sourceCommit))) {
+      errors.push(
+        `manifest.sourceCommit must be a full commit sha, received ${String(manifest.sourceCommit)}.`,
+      );
+    }
+  }
+
   assertCount('manifest.characterCount', manifest.characterCount, characters?.length ?? 0, errors);
   assertCount('manifest.shipCount', manifest.shipCount, ships?.length ?? 0, errors);
   assertCount(

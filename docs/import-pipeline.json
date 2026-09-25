@@ -27,8 +27,10 @@
     "normalizeCharacters",
     "normalizeShips",
     "parseArgs",
+    "pinImportSourceToCommit",
     "resolveCharacterIterationLimit",
-    "resolveImportSource"
+    "resolveImportSource",
+    "resolveSourceCommit"
   ],
   "dataFileCount": 14,
   "readerlessDataFileCount": 1,

@@ -132,11 +132,36 @@ function sqlValue(value) {
   return `'${escapeSql(value)}'`;
 }
 
-export function buildManifest(characters, ships, sourceVersion, packs, generatedAt) {
+/**
+ * 869f63gtc. Which upstream repository and commit the data was read from.
+ *
+ * `sourceVersion` cannot answer that: both candidate repositories report `dbVersion 36`, and their
+ * `version.js` has not changed since 2016-05-23. The importer passes both fields; the manual overlay
+ * reads them back out of the manifest it rebuilds and passes them on, so neither write drops them. A
+ * caller with neither writes neither, rather than a null that looks like a recorded answer.
+ */
+export function readManifestSourceProvenance(manifest) {
+  const repository =
+    typeof manifest?.sourceRepository === 'string' ? manifest.sourceRepository.trim() : '';
+  const commit = typeof manifest?.sourceCommit === 'string' ? manifest.sourceCommit.trim() : '';
+
+  return repository || commit ? { repository, commit } : null;
+}
+
+export function buildManifest(
+  characters,
+  ships,
+  sourceVersion,
+  packs,
+  generatedAt,
+  sourceProvenance = null,
+) {
   return {
     schemaVersion: DATASET_SCHEMA_VERSION,
     generatedAt,
     sourceVersion,
+    ...(sourceProvenance?.repository ? { sourceRepository: sourceProvenance.repository } : {}),
+    ...(sourceProvenance?.commit ? { sourceCommit: sourceProvenance.commit } : {}),
     characterCount: characters.length,
     detailCount: characters.filter(
       (character) => character.detail?.specialText || character.detail?.captainAbility,
@@ -491,6 +516,17 @@ export function readManifestGeneratedAt(manifestText) {
   }
 }
 
+/** 869f63gtc. The recorded upstream commit, or `null` when the manifest records none. */
+export function readManifestSourceCommit(manifestText) {
+  try {
+    const commit = JSON.parse(manifestText)?.sourceCommit;
+
+    return typeof commit === 'string' && /^[0-9a-f]{40}$/u.test(commit) ? commit : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * 869f138qb. Puts the previous files back when an import changed nothing but `generatedAt`.
  *
@@ -508,6 +544,13 @@ export function readManifestGeneratedAt(manifestText) {
  * Returns the timestamp that was kept, or `null` when the data really changed (or there was
  * nothing to compare against) and the new files stand. `generatedAt` therefore means "when this
  * data last changed".
+ *
+ * 869f63gtc. The upstream commit the manifest records moves on nearly every import too - upstream
+ * pushes filters, events and files the importer never reads - and the seed embeds the manifest, so
+ * a new commit alone would have made every client download the whole seed again. It is kept the
+ * same way: when the timestamp and the commit are the only differences, the previous files stand,
+ * and `sourceCommit` means "the commit this data last changed at" - which the new commit's data is
+ * byte-for-byte identical to. A different REPOSITORY is never substituted, so it always counts.
  */
 export async function keepGeneratedAtWhenOnlyTimestampChanged({ dataDir, previousFiles }) {
   const previousGeneratedAt = readManifestGeneratedAt(previousFiles.manifest);
@@ -523,9 +566,17 @@ export async function keepGeneratedAtWhenOnlyTimestampChanged({ dataDir, previou
     return null;
   }
 
+  const previousCommit = readManifestSourceCommit(previousFiles.manifest);
+  const currentCommit = readManifestSourceCommit(currentFiles.manifest);
+  const restorePrevious = (text) => {
+    const withPreviousTimestamp = text.split(currentGeneratedAt).join(previousGeneratedAt);
+
+    return previousCommit && currentCommit && previousCommit !== currentCommit
+      ? withPreviousTimestamp.split(currentCommit).join(previousCommit)
+      : withPreviousTimestamp;
+  };
   const onlyTheTimestampMoved = Object.keys(GENERATED_DATASET_FILES).every(
-    (key) =>
-      currentFiles[key].split(currentGeneratedAt).join(previousGeneratedAt) === previousFiles[key],
+    (key) => restorePrevious(currentFiles[key]) === previousFiles[key],
   );
 
   if (!onlyTheTimestampMoved) {

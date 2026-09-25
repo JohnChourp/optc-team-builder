@@ -20,6 +20,7 @@ import {
   generatedDatasetFilesMatch,
   parseJson,
   readGeneratedDatasetFiles,
+  readManifestSourceProvenance,
   writeGeneratedDatasetFiles,
 } from './optc-dataset.mjs';
 import {
@@ -62,10 +63,16 @@ export async function applyManualCharacterOverlay({
   ].sort((left, right) => left.id - right.id);
 
   const generatedAt = dataset.manifest.generatedAt;
+  /*
+   * 869f63gtc. The manifest is rebuilt here from the fields named below, so a field not named is
+   * dropped on this second write. The upstream repository and commit are read back and passed on.
+   */
+  const sourceProvenance = readManifestSourceProvenance(dataset.manifest);
   const provisionalOutputs = await buildGeneratedOutputs({
     characters: nextCharacters,
     ships: dataset.ships,
     sourceVersion: dataset.manifest.sourceVersion,
+    sourceProvenance,
     packs: dataset.manifest.packs,
     generatedAt,
     abilityCorrections,
@@ -90,6 +97,7 @@ export async function applyManualCharacterOverlay({
     characters: nextCharacters,
     ships: dataset.ships,
     sourceVersion: dataset.manifest.sourceVersion,
+    sourceProvenance,
     packs: dataset.manifest.packs,
     generatedAt: finalGeneratedAt,
     abilityCorrections,
@@ -121,6 +129,7 @@ async function buildGeneratedOutputs({
   characters,
   ships,
   sourceVersion,
+  sourceProvenance = null,
   packs,
   generatedAt,
   abilityCorrections,
@@ -131,7 +140,14 @@ async function buildGeneratedOutputs({
     abilityCorrections,
     logger,
   });
-  const manifest = buildManifest(nextCharacters, ships, sourceVersion, packs, generatedAt);
+  const manifest = buildManifest(
+    nextCharacters,
+    ships,
+    sourceVersion,
+    packs,
+    generatedAt,
+    sourceProvenance,
+  );
   const unresolvedCatalog = createUnresolvedCatalog(
     nextCharacters,
     manifest.packs,
