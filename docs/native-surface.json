@@ -26,9 +26,15 @@
         "build": "debug builds of #606 and #613",
         "what": "each fix recorded in webViewCapabilities, on the same emulator",
         "evidence": "optc-team-builder-brain/live-artifacts/869f6tcxz/AFTER-lane3-android-shell.md; optc-team-builder-brain/live-artifacts/869f63gp1/AFTER-lane3b-apk-data-out.md"
+      },
+      {
+        "date": "2026-09-25",
+        "build": "the published v0.7.0 APK, the first to carry #606 and #613",
+        "what": "installed as an update over the published v0.6.5 (same signing certificate), launched with 0 crash lines across 11,298 logcat lines, rendered portraits and named 0.7.0 (206); and each fix in webViewCapabilities on it: both system bars rgb(7, 11, 23) where v0.6.5 showed rgb(250, 250, 250), Export all data through the share sheet, back on Home to the launcher, and no sign-in offered",
+        "evidence": "optc-team-builder-brain/audits/2026-09-25-wave-11-implementation.md; optc-team-builder-brain/live-artifacts/869f6tcxz/release-0.7.0/RELEASE-v0.7.0-emulator.md"
       }
     ],
-    "notYetProven": "As of 2026-09-25 no published APK carries #606 or #613 - the next release's is the first. Every release's published APK is installed on the emulator before it is called done (optc-team-builder-brain/CLAUDE.md), and that pass is what proves them on a build players get."
+    "notYetProven": "As of 2026-09-25 every difference in webViewCapabilities is proven on a published APK (v0.7.0) on the emulator; none has been seen on a phone. A later change to one of them is unproven until the published APK of the release that carries it passes the same emulator pass (optc-team-builder-brain/CLAUDE.md)."
   },
   "capacitor": {
     "appId": "com.john.optcteambuilder",
