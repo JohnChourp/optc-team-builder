@@ -23,7 +23,7 @@
     "",
     "Baseline measured 2026-09-15 against v0.4.48."
   ],
-  "measuredOn": "2026-09-15",
+  "measuredOn": "2026-09-24",
   "notOverlays": [
     "component-style-budget-baseline.json",
     "i18n-untranslated-register.json",
@@ -104,11 +104,19 @@
     {
       "file": "party-conflict-overrides.json",
       "kind": "correction",
-      "appliedBy": "scripts/import-optc-data.mjs and src/app/core/services/character-party-conflict-keys.utils.ts",
-      "why": "Conflict keys are derived from a character's name, and a name the derivation reads wrong produces a unit that does not conflict with itself, or conflicts with the wrong character.",
-      "removeWhen": "The derivation produces the same key set from the shipped name unaided.",
-      "staleSignal": "The derivation util itself, which is TypeScript the app consumes. Re-implementing it here would create a second source of truth for the rule this overlay exists to patch, so it is checked by a unit test that calls the real util rather than by this script.",
-      "entryCount": 1
+      "appliedBy": "scripts/import-optc-data.mjs (the name keys it bakes into detail.partyConflictKeys), src/app/core/services/character-party-conflict-keys.utils.ts (the app) and scripts/check-published-teams.mjs (the published teams) - the last two through the one rule in src/app/core/grammar/same-character-keys.ts",
+      "why": "Hand-stated keys for a unit whose automatic answer names the wrong character. Since 869f63grj the same-character rule reads upstream's families.js first and the card name only where upstream names no family, so an entry here REPLACES a unit's families in that rule; the name keys that super-criteria and name matching read ADD it, as they always have.",
+      "removeWhen": "The unit's families.js entry (families_json in the shipped seed) gives the right character unaided - for #2179 and #3537, when upstream stops giving the Blackback family the name \"BB\" that the Blackbeard family also carries. #3574 is already right in families.js and stays only for the name keys, which read no families.",
+      "staleSignal": "families.js, as the importer stores it per unit. src/app/core/services/character-same-character-keys.spec.ts runs the real rule over the shipped seed and fails when an entry stops changing the answer, so this script does not re-implement the rule.",
+      "entryCount": 3,
+      "entries": {
+        "2179": "BB - Whale Forest Guardian is Blackback. families.js lists it as [\"Blackback\", \"BB\"], and \"BB\" is also in the Marshall D. Teach family, so matched by name it and #3537 would each be the same character as all 40 Blackbeard cards - 80 wrong pairs. Stated as Blackback alone.",
+        "3537": "Roddy & BB - Guardian Sulongs carries Roddy and Blackback, and has the same \"BB\" collision. Stated as Roddy and Blackback.",
+        "3574": "General Franky - Dream Docking carries Franky and Chopper, which its name does not say. families.js already agrees ([\"Franky\", \"Cutty Flam\", \"Tony Tony Chopper\"]) and the entry gives the same pairs; it stays for the name keys."
+      },
+      "handledWithoutEntry": {
+        "2993": "Gyukimaru is listed in families.js as the Onimaru family only, while every other Gyukimaru card is [\"Gyukimaru\", \"Onimaru\"]. Matching families by NAME keeps it with them through the shared \"Onimaru\" - the game's view, Gyukimaru being Onimaru - so it needs no entry. Matching by family identity would have split it off, which is one reason the rule matches names."
+      }
     },
     {
       "file": "crewmate-ability-definitions.json",

@@ -118,10 +118,9 @@ describe('AutoTeamBuilderRumbleService', () => {
     expect(JSON.stringify(normalized?.maxPassiveEffects)).not.toContain('Condition');
     expect(JSON.stringify(normalized?.maxSpecialEffects)).not.toContain('Range');
     expect(normalized?.baseResistances).toEqual(['70% chance to resist Paralysis']);
-    expect(normalized?.llbResistances).toEqual([
-      '100% chance to resist Paralysis',
-      '40% damage reduction from DEX enemies',
-    ]);
+    // 869f6td5p: every unit is scored before Level Limit Break, so the LLB line above is not read.
+    // What the engine does read is pinned in auto-team-builder-rumble-pre-llb.spec.ts.
+    expect(normalized).not.toHaveProperty('llbResistances');
   });
 
   it('returns five active slots and three bench slots when enough candidates exist', () => {

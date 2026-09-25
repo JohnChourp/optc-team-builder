@@ -51,6 +51,17 @@ const HP_MULTIPLIER_PATTERNS = [
   /their hp by (\d+(?:\.\d+)?)x/gi,
 ];
 
+/**
+ * 869f6td3n. The "of ..." part of a boost clause - "boosts ATK of Shooter characters by 1.6x" -
+ * which is the part the multiplier patterns above skip over, and the only place that says whose
+ * stats the ship boosts. The same words elsewhere in a description mean something else: White
+ * Tiger's "[PSY] and [INT] orbs" are orbs, and Queen Mama Chanter's "If your Captain is a
+ * Powerhouse or Driven character" is a Captain condition. Read from the whole text, both narrowed
+ * the scope to units that had to match them too, and six Shooters read "0/6 slots".
+ */
+const BOOST_SCOPE_PATTERN =
+  /boosts? (?:the )?(?:atk|hp)(?: and (?:atk|hp))? of ([^.]+?) (?:by|depending on)\b/gi;
+
 const UTILITY_SIGNAL_BUILDERS: Array<{
   label: string;
   pattern: RegExp;
@@ -183,12 +194,20 @@ function analyzeShipForResult(
   result: Pick<AutoBuildResult, 'slots' | 'input'>,
 ): ShipAnalysis {
   const description = ship.description.trim();
-  const scopedClasses = AUTO_TEAM_BUILDER_CLASSES.filter((characterClass) =>
-    new RegExp(`\\b${escapeRegExp(characterClass)}\\b`, 'i').test(description),
+  const boostScope = readShipScope(
+    [...description.matchAll(BOOST_SCOPE_PATTERN)].map((match) => match[1]).join(' '),
   );
-  const scopedTypes = AUTO_TEAM_BUILDER_TYPES.filter((type) =>
-    new RegExp(`\\b\\[?${type}\\]?\\b`, 'i').test(description),
-  );
+  /*
+   * A boost clause that names no class or type ("boosts ATK of all characters") keeps the
+   * whole-text reading. Those eight ships - Megalo, Germa 66, Nostra Castello and five more - name
+   * their classes or types in a Captain condition, a crew condition or a crew penalty, none of
+   * which this scorer models. Reading them the new way moved the recommended ship for 518 of 860
+   * sampled teams, mostly to Nostra Castello, whose ATK cut per Slasher, Free Spirit or Powerhouse
+   * it cannot see. That is a recommendation question of its own; this one is about ships whose
+   * boost clause names who they boost.
+   */
+  const { classes: scopedClasses, types: scopedTypes } =
+    boostScope.classes.length || boostScope.types.length ? boostScope : readShipScope(description);
   const costCapMatch = description.match(/(\d+)\s+cost or less/i);
   const costCap = costCapMatch ? Number(costCapMatch[1]) : null;
   const matchingSlots = result.slots.filter((slot) =>
@@ -299,6 +318,18 @@ function resolveMaxMultiplier(description: string, patterns: RegExp[]): number {
     pattern.lastIndex = 0;
     return nextMax;
   }, 0);
+}
+
+/** A plural counts: Polar Tang boosts "Slashers and Free Spirit characters". */
+function readShipScope(text: string): { classes: string[]; types: AutoTeamBuilderType[] } {
+  return {
+    classes: AUTO_TEAM_BUILDER_CLASSES.filter((characterClass) =>
+      new RegExp(`\\b${escapeRegExp(characterClass)}s?\\b`, 'i').test(text),
+    ),
+    types: AUTO_TEAM_BUILDER_TYPES.filter((type) =>
+      new RegExp(`\\b\\[?${type}\\]?\\b`, 'i').test(text),
+    ),
+  };
 }
 
 function doesShipMatchSlot(

@@ -1747,7 +1747,6 @@ function createSlot(
         maxSpecialEffects: ['damage • Amount 2,500 • fixed • 1 enemy'],
         maxSpecialCooldown: 35,
         baseResistances: ['70% chance to resist Paralysis'],
-        llbResistances: ['100% chance to resist Paralysis'],
         passiveEffects: [],
         specialEffects: [],
         roleTags: ['attacker'],

@@ -67,6 +67,13 @@ function needsReview(item: RecognitionPreviewSlotView, reviewed: ReadonlySet<str
   return item.slot.status === 'ambiguous' || item.slot.status === 'matched';
 }
 
+/** Order does not matter: a roster is the set of units a screenshot shows. */
+function isSameRoster(left: readonly number[], right: readonly number[]): boolean {
+  const rightIds = new Set(right);
+
+  return left.length === rightIds.size && left.every((characterId) => rightIds.has(characterId));
+}
+
 /** Lower sorts first. See `recognitionReviewSlots` for why this is not a plain confidence sort. */
 function reviewRank(item: RecognitionPreviewSlotView, reviewed: ReadonlySet<string>): number {
   if (reviewed.has(item.slot.slotKey)) {
@@ -496,6 +503,14 @@ export class CrewForgePage implements OnInit {
       return;
     }
 
+    /*
+     * 869f6td1j. The roster this build is FOR. Replace stays available while a build runs, and so
+     * does correcting a slot, so the screen can show another roster by the time the teams come
+     * back - and publishing them put teams made of the previous screenshot's units under the new
+     * one. A build whose roster is no longer on screen answers nothing, so it is dropped.
+     */
+    const rosterCharacterIds = this.recognizedRosterCharacterIds();
+
     this.building.set(true);
     this.results.set([]);
     this.errorMessage.set('');
@@ -504,7 +519,7 @@ export class CrewForgePage implements OnInit {
     try {
       const result = await this.autoTeamBuilder.buildRankedTeamsFromRoster(
         {
-          rosterCharacterIds: this.recognizedRosterCharacterIds(),
+          rosterCharacterIds,
           captainCharacterId: null,
           friendCaptainCharacterId: null,
           resultLimit: MAX_AUTO_BUILD_RANKED_RESULT_COUNT,
@@ -514,6 +529,10 @@ export class CrewForgePage implements OnInit {
           workerCount: this.userState.resolveAutoTeamBuilderWorkerCount(),
         },
       );
+
+      if (!isSameRoster(rosterCharacterIds, this.recognizedRosterCharacterIds())) {
+        return;
+      }
 
       this.results.set(result.results);
 

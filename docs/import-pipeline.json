@@ -108,11 +108,12 @@
       "name": "party-conflict-overrides.json",
       "readers": [
         "scripts/check-manual-overlay-register.mjs",
+        "scripts/check-published-teams.mjs",
         "scripts/ci-check-routing.mjs",
         "scripts/import-optc-data.mjs",
         "src/app/core/services/character-party-conflict-keys.utils.ts"
       ],
-      "readerCount": 4,
+      "readerCount": 5,
       "readerlessReason": null
     },
     {

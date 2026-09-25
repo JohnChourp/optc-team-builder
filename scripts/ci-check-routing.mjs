@@ -270,7 +270,7 @@ export const SCRIPT_SUITES = {
   'source-data': {
     label: 'Source data validation tests',
     command:
-      'npx vitest run scripts/lib/dataset-integrity.spec.ts scripts/lib/optc-dataset.spec.ts scripts/lib/manual-character-overlay.spec.ts scripts/lib/manual-character-apply.spec.ts scripts/lib/manual-character-prune.spec.ts scripts/lib/party-conflict-keys.spec.ts scripts/lib/rumble-data-normalizer.spec.ts scripts/lib/super-special-criteria.spec.ts scripts/upsert-manual-character.spec.ts scripts/check-dataset-spec-pins.spec.ts scripts/optc-upstream-progression.spec.ts && npm run dataset:spec-pins',
+      'npx vitest run scripts/lib/dataset-integrity.spec.ts scripts/lib/optc-dataset.spec.ts scripts/lib/manual-character-overlay.spec.ts scripts/lib/manual-character-apply.spec.ts scripts/lib/manual-character-prune.spec.ts scripts/lib/party-conflict-keys.spec.ts scripts/lib/rumble-data-normalizer.spec.ts scripts/lib/super-special-criteria.spec.ts scripts/upsert-manual-character.spec.ts scripts/check-dataset-spec-pins.spec.ts scripts/optc-upstream-progression.spec.ts scripts/import-optc-families.spec.ts && npm run dataset:spec-pins',
   },
   'perf-budget': {
     label: 'Performance budget script tests',
@@ -947,7 +947,8 @@ function isRouteSitemapCoveragePath(filePath) {
 function isPublishedTeamsPath(filePath) {
   return (
     filePath === 'scripts/check-published-teams.mjs' ||
-    filePath === 'scripts/check-published-teams.spec.ts'
+    filePath === 'scripts/check-published-teams.spec.ts' ||
+    filePath === 'scripts/check-published-teams-same-character.spec.ts'
   );
 }
 
@@ -1750,7 +1751,9 @@ function isSourceDataPath(filePath) {
      * parser over upstream shapes, beside `dataset-integrity` and `manual-character-apply`.
      */
     filePath === 'scripts/lib/optc-upstream-progression.mjs' ||
-    filePath === 'scripts/optc-upstream-progression.spec.ts'
+    filePath === 'scripts/optc-upstream-progression.spec.ts' ||
+    /* 869f63grj. The same kind of thing again: upstream's `families.js`, read into `families`. */
+    filePath === 'scripts/import-optc-families.spec.ts'
   );
 }
 

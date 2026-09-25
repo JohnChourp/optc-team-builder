@@ -193,6 +193,8 @@ async function loadCurrentDataset(seedPath, manifestPath) {
   const hasCooldownColumns = tableHasColumn(database, 'characters', 'special_cooldown_max');
   const hasEvolutionsTable = tableExists(database, 'character_evolutions');
   const hasDropsTable = tableExists(database, 'character_drops');
+  /* 869f63grj. The same round trip, for upstream's families - an older seed has no such column. */
+  const hasFamiliesColumn = tableHasColumn(database, 'characters', 'families_json');
   const characters = selectAll(
     database,
     `
@@ -234,6 +236,7 @@ async function loadCurrentDataset(seedPath, manifestPath) {
         c.region_release_json,
         c.assets_json,
         c.search_text,
+        ${hasFamiliesColumn ? 'c.families_json' : "'[]' AS families_json"},
         d.detail_json
       FROM characters c
       LEFT JOIN character_details d ON d.character_id = c.id
@@ -322,6 +325,7 @@ function hydrateCharacterRow(row) {
     regionArtwork: parseJson(row.region_json, createEmptyRegionArtwork()),
     regionRelease: parseJson(row.region_release_json, createEmptyRegionRelease()),
     assets: parseJson(row.assets_json, createEmptyAssets()),
+    families: parseJson(row.families_json, []),
     detail: parseJson(row.detail_json, createEmptyManualDetail(characterId)),
   };
 }
