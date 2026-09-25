@@ -107,6 +107,17 @@
         "tertiary": "Tertiary",
         "ignored": "Ignored"
       }
+    },
+    "avoid": {
+      "toggle": "Avoid style / type / class",
+      "support": {
+        "off": "For an Assault Rumble boss that punishes a style, type or class.",
+        "on": "Units with the styles, types and classes below are kept out of the team."
+      },
+      "styles": "Styles to avoid",
+      "stylesPlaceholder": "Select styles",
+      "types": "Types to avoid",
+      "classes": "Classes to avoid"
     }
   },
   "performance": {
@@ -158,7 +169,8 @@
     "strictTypesTitle": "No team matched the active only-selected filters",
     "hardFiltersCopy": "No full Rumble team could be built while keeping the active only-selected type/class filters.",
     "relaxedTitle": "Relaxed targets used",
-    "relaxedCopy": "The builder relaxed only the soft target values below to return a team."
+    "relaxedCopy": "The builder relaxed only the soft target values below to return a team.",
+    "avoidShortfall": "Avoiding {{values}} left out {{count}} units, too few for a full team. Avoid fewer to widen the pool."
   },
   "summary": {
     "eyebrow": "Team summary",

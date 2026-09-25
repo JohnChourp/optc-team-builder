@@ -48,6 +48,10 @@ import {
   createEmptyCharacterTagSetSelection,
   matchesCharacterTagSets,
 } from '../../core/services/character-tag-set.utils';
+import {
+  matchesCharacterSearchTerm,
+  toCharacterSearchTerm,
+} from '../../core/grammar/character-search-text';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
 import {
@@ -466,23 +470,24 @@ export class RumbleCharactersPage implements OnInit {
   }
 
   private matchesSearch(character: CharacterDetailRecord, reasonChips: string[]): boolean {
-    const searchTerm = this.searchTerm().trim().toLowerCase();
+    // 869f63gkm. Words rather than punctuation, as every character search reads them.
+    const searchTerm = toCharacterSearchTerm(this.searchTerm());
 
     if (!searchTerm) {
       return true;
     }
 
-    return [
-      character.id,
-      character.name,
-      character.searchText ?? '',
-      character.type,
-      ...character.classes,
-      ...reasonChips,
-    ]
-      .join(' ')
-      .toLowerCase()
-      .includes(searchTerm);
+    return matchesCharacterSearchTerm(
+      [
+        character.id,
+        character.name,
+        character.searchText ?? '',
+        character.type,
+        ...character.classes,
+        ...reasonChips,
+      ].join(' '),
+      searchTerm,
+    );
   }
 
   private resetVisiblePage(): void {

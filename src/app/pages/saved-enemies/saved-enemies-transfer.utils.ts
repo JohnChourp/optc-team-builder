@@ -4,6 +4,10 @@ import {
   normalizeAbilityRequirementEffectValue,
   normalizeAbilityRequirementSourceScope,
 } from "../../core/models/auto-team-builder-ability.models";
+import {
+  normalizeAvoidPreferRules,
+  toSparseAvoidPreferFields,
+} from "../../core/services/auto-team-builder-avoid-prefer.utils";
 import { cloneBattleRequirements } from "../../core/services/auto-team-builder-battle.utils";
 import { cloneRequiredCharacterGroups } from "../../core/services/required-character-groups.utils";
 import {
@@ -315,6 +319,10 @@ function cloneSavedEnemy(enemy: SavedEnemy): SavedEnemy {
       responseTags: [...mechanic.responseTags],
       conditionTags: [...mechanic.conditionTags],
     })),
+    ...(enemy.avoidedTypes ? { avoidedTypes: [...enemy.avoidedTypes] } : {}),
+    ...(enemy.avoidedClasses ? { avoidedClasses: [...enemy.avoidedClasses] } : {}),
+    ...(enemy.preferredTypes ? { preferredTypes: [...enemy.preferredTypes] } : {}),
+    ...(enemy.preferredClasses ? { preferredClasses: [...enemy.preferredClasses] } : {}),
     ...(enemy.associatedTeamIds?.length
       ? { associatedTeamIds: [...enemy.associatedTeamIds] }
       : {}),
@@ -432,6 +440,7 @@ export function parseSavedEnemiesImportPayloadValue(
           requireAllSelectedCharacterNamesInTeam: Boolean(
             enemy["requireAllSelectedCharacterNamesInTeam"],
           ),
+          ...toSparseAvoidPreferFields(normalizeAvoidPreferRules(enemy)),
           associatedTeamIds: normalizeAssociatedTeamIds(enemy["associatedTeamIds"]),
           createdAt: exportedAt,
           updatedAt: exportedAt,
@@ -532,6 +541,8 @@ export function sanitizeSavedEnemiesImportPayload(
       requireAllSelectedCharacterNamesInTeam: Boolean(
         enemy["requireAllSelectedCharacterNamesInTeam"],
       ),
+      // 869f63gma. Sparse, as storage writes them: a file without a rule imports without one.
+      ...toSparseAvoidPreferFields(normalizeAvoidPreferRules(enemy)),
       associatedTeamIds: normalizeAssociatedTeamIds(enemy["associatedTeamIds"]),
       createdAt: normalizeTimestamp(enemy["createdAt"], fallbackTimestamp),
       updatedAt: normalizeTimestamp(enemy["updatedAt"], fallbackTimestamp),

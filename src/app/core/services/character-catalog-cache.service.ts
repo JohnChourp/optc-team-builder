@@ -11,6 +11,11 @@ import {
   matchesCharacterFacet,
   normalizeCharacterFacetSelection,
 } from './character-facet-filter.utils';
+import { compareCharacterNamesNoCase } from './character-name-order.utils';
+import {
+  normalizeCharacterSearchText,
+  toCharacterSearchTerm,
+} from '../grammar/character-search-text';
 import { CharacterOverridesService } from './character-overrides.service';
 import { OptcRepositoryService } from './optc-repository.service';
 import {
@@ -61,8 +66,12 @@ export class CharacterCatalogCacheService {
         );
         this.searchIndex.clear();
 
+        // 869f63gkm. Normalised once here, so a keystroke normalises only the query.
         catalog.forEach((character) => {
-          this.searchIndex.set(character.id, this.buildSearchText(character));
+          this.searchIndex.set(
+            character.id,
+            normalizeCharacterSearchText(this.buildSearchText(character)),
+          );
         });
 
         this.lastAppliedOverrideRevision = this.characterOverrides.revision();
@@ -95,7 +104,7 @@ export class CharacterCatalogCacheService {
         (characterId) => Number.isInteger(characterId) && characterId > 0,
       ),
     );
-    const normalizedSearchTerm = query.searchTerm.trim().toLowerCase();
+    const searchTerm = toCharacterSearchTerm(query.searchTerm);
     // Boundary invariant: normalize here too, so no host bug can smuggle an
     // unsatisfiable `all` (3+ values) into a cached query.
     const typeFacet = normalizeCharacterFacetSelection(
@@ -132,10 +141,13 @@ export class CharacterCatalogCacheService {
         return false;
       }
 
-      if (normalizedSearchTerm.length) {
-        const searchText = this.searchIndex.get(character.id) ?? '';
+      if (searchTerm) {
+        // An all-punctuation query (`&`) is compared as typed; see character-search-text.utils.ts.
+        const matches = searchTerm.normalized.length
+          ? (this.searchIndex.get(character.id) ?? '').includes(searchTerm.normalized)
+          : this.buildSearchText(character).includes(searchTerm.literal);
 
-        if (!searchText.includes(normalizedSearchTerm)) {
+        if (!matches) {
           return false;
         }
       }
@@ -200,18 +212,15 @@ export class CharacterCatalogCacheService {
         return this.compareBoostSortedCharacters(left, right, 'captainAverageBoost', idOrder);
       }
 
+      // 869f6td2q. The same order the SQL path's `COLLATE NOCASE` gives, not a collator's.
       if (sortMode === 'nameAsc') {
-        const nameDifference = left.name.localeCompare(right.name, undefined, {
-          sensitivity: 'base',
-        });
+        const nameDifference = compareCharacterNamesNoCase(left.name, right.name);
 
         return nameDifference || compareCharacterIds(left.id, right.id, idOrder);
       }
 
       if (sortMode === 'nameDesc') {
-        const nameDifference = right.name.localeCompare(left.name, undefined, {
-          sensitivity: 'base',
-        });
+        const nameDifference = compareCharacterNamesNoCase(right.name, left.name);
 
         return nameDifference || compareCharacterIds(left.id, right.id, idOrder);
       }

@@ -68,6 +68,7 @@ import {
   type AutoBuildResult,
   type AutoBuildSlotExplanationReason,
   type AutoBuildCostRange,
+  type AutoBuildAvoidPreferRules,
   type AutoTeamBuilderType,
   createEmptyAutoBuildCostRange,
   createEmptyAutoBuildLeaderBoostRanges,
@@ -138,7 +139,15 @@ import {
   resolveCaptainCoverageBranchDisplay,
   resolveCaptainCoverageBranchOptions,
 } from '../../core/services/captain-coverage.utils';
+import { resolveCharacterFacetMatches } from '../../core/services/auto-team-builder.utils';
+import {
+  createEmptyAvoidPreferRules,
+  hasAvoidPreferRules,
+  normalizeAvoidPreferRules,
+  toSparseAvoidPreferFields,
+} from '../../core/services/auto-team-builder-avoid-prefer.utils';
 import { resolveCharacterSameCharacterKeys } from '../../core/services/character-party-conflict-keys.utils';
+import { isSupportOnlyCharacter } from '../../core/grammar/support-only-character';
 import {
   buildMechanicChecklist,
   collectRequestedAbilityRequirements,
@@ -548,6 +557,8 @@ interface ManualCharacterCardView {
 type ManualSlotSelectedCharacterView = CharacterListItem & {
   isRequiredInManualSlot: boolean;
   branchLabel: string | null;
+  /** 869f6td4p. Arrived with a saved team or a preset; the build never puts it in the crew. */
+  supportOnly: boolean;
 };
 
 interface ManualCaptainBranchActionView {
@@ -1258,6 +1269,13 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly compareStorageFeedback = signal<PresetImportFeedback | null>(null);
   public readonly manualSimilarPickFeedback = signal('');
   public readonly loadedEnemyPresetName = signal<string | null>(null);
+  /**
+   * 869f63gma. The avoid and prefer rules the loaded Saved Enemy (or preset) brought with it. Set
+   * only by a preset, cleared by a reset or by the reader, and sent with every build.
+   */
+  private readonly avoidPreferRules = signal<AutoBuildAvoidPreferRules>(
+    createEmptyAvoidPreferRules(),
+  );
   public readonly openExplanationSlotKeys = signal<ReadonlySet<string>>(new Set());
   /**
    * Which decisive-reason group each slot's rejected list is narrowed to, keyed by the slot's
@@ -1561,6 +1579,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.t(`requiredCharacters.categories.${this.activeRequiredCharacterAbilityCategory()}`),
   );
   public readonly hasLoadedEnemyPreset = computed(() => Boolean(this.loadedEnemyPresetName()));
+  /** 869f63gma. The active rules in the report's own words, so the page says them before a build. */
+  public readonly avoidPreferRulesLabel = computed(() =>
+    this.describeAvoidPreferRules(this.avoidPreferRules(), [], []),
+  );
   public readonly lockedCharacterIds = computed(() => [
     ...new Set(this.manualSlots().flatMap((slot) => slot.characterIds)),
   ]);
@@ -1644,6 +1666,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           ...character,
           isRequiredInManualSlot: character.id === slot.requiredCharacterId,
           branchLabel: this.resolveManualSlotCharacterBranchLabel(slot.role, character),
+          supportOnly: isSupportOnlyCharacter(character),
         })),
       isLeaderSlot: this.isLeaderManualSlotRole(slot.role),
       isActive: slot.role === this.activeManualSlotRole(),
@@ -6382,9 +6405,16 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       return;
     }
 
+    // 869f6td4p. Requiring a pick forces it into the crew, so a Support-only one is never required.
+    const supportOnly = isSupportOnlyCharacter(this.lockedCharacterRecords()[characterId]);
+
     this.manualSlots.update((currentSlots) =>
       currentSlots.map((slot) => {
         if (slot.role !== role || !slot.characterIds.includes(characterId)) {
+          return slot;
+        }
+
+        if (supportOnly && slot.requiredCharacterId !== characterId) {
           return slot;
         }
 
@@ -6401,9 +6431,27 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     role: AutoBuildManualSlotRole,
     character: Pick<CharacterListItem, 'id' | 'name'>,
   ): string {
-    return this.resolveManualSlotSelection(role).requiredCharacterId === character.id
-      ? this.t('manual.required.actions.clearFor', { name: character.name })
+    if (this.resolveManualSlotSelection(role).requiredCharacterId === character.id) {
+      return this.t('manual.required.actions.clearFor', { name: character.name });
+    }
+
+    // 869f6td4p. The toggle refuses a Support-only pick, so it says why instead of going quiet.
+    return isSupportOnlyCharacter(this.lockedCharacterRecords()[character.id])
+      ? this.t('manual.slotSelection.supportOnly')
       : this.t('manual.required.actions.requireFor', { name: character.name });
+  }
+
+  /**
+   * 869f6td4p. The compact picker's thumbs are pictures only, so a refused one said nothing but its
+   * name. When it cannot be picked its tooltip and accessible name carry the reason too, the one the
+   * list view prints under the card. A native button, so a changing label reaches assistive tech.
+   */
+  public manualCandidateThumbLabel(card: ManualCharacterCardView): string {
+    const blocked = !card.isSelectedInActiveSlot && !card.isSelectableInActiveSlot;
+
+    return blocked && card.selectionSupportLabel
+      ? `${card.character.name} - ${card.selectionSupportLabel}`
+      : card.character.name;
   }
 
   public requiredManualPickButtonIcon(role: AutoBuildManualSlotRole, characterId: number): string {
@@ -6421,10 +6469,16 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   public canAssignCharacterToManualSlot(
     role: AutoBuildManualSlotRole,
-    character: Pick<CharacterDetailRecord, 'id' | 'cost'>,
+    character: Pick<CharacterDetailRecord, 'id' | 'cost'> &
+      Partial<Pick<CharacterDetailRecord, 'detail'>>,
   ): boolean {
     if (this.isCharacterSelectedInManualSlot(role, character.id)) {
       return true;
+    }
+
+    // 869f6td4p. No crew slot takes a Support-only character, a leader slot included.
+    if (isSupportOnlyCharacter(character)) {
+      return false;
     }
 
     return (
@@ -6788,6 +6842,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       enemyMechanics: this.pageEnemyMechanics(),
       favoritesOnly: this.favoritesOnly(),
       boostedCharacterIds: [...this.boostedCharacterIds()],
+      ...toSparseAvoidPreferFields(this.avoidPreferRules()),
       allowAnyFriendCaptainAutoFill: this.allowAnyFriendCaptainAutoFill(),
       favoriteCharacterIds: this.favoriteCharacterIds(),
       favoriteShipsOnly: this.favoriteShipsOnly(),
@@ -7030,6 +7085,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       leaderCostRange: createEmptyAutoBuildCostRange(),
       subCostRange: createEmptyAutoBuildCostRange(),
       maxTotalCost: null,
+      // 869f63gma. Read here AND in `applySelectionPresetState`, or a preset drops the enemy's rules.
+      avoidPreferRules: this.avoidPreferRules(),
       manualSlots: this.serializeManualSlots(),
       lockedCharacterIds: this.lockedCharacterIds(),
       lockedCharacters: this.lockedCharacters(),
@@ -7579,6 +7636,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.presetImportFeedback.set(null);
     this.candidatePoolBoxFeedback.set(null);
     this.loadedEnemyPresetName.set(null);
+    this.avoidPreferRules.set(createEmptyAvoidPreferRules());
     this.resetBuildState();
     this.buildInputsUntouched.set(true);
     this.syncShipPickerPanelStates();
@@ -7589,8 +7647,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       const rawContent = await file.text();
       const payload = parseAutoTeamSelectionImportPayload(rawContent);
       const importedCharacterIds = this.collectSelectionPresetImportCharacterIds(payload);
+      // 869f6td4p. With their details, so a Support-only pick is marked and never required.
       const availableLockedCharacters =
-        await this.repository.getCharactersByIds(importedCharacterIds);
+        await this.repository.getDetailedCharactersByIds(importedCharacterIds);
       const importResult = sanitizeAutoTeamSelectionImportPayload(payload, {
         availableTypes: this.availableTypes,
         availableClasses: this.availableClasses(),
@@ -7889,9 +7948,16 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.favoritesOnly.set(state.favoritesOnly);
     this.allowAnyFriendCaptainAutoFill.set(state.allowAnyFriendCaptainAutoFill);
     this.favoriteShipsOnly.set(state.favoriteShipsOnly);
+    this.avoidPreferRules.set(state.avoidPreferRules ?? createEmptyAvoidPreferRules());
     this.reconcileFavoriteShipSelection();
     this.resetBuildState();
     await this.refreshCharacterPickPanels();
+  }
+
+  /** 869f63gma. Drops the loaded enemy's avoid and prefer rules and nothing else. */
+  public clearAvoidPreferRules(): void {
+    this.avoidPreferRules.set(createEmptyAvoidPreferRules());
+    this.resetBuildState();
   }
 
   private async applySavedTeamPresetFromRoute(): Promise<boolean> {
@@ -7914,9 +7980,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         team.slots.filter((characterId): characterId is number => typeof characterId === 'number'),
       ),
     ];
+    // 869f6td4p. With their details, so a Support-only pick is marked and never required.
     const availableLockedCharacters =
       selectedCharacterIds.length > 0
-        ? await this.repository.getCharactersByIds(selectedCharacterIds)
+        ? await this.repository.getDetailedCharactersByIds(selectedCharacterIds)
         : [];
 
     await this.applySelectionPresetState(
@@ -9569,10 +9636,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         actionLabel: isSelectedInActiveSlot
           ? this.i18n.translate('common.actions.remove')
           : this.t('manual.actions.addChoice'),
-        selectionSupportLabel: this.resolveManualCharacterSelectionSupport(
-          character.id,
-          activeRole,
-        ),
+        // 869f6td4p. Marked, never hidden: the card stays in the picker and says why it is refused.
+        selectionSupportLabel: isSupportOnlyCharacter(character)
+          ? this.t('manual.slotSelection.supportOnly')
+          : this.resolveManualCharacterSelectionSupport(character.id, activeRole),
         selectedBranchLabel,
         branchActions: this.resolveManualCandidateBranchActions(character, activeRole),
       };
@@ -9997,6 +10064,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         (result.requestedInput.selectedCharacterNames ?? []).length > 0,
         teamSlotCount,
       ),
+      this.buildAvoidPreferReportRow(result),
       this.buildCaptainReportRow(result),
       this.buildLeaderSuperScopeReportRow(result),
       this.buildCaptainAbilityReportRow(result),
@@ -10113,6 +10181,90 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       'notApplicable',
       this.t('report.rules.leaderSuperScope.notApplicable'),
     );
+  }
+
+  /**
+   * 869f63gma. The loaded enemy's avoid and prefer rules, in one row. Relaxed only when the hard
+   * avoid gave way - and then it names who the search let in. A soft avoid and a prefer are
+   * rankings, so they can only have been applied: Passed.
+   */
+  private buildAvoidPreferReportRow(result: AutoBuildResult): AutoBuildFinalReportRow {
+    const rules = normalizeAvoidPreferRules(result.requestedInput);
+
+    if (!hasAvoidPreferRules(rules)) {
+      return this.buildFinalReportRow(
+        'avoidPrefer',
+        'notApplicable',
+        this.t('report.rules.avoidPrefer.notApplicable'),
+      );
+    }
+
+    const relaxedValues = result.relaxation.relaxedAvoidedValues ?? [];
+    const manualCharacterIds = new Set(
+      result.requestedInput.manualSlots.flatMap((slot) => slot.characterIds),
+    );
+    const relaxedNames = relaxedValues.length
+      ? result.slots
+          .filter(
+            (slot) =>
+              !manualCharacterIds.has(slot.character.id) &&
+              resolveCharacterFacetMatches(
+                slot.character,
+                rules.avoidedTypes,
+                rules.avoidedClasses,
+              ).length > 0,
+          )
+          .map((slot) => slot.character.name)
+      : [];
+
+    return this.buildFinalReportRow(
+      'avoidPrefer',
+      relaxedValues.length ? 'relaxed' : 'passed',
+      this.describeAvoidPreferRules(rules, relaxedValues, relaxedNames),
+    );
+  }
+
+  /**
+   * 869f63gma. The rules in words: what the search keeps out, ranks lower or ranks higher - or, when
+   * the hard avoid gave way, what it let in and who. The line before a build and the report row
+   * after one are this one sentence, so they cannot disagree.
+   */
+  private describeAvoidPreferRules(
+    rules: AutoBuildAvoidPreferRules,
+    relaxedValues: readonly string[],
+    relaxedNames: readonly string[],
+  ): string {
+    const avoided = [...rules.avoidedTypes, ...rules.avoidedClasses];
+    const preferred = [...rules.preferredTypes, ...rules.preferredClasses];
+    const sentences: string[] = [];
+
+    if (relaxedValues.length) {
+      sentences.push(
+        this.t('report.rules.avoidPrefer.avoidRelaxed', {
+          values: this.formatResultValues(relaxedValues),
+          names: relaxedNames.join(', '),
+        }),
+      );
+    } else if (avoided.length) {
+      sentences.push(
+        this.t(
+          rules.avoidMode === 'soft'
+            ? 'report.rules.avoidPrefer.avoidRanked'
+            : 'report.rules.avoidPrefer.avoidKept',
+          { values: this.formatResultValues(avoided) },
+        ),
+      );
+    }
+
+    if (preferred.length) {
+      sentences.push(
+        this.t('report.rules.avoidPrefer.preferRanked', {
+          values: this.formatResultValues(preferred),
+        }),
+      );
+    }
+
+    return sentences.join(' ');
   }
 
   /* 869f333ey (D4). Whether the Captain the reader pinned is the one leading the team. */

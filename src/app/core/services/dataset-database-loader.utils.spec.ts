@@ -59,6 +59,11 @@ class FakeDatabase {
     return [];
   }
 
+  /* 869f63gkm. The loader registers the app's SQL functions on every database it returns. */
+  create_function(): this {
+    return this;
+  }
+
   close(): void {
     this.closed = true;
   }

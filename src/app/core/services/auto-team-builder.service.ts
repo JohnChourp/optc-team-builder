@@ -30,6 +30,7 @@ import {
   createEmptyAutoBuildCostRange,
   createEmptyAutoBuildLeaderBoostRanges,
   createEmptyAutoBuildManualSlots,
+  resolveAutoBuildAvoidMode,
   shouldTreatSelectedClassesAsNeutral,
 } from '../models/auto-team-builder.models';
 import {
@@ -41,6 +42,10 @@ import {
   type AutoBuildRequiredCharacterGroup,
 } from '../models/auto-team-builder-ability.models';
 import { type CharacterDetailRecord } from '../models/optc.models';
+import {
+  normalizeAvoidPreferRules,
+  toSparseAvoidPreferFields,
+} from './auto-team-builder-avoid-prefer.utils';
 import { cloneCharacterTagSetSelection } from './character-tag-set.utils';
 import {
   AutoTeamBuildCancelledError,
@@ -83,6 +88,7 @@ import {
   buildAutoBuildAbilityCoverageBreakdown,
   buildAutoTeamResult,
   resolveAutoBuildTeamPowerPreferenceScore,
+  resolveCharacterFacetMatches,
 } from './auto-team-builder.utils';
 import {
   createCaptainBoostScopeCache,
@@ -324,6 +330,8 @@ export class AutoTeamBuilderService {
      * alias a signal the page keeps mutating.
      */
     const boostedCharacterIds = [...(constraints.boostedCharacterIds ?? [])];
+    // 869f63gma. Normalised once and sent sparse: a build without a rule sends what it always did.
+    const avoidPreferRules = normalizeAvoidPreferRules(constraints);
     const allowAnyFriendCaptainAutoFill = constraints.allowAnyFriendCaptainAutoFill ?? false;
     const favoriteShipsOnly = constraints.favoriteShipsOnly ?? false;
     const requireAllSlotsInLeaderSuperEffectScope =
@@ -450,6 +458,7 @@ export class AutoTeamBuilderService {
       enemyMechanics,
       favoritesOnly,
       boostedCharacterIds,
+      ...toSparseAvoidPreferFields(avoidPreferRules),
       allowAnyFriendCaptainAutoFill,
       favoriteShipsOnly,
       favoriteShipIds,
@@ -494,6 +503,7 @@ export class AutoTeamBuilderService {
         conditionTags: [...mechanic.conditionTags],
       })),
       favoriteShipIds: [...input.favoriteShipIds],
+      ...toSparseAvoidPreferFields(avoidPreferRules),
       leaderBoostFilters: [...input.leaderBoostFilters],
       leaderBoostRanges: this.cloneLeaderBoostRanges(input.leaderBoostRanges),
       costRange: { ...input.costRange },
@@ -881,6 +891,8 @@ export class AutoTeamBuilderService {
           // Already placed somewhere in the team by the reader.
           !locked.has(record.id) &&
           (!allowed || allowed.has(record.id)) &&
+          // 869f63gma. A hard avoid keeps it out of the seat anyway, so it must not take one of eight.
+          !this.isHardAvoidedRecord(record, requestedInput) &&
           this.characterHasReadableCaptainAbility(record) &&
           this.characterMatchesCostRange(record, requestedInput.leaderCostRange) &&
           this.characterMatchesLeaderBoostRanges(record, requestedInput.leaderBoostRanges),
@@ -2939,6 +2951,14 @@ export class AutoTeamBuilderService {
 
   private characterHasReadableCaptainAbility(character: CharacterDetailRecord): boolean {
     return normalizeHtmlToText(character.detail.captainAbility).trim().length > 0;
+  }
+
+  /** 869f63gma. The record-level twin of the search's own hard-avoid check. */
+  private isHardAvoidedRecord(character: CharacterDetailRecord, input: AutoBuildInput): boolean {
+    return (
+      resolveAutoBuildAvoidMode(input) === 'hard' &&
+      resolveCharacterFacetMatches(character, input.avoidedTypes, input.avoidedClasses).length > 0
+    );
   }
 
   private captainBoostMatchesRange(boost: number, range: AutoBuildLeaderBoostRange): boolean {

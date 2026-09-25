@@ -57,10 +57,25 @@ entry in the formatting guard's allowlist.
 
 Character names come from the community database and are **Latin script**
 whatever the interface language is. Collating them with a Greek collator changes
-established ordering and buys nothing a reader would notice. The 31 bare
+established ordering and buys nothing a reader would notice. The bare
 `localeCompare` calls stay as they are, and a test asserts that ordering is
 identical under both languages so this is a check rather than a comment somebody
 deletes.
+
+**869f6td2q took the character-name sort one step further, for a different
+reason.** "Name A→Z" was answered two ways: SQLite's `COLLATE NOCASE` on the SQL
+path, and a `localeCompare` collator on every in-memory path - the Characters
+screen, Captain Coverage, and Character Boxes as soon as the reader saves one
+local override. The two disagreed on **1,063 of 4,622** positions (measured
+2026-09-24; `&`, `-`, `:`, `'` and `"` are weighed differently by a collator than
+by a byte compare), so a list reordered itself when the path serving it changed.
+Every in-memory name sort now calls `compareCharacterNamesNoCase`
+(`src/app/core/services/character-name-order.utils.ts`), which does what SQLite
+does - fold the 26 ASCII capitals, compare code points - and its spec holds it to
+a real SQLite engine. It has no locale at all, so it cannot follow the interface
+language: the position above holds by construction. It is deliberately not an
+`Intl.Collator`, which Rule D below would refuse anyway. The engines' tie-breaks
+that are never reached (after an id comparison) were left as they were.
 
 This is the one to revisit **if** character names are ever translated. They are
 not, and the game's own terms stay untranslated by policy.

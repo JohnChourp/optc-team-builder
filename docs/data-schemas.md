@@ -37,6 +37,21 @@ Character rows are normalized from upstream unit/detail data plus manual overlay
 - `partyConflictKeys` are keys derived from the card name. They decide "same character" only for a unit with no `families`; super-criteria and name matching in the Auto Team Builder, and the SEO pages' related characters, read them
 - `characterTags` drive tag filters and captain coverage requirements
 - `builderAbilities` are canonical ability entries used by Auto Team Builder and Captain Coverage filters
+- a **Support-only** character (869f6td4p) has `supportData` and no Captain Ability (no
+  `captainAbility` text and no `captainAbilityVariants` text) and no `specialText`. The official
+  Global letter of 2026-04-16 says such characters "do not have any Specials, Captain Abilities,
+  Co-Op Captain Abilities, or Pirate Rumble Combat Stats" and can only be added to a Support slot.
+  The rule is `src/app/core/grammar/support-only-character.ts`, read at runtime from the record the
+  app already holds - the importer is unchanged and no column says it. No crew slot takes one -
+  Captain, Friend Captain and subs alike - on Manual Team Builder, Captain Coverage and the Auto
+  Team Builder's manual picks, and each says why; they stay in every list and the Character screen
+  says what they are for (marked, never hidden). A saved team that already holds one is kept exactly
+  as stored: Manual Team Builder names the seat in its validation panel, Captain Coverage marks the
+  seat, and the Auto Team Builder marks the pick and never requires it, so the build leaves it out.
+  The census is `supportOnlyCharacters` in `src/app/core/data/dataset-measurements.json`, counted
+  with the same function - 6 when this was written (2026-09-25). The Auto Team Builder never picked
+  one by itself (its candidate pool keeps only units with Captain, special or sailor text), and the
+  Rumble pool leaves them out too, since their Rumble data carries no ability and no special.
 
 For normal upstream records, `detail.characterId` must match the row `id`.
 Reserved manual overlay records (`id >= 900000`) may instead store an existing
@@ -201,6 +216,18 @@ had just spent a wave shrinking. **The answer is no, and the number is written h
 asked a fourth time.** Re-check with `npm run perf:dataset` if the row count ever changes by an
 order of magnitude.
 
+**869f63gkm, 2026-09-25: the search now pays for a JavaScript call per row it reaches.** Search
+compares words, not punctuation, so the loader registers `optc_search_text`
+(`src/app/core/grammar/character-search-text.ts`) with SQLite on both load paths and the repository
+reads `optc_search_text(c.search_text) LIKE ...`. `npm run perf:dataset` times that clause now,
+loading the same grammar file, because timing the bare `LIKE` the app no longer runs would stay
+green over a search that had become slow. Measured on an M4 Pro, 20 repeats: `searchAverageMs`
+**0.29 → 1.36**, `combinedAverageMs` **0.90 → 0.78**. The second went DOWN because the repository
+puts the search clause last and SQLite evaluates the terms in the order written: first, the
+function ran on all 4,622 rows of a type-and-class search (5.4 ms); last, on the 310 the facets let
+through. A search with no other filter reaches most of the table and costs about 4.5 ms here -
+still a fraction of a frame, and no reason for an index.
+
 **Where do they run?** All of them on the main thread, in `optc-repository.service.ts`. The app's
 three Web Workers exist for the long CPU passes — Auto Team Builder's search, its Rumble variant,
 and Captain Coverage's filter pass — and not for SQL. The numbers above are why that split is
@@ -238,6 +265,19 @@ Required fields include:
 - required abilities and required character groups
 - optional battle requirements
 - enemy mechanics with `mechanicKey`, category, turns, trigger/response/condition tags, and optional `derivedAbilityKey`
+
+Optional, and written only when they hold something
+([869f63gma](https://app.clickup.com/t/90121749478/869f63gma)):
+
+- `avoidedTypes` / `avoidedClasses` - what the enemy punishes. `avoidMode` sits beside them, `hard`
+  (the default, and what an absent mode means) or `soft`: hard keeps avoided units out of every seat
+  the Auto Team Builder fills and is relaxed to a ranking only when no team can be built, soft only
+  ranks them lower. The reader's own picks are never removed.
+- `preferredTypes` / `preferredClasses` - what the enemy is weak to. Ranking only.
+
+A type is one of the five and upper-cased; a class keeps the case it was written in. An enemy
+without a rule carries none of the five keys, so a Drive backup written before they existed still
+matches it. `auto-team-builder-avoid-prefer.utils.ts` is the one reader and writer.
 
 Import/export supports the saved enemies transfer payload:
 
@@ -513,10 +553,12 @@ never blanks a result list.
 - Tag values are stored **case-preserved** and compared case-insensitively.
   Do not lowercase on write: persisted `characterTags` were never normalized, so
   folding case would shift existing user data.
-- The Auto Team Builder preset payload is `schemaVersion: 33`, which adds
-  `filters.characterTagSets`. Version 32 and earlier import cleanly by expanding
+- The Auto Team Builder preset payload is `schemaVersion: 34`. Version 33 added
+  `filters.characterTagSets`; version 32 and earlier import cleanly by expanding
   the legacy flat `selectedCharacterTags` plus `requireAllSelectedCharacterTagsInTeam`
-  into a single set. The flat field is still emitted for back-compat.
+  into a single set. The flat field is still emitted for back-compat. Version 34
+  adds a loaded Saved Enemy's avoid and prefer rules to `filters`, written only
+  when set; a version 33 preset imports with none.
 - `SavedEnemy` and the saved-teams/all-data transfer payloads stay at their
   existing versions and carry only the flat tag list, so a set structure that
   round-trips through them widens to one group. This is a widening, never a

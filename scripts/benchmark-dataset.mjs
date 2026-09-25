@@ -6,6 +6,10 @@ import { fileURLToPath } from 'node:url';
 
 import initSqlJs from 'sql.js';
 
+import {
+  CHARACTER_SEARCH_TEXT_SQL_FUNCTION,
+  normalizeCharacterSearchText,
+} from '../src/app/core/grammar/character-search-text.ts';
 import { buildDatasetDatabaseBytes, gunzipDatasetDatabase, gzipDatasetDatabase } from './lib/dataset-binary.mjs';
 
 const require = createRequire(import.meta.url);
@@ -64,6 +68,19 @@ async function main() {
     return opened;
   });
 
+  /*
+   * 869f63gkm. The app's search compares words, not punctuation: its loader registers
+   * `optc_search_text` - the very function below, loaded from the app's own grammar file - and the
+   * repository's LIKE reads `optc_search_text(c.search_text)`. The search timings below time that
+   * clause, because timing the bare `search_text LIKE` the app no longer runs would stay green over
+   * a search that had become slow. `luffy` and `monkey` are their own normalised form, and the
+   * combined query puts the search last, as the repository does, so the function runs only on the
+   * rows the type and class have already let through.
+   */
+  database.create_function(CHARACTER_SEARCH_TEXT_SQL_FUNCTION, (value) =>
+    normalizeCharacterSearchText(typeof value === 'string' ? value : String(value ?? '')),
+  );
+
   results.databaseGzipBytes = compressedDatabase.length;
 
   results.previewCharacterCount = preview.characters?.length ?? 0;
@@ -75,7 +92,7 @@ async function main() {
       `
         SELECT id, name, type
         FROM characters
-        WHERE search_text LIKE '%' || ? || '%'
+        WHERE ${CHARACTER_SEARCH_TEXT_SQL_FUNCTION}(search_text) LIKE '%' || ? || '%'
         ORDER BY id DESC
         LIMIT 50
       `,
@@ -102,13 +119,13 @@ async function main() {
       `
         SELECT id, name, type
         FROM characters
-        WHERE search_text LIKE '%' || ? || '%'
-          AND type = ?
+        WHERE type = ?
           AND classes_json LIKE ?
+          AND ${CHARACTER_SEARCH_TEXT_SQL_FUNCTION}(search_text) LIKE '%' || ? || '%'
         ORDER BY name COLLATE NOCASE ASC, id DESC
         LIMIT 25
       `,
-      ['monkey', 'STR', '%"Fighter"%'],
+      ['STR', '%"Fighter"%', 'monkey'],
     ),
   );
 

@@ -1079,6 +1079,11 @@
                                                             {{ character.branchLabel }}
                                                           </small>
                                                         }
+                                                        @if (character.supportOnly) {
+                                                          <small class="manual-lock-chip__branch">
+                                                            {{ t('manual.slotSelection.supportOnly') }}
+                                                          </small>
+                                                        }
                                                       </span>
                                                       <button
                                                         type="button"
@@ -1086,7 +1091,11 @@
                                                         [class.manual-lock-chip__icon-button--active]="
                                                           character.isRequiredInManualSlot
                                                         "
-                                                        [disabled]="controlsDisabled()"
+                                                        [disabled]="
+                                                          controlsDisabled() ||
+                                                          (character.supportOnly &&
+                                                            !character.isRequiredInManualSlot)
+                                                        "
                                                         [title]="
                                                           requiredManualPickButtonLabel(
                                                             slotCard.role,
@@ -1272,6 +1281,13 @@
                                                                 {{ character.branchLabel }}
                                                               </small>
                                                             }
+                                                            @if (character.supportOnly) {
+                                                              <small
+                                                                class="manual-lock-chip__branch"
+                                                              >
+                                                                {{ t('manual.slotSelection.supportOnly') }}
+                                                              </small>
+                                                            }
                                                           </span>
                                                           <span class="manual-lock-chip__actions">
                                                             <span
@@ -1282,7 +1298,9 @@
                                                                 character.isRequiredInManualSlot
                                                               "
                                                               [class.manual-lock-chip__icon-button--disabled]="
-                                                                building()
+                                                                building() ||
+                                                                (character.supportOnly &&
+                                                                  !character.isRequiredInManualSlot)
                                                               "
                                                               [title]="
                                                                 requiredManualPickButtonLabel(
@@ -1466,9 +1484,9 @@
                                                             (!candidateCard.isSelectedInActiveSlot &&
                                                               !candidateCard.isSelectableInActiveSlot)
                                                           "
-                                                          [title]="candidateCard.character.name"
+                                                          [title]="manualCandidateThumbLabel(candidateCard)"
                                                           [attr.aria-label]="
-                                                            candidateCard.character.name
+                                                            manualCandidateThumbLabel(candidateCard)
                                                           "
                                                           [attr.aria-pressed]="
                                                             candidateCard.isSelectedInActiveSlot
@@ -2791,6 +2809,28 @@
                                           })
                                         }}</small>
                                       </div>
+                                    </section>
+                                  }
+
+                                  @if (avoidPreferRulesLabel()) {
+                                    <section
+                                      class="preset-import-feedback preset-import-feedback--success"
+                                      data-testid="auto-build-avoid-prefer-rules"
+                                    >
+                                      <ion-icon [icon]="presetImportSuccessIcon"></ion-icon>
+                                      <div>
+                                        <strong>{{ t('report.rules.avoidPrefer.title') }}</strong>
+                                        <small>{{ avoidPreferRulesLabel() }}</small>
+                                      </div>
+                                      <ion-button
+                                        fill="clear"
+                                        size="small"
+                                        class="select-all-button"
+                                        [disabled]="controlsDisabled()"
+                                        (click)="clearAvoidPreferRules()"
+                                      >
+                                        {{ t('enemyPreset.clearAvoidPrefer') }}
+                                      </ion-button>
                                     </section>
                                   }
 

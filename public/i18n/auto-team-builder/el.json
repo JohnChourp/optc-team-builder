@@ -495,6 +495,7 @@
       "assignedTo": "Υπάρχει ήδη στα {{slots}}.",
       "costBudget": "Αυτό το pick δεν χωράει στο remaining team cost.",
       "excluded": "Τα excluded picks δεν μπορούν να μπουν στα τελικά team slots.",
+      "supportOnly": "Μόνο για Support. Μπαίνει σε Support slot, ποτέ στο πλήρωμα.",
       "noneActive": "Διάλεξε slot για να κάνεις edit."
     },
     "slots": {
@@ -726,6 +727,14 @@
         "passed": "Ο Captain σου {{captain}} οδηγεί την ομάδα.",
         "relaxed": "Ο {{from}} δεν δίνει boost σε αυτό το crew σε όλα τα tiers του captain ability του, οπότε την ομάδα την οδηγεί ο {{to}}.",
         "title": "Captain"
+      },
+      "avoidPrefer": {
+        "title": "Κανόνες αποφυγής και προτίμησης",
+        "notApplicable": "Δεν ορίστηκε κανόνας αποφυγής ή προτίμησης.",
+        "avoidKept": "Μένουν έξω από κάθε θέση που γεμίζει η αναζήτηση: {{values}}.",
+        "avoidRanked": "Κατατάσσονται χαμηλότερα: {{values}}.",
+        "avoidRelaxed": "Δεν χτίζεται ομάδα χωρίς {{values}}, γι' αυτό η αναζήτηση έβαλε: {{names}}.",
+        "preferRanked": "Κατατάσσονται ψηλότερα: {{values}}."
       }
     },
     "states": {
@@ -1221,7 +1230,8 @@
   },
   "enemyPreset": {
     "loadedDescription": "Φορτώθηκε το enemy preset: {{name}}.",
-    "loadedTitle": "Το enemy preset είναι έτοιμο."
+    "loadedTitle": "Το enemy preset είναι έτοιμο.",
+    "clearAvoidPrefer": "Καθάρισε αυτούς τους κανόνες"
   },
   "requiredCharacters": {
     "title": "Required characters",

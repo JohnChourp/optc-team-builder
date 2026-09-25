@@ -1,7 +1,9 @@
 import {
+  type CharacterDetailRecord,
   type CharacterDropSource,
   type CharacterProgression,
 } from '../../core/models/optc.models';
+import { normalizeHtmlToText } from '../../core/services/html-text.utils';
 
 /**
  * 869f1935z. The two questions the builders could never answer, turned into display rows.
@@ -27,9 +29,17 @@ export interface ProgressionDisplayRow {
   value: string;
 }
 
+/** A translated line under one list item, e.g. "Same Captain Ability · cost 40". */
+export interface ProgressionDisplayNote {
+  key: string;
+  params: Record<string, number>;
+}
+
 export interface ProgressionDisplayList {
   labelKey: string;
   items: string[];
+  /** Parallel to `items`, present only when at least one item has a note. */
+  notes?: Array<ProgressionDisplayNote | null>;
 }
 
 export interface ProgressionDisplayCard {
@@ -150,16 +160,85 @@ export function summarizeMaterials(materials: readonly string[]): string[] {
   );
 }
 
+/** What `resolveCheaperSameCaptainAbilityForms` reads: the cost and the Captain Ability. */
+export type CaptainAbilityForm = Pick<CharacterDetailRecord, 'id' | 'cost'> & {
+  detail: Pick<CharacterDetailRecord['detail'], 'captainAbility' | 'captainAbilityVariants'>;
+};
+
+/**
+ * 869f63gn4. The earlier forms that lead exactly as this character does, for less cost.
+ *
+ * A cost cap is a real constraint, and guides tell players to lead with the UNEVOLVED form of a unit
+ * because it keeps the same Captain Ability at a lower cost - Whitebeard #260 leads like #261 for 40
+ * cost instead of 55. The evolution chain already names that form; this is what lets it say so.
+ *
+ * **Identical, never similar.** The Captain Ability text and every variant - key, label and text,
+ * in order - after `normalizeHtmlToText`, the normalisation the rest of the app reads captain text
+ * through. Anything looser would tell a player to swap in a unit that does not lead the same way.
+ * A character with no Captain Ability matches nothing.
+ *
+ * Measured over the shipped seed on 2026-09-25: 1,572 evolution steps, 296 keep an identical
+ * Captain Ability, 285 of them at a lower cost, 11 at the same cost and none at a higher one - so 285
+ * Character screens show the mark.
+ *
+ * Returns earlier form id -> its cost, for the forms that qualify.
+ */
+export function resolveCheaperSameCaptainAbilityForms(
+  character: CaptainAbilityForm,
+  earlierForms: readonly CaptainAbilityForm[],
+): Map<number, number> {
+  const signature = captainAbilitySignature(character);
+  const costs = new Map<number, number>();
+
+  if (signature === null) {
+    return costs;
+  }
+
+  for (const form of earlierForms) {
+    if (form.cost < character.cost && captainAbilitySignature(form) === signature) {
+      costs.set(form.id, form.cost);
+    }
+  }
+
+  return costs;
+}
+
+function captainAbilitySignature(form: CaptainAbilityForm): string | null {
+  const text = normalizeHtmlToText(form.detail.captainAbility);
+
+  if (!text) {
+    return null;
+  }
+
+  return JSON.stringify([
+    text,
+    (form.detail.captainAbilityVariants ?? []).map((variant) => [
+      variant.key,
+      variant.label,
+      normalizeHtmlToText(variant.text),
+    ]),
+  ]);
+}
+
 export function buildEvolutionCard(
   progression: CharacterProgression,
   resolveName: CharacterNameResolver,
+  sameCaptainAbilityCostById: ReadonlyMap<number, number> = new Map(),
 ): ProgressionDisplayCard | null {
   const lists: ProgressionDisplayList[] = [];
 
   if (progression.evolvesFrom.length > 0) {
+    // 869f63gn4. An earlier form that leads identically for less cost says so, and gives the cost.
+    const notes = progression.evolvesFrom.map((characterId) => {
+      const cost = sameCaptainAbilityCostById.get(characterId);
+
+      return cost === undefined ? null : { key: 'progression.sameCaptainAbility', params: { cost } };
+    });
+
     lists.push({
       labelKey: 'progression.evolvesFrom',
       items: progression.evolvesFrom.map((characterId) => nameOf(characterId, resolveName)),
+      ...(notes.some((note) => note !== null) ? { notes } : {}),
     });
   }
 
@@ -206,6 +285,7 @@ export function buildDropSourceCard(
 export function buildProgressionCards(
   progression: CharacterProgression | null,
   resolveName: CharacterNameResolver,
+  sameCaptainAbilityCostById: ReadonlyMap<number, number> = new Map(),
 ): ProgressionDisplayCard[] {
   if (!progression) {
     return [];
@@ -213,7 +293,7 @@ export function buildProgressionCards(
 
   return [
     buildInvestmentCard(progression),
-    buildEvolutionCard(progression, resolveName),
+    buildEvolutionCard(progression, resolveName, sameCaptainAbilityCostById),
     buildDropSourceCard(progression),
   ].filter((card): card is ProgressionDisplayCard => card !== null);
 }
