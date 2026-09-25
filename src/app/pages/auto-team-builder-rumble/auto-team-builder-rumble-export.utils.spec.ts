@@ -270,7 +270,6 @@ function createSlot(
         maxSpecialEffects: [],
         maxSpecialCooldown: null,
         baseResistances: [],
-        llbResistances: [],
         passiveEffects: [],
         specialEffects: [],
         roleTags: ['attacker'],

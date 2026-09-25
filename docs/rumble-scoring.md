@@ -36,6 +36,30 @@ Two of those are worth stating plainly rather than leaving to be discovered:
   cannot recover `roleScore`. `breakdown.synergyScore` is `0` at this stage and filled in
   later.
 
+## Every unit is scored before Level Limit Break
+
+**869f6td5p, decided 2026-09-25.** The builder reads a unit's pre-Level Limit Break kit and
+nothing else. No `llb*` field and no `gp*` field of `rumbleData` is read - not the LLB passive,
+special, super special or resilience, and none of the `gp*` ones.
+
+- **Why.** The app cannot know which of a reader's units are LLB'd, and it will not ask players
+  to maintain investment state (869f13c8m), so every unit is scored the same way whatever the
+  reader's box holds.
+- **What it replaced.** The passive and special were already the pre-LLB ones (no super special
+  is read at all), but `llbresilience` was read and **added** to the base resilience it upgrades. 174 of the 181 units
+  with an LLB resilience repeat an attribute of their base line, so a matching opponent counted it
+  twice: Sengoku the Buddha against an Action Bind opponent scored **140.4** (32.4 base + 108.0
+  LLB) where either line alone says 32.4 or 108.0. It is **32.4** now.
+- **Where the player is told.** The top of the Rumble builder says every unit is scored as it is
+  before Level Limit Break, in English and Greek.
+- **What pins it.** `src/app/core/services/auto-team-builder-rumble-pre-llb.spec.ts` takes each
+  field away in turn and compares everything the builder computes, and requires exactly these to
+  matter: `ability`, `cost`, `pattern`, `resilience`, `special`, `stats`, `target` (and `basedOn`
+  for a unit that inherits). Reading an LLB field again turns it red, which is the point: it has to
+  be a decision.
+
+The Character screen still shows the LLB lines; this is about what the builder scores.
+
 ## What the opponent changes
 
 An opponent team is turned into a profile of threats, then units that counter it are
