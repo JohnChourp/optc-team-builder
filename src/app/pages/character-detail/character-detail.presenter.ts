@@ -8,6 +8,12 @@ import {
   type CaptainCoverageTierScopeToken,
 } from '../../core/services/captain-coverage-tier-view.utils';
 import { formatBoolean, formattingLanguage } from '../../core/i18n/app-locale-format';
+import { normalizeHtmlToText } from '../../core/services/html-text.utils';
+import {
+  readSupportAutoPlus,
+  type SupportAutoPlusReading,
+  type SupportAutoPlusTrigger,
+} from './support-auto-plus.utils';
 
 type DisplayLabel = {
   label?: string;
@@ -27,6 +33,20 @@ interface DetailDisplayList extends DisplayLabel {
   items: string[];
 }
 
+/** A piece of a sentence: a key in this page's scope, translated where it is shown, or text as it is. */
+export type DetailDisplayToken =
+  | { key: string; params?: Record<string, string>; text?: undefined }
+  | { text: string; key?: undefined; params?: undefined };
+
+/**
+ * 869f63gz3. A sentence the app writes in the reader's language - an Auto+ instruction - with an
+ * optional label before it ("Auto+: ...").
+ */
+export interface DetailDisplayLine {
+  labelKey?: string;
+  tokens: DetailDisplayToken[];
+}
+
 interface DetailDisplayEntry {
   title?: string;
   titleKey?: string;
@@ -34,6 +54,7 @@ interface DetailDisplayEntry {
   texts: DetailDisplayText[];
   lists: DetailDisplayList[];
   chips: string[];
+  lines?: DetailDisplayLine[];
 }
 
 export interface DetailDisplayCard extends DetailDisplayEntry {
@@ -429,24 +450,34 @@ function buildSupportGroup(character: CharacterDetailRecord): DetailDisplayGroup
       texts: [],
       lists: [],
       entries: detail.supportData
-        .map((entry, index) => ({
-          title: `Support ${index + 1}`,
-          rows: [
-            ...(sanitizeText(entry.supportedCharactersText)
-              ? [
-                  createRow(
-                    'support.supportedCharactersLabel',
-                    sanitizeText(entry.supportedCharactersText) ?? '',
-                  ),
-                ]
-              : []),
-          ],
-          texts: [],
-          lists: entry.levelDescriptions.length
-            ? [createList('support.maxLevelEffect', entry.levelDescriptions)]
-            : [],
-          chips: [],
-        }))
+        .map((entry, index) => {
+          /*
+           * 869f63gz3. The dataset writes support text as HTML: on the shipped seed of 2026-09-25,
+           * 40 texts carried a `<b>[AUTO+]</b>` that interpolation printed as it is. This is the
+           * normaliser the captain text goes through; measured then, it changed those 40 and no
+           * other support text.
+           */
+          const supportedCharacters = normalizeHtmlToText(entry.supportedCharactersText);
+          const levelDescriptions = entry.levelDescriptions
+            .map((description) => normalizeHtmlToText(description))
+            .filter((description) => description.length > 0);
+          const autoPlusLines = entry.levelDescriptions.flatMap((description) =>
+            readSupportAutoPlus(description).flatMap((reading) => buildAutoPlusLines(reading)),
+          );
+
+          return {
+            title: `Support ${index + 1}`,
+            rows: supportedCharacters
+              ? [createRow('support.supportedCharactersLabel', supportedCharacters)]
+              : [],
+            texts: [],
+            lists: levelDescriptions.length
+              ? [createList('support.maxLevelEffect', levelDescriptions)]
+              : [],
+            chips: [],
+            ...(autoPlusLines.length ? { lines: autoPlusLines } : {}),
+          };
+        })
         .filter((entry) => entry.title || entry.lists.length),
       chips: [],
     });
@@ -458,6 +489,80 @@ function buildSupportGroup(character: CharacterDetailRecord): DetailDisplayGroup
         cards,
       }
     : null;
+}
+
+/**
+ * 869f63gz3. One Auto+ instruction in the reader's language: "Auto+: at stage 3, fires the
+ * supported character's Special by itself". One line per effect, so no sentence has to join two
+ * effect names in a way only English word order allows. A sentence the parser does not recognise is
+ * shown as the dataset wrote it.
+ */
+function buildAutoPlusLines(reading: SupportAutoPlusReading): DetailDisplayLine[] {
+  const labelKey = 'support.autoPlus.label';
+
+  if (reading.kind === 'unrecognised') {
+    return [{ labelKey, tokens: [{ text: reading.source }] }];
+  }
+
+  const triggerTokens = buildAutoPlusTriggerTokens(reading.triggers, reading.join);
+  const effectKey =
+    reading.kind === 'fires' ? 'support.autoPlus.fires' : 'support.autoPlus.neverFires';
+
+  return reading.effects.map((effect) => ({
+    labelKey,
+    tokens: [
+      ...triggerTokens,
+      ...(triggerTokens.length ? [{ text: ', ' }] : []),
+      { key: effectKey, params: { effect } },
+    ],
+  }));
+}
+
+function buildAutoPlusTriggerTokens(
+  triggers: readonly SupportAutoPlusTrigger[],
+  join: 'any' | 'all' | null,
+): DetailDisplayToken[] {
+  const or: DetailDisplayToken[] = [{ text: ' ' }, { key: 'support.autoPlus.or' }, { text: ' ' }];
+  // Triggers that must hold together read best with the stage first: "at the final stage, when an
+  // enemy applies Territory". The order carries no meaning when all of them are required.
+  const ordered =
+    join === 'all'
+      ? [...triggers].sort((left, right) => Number(isStageTrigger(right)) - Number(isStageTrigger(left)))
+      : triggers;
+
+  return ordered.flatMap((trigger, index) => [
+    ...(index === 0 ? [] : join === 'all' ? [{ text: ', ' }] : or),
+    ...buildAutoPlusTriggerToken(trigger, or),
+  ]);
+}
+
+function isStageTrigger(trigger: SupportAutoPlusTrigger): boolean {
+  return trigger.kind === 'stage' || trigger.kind === 'final-stage';
+}
+
+function buildAutoPlusTriggerToken(
+  trigger: SupportAutoPlusTrigger,
+  or: DetailDisplayToken[],
+): DetailDisplayToken[] {
+  switch (trigger.kind) {
+    case 'stage':
+      return [{ key: 'support.autoPlus.stage', params: { stage: String(trigger.stage) } }];
+    case 'final-stage':
+      return [{ key: 'support.autoPlus.finalStage' }];
+    case 'enemy-barrier':
+      return [{ key: 'support.autoPlus.enemyBarrier' }];
+    case 'enemy-inflicts': {
+      // The key ends on `{{status}}` in both languages, so any further status follows it directly.
+      const [first = '', ...rest] = trigger.statuses;
+
+      return [
+        { key: 'support.autoPlus.enemyInflicts', params: { status: first } },
+        ...rest.flatMap((status) => [...or, { text: status }]),
+      ];
+    }
+    case 'enemy-applies':
+      return [{ key: 'support.autoPlus.enemyApplies', params: { status: trigger.status } }];
+  }
 }
 
 function buildBattleModesGroup(

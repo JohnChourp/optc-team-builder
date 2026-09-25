@@ -78,7 +78,18 @@
   },
   "support": {
     "maxLevelEffect": "Effect σε max level",
-    "supportedCharactersLabel": "Υποστηριζόμενοι χαρακτήρες"
+    "supportedCharactersLabel": "Υποστηριζόμενοι χαρακτήρες",
+    "autoPlus": {
+      "label": "Auto+",
+      "or": "ή",
+      "stage": "στο stage {{stage}}",
+      "finalStage": "στο τελευταίο stage",
+      "enemyBarrier": "όταν ένας εχθρός έχει Barrier",
+      "enemyInflicts": "όταν ένας εχθρός σού προκαλεί {{status}}",
+      "enemyApplies": "όταν ένας εχθρός εφαρμόζει {{status}}",
+      "fires": "ενεργοποιεί αυτόματα το {{effect}} του υποστηριζόμενου χαρακτήρα",
+      "neverFires": "δεν ενεργοποιεί ποτέ αυτόματα το {{effect}} του υποστηριζόμενου χαρακτήρα"
+    }
   },
   "stats": {
     "maxAtk": "Max ATK",

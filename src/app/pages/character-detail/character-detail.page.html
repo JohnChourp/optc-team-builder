@@ -602,6 +602,20 @@
                                 </div>
                               }
 
+                              <!--
+                                869f63gz3. Sentences the app writes in the reader's language: a support's
+                                Auto+ instructions.
+                              -->
+                              @if (entry.lines?.length) {
+                                <section class="detail-list-block" data-test="character-detail-lines">
+                                  <ul>
+                                    @for (line of entry.lines; track $index) {
+                                      <li>@if (line.labelKey) {<strong>{{ t(line.labelKey) }}: </strong>}@for (token of line.tokens; track $index) {@if (token.key) {{{ t(token.key, token.params) }}} @else {{{ token.text }}}}</li>
+                                    }
+                                  </ul>
+                                </section>
+                              }
+
                               @if (entry.chips.length) {
                                 <div class="chip-row">
                                   @for (chip of entry.chips; track $index) {
