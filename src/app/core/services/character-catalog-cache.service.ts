@@ -11,6 +11,7 @@ import {
   matchesCharacterFacet,
   normalizeCharacterFacetSelection,
 } from './character-facet-filter.utils';
+import { compareCharacterNamesNoCase } from './character-name-order.utils';
 import { CharacterOverridesService } from './character-overrides.service';
 import { OptcRepositoryService } from './optc-repository.service';
 import {
@@ -200,18 +201,15 @@ export class CharacterCatalogCacheService {
         return this.compareBoostSortedCharacters(left, right, 'captainAverageBoost', idOrder);
       }
 
+      // 869f6td2q. The same order the SQL path's `COLLATE NOCASE` gives, not a collator's.
       if (sortMode === 'nameAsc') {
-        const nameDifference = left.name.localeCompare(right.name, undefined, {
-          sensitivity: 'base',
-        });
+        const nameDifference = compareCharacterNamesNoCase(left.name, right.name);
 
         return nameDifference || compareCharacterIds(left.id, right.id, idOrder);
       }
 
       if (sortMode === 'nameDesc') {
-        const nameDifference = right.name.localeCompare(left.name, undefined, {
-          sensitivity: 'base',
-        });
+        const nameDifference = compareCharacterNamesNoCase(right.name, left.name);
 
         return nameDifference || compareCharacterIds(left.id, right.id, idOrder);
       }

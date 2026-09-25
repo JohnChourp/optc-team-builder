@@ -9,6 +9,7 @@ import {
   CHARACTER_TYPE_LIKE_CLAUSE,
   evaluateSqlLikePattern,
 } from './character-facet-filter.utils';
+import { compareCharacterNamesNoCase } from './character-name-order.utils';
 import { OptcRepositoryService } from './optc-repository.service';
 
 interface TestSqlRow {
@@ -1844,21 +1845,21 @@ function applyOrderingAndWindow(
       (left, right) => Number(left['id'] ?? 0) - Number(right['id'] ?? 0),
     );
   } else if (query.includes('ORDER BY c.name COLLATE NOCASE ASC')) {
+    // 869f6td2q. SQLite's NOCASE, not a collator: this fake stands in for the SQL path, and a
+    // collator here is exactly the second order that path never had.
     orderedRows = [...rows].sort((left, right) => {
-      const nameDifference = String(left['name'] ?? '').localeCompare(
+      const nameDifference = compareCharacterNamesNoCase(
+        String(left['name'] ?? ''),
         String(right['name'] ?? ''),
-        undefined,
-        { sensitivity: 'base' },
       );
 
       return nameDifference || compareSqlRowIds(left, right, resolveSqlIdOrder(query));
     });
   } else if (query.includes('ORDER BY c.name COLLATE NOCASE DESC')) {
     orderedRows = [...rows].sort((left, right) => {
-      const nameDifference = String(right['name'] ?? '').localeCompare(
+      const nameDifference = compareCharacterNamesNoCase(
+        String(right['name'] ?? ''),
         String(left['name'] ?? ''),
-        undefined,
-        { sensitivity: 'base' },
       );
 
       return nameDifference || compareSqlRowIds(left, right, resolveSqlIdOrder(query));

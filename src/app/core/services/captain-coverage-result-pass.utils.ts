@@ -17,6 +17,7 @@ import {
   summarizeCaptainCoverageTarget,
 } from './captain-coverage-filter.utils';
 import { matchesCharacterFacet } from './character-facet-filter.utils';
+import { compareCharacterNamesNoCase } from './character-name-order.utils';
 import { matchesCharacterTagSets } from './character-tag-set.utils';
 
 /**
@@ -286,19 +287,18 @@ function sortCaptainCoverageCandidates(
       return compareCaptainCoverageIds(left.character.id, right.character.id, idOrder);
     }
 
+    // 869f6td2q. The order the SQL path's `COLLATE NOCASE` gives, as on every other screen.
     if (sortMode === 'nameAsc') {
       return (
-        left.character.name.localeCompare(right.character.name, undefined, {
-          sensitivity: 'base',
-        }) || compareCaptainCoverageIds(left.character.id, right.character.id, idOrder)
+        compareCharacterNamesNoCase(left.character.name, right.character.name) ||
+        compareCaptainCoverageIds(left.character.id, right.character.id, idOrder)
       );
     }
 
     if (sortMode === 'nameDesc') {
       return (
-        right.character.name.localeCompare(left.character.name, undefined, {
-          sensitivity: 'base',
-        }) || compareCaptainCoverageIds(left.character.id, right.character.id, idOrder)
+        compareCharacterNamesNoCase(right.character.name, left.character.name) ||
+        compareCaptainCoverageIds(left.character.id, right.character.id, idOrder)
       );
     }
 

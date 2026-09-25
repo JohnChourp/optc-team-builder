@@ -37,6 +37,7 @@ import {
   matchesCharacterFacet,
   normalizeCharacterFacetSelection,
 } from './character-facet-filter.utils';
+import { compareCharacterNamesNoCase } from './character-name-order.utils';
 import {
   applyOverrideToCharacterDetailRecord,
   applyOverrideToCharacterListItem,
@@ -163,6 +164,10 @@ function buildDetailedCharacterOrderByClause(
     return buildCharacterBoostOrderByClause(alias, 'captain_average_boost', idOrder);
   }
 
+  /*
+   * 869f6td2q. `compareCharacterNamesNoCase` is the in-memory twin of these two clauses; the two
+   * must always describe the same order, or a list reorders itself when the path serving it changes.
+   */
   if (sortMode === 'nameAsc') {
     return `${alias}.name COLLATE NOCASE ASC, ${buildCharacterIdOrderByClause(alias, idOrder)}`;
   }
@@ -1984,18 +1989,16 @@ export class OptcRepositoryService {
         return left.id - right.id;
       }
 
+      // 869f6td2q. The twin of the SQL path's `COLLATE NOCASE` above, so saving one local
+      // override no longer reorders Character Boxes.
       if (sortMode === 'nameAsc') {
-        const nameDifference = left.name.localeCompare(right.name, undefined, {
-          sensitivity: 'base',
-        });
+        const nameDifference = compareCharacterNamesNoCase(left.name, right.name);
 
         return nameDifference || compareCharacterIds(left.id, right.id, idOrder);
       }
 
       if (sortMode === 'nameDesc') {
-        const nameDifference = right.name.localeCompare(left.name, undefined, {
-          sensitivity: 'base',
-        });
+        const nameDifference = compareCharacterNamesNoCase(right.name, left.name);
 
         return nameDifference || compareCharacterIds(left.id, right.id, idOrder);
       }
