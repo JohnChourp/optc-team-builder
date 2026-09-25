@@ -7,6 +7,7 @@ import {
   type AutoTeamBuilderType,
 } from '../../core/models/auto-team-builder.models';
 import { type SavedEnemy } from '../../core/models/optc.models';
+import { normalizeAvoidPreferRules } from '../../core/services/auto-team-builder-avoid-prefer.utils';
 import { normalizeBattleRequirementsWithLegacyFallback } from '../../core/services/auto-team-builder-battle.utils';
 import { splitManualAbilityRequirementsFromEnemyMechanics } from '../../core/services/enemy-mechanic-draft.utils';
 import { expandRequiredAbilitiesToCharacterGroups } from '../../core/services/required-character-groups.utils';
@@ -80,5 +81,7 @@ export function buildAutoTeamBuilderStateFromSavedEnemy(
     captainLeaderId: null,
     manualShipId: null,
     excludedShipIds: [],
+    // 869f63gma. What the enemy punishes and is weak to, applied as the enemy's own rules.
+    avoidPreferRules: normalizeAvoidPreferRules(enemy),
   };
 }

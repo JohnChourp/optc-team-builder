@@ -170,6 +170,21 @@ export const AUTO_TEAM_BUILDER_AXES: readonly AutoTeamBuilderAxis[] = [
     family: 'leaderScope',
     reportRowKey: 'captain',
   },
+  /*
+   * 869f63gma. A Saved Enemy's hard avoid. Relaxed to a ranking only when no team can be built with
+   * it, as the owner decided for both builders; `relaxedAvoidedValues` names what got in. A soft
+   * avoid and every prefer are rankings from the start, so they never relax - the same row reports
+   * them as applied.
+   */
+  {
+    axis: 13,
+    id: 'avoidedTypesAndClasses',
+    inputField: 'avoidMode',
+    relaxationFields: ['relaxedAvoidedValues'],
+    relaxable: true,
+    family: 'candidatePool',
+    reportRowKey: 'avoidPrefer',
+  },
 ] as const;
 
 /**

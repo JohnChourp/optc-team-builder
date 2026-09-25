@@ -23,6 +23,10 @@ import {
 } from '../models/auto-team-builder-ability.models';
 import { AUTO_TEAM_BUILDER_TYPES } from '../models/auto-team-builder.models';
 import {
+  normalizeAvoidPreferRules,
+  toSparseAvoidPreferFields,
+} from './auto-team-builder-avoid-prefer.utils';
+import {
   normalizeBattleRequirementsWithLegacyFallback,
 } from './auto-team-builder-battle.utils';
 import {
@@ -1849,6 +1853,8 @@ export class UserStateService {
       requireAllSelectedCharacterNamesInTeam: Boolean(
         enemy.requireAllSelectedCharacterNamesInTeam,
       ),
+      // 869f63gma. Sparse, so an enemy without a rule stores exactly what it stored before.
+      ...toSparseAvoidPreferFields(normalizeAvoidPreferRules(enemy)),
       associatedTeamIds: this.normalizeAssociatedTeamIds(enemy.associatedTeamIds),
       createdAt: this.normalizeTimestamp(enemy.createdAt, existing?.createdAt ?? now),
       updatedAt: this.normalizeTimestamp(enemy.updatedAt, now),

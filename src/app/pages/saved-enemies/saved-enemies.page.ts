@@ -15,7 +15,10 @@ import { IonToolbar } from '@ionic/angular/ion-toolbar';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 import { addCircleOutline, closeOutline } from 'ionicons/icons';
 
-import { AUTO_TEAM_BUILDER_TYPES } from '../../core/models/auto-team-builder.models';
+import {
+  AUTO_TEAM_BUILDER_TYPES,
+  type AutoBuildAvoidPreferRules,
+} from '../../core/models/auto-team-builder.models';
 import {
   type AutoBuildAbilityCategory,
   type AutoBuildAbilityCatalog,
@@ -33,6 +36,11 @@ import {
   type ShipRecord,
 } from '../../core/models/optc.models';
 import { AppI18nService } from '../../core/services/app-i18n.service';
+import {
+  createEmptyAvoidPreferRules,
+  normalizeAvoidPreferRules,
+  toSparseAvoidPreferFields,
+} from '../../core/services/auto-team-builder-avoid-prefer.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
 import { applyIonicModalDialogLabel } from '../../shared/a11y/ionic-modal-dialog-label.utils';
@@ -322,6 +330,10 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
   public readonly requiredCharacterAbilityPickerOpen = signal(false);
   public readonly requireAllSelectedTypesInTeam = signal(false);
   public readonly requireAllSelectedClassesPerCharacter = signal(false);
+  /** 869f63gma. What this enemy punishes and what it is weak to, as the editor holds them. */
+  public readonly avoidPreferRules = signal<AutoBuildAvoidPreferRules>(
+    createEmptyAvoidPreferRules(),
+  );
   public readonly savingEnemy = signal(false);
   public readonly associatedTeamIds = signal<string[]>([]);
   public readonly associatedTeamIdSet = computed(() => new Set(this.associatedTeamIds()));
@@ -836,6 +848,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     this.battleRequirements.set([createEmptyBattleRequirement(0)]);
     this.requireAllSelectedTypesInTeam.set(false);
     this.requireAllSelectedClassesPerCharacter.set(false);
+    this.avoidPreferRules.set(createEmptyAvoidPreferRules());
     this.associatedTeamIds.set([]);
     this.teamAssociationPickerOpen.set(false);
     this.teamAssociationDraftIds.set([]);
@@ -907,6 +920,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
     );
     this.requireAllSelectedTypesInTeam.set(enemy.requireAllSelectedTypesInTeam);
     this.requireAllSelectedClassesPerCharacter.set(enemy.requireAllSelectedClassesPerCharacter);
+    this.avoidPreferRules.set(normalizeAvoidPreferRules(enemy));
     this.associatedTeamIds.set([...(enemy.associatedTeamIds ?? [])]);
     this.teamAssociationPickerOpen.set(false);
     this.teamAssociationDraftIds.set([]);
@@ -1012,6 +1026,48 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
 
   public onClassChange(event: CustomEvent<{ value?: string[] | string | null }>): void {
     this.selectedClasses.set(this.resolveSelectedValues(event.detail.value));
+  }
+
+  /**
+   * 869f63gma. The four avoid and prefer pickers share one handler, and every value goes back
+   * through the shared normaliser, so the editor can only hold what storage would keep.
+   */
+  public onAvoidPreferValuesChange(
+    field: 'avoidedTypes' | 'avoidedClasses' | 'preferredTypes' | 'preferredClasses',
+    event: CustomEvent<{ value?: string[] | string | null }>,
+  ): void {
+    this.avoidPreferRules.update((rules) =>
+      normalizeAvoidPreferRules({
+        ...rules,
+        [field]: this.resolveSelectedValues(event.detail.value),
+      }),
+    );
+  }
+
+  public onAvoidModeChange(event: CustomEvent<{ value?: string | null }>): void {
+    this.avoidPreferRules.update((rules) => ({
+      ...rules,
+      avoidMode: event.detail.value === 'soft' ? 'soft' : 'hard',
+    }));
+  }
+
+  /** 869f63gma. The rules a saved enemy carries, worded for its card; null when it has none. */
+  public avoidPreferChipLabels(enemy: SavedEnemy): string[] | null {
+    const rules = normalizeAvoidPreferRules(enemy);
+    const avoided = [...rules.avoidedTypes, ...rules.avoidedClasses];
+    const labels = [
+      ...avoided.map((value) =>
+        this.i18n.translate('summary.avoid', { value }, 'saved-enemies'),
+      ),
+      ...(avoided.length && rules.avoidMode === 'soft'
+        ? [this.i18n.translate('editor.avoidPrefer.modes.soft', undefined, 'saved-enemies')]
+        : []),
+      ...[...rules.preferredTypes, ...rules.preferredClasses].map((value) =>
+        this.i18n.translate('summary.prefer', { value }, 'saved-enemies'),
+      ),
+    ];
+
+    return labels.length ? labels : null;
   }
 
   public selectAllTypes(): void {
@@ -1728,6 +1784,7 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
         enemyMechanics: this.serializeEnemyMechanics(),
         requireAllSelectedTypesInTeam: this.requireAllSelectedTypesInTeam(),
         requireAllSelectedClassesPerCharacter: this.requireAllSelectedClassesPerCharacter(),
+        ...toSparseAvoidPreferFields(this.avoidPreferRules()),
         associatedTeamIds,
       });
       this.closeEditor();
