@@ -1,4 +1,5 @@
 import { type AutoBuildResult } from '../../core/models/auto-team-builder.models';
+import { type StartCutPart } from './special-charge-start-cut.utils';
 
 /**
  * The two numbers this needs, keyed by character.
@@ -38,8 +39,18 @@ export interface SpecialCooldownRecord {
  * simulation - that is wave 1's calculator and a separate, larger question.
  *
  * **The Limit Break limit, which the UI must repeat.** Limit Break lowers a special's cooldown
- * further in game, and the dataset carries no LB reduction. `min` is therefore the floor a fully
- * levelled special reaches *before* LB, not the lowest number a real box can achieve.
+ * in game two ways, and the dataset carries only one. The Cooldown Reduction potential is there,
+ * as its max-level amount, and 869f63gm7 counts it behind "If Limit Broken". The Limit Break
+ * path's own "Reduce base Special Cooldown by N turns" nodes are not - the importer does not read
+ * upstream's `limit` list - so `min` stays the floor a fully levelled special reaches before them,
+ * not the lowest number a real box can achieve. 869f63gm7 corrected the note that said the data
+ * carried no Limit Break reduction at all.
+ *
+ * **869f63gm7: the start of the quest.** A special does not start from a full cooldown when the
+ * event, the Captains, the ship or - Limit Broken - the unit's crewmates and Cooldown Reduction
+ * potential cut it first. `special-charge-start-cut.utils.ts` works out those cuts per slot; this
+ * takes them off both numbers, never below zero, and keeps them on the entry so the row can name
+ * every source. Zero turns to charge means the special is charged at the start of the fight.
  */
 export interface SpecialChargeEntry {
   readonly characterId: number;
@@ -47,10 +58,12 @@ export interface SpecialChargeEntry {
   readonly role: AutoBuildResult['slots'][number]['role'];
   /** The special's own name, when the dataset has one. */
   readonly specialName: string | null;
-  /** Turns to charge at special level 1. */
+  /** Turns to charge at special level 1, after the cuts at the start of the quest. */
   readonly baseTurns: number;
-  /** Turns to charge at max special level, before Limit Break. */
+  /** Turns to charge at max special level, after the cuts at the start of the quest. */
   readonly maxLevelTurns: number;
+  /** What the start of the quest took off, source by source. Empty when nothing did. */
+  readonly startCut: readonly StartCutPart[];
   /** True when `maxLevelTurns` fits inside the run the reader entered. */
   readonly chargesInRun: boolean;
   /**
@@ -95,6 +108,7 @@ export function buildSpecialChargeTimeline(
   result: AutoBuildResult | null,
   turns: number,
   cooldownsById: ReadonlyMap<number, SpecialCooldownRecord>,
+  startCutsBySlot: readonly (readonly StartCutPart[])[] = [],
 ): SpecialChargeTimeline | null {
   if (!result) {
     return null;
@@ -104,11 +118,12 @@ export function buildSpecialChargeTimeline(
   const entries: SpecialChargeEntry[] = [];
   const unknownCharacterNames: string[] = [];
 
-  for (const slot of result.slots) {
+  for (const [slotIndex, slot] of result.slots.entries()) {
     const { character } = slot;
     const cooldown = cooldownsById.get(character.id);
-    const baseTurns = cooldown?.baseTurns ?? null;
-    const maxLevelTurns = cooldown?.maxLevelTurns ?? null;
+    const startCut = startCutsBySlot[slotIndex] ?? [];
+    const baseTurns = afterStartCut(cooldown?.baseTurns ?? null, startCut);
+    const maxLevelTurns = afterStartCut(cooldown?.maxLevelTurns ?? null, startCut);
 
     /*
      * A character with no cooldown is overwhelmingly fodder - Turtles and low-rarity units - but
@@ -129,6 +144,7 @@ export function buildSpecialChargeTimeline(
       specialName: character.detail?.specialName ?? null,
       baseTurns,
       maxLevelTurns,
+      startCut,
       chargesInRun,
       spareTurns: chargesInRun ? runTurns - maxLevelTurns : null,
       shortfallTurns: chargesInRun ? null : maxLevelTurns - runTurns,
@@ -153,4 +169,17 @@ export function buildSpecialChargeTimeline(
     earliestTurns: sorted[0]?.maxLevelTurns ?? null,
     latestReadyTurns: ready[ready.length - 1]?.maxLevelTurns ?? null,
   };
+}
+
+/** A source that charges it completely leaves nothing; otherwise every turn cut comes off. */
+function afterStartCut(turns: number | null, startCut: readonly StartCutPart[]): number | null {
+  if (turns === null || startCut.length === 0) {
+    return turns;
+  }
+
+  if (startCut.some((part) => part.turns === null)) {
+    return 0;
+  }
+
+  return Math.max(0, turns - startCut.reduce((total, part) => total + (part.turns ?? 0), 0));
 }

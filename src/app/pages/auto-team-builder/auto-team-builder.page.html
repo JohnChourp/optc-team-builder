@@ -3615,6 +3615,52 @@
                     <span class="charge-turns__summary">{{ chargeTimelineSummaryLabel() }}</span>
                   </div>
 
+                  <!--
+                    869f63gm7. The start of the quest. The event cut is the reader's to enter - the
+                    dataset carries no event data - and it goes to the Boosted list above unless
+                    they give it to the whole team. Limit Break is theirs to claim too, so it
+                    starts off. Native buttons, because their pressed state changes, as in the
+                    Boosted list above.
+                  -->
+                  <div class="charge-turns">
+                    <label for="charge-timeline-event-cut">{{
+                      t('chargeTimeline.cutLabel')
+                    }}</label>
+                    <input
+                      id="charge-timeline-event-cut"
+                      class="transfer-text-input charge-turns__input"
+                      type="number"
+                      inputmode="numeric"
+                      min="0"
+                      max="99"
+                      [value]="timelineEventCut()"
+                      (change)="onTimelineEventCutChange($event)"
+                    />
+                    <button
+                      type="button"
+                      class="boosted-toggle"
+                      [class.boosted-toggle--on]="timelineEventCutWholeTeam()"
+                      [attr.aria-pressed]="timelineEventCutWholeTeam()"
+                      (click)="toggleTimelineEventCutWholeTeam()"
+                    >
+                      {{ t('chargeTimeline.cutWholeTeam') }}
+                    </button>
+                  </div>
+                  @if (!timelineEventCutWholeTeam()) {
+                    <p class="charge-list__note">{{ chargeTimelineCutReachLabel() }}</p>
+                  }
+                  <div class="charge-turns">
+                    <button
+                      type="button"
+                      class="boosted-toggle"
+                      [class.boosted-toggle--on]="timelineCountLimitBreak()"
+                      [attr.aria-pressed]="timelineCountLimitBreak()"
+                      (click)="toggleTimelineCountLimitBreak()"
+                    >
+                      {{ t('chargeTimeline.limitBreakToggle') }}
+                    </button>
+                  </div>
+
                   @if (timeline.entries.length) {
                     <ul class="charge-list">
                       @for (entry of timeline.entries; track entry.characterId) {
@@ -3625,7 +3671,7 @@
                           <div class="charge-list__head">
                             <strong>{{ entry.characterName }}</strong>
                             <small class="coverage-chip">{{
-                              t('chargeTimeline.charges', { turns: entry.maxLevelTurns })
+                              chargeTimelineChargesLabel(entry)
                             }}</small>
                           </div>
                           @if (entry.specialName) {
@@ -3634,6 +3680,11 @@
                           <p class="charge-list__verdict">
                             {{ chargeTimelineEntryLabel(entry) }}
                           </p>
+                          @if (entry.startCut.length) {
+                            <p class="charge-list__note">
+                              {{ chargeTimelineStartCutLabel(entry) }}
+                            </p>
+                          }
                         </li>
                       }
                     </ul>
