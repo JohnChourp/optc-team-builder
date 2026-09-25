@@ -1,6 +1,7 @@
 /**
  * 869f1935z. The three upstream files the importer never read, normalized into per-character
- * lookups: `cooldowns.js`, `evolutions.js` and `drops.js`.
+ * lookups: `cooldowns.js`, `evolutions.js` and `drops.js`. 869f63gm1 added how a unit is obtained,
+ * from `flags.js`, `shops.js` and `banners.js` (`normalizeAcquisition`).
  *
  * They were left out because nothing needed them, and the feasibility audit
  * (`optc-team-builder-brain/audits/2026-09-13-869f127fy-ideas-feasibility.md`) measured what they
@@ -217,11 +218,105 @@ export function normalizeDropSources(dropsWindow) {
 }
 
 /**
- * Attaches the three lookups onto already-built character objects, in place of a fourth argument
+ * 869f63gm1. The `flags.js` keys that say how a unit is obtained: upstream's own "non-farmable"
+ * filter set in `filterOptions.js`, in its order, after `rr` - the Rare Recruit itself. A limited
+ * unit carries `rr` and `lrr` and then the kind (`tmlrr`, `kclrr` ...): upstream never sets `lrr`
+ * without `rr`, nor a kind without both.
+ *
+ * Left out on purpose: `global` (a region, already `region_release_json`), `rro` (a strict subset
+ * of `rr` - no unit carries it without `rr` - that upstream's pages never label), and `inkable`
+ * (what a unit can be evolved with, not how it is obtained).
+ */
+export const ACQUISITION_FLAG_KEYS = Object.freeze([
+  'rr',
+  'lrr',
+  'tmlrr',
+  'kclrr',
+  'pflrr',
+  'slrr',
+  'superlrr',
+  'annilrr',
+  'promo',
+  'special',
+  'shop',
+  'tmshop',
+]);
+
+function createEmptyAcquisition() {
+  return { flags: [], shops: [], banners: [] };
+}
+
+/**
+ * 869f63gm1. How each unit is obtained, as upstream records it - the answer `drops.js` alone gives
+ * for only a third of the units: its acquisition flags (`flags.js`), the shops that sell it
+ * (`shops.js`: Ray, Medal, TM, Rumble, Kizuna, PKA) and the banners that pull it (`banners.js`: the
+ * Friend Point banner). Returns `characterId -> { flags, shops, banners }` for every unit at least
+ * one of them names, each list in upstream's order and each value once.
+ *
+ * Only POSITIVE facts exist here. A unit none of the three files names has no entry, which means
+ * "nothing recorded" - never "not obtainable", for the reason `attachProgressionData` gives.
+ */
+export function normalizeAcquisition({ flags, shops, banners } = {}) {
+  const byId = new Map();
+  const entryFor = (characterId) => {
+    const entry = byId.get(characterId) ?? createEmptyAcquisition();
+
+    byId.set(characterId, entry);
+
+    return entry;
+  };
+
+  for (const [rawId, flagEntry] of Object.entries(flags ?? {})) {
+    const characterId = toCharacterId(rawId);
+
+    if (characterId === null || !flagEntry || typeof flagEntry !== 'object') {
+      continue;
+    }
+
+    const keys = ACQUISITION_FLAG_KEYS.filter((key) => Boolean(flagEntry[key]));
+
+    if (keys.length > 0) {
+      entryFor(characterId).flags.push(...keys);
+    }
+  }
+
+  for (const [field, lists] of [
+    ['shops', shops],
+    ['banners', banners],
+  ]) {
+    for (const [name, ids] of Object.entries(lists ?? {})) {
+      if (!Array.isArray(ids)) {
+        continue;
+      }
+
+      for (const value of ids) {
+        const characterId = toCharacterId(value);
+
+        if (characterId === null) {
+          continue;
+        }
+
+        const names = entryFor(characterId)[field];
+
+        if (!names.includes(name)) {
+          names.push(name);
+        }
+      }
+    }
+  }
+
+  return byId;
+}
+
+/**
+ * Attaches the lookups onto already-built character objects, in place of a fourth argument
  * to `createSqlSeed` - which `manual-character-apply.mjs` also calls, and which would then have to
  * carry data a manually added character never has.
  */
-export function attachProgressionData(characters, { cooldowns, evolutions, dropSources }) {
+export function attachProgressionData(
+  characters,
+  { cooldowns, evolutions, dropSources, acquisition = new Map() },
+) {
   return characters.map((character) => {
     const forward = evolutions.forward.get(character.id) ?? [];
     const reverse = evolutions.reverse.get(character.id) ?? [];
@@ -235,6 +330,7 @@ export function attachProgressionData(characters, { cooldowns, evolutions, dropS
       evolvesTo: forward,
       evolvesFrom: reverse,
       dropSources: drops,
+      acquisition: acquisition.get(character.id) ?? createEmptyAcquisition(),
     };
   });
 }
@@ -271,6 +367,11 @@ export const PROGRESSION_UPSTREAM_SOURCES = Object.freeze({
   dropSources: {
     upstream: 'drops.js <group>[].<slot>',
     table: 'character_drops',
+    column: 'sources_json',
+  },
+  acquisition: {
+    upstream: 'flags.js acquisition keys + shops.js + banners.js',
+    table: 'character_acquisition',
     column: 'sources_json',
   },
 });

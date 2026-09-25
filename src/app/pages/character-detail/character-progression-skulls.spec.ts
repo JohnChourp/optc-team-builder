@@ -29,6 +29,7 @@ function progression(overrides: Partial<CharacterProgression> = {}): CharacterPr
     evolvesTo: [],
     evolvesFrom: [],
     dropSources: [],
+    acquisition: { flags: [], shops: [], banners: [] },
     ...overrides,
   };
 }

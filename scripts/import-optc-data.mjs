@@ -41,6 +41,7 @@ import {
 import { normalizeRumbleUnits } from './lib/rumble-data-normalizer.mjs';
 import {
   attachProgressionData,
+  normalizeAcquisition,
   normalizeDropSources,
   normalizeEvolutions,
   normalizeSpecialCooldowns,
@@ -1634,6 +1635,8 @@ async function main() {
     dropsWindow,
     flagsWindow,
     familiesWindow,
+    shopsWindow,
+    bannersWindow,
     rumble,
     sourceVersion,
     imageOverrides,
@@ -1667,6 +1670,13 @@ async function main() {
      * disagreed with this file on 18,449 unit pairs. Plain data like the files above.
      */
     evaluateLegacyFile('common/data/families.js', selectedSource),
+    /*
+     * 869f63gm1. How a unit is obtained besides a drop: the shops that sell it and the Friend Point
+     * banner. With the acquisition keys of `flags.js` above, they give a positive answer for most
+     * of the units `drops.js` says nothing about. Plain data like the files above.
+     */
+    evaluateLegacyFile('common/data/shops.js', selectedSource),
+    evaluateLegacyFile('common/data/banners.js', selectedSource),
     fetchJson(buildSourceFileUrl(selectedSource, 'common/data/rumble.json'), selectedSource),
     fetchVersion(selectedSource),
     loadCharacterImageOverrides(),
@@ -1736,6 +1746,11 @@ async function main() {
       cooldowns: normalizeSpecialCooldowns(cooldownsWindow.cooldowns),
       evolutions: normalizeEvolutions(evolutionsWindow.evolutions),
       dropSources: normalizeDropSources(dropsWindow.drops),
+      acquisition: normalizeAcquisition({
+        flags: flagsWindow.flags,
+        shops: shopsWindow.shops,
+        banners: bannersWindow.banners,
+      }),
     },
   );
   const abilityCorrections = await loadBuilderAbilityCorrections(builderAbilityCorrectionsPath);

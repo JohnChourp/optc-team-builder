@@ -195,6 +195,8 @@ async function loadCurrentDataset(seedPath, manifestPath) {
   const hasDropsTable = tableExists(database, 'character_drops');
   /* 869f63grj. The same round trip, for upstream's families - an older seed has no such column. */
   const hasFamiliesColumn = tableHasColumn(database, 'characters', 'families_json');
+  /* 869f63gm1. And again for how a unit is obtained. */
+  const hasAcquisitionTable = tableExists(database, 'character_acquisition');
   const characters = selectAll(
     database,
     `
@@ -232,6 +234,7 @@ async function loadCurrentDataset(seedPath, manifestPath) {
         },
         ${hasEvolutionsTable ? 'e.evolves_to_json, e.evolves_from_json' : "NULL AS evolves_to_json, NULL AS evolves_from_json"},
         ${hasDropsTable ? 'p.sources_json' : 'NULL AS sources_json'},
+        ${hasAcquisitionTable ? 'a.sources_json AS acquisition_json' : 'NULL AS acquisition_json'},
         c.region_json,
         c.region_release_json,
         c.assets_json,
@@ -242,6 +245,7 @@ async function loadCurrentDataset(seedPath, manifestPath) {
       LEFT JOIN character_details d ON d.character_id = c.id
       ${hasEvolutionsTable ? 'LEFT JOIN character_evolutions e ON e.character_id = c.id' : ''}
       ${hasDropsTable ? 'LEFT JOIN character_drops p ON p.character_id = c.id' : ''}
+      ${hasAcquisitionTable ? 'LEFT JOIN character_acquisition a ON a.character_id = c.id' : ''}
       ORDER BY c.id ASC
     `,
   ).map((row) => hydrateCharacterRow(row));
@@ -318,6 +322,7 @@ function hydrateCharacterRow(row) {
     evolvesTo: parseJson(row.evolves_to_json, []),
     evolvesFrom: parseJson(row.evolves_from_json, []),
     dropSources: parseJson(row.sources_json, []),
+    acquisition: parseJson(row.acquisition_json, { flags: [], shops: [], banners: [] }),
     searchText:
       typeof row.search_text === 'string' && row.search_text.length
         ? row.search_text

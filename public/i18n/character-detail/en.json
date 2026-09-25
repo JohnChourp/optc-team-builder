@@ -70,7 +70,7 @@
     "progression": "Getting and improving this unit",
     "investment": "Investment",
     "evolution": "Evolution",
-    "dropSources": "Where it drops"
+    "howToGet": "How to get it"
   },
   "superSpecial": {
     "criteriaLabel": "Criteria",
@@ -109,8 +109,34 @@
     "sameCaptainAbility": "Same Captain Ability · cost {{cost}}",
     "evolvesInto": "Evolves into, and what it costs",
     "dropsFrom": "Drops from",
+    "recruitedFrom": "Recruited from",
+    "soldIn": "Sold in",
+    "givenThrough": "Given through",
+    "byEvolving": "By evolving",
+    "dropStageJapanOnly": "{{stage}} ({{group}}, JP only)",
     "skullOf": "Skull of {{name}}",
-    "skullOfCount": "Skull of {{name}} ×{{count}}"
+    "skullOfCount": "Skull of {{name}} ×{{count}}",
+    "acquisition": {
+      "rareRecruit": "Rare Recruit",
+      "limitedRareRecruit": "Limited Rare Recruit",
+      "treasureMapLimitedRareRecruit": "Treasure Map Limited Rare Recruit",
+      "kizunaClashLimitedRareRecruit": "Kizuna Clash Limited Rare Recruit",
+      "pirateFestivalLimitedRareRecruit": "Pirate Festival Limited Rare Recruit",
+      "supportLimitedRareRecruit": "Support Limited Rare Recruit",
+      "superLimitedRareRecruit": "Super Limited Rare Recruit",
+      "anniversaryLimitedRareRecruit": "Anniversary Limited Rare Recruit",
+      "friendPointBanner": "Friend Point banner",
+      "bannerNamed": "{{name}} banner",
+      "rayleighShop": "Rayleigh Shop",
+      "medalShop": "Medal Shop",
+      "treasureMapShop": "Treasure Map Shop",
+      "rumbleShop": "Rumble Shop",
+      "kizunaShop": "Kizuna Shop",
+      "pirateKingAdventuresShop": "Pirate King Adventures Shop",
+      "shopNamed": "{{name}} Shop",
+      "loginBonus": "Login Bonus",
+      "promoCode": "Promo code"
+    }
   },
   "region": {
     "japanOnly": "Japan only"

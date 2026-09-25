@@ -165,6 +165,7 @@ export function createSqlSeed(characters, ships, manifest) {
     'DROP TABLE IF EXISTS character_details;',
     'DROP TABLE IF EXISTS character_evolutions;',
     'DROP TABLE IF EXISTS character_drops;',
+    'DROP TABLE IF EXISTS character_acquisition;',
     'DROP TABLE IF EXISTS ships;',
     'DROP TABLE IF EXISTS meta;',
     `
@@ -220,6 +221,17 @@ export function createSqlSeed(characters, ships, manifest) {
     `,
     `
       CREATE TABLE character_drops (
+        character_id INTEGER PRIMARY KEY,
+        sources_json TEXT NOT NULL
+      );
+    `,
+    /*
+     * 869f63gm1. How a unit is obtained besides a drop, as upstream records it:
+     * `{ "flags": [...], "shops": [...], "banners": [...] }`. Like the two tables above, a unit
+     * nothing records has no row.
+     */
+    `
+      CREATE TABLE character_acquisition (
         character_id INTEGER PRIMARY KEY,
         sources_json TEXT NOT NULL
       );
@@ -328,6 +340,23 @@ export function createSqlSeed(characters, ships, manifest) {
       statements.push(`
         INSERT INTO character_drops (character_id, sources_json)
         VALUES (${sqlValue(character.id)}, ${sqlValue(JSON.stringify(dropSources))});
+      `);
+    }
+
+    const acquisition = {
+      flags: character.acquisition?.flags ?? [],
+      shops: character.acquisition?.shops ?? [],
+      banners: character.acquisition?.banners ?? [],
+    };
+
+    if (
+      acquisition.flags.length > 0 ||
+      acquisition.shops.length > 0 ||
+      acquisition.banners.length > 0
+    ) {
+      statements.push(`
+        INSERT INTO character_acquisition (character_id, sources_json)
+        VALUES (${sqlValue(character.id)}, ${sqlValue(JSON.stringify(acquisition))});
       `);
     }
   }

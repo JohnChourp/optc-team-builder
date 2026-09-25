@@ -321,6 +321,23 @@ export interface CharacterDropSource {
   global: boolean;
 }
 
+/**
+ * 869f63gm1. How a unit is obtained besides a drop, as upstream records it, each list in upstream's
+ * order. Only positive facts: empty lists mean nothing is recorded, never that it cannot be had.
+ */
+export interface CharacterAcquisition {
+  /**
+   * `flags.js` keys: `rr` (Rare Recruit), `lrr` (limited) and its kind - `tmlrr`, `kclrr`, `pflrr`,
+   * `slrr`, `superlrr`, `annilrr` - then `promo`, `special` (Login Bonus), `shop` (Rayleigh's shop)
+   * and `tmshop` (the Treasure Map's).
+   */
+  flags: string[];
+  /** `shops.js` lists that sell it: `Ray`, `Medal`, `TM`, `Rumble`, `Kizuna`, `PKA`. */
+  shops: string[];
+  /** `banners.js` lists that pull it: `FP`, the Friend Point banner. */
+  banners: string[];
+}
+
 export interface CharacterProgression {
   characterId: number;
   maxSockets: number | null;
@@ -329,6 +346,7 @@ export interface CharacterProgression {
   evolvesTo: CharacterEvolutionBranch[];
   evolvesFrom: number[];
   dropSources: CharacterDropSource[];
+  acquisition: CharacterAcquisition;
 }
 
 interface LocalCharacterOverrideImages {

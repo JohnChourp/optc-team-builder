@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import { type CharacterProgression } from '../../core/models/optc.models';
 import {
-  buildDropSourceCard,
   buildEvolutionCard,
+  buildHowToGetCard,
   buildInvestmentCard,
   buildProgressionCards,
   collectProgressionCharacterIds,
@@ -26,6 +26,7 @@ function progression(overrides: Partial<CharacterProgression> = {}): CharacterPr
     evolvesTo: [],
     evolvesFrom: [],
     dropSources: [],
+    acquisition: { flags: [], shops: [], banners: [] },
     ...overrides,
   };
 }
@@ -195,22 +196,23 @@ describe('summarizeDropSources', () => {
   });
 });
 
-describe('buildDropSourceCard', () => {
+describe('buildHowToGetCard', () => {
   it('renders NOTHING when no source is recorded, rather than claiming it is not farmable', () => {
     /*
      * The whole rule. Most characters have no `drops.js` entry and are sugo-only, not
      * unobtainable - so the absence must stay silent.
      */
-    expect(buildDropSourceCard(progression())).toBeNull();
+    expect(buildHowToGetCard(progression(), resolveName)).toBeNull();
   });
 
   it('renders the stages when sources exist', () => {
-    const card = buildDropSourceCard(
+    const card = buildHowToGetCard(
       progression({
         dropSources: [
           { group: 'Coliseum', stage: 'Doflamingo', dropId: 'col1', slot: '5', global: true },
         ],
       }),
+      resolveName,
     );
 
     expect(card?.lists[0]?.items).toEqual(['Doflamingo (Coliseum)']);
@@ -242,7 +244,7 @@ describe('buildProgressionCards', () => {
     expect(buildProgressionCards(null, resolveName)).toEqual([]);
   });
 
-  it('orders the cards investment, evolution, drops', () => {
+  it('orders the cards investment, evolution, how to get it', () => {
     const cards = buildProgressionCards(
       progression({
         maxSockets: 4,
@@ -255,7 +257,7 @@ describe('buildProgressionCards', () => {
     expect(cards.map((card) => card.titleKey)).toEqual([
       'sections.investment',
       'sections.evolution',
-      'sections.dropSources',
+      'sections.howToGet',
     ]);
   });
 });

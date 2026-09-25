@@ -70,7 +70,7 @@
     "progression": "Πώς τον αποκτάς και πώς τον ανεβάζεις",
     "investment": "Επένδυση",
     "evolution": "Evolution",
-    "dropSources": "Πού πέφτει"
+    "howToGet": "Πώς τον αποκτάς"
   },
   "superSpecial": {
     "criteriaLabel": "Criteria",
@@ -109,8 +109,34 @@
     "sameCaptainAbility": "Ίδιο Captain Ability · cost {{cost}}",
     "evolvesInto": "Εξελίσσεται σε, και τι κοστίζει",
     "dropsFrom": "Πέφτει από",
+    "recruitedFrom": "Βγαίνει από",
+    "soldIn": "Πωλείται στο",
+    "givenThrough": "Δίνεται μέσω",
+    "byEvolving": "Με εξέλιξη από",
+    "dropStageJapanOnly": "{{stage}} ({{group}}, μόνο JP)",
     "skullOf": "Κρανίο: {{name}}",
-    "skullOfCount": "Κρανίο: {{name}} ×{{count}}"
+    "skullOfCount": "Κρανίο: {{name}} ×{{count}}",
+    "acquisition": {
+      "rareRecruit": "Rare Recruit",
+      "limitedRareRecruit": "Rare Recruit περιορισμένης διάρκειας",
+      "treasureMapLimitedRareRecruit": "Rare Recruit περιορισμένης διάρκειας του Treasure Map",
+      "kizunaClashLimitedRareRecruit": "Rare Recruit περιορισμένης διάρκειας του Kizuna Clash",
+      "pirateFestivalLimitedRareRecruit": "Rare Recruit περιορισμένης διάρκειας του Pirate Festival",
+      "supportLimitedRareRecruit": "Support Rare Recruit περιορισμένης διάρκειας",
+      "superLimitedRareRecruit": "Super Rare Recruit περιορισμένης διάρκειας",
+      "anniversaryLimitedRareRecruit": "Rare Recruit περιορισμένης διάρκειας της επετείου",
+      "friendPointBanner": "Banner των Friend Points",
+      "bannerNamed": "Banner του {{name}}",
+      "rayleighShop": "Κατάστημα του Rayleigh",
+      "medalShop": "Κατάστημα Medal",
+      "treasureMapShop": "Κατάστημα του Treasure Map",
+      "rumbleShop": "Κατάστημα του Rumble",
+      "kizunaShop": "Κατάστημα του Kizuna",
+      "pirateKingAdventuresShop": "Κατάστημα του Pirate King Adventures",
+      "shopNamed": "Κατάστημα {{name}}",
+      "loginBonus": "Δώρο σύνδεσης (Login Bonus)",
+      "promoCode": "Κωδικός promo"
+    }
   },
   "region": {
     "japanOnly": "Μόνο Japan"

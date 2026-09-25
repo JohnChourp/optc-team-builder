@@ -13,6 +13,7 @@ import {
 import { type AutoBuildAbilityCatalog } from '../models/auto-team-builder-ability.models';
 import {
   type CaptainCoverageTierKind,
+  type CharacterAcquisition,
   type CharacterAssets,
   type CharacterCaptainAbilityScope,
   type CharacterDetail,
@@ -749,6 +750,32 @@ function parseJsonArray<T>(value: unknown): T[] {
 }
 
 /**
+ * 869f63gm1. A `character_acquisition` row: `{ flags, shops, banners }`, each a list of upstream
+ * keys. Anything missing or malformed reads as an empty list - "nothing recorded" - and a
+ * non-string entry is dropped rather than shown.
+ */
+function parseCharacterAcquisition(value: unknown): CharacterAcquisition {
+  let parsed: unknown = null;
+
+  if (typeof value === 'string' && value.length > 0) {
+    try {
+      parsed = JSON.parse(value);
+    } catch {
+      parsed = null;
+    }
+  }
+
+  const record =
+    parsed !== null && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : {};
+  const keys = (field: string): string[] =>
+    Array.isArray(record[field])
+      ? (record[field] as unknown[]).filter((entry): entry is string => typeof entry === 'string')
+      : [];
+
+  return { flags: keys('flags'), shops: keys('shops'), banners: keys('banners') };
+}
+
+/**
  * `undefined` is admitted because that is what indexing a `SqlRow` yields for an
  * absent column under `noUncheckedIndexedAccess`, and the body has always
  * treated it exactly as `null`. Only the signature was untrue.
@@ -1278,15 +1305,16 @@ export class OptcRepositoryService {
 
   /**
    * 869f1935z. One character's progression: socket slots, special cooldown, both evolution
-   * directions and every drop source.
+   * directions and every drop source - and, since 869f63gm1, how else it is obtained.
    *
    * A separate query on purpose. `getCharacterById` is also used to resolve a Rumble `basedOn`
    * unit and runs in list contexts; these payloads are per-character arrays that nothing but the
    * detail surface reads.
    *
-   * A missing `character_evolutions` or `character_drops` row means the upstream graph does not
-   * mention this character - "nothing recorded", NOT "not farmable". The difference is the whole
-   * point: a confident "there is no way to get this" is as wrong as a bad stage recommendation.
+   * A missing `character_evolutions`, `character_drops` or `character_acquisition` row means the
+   * upstream data does not mention this character - "nothing recorded", NOT "not farmable". The
+   * difference is the whole point: a confident "there is no way to get this" is as wrong as a bad
+   * stage recommendation.
    */
   public async getCharacterProgression(characterId: number): Promise<CharacterProgression | null> {
     const rows = await this.selectAll(
@@ -1298,10 +1326,12 @@ export class OptcRepositoryService {
           c.special_cooldown_min,
           e.evolves_to_json,
           e.evolves_from_json,
-          p.sources_json
+          p.sources_json,
+          a.sources_json AS acquisition_json
         FROM characters c
         LEFT JOIN character_evolutions e ON e.character_id = c.id
         LEFT JOIN character_drops p ON p.character_id = c.id
+        LEFT JOIN character_acquisition a ON a.character_id = c.id
         WHERE c.id = ?
       `,
       [characterId],
@@ -1321,6 +1351,8 @@ export class OptcRepositoryService {
       evolvesTo: parseJsonArray<CharacterEvolutionBranch>(row['evolves_to_json']),
       evolvesFrom: parseJsonArray<number>(row['evolves_from_json']),
       dropSources: parseJsonArray<CharacterDropSource>(row['sources_json']),
+      // 869f63gm1. No row, or a malformed one, is "nothing recorded" - empty lists, never a negative.
+      acquisition: parseCharacterAcquisition(row['acquisition_json']),
     };
   }
 

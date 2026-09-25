@@ -380,7 +380,8 @@
             }
 
             <!--
-              869f1935z. Sockets, evolution chain and drop sources. Its own section rather than a
+              869f1935z. Sockets, evolution chain and how to get it (drop sources until
+              869f63gm1). Its own section rather than a
               card inside the ability groups: those describe what the unit DOES in a team, this
               describes what the player has to do to GET and improve it.
             -->
@@ -419,8 +420,8 @@
                                 @for (item of list.items; track $index) {
                                   <li>
                                     <!--
-                                      869f63gm1. A unit's skull is a phrase in the reader's
-                                      language.
+                                      869f63gm1. A way to get the unit, a unit's skull or a stage
+                                      not on Global is a phrase in the reader's language.
                                     -->
                                     @if (list.texts?.[$index]; as text) {
                                       {{ t(text.key, text.params) }}
