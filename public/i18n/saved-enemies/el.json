@@ -270,6 +270,18 @@
       "actions": {
         "clear": "Καθαρισμός Support filters"
       }
+    },
+    "avoidPrefer": {
+      "title": "Αποφυγή ή προτίμηση",
+      "avoidTypesLabel": "Types προς αποφυγή",
+      "avoidClassesLabel": "Classes προς αποφυγή",
+      "modeLabel": "Πώς να αποφευχθούν",
+      "modes": {
+        "hard": "Να μένουν έξω, εκτός αν δεν βγαίνει ομάδα",
+        "soft": "Να κατατάσσονται χαμηλότερα"
+      },
+      "preferTypesLabel": "Προτιμώμενα types",
+      "preferClassesLabel": "Προτιμώμενα classes"
     }
   },
   "empty": {
@@ -332,7 +344,9 @@
       "types": "Strict types"
     },
     "rules": "Κανόνες",
-    "types": "Types"
+    "types": "Types",
+    "avoid": "Αποφυγή {{value}}",
+    "prefer": "Προτίμηση {{value}}"
   },
   "tools": {
     "delete": "Διαγραφή επιλεγμένων",

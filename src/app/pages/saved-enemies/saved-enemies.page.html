@@ -249,6 +249,16 @@
                         </div>
                       </div>
                     }
+                    @if (avoidPreferChipLabels(enemy); as avoidPreferChips) {
+                      <div class="enemy-chip-group">
+                        <span>{{ t('editor.avoidPrefer.title') }}</span>
+                        <div class="chip-row">
+                          @for (label of avoidPreferChips; track $index) {
+                            <small class="enemy-chip enemy-chip--rule">{{ label }}</small>
+                          }
+                        </div>
+                      </div>
+                    }
                     @if (enemy.requiredAbilities.length) {
                       <div class="enemy-chip-group">
                         <span>{{ t('summary.counters') }}</span>
@@ -699,6 +709,102 @@
                   </div>
                 </div>
               </div>
+
+              <section class="ability-card" data-testid="saved-enemies-avoid-prefer">
+                <div class="section-head section-head--editor">
+                  <div>
+                    <h3>{{ t('editor.avoidPrefer.title') }}</h3>
+                  </div>
+                </div>
+
+                <div class="editor-grid">
+                  <div class="editor-field">
+                    <span>{{ t('editor.avoidPrefer.avoidTypesLabel') }}</span>
+                    <ion-select
+                      interface="popover"
+                      [multiple]="true"
+                      fill="outline"
+                      [placeholder]="t('editor.typesPlaceholder')"
+                      [value]="avoidPreferRules().avoidedTypes"
+                      [disabled]="savingEnemy()"
+                      (ionChange)="onAvoidPreferValuesChange('avoidedTypes', $event)"
+                    >
+                      @for (item of availableTypes; track item) {
+                        <ion-select-option [value]="item">{{ item }}</ion-select-option>
+                      }
+                    </ion-select>
+                  </div>
+
+                  <div class="editor-field">
+                    <span>{{ t('editor.avoidPrefer.avoidClassesLabel') }}</span>
+                    <ion-select
+                      interface="popover"
+                      [multiple]="true"
+                      fill="outline"
+                      [placeholder]="t('editor.classesPlaceholder')"
+                      [value]="avoidPreferRules().avoidedClasses"
+                      [disabled]="savingEnemy()"
+                      (ionChange)="onAvoidPreferValuesChange('avoidedClasses', $event)"
+                    >
+                      @for (item of availableClasses(); track item) {
+                        <ion-select-option [value]="item">{{ item }}</ion-select-option>
+                      }
+                    </ion-select>
+                  </div>
+
+                  <div class="editor-field">
+                    <span>{{ t('editor.avoidPrefer.modeLabel') }}</span>
+                    <ion-select
+                      interface="popover"
+                      fill="outline"
+                      [value]="avoidPreferRules().avoidMode"
+                      [disabled]="savingEnemy()"
+                      (ionChange)="onAvoidModeChange($event)"
+                    >
+                      <ion-select-option value="hard">
+                        {{ t('editor.avoidPrefer.modes.hard') }}
+                      </ion-select-option>
+                      <ion-select-option value="soft">
+                        {{ t('editor.avoidPrefer.modes.soft') }}
+                      </ion-select-option>
+                    </ion-select>
+                  </div>
+
+                  <div class="editor-field">
+                    <span>{{ t('editor.avoidPrefer.preferTypesLabel') }}</span>
+                    <ion-select
+                      interface="popover"
+                      [multiple]="true"
+                      fill="outline"
+                      [placeholder]="t('editor.typesPlaceholder')"
+                      [value]="avoidPreferRules().preferredTypes"
+                      [disabled]="savingEnemy()"
+                      (ionChange)="onAvoidPreferValuesChange('preferredTypes', $event)"
+                    >
+                      @for (item of availableTypes; track item) {
+                        <ion-select-option [value]="item">{{ item }}</ion-select-option>
+                      }
+                    </ion-select>
+                  </div>
+
+                  <div class="editor-field">
+                    <span>{{ t('editor.avoidPrefer.preferClassesLabel') }}</span>
+                    <ion-select
+                      interface="popover"
+                      [multiple]="true"
+                      fill="outline"
+                      [placeholder]="t('editor.classesPlaceholder')"
+                      [value]="avoidPreferRules().preferredClasses"
+                      [disabled]="savingEnemy()"
+                      (ionChange)="onAvoidPreferValuesChange('preferredClasses', $event)"
+                    >
+                      @for (item of availableClasses(); track item) {
+                        <ion-select-option [value]="item">{{ item }}</ion-select-option>
+                      }
+                    </ion-select>
+                  </div>
+                </div>
+              </section>
 
               <section class="ability-card">
                 <!-- editor.specialFilters.title -->

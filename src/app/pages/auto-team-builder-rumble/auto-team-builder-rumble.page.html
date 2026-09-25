@@ -240,6 +240,65 @@
               ></ion-toggle>
             </div>
           </div>
+
+          <div class="filter-card" data-testid="rumble-avoid-filter">
+            <div class="strict-toggle-row strict-toggle-row--filter">
+              <div class="strict-toggle-copy">
+                <strong>{{ t('filters.avoid.toggle') }}</strong>
+                <small>{{ avoidSupportLabel() }}</small>
+              </div>
+              <ion-toggle
+                color="warning"
+                [checked]="avoidEnabled()"
+                [disabled]="loading()"
+                (ionChange)="onAvoidToggle($event)"
+              ></ion-toggle>
+            </div>
+            @if (avoidEnabled()) {
+              <span>{{ t('filters.avoid.styles') }}</span>
+              <ion-select
+                interface="popover"
+                [multiple]="true"
+                fill="outline"
+                [placeholder]="t('filters.avoid.stylesPlaceholder')"
+                [value]="avoidedStyles()"
+                [disabled]="loading() || !availableRumbleStyles().length"
+                (ionChange)="onAvoidedStylesChange($event)"
+              >
+                @for (item of availableRumbleStyles(); track item) {
+                  <ion-select-option [value]="item">{{ item }}</ion-select-option>
+                }
+              </ion-select>
+              <span>{{ t('filters.avoid.types') }}</span>
+              <ion-select
+                interface="popover"
+                [multiple]="true"
+                fill="outline"
+                [placeholder]="t('filters.types.placeholder')"
+                [value]="avoidedTypes()"
+                [disabled]="loading()"
+                (ionChange)="onAvoidedTypesChange($event)"
+              >
+                @for (item of availableTypes; track item) {
+                  <ion-select-option [value]="item">{{ item }}</ion-select-option>
+                }
+              </ion-select>
+              <span>{{ t('filters.avoid.classes') }}</span>
+              <ion-select
+                interface="popover"
+                [multiple]="true"
+                fill="outline"
+                [placeholder]="t('filters.classes.placeholder')"
+                [value]="avoidedClasses()"
+                [disabled]="loading() || !availableClasses().length"
+                (ionChange)="onAvoidedClassesChange($event)"
+              >
+                @for (item of availableClasses(); track item) {
+                  <ion-select-option [value]="item">{{ item }}</ion-select-option>
+                }
+              </ion-select>
+            }
+          </div>
         </div>
 
         <div class="buff-focus-card">
@@ -709,6 +768,9 @@
         <section class="glass-card state-card">
           <strong>{{ t('states.emptyTitle') }}</strong>
           <p>{{ t('states.emptyCopy') }}</p>
+          @if (avoidShortfallLabel()) {
+            <p>{{ avoidShortfallLabel() }}</p>
+          }
         </section>
       }
 
@@ -723,6 +785,9 @@
               })
             }}
           </p>
+          @if (avoidShortfallLabel()) {
+            <p>{{ avoidShortfallLabel() }}</p>
+          }
         </section>
       }
 

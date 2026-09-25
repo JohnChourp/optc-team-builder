@@ -81,6 +81,32 @@ export type AutoBuildCaptainBranchMode = 'character1' | 'character2' | 'both';
 type AutoBuildCaptainBranchSelectionSource = 'manual' | 'auto';
 export type AutoBuildLeaderSlotRole = 'captain' | 'friendCaptain';
 
+/**
+ * 869f63gma. How a Saved Enemy's avoided types and classes are applied - decided once, by the
+ * owner, for both builders.
+ *
+ * `hard`, the default: no seat the search fills holds an avoided unit. It is a rule like the
+ * others, so when no team can be built with it the search may relax it, and the Final team report
+ * then reads Relaxed and names who was let in. `soft`: avoided units only rank lower.
+ */
+export type AutoBuildAvoidMode = 'hard' | 'soft';
+
+/** The five avoid and prefer fields, as one value. Stored and sent sparse - see the utils. */
+export interface AutoBuildAvoidPreferRules {
+  avoidedTypes: AutoTeamBuilderType[];
+  avoidedClasses: string[];
+  avoidMode: AutoBuildAvoidMode;
+  preferredTypes: AutoTeamBuilderType[];
+  preferredClasses: string[];
+}
+
+/** An absent mode is `hard`: the owner's default, and what every file without one meant. */
+export function resolveAutoBuildAvoidMode(
+  input: Pick<AutoBuildConstraints, 'avoidMode'>,
+): AutoBuildAvoidMode {
+  return input.avoidMode === 'soft' ? 'soft' : 'hard';
+}
+
 export interface AutoBuildLeaderBoostRange {
   min: number | null;
   max: number | null;
@@ -194,6 +220,18 @@ export interface AutoBuildConstraints {
    * already; a boosted character is preferred among candidates the search would accept anyway.
    */
   boostedCharacterIds?: number[];
+  /**
+   * 869f63gma. Types and classes a Saved Enemy punishes - it binds, debuffs or answers them - so
+   * the reader wants the team built without them. `avoidMode` says how (see `AutoBuildAvoidMode`).
+   * A unit carrying ANY of them is avoided, a dual unit included, and the reader's own picks never
+   * are. All five fields are absent when no rule is set, so a build without them is unchanged.
+   */
+  avoidedTypes?: AutoTeamBuilderType[];
+  avoidedClasses?: string[];
+  avoidMode?: AutoBuildAvoidMode;
+  /** 869f63gma. Ranking only: a unit carrying one of these ranks higher, and nothing more. */
+  preferredTypes?: AutoTeamBuilderType[];
+  preferredClasses?: string[];
   allowAnyFriendCaptainAutoFill?: boolean;
   favoriteCharacterIds?: number[];
   favoriteShipsOnly?: boolean;
@@ -568,6 +606,12 @@ interface AutoBuildRelaxationSummary {
    * rejects it, naming the Captain it found.
    */
   replacedCaptain?: AutoBuildReplacedCaptain;
+  /**
+   * 869f63gma. The avoided types and classes the finished team still holds, because no team could
+   * be built with the hard avoid kept. Read off the seats the search filled, never the reader's own
+   * picks, so it is set only when the team really gave the rule up. Absent when the avoid held.
+   */
+  relaxedAvoidedValues?: string[];
 }
 
 export interface AutoBuildReplacedCaptain {

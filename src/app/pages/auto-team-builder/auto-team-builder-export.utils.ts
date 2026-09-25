@@ -2,6 +2,7 @@ import {
   AUTO_BUILD_LEADER_BOOST_FILTERS,
   AUTO_BUILD_MANUAL_SLOT_ROLES,
   AUTO_BUILD_MANUAL_SUB_SLOT_ROLES,
+  type AutoBuildAvoidPreferRules,
   type AutoBuildCostRange,
   type AutoBuildCaptainBranchMode,
   type AutoBuildCaptainBranchSelection,
@@ -32,6 +33,11 @@ import {
   type CharacterTagSetSelection,
   type ShipRecord,
 } from '../../core/models/optc.models';
+import {
+  createEmptyAvoidPreferRules,
+  normalizeAvoidPreferRules,
+  toSparseAvoidPreferFields,
+} from '../../core/services/auto-team-builder-avoid-prefer.utils';
 import {
   cloneCharacterTagSetSelection,
   createEmptyCharacterTagSetSelection,
@@ -139,7 +145,8 @@ export interface AutoTeamSelectionExportPayload {
     | 30
     | 31
     | 32
-    | 33;
+    | 33
+    | 34;
   exportedAt: string;
   source: 'auto-team-builder';
   exportType: 'preset';
@@ -180,6 +187,15 @@ export interface AutoTeamSelectionExportPayload {
     leaderCostRange?: AutoBuildCostRange;
     subCostRange?: AutoBuildCostRange;
     maxTotalCost?: number | null;
+    /**
+     * Schema 34+ (869f63gma). A loaded Saved Enemy's avoid and prefer rules, written only when set
+     * (see `toSparseAvoidPreferFields`). A v33 payload has none and imports with none.
+     */
+    avoidedTypes?: AutoBuildAvoidPreferRules['avoidedTypes'];
+    avoidedClasses?: string[];
+    avoidMode?: AutoBuildAvoidPreferRules['avoidMode'];
+    preferredTypes?: AutoBuildAvoidPreferRules['preferredTypes'];
+    preferredClasses?: string[];
   };
   manualSelection: {
     manualSlots: AutoBuildManualSlotSelection[];
@@ -239,6 +255,11 @@ export interface AutoTeamSelectionImportState {
   captainLeaderId: number | null;
   manualShipId: number | null;
   excludedShipIds: number[];
+  /**
+   * 869f63gma. Optional for the same reason `characterTagSets` is: the saved-team preset builder
+   * has no rules to carry, and hosts read an absent value as no rule.
+   */
+  avoidPreferRules?: AutoBuildAvoidPreferRules;
 }
 
 export interface AutoTeamSelectionImportResult {
@@ -302,6 +323,7 @@ interface BuildAutoTeamSelectionExportPayloadOptions {
   leaderCostRange?: Partial<AutoBuildCostRange> | null;
   subCostRange?: Partial<AutoBuildCostRange> | null;
   maxTotalCost?: number | null;
+  avoidPreferRules?: AutoBuildAvoidPreferRules;
   manualSlots: AutoBuildManualSlotSelection[];
   lockedCharacterIds: number[];
   lockedCharacters: CharacterListItem[];
@@ -629,6 +651,25 @@ function isLeaderBoostRangesShape(value: unknown): boolean {
   });
 }
 
+function isOptionalStringArray(value: unknown): boolean {
+  return (
+    value === undefined || (Array.isArray(value) && value.every((entry) => typeof entry === 'string'))
+  );
+}
+
+/**
+ * 869f63gma. How many distinct values a preset's rule list carried, folded the way the normaliser
+ * folds them - so the count it kept can be subtracted and what it dropped said out loud.
+ */
+function countDistinctRuleValues(value: unknown): number {
+  return new Set(
+    (Array.isArray(value) ? value : [])
+      .filter((entry): entry is string => typeof entry === 'string')
+      .map((entry) => entry.trim().replace(/\s+/g, ' ').toLowerCase())
+      .filter((entry) => entry.length > 0),
+  ).size;
+}
+
 function isCostRangeShape(value: unknown): boolean {
   if (value === undefined) {
     return true;
@@ -863,7 +904,8 @@ export function parseAutoTeamSelectionImportPayload(
       parsedPayload['schemaVersion'] !== 30 &&
       parsedPayload['schemaVersion'] !== 31 &&
       parsedPayload['schemaVersion'] !== 32 &&
-      parsedPayload['schemaVersion'] !== 33) ||
+      parsedPayload['schemaVersion'] !== 33 &&
+      parsedPayload['schemaVersion'] !== 34) ||
     parsedPayload['source'] !== 'auto-team-builder' ||
     parsedPayload['exportType'] !== 'preset'
   ) {
@@ -1008,6 +1050,15 @@ export function parseAutoTeamSelectionImportPayload(
       filters['maxTotalCost'] === null ||
       typeof filters['maxTotalCost'] === 'number'
     ) ||
+    !isOptionalStringArray(filters['avoidedTypes']) ||
+    !isOptionalStringArray(filters['avoidedClasses']) ||
+    !(
+      filters['avoidMode'] === undefined ||
+      filters['avoidMode'] === 'hard' ||
+      filters['avoidMode'] === 'soft'
+    ) ||
+    !isOptionalStringArray(filters['preferredTypes']) ||
+    !isOptionalStringArray(filters['preferredClasses']) ||
     !Array.isArray(manualSelection['lockedCharacterIds']) ||
     !(
       manualSelection['excludedCharacterIds'] === undefined ||
@@ -1087,9 +1138,40 @@ export function sanitizeAutoTeamSelectionImportPayload(
   const selectedTypes = rawSelectedTypes.filter((type): type is AutoTeamBuilderType =>
     availableTypesSet.has(type as AutoTeamBuilderType),
   );
+  /*
+   * 869f63gma. A loaded enemy's avoid and prefer rules, read by the same normaliser storage uses
+   * and held to this dataset's types and classes like the selection above. What they drop is
+   * counted into the same two warnings rather than vanishing.
+   */
+  const normalizedAvoidPreferRules = normalizeAvoidPreferRules(payload.filters);
+  const avoidPreferRules: AutoBuildAvoidPreferRules = {
+    ...normalizedAvoidPreferRules,
+    avoidedTypes: normalizedAvoidPreferRules.avoidedTypes.filter((type) =>
+      availableTypesSet.has(type),
+    ),
+    avoidedClasses: normalizedAvoidPreferRules.avoidedClasses.filter((characterClass) =>
+      availableClassesSet.has(characterClass),
+    ),
+    preferredTypes: normalizedAvoidPreferRules.preferredTypes.filter((type) =>
+      availableTypesSet.has(type),
+    ),
+    preferredClasses: normalizedAvoidPreferRules.preferredClasses.filter((characterClass) =>
+      availableClassesSet.has(characterClass),
+    ),
+  };
+  const droppedRuleTypeCount =
+    countDistinctRuleValues(payload.filters.avoidedTypes) +
+    countDistinctRuleValues(payload.filters.preferredTypes) -
+    avoidPreferRules.avoidedTypes.length -
+    avoidPreferRules.preferredTypes.length;
+  const droppedRuleClassCount =
+    countDistinctRuleValues(payload.filters.avoidedClasses) +
+    countDistinctRuleValues(payload.filters.preferredClasses) -
+    avoidPreferRules.avoidedClasses.length -
+    avoidPreferRules.preferredClasses.length;
   const typeWarning = buildWarning(
     'preset.warnings.unavailableTypes',
-    rawSelectedTypes.length - selectedTypes.length,
+    rawSelectedTypes.length - selectedTypes.length + droppedRuleTypeCount,
   );
 
   if (typeWarning) {
@@ -1104,7 +1186,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
   );
   const classWarning = buildWarning(
     'preset.warnings.unavailableClasses',
-    rawSelectedClasses.length - selectedClasses.length,
+    rawSelectedClasses.length - selectedClasses.length + droppedRuleClassCount,
   );
 
   if (classWarning) {
@@ -1596,6 +1678,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
       captainLeaderId: derivedManualSelection.captainLeaderId,
       manualShipId,
       excludedShipIds,
+      avoidPreferRules,
     },
     warnings,
   };
@@ -1671,6 +1754,7 @@ export function buildAutoTeamSelectionExportPayload({
   favoriteShipCount = 0,
   leaderBoostFilters = [...AUTO_BUILD_LEADER_BOOST_FILTERS],
   leaderBoostRanges = createEmptyAutoBuildLeaderBoostRanges(),
+  avoidPreferRules = createEmptyAvoidPreferRules(),
   manualSlots,
   lockedCharacterIds,
   lockedCharacters,
@@ -1707,7 +1791,7 @@ export function buildAutoTeamSelectionExportPayload({
   const normalizedCharacterTagSets = cloneCharacterTagSetSelection(characterTagSets);
 
   return {
-    schemaVersion: 33,
+    schemaVersion: 34,
     exportedAt,
     source: 'auto-team-builder',
     exportType: 'preset',
@@ -1754,6 +1838,7 @@ export function buildAutoTeamSelectionExportPayload({
       leaderCostRange: createEmptyAutoBuildCostRange(),
       subCostRange: createEmptyAutoBuildCostRange(),
       maxTotalCost: null,
+      ...toSparseAvoidPreferFields(avoidPreferRules),
     },
     manualSelection: {
       manualSlots: normalizedManualSlots,

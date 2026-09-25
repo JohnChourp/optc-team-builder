@@ -266,6 +266,19 @@ Required fields include:
 - optional battle requirements
 - enemy mechanics with `mechanicKey`, category, turns, trigger/response/condition tags, and optional `derivedAbilityKey`
 
+Optional, and written only when they hold something
+([869f63gma](https://app.clickup.com/t/90121749478/869f63gma)):
+
+- `avoidedTypes` / `avoidedClasses` - what the enemy punishes. `avoidMode` sits beside them, `hard`
+  (the default, and what an absent mode means) or `soft`: hard keeps avoided units out of every seat
+  the Auto Team Builder fills and is relaxed to a ranking only when no team can be built, soft only
+  ranks them lower. The reader's own picks are never removed.
+- `preferredTypes` / `preferredClasses` - what the enemy is weak to. Ranking only.
+
+A type is one of the five and upper-cased; a class keeps the case it was written in. An enemy
+without a rule carries none of the five keys, so a Drive backup written before they existed still
+matches it. `auto-team-builder-avoid-prefer.utils.ts` is the one reader and writer.
+
 Import/export supports the saved enemies transfer payload:
 
 ```json
@@ -540,10 +553,12 @@ never blanks a result list.
 - Tag values are stored **case-preserved** and compared case-insensitively.
   Do not lowercase on write: persisted `characterTags` were never normalized, so
   folding case would shift existing user data.
-- The Auto Team Builder preset payload is `schemaVersion: 33`, which adds
-  `filters.characterTagSets`. Version 32 and earlier import cleanly by expanding
+- The Auto Team Builder preset payload is `schemaVersion: 34`. Version 33 added
+  `filters.characterTagSets`; version 32 and earlier import cleanly by expanding
   the legacy flat `selectedCharacterTags` plus `requireAllSelectedCharacterTagsInTeam`
-  into a single set. The flat field is still emitted for back-compat.
+  into a single set. The flat field is still emitted for back-compat. Version 34
+  adds a loaded Saved Enemy's avoid and prefer rules to `filters`, written only
+  when set; a version 33 preset imports with none.
 - `SavedEnemy` and the saved-teams/all-data transfer payloads stay at their
   existing versions and carry only the flat tag list, so a set structure that
   round-trips through them widens to one group. This is a widening, never a

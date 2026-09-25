@@ -17,7 +17,7 @@ import {
  * rejected rather than half-read.
  */
 describe('auto-team-builder-export.utils character tag sets', () => {
-  it('emits schema 33 and carries the tag sets through the payload', () => {
+  it('emits the current schema (34) and carries the tag sets through the payload', () => {
     const payload = buildExportPayload({
       operator: 'all',
       sets: [
@@ -26,7 +26,7 @@ describe('auto-team-builder-export.utils character tag sets', () => {
       ],
     });
 
-    expect(payload.schemaVersion).toBe(33);
+    expect(payload.schemaVersion).toBe(34);
     expect(payload.filters.characterTagSets).toEqual({
       operator: 'all',
       sets: [
@@ -174,7 +174,7 @@ describe('auto-team-builder-export.utils character tag sets', () => {
   });
 
   it('rejects an unknown future schema version', () => {
-    const payload = { ...buildExportPayload({ operator: 'all', sets: [] }), schemaVersion: 34 };
+    const payload = { ...buildExportPayload({ operator: 'all', sets: [] }), schemaVersion: 35 };
 
     expect(() => parseAutoTeamSelectionImportPayload(JSON.stringify(payload))).toThrowError(
       AutoTeamSelectionImportError,
