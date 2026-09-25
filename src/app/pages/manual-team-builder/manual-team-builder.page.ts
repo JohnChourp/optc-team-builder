@@ -61,6 +61,7 @@ import {
   resolveCaptainCoverageBranchOptions,
 } from '../../core/services/captain-coverage.utils';
 import { maySlotHoldCharacter } from '../../core/services/character-party-conflict-keys.utils';
+import { isSupportOnlyCharacter } from '../../core/grammar/support-only-character';
 import {
   matchesCharacterSearchTerm,
   toCharacterSearchTerm,
@@ -168,6 +169,8 @@ interface ManualTeamCandidateCardView {
   isAssignableToActiveSlot: boolean;
   /** Already in the crew, so the active sub slot refuses it; supportLabel says so. */
   repeatsCrewMember: boolean;
+  /** 869f6td4p. Support-only, so no crew slot takes it at all; supportLabel says so. */
+  supportOnly: boolean;
   actionLabel: string;
   supportLabel: string | null;
 }
@@ -599,21 +602,26 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
       const assignedSlotIndex = slots.findIndex((slot) => slot?.id === character.id);
       const repeatsCrewMember = this.repeatsCrewMember(activeIndex, character, slots);
       const withinBudget = this.canAssignCharacterToSlot(activeIndex, character);
+      // 869f6td4p. Marked, never hidden: the card stays in the list and says why it is refused.
+      const supportOnly = isSupportOnlyCharacter(character);
 
       return {
         character,
         subtitle: this.buildCharacterSubtitle(character),
         isAssignedToActiveSlot: assignedSlotIndex === activeIndex,
         isAssignedToAnotherSlot: assignedSlotIndex !== -1 && assignedSlotIndex !== activeIndex,
-        isAssignableToActiveSlot: withinBudget && !repeatsCrewMember,
+        isAssignableToActiveSlot: withinBudget && !repeatsCrewMember && !supportOnly,
         repeatsCrewMember,
+        supportOnly,
         actionLabel:
           assignedSlotIndex === activeIndex ? this.t('actions.assigned') : this.t('actions.assign'),
-        supportLabel: repeatsCrewMember
-          ? this.t('picker.subConflict')
-          : withinBudget
-            ? null
-            : this.t('picker.costBlocked', { max: this.maxTotalCost() ?? 0 }),
+        supportLabel: supportOnly
+          ? this.t('picker.supportOnly')
+          : repeatsCrewMember
+            ? this.t('picker.subConflict')
+            : withinBudget
+              ? null
+              : this.t('picker.costBlocked', { max: this.maxTotalCost() ?? 0 }),
       };
     });
   });
@@ -669,6 +677,21 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
         key: 'subConflict',
         title: this.t('validation.subConflict.title'),
         copy: this.t('validation.subConflict.copy', { slots: repeatedSubLabels.join(', ') }),
+        tone: 'error',
+      });
+    }
+
+    // 869f6td4p. Assignment refuses a Support-only character, but a saved or shared team from
+    // before this rule can still hold one. It is named here, never removed: the team is the reader's.
+    const supportOnlySlotLabels = this.slots().flatMap((slot, index) =>
+      isSupportOnlyCharacter(slot) ? [this.t('condition.slotLabel', { slot: index + 1 })] : [],
+    );
+
+    if (supportOnlySlotLabels.length) {
+      messages.push({
+        key: 'supportOnly',
+        title: this.t('validation.supportOnly.title'),
+        copy: this.t('validation.supportOnly.copy', { slots: supportOnlySlotLabels.join(', ') }),
         tone: 'error',
       });
     }
@@ -1126,9 +1149,11 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
         dragState.sourceSlotIndex,
       );
       this.dragFeedbackMessage.set(
-        repeatedCharacter
-          ? this.t('drag.invalidConflict', { name: repeatedCharacter.name })
-          : this.t('drag.invalidCost', { max: this.maxTotalCost() ?? 0 }),
+        isSupportOnlyCharacter(character)
+          ? this.t('drag.invalidSupportOnly', { name: character.name })
+          : repeatedCharacter
+            ? this.t('drag.invalidConflict', { name: repeatedCharacter.name })
+            : this.t('drag.invalidCost', { max: this.maxTotalCost() ?? 0 }),
       );
       this.onDragEnd();
       return;
@@ -1608,6 +1633,12 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
       return false;
     }
 
+    // 869f6td4p. Every seat refuses a Support-only character, the two leader seats included.
+    if (isSupportOnlyCharacter(character)) {
+      this.dragFeedbackMessage.set(this.t('drag.invalidSupportOnly', { name: character.name }));
+      return false;
+    }
+
     if (this.repeatsCrewMember(index, character)) {
       this.dragFeedbackMessage.set(this.t('drag.invalidConflict', { name: character.name }));
       return false;
@@ -1655,7 +1686,7 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
     character: CharacterDetailRecord,
     sourceSlotIndex: number | null | undefined,
   ): boolean {
-    if (!this.isValidSlotIndex(targetIndex)) {
+    if (!this.isValidSlotIndex(targetIndex) || isSupportOnlyCharacter(character)) {
       return false;
     }
 

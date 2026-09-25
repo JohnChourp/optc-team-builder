@@ -25,6 +25,7 @@ import {
   type AutoBuildEnemyMechanicRequirement,
   type AutoBuildRequiredCharacterGroup,
 } from '../../core/models/auto-team-builder-ability.models';
+import { isSupportOnlyCharacter } from '../../core/grammar/support-only-character';
 import {
   type CharacterDetailRecord,
   type CharacterListItem,
@@ -775,8 +776,11 @@ function sanitizeManualSlots(
     }
 
     slot.characterIds = nextIds;
+    // 869f6td4p. A required pick is forced into the crew, so a Support-only one stays a choice.
     slot.requiredCharacterId =
-      roleSelection?.requiredCharacterId && nextIds.includes(roleSelection.requiredCharacterId)
+      roleSelection?.requiredCharacterId &&
+      nextIds.includes(roleSelection.requiredCharacterId) &&
+      !isSupportOnlyCharacter(availableLockedCharacterMap.get(roleSelection.requiredCharacterId))
         ? roleSelection.requiredCharacterId
         : null;
     const branchSelections = normalizeManualSlotBranchSelections(

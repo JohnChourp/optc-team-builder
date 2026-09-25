@@ -11,7 +11,8 @@
     "resetOverride": "Επαναφορά τοπικών αλλαγών",
     "savedTeamCount": "Σε {{count}} από τις αποθηκευμένες ομάδες σου",
     "seeCaptainBoosts": "Δες ποιους ενισχύει αυτός ο Captain",
-    "summary": "Κόστος {{cost}} • {{stars}}★ unit"
+    "summary": "Κόστος {{cost}} • {{stars}}★ unit",
+    "supportOnly": "Μόνο για Support: αυτός ο χαρακτήρας μπαίνει μόνο σε Support slot, ποτέ στο πλήρωμα."
   },
   "fields": {
     "captainNotes": "Σημειώσεις Captain",

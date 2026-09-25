@@ -139,6 +139,7 @@ import {
   resolveCaptainCoverageBranchOptions,
 } from '../../core/services/captain-coverage.utils';
 import { resolveCharacterSameCharacterKeys } from '../../core/services/character-party-conflict-keys.utils';
+import { isSupportOnlyCharacter } from '../../core/grammar/support-only-character';
 import {
   buildMechanicChecklist,
   collectRequestedAbilityRequirements,
@@ -547,6 +548,8 @@ interface ManualCharacterCardView {
 type ManualSlotSelectedCharacterView = CharacterListItem & {
   isRequiredInManualSlot: boolean;
   branchLabel: string | null;
+  /** 869f6td4p. Arrived with a saved team or a preset; the build never puts it in the crew. */
+  supportOnly: boolean;
 };
 
 interface ManualCaptainBranchActionView {
@@ -1643,6 +1646,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           ...character,
           isRequiredInManualSlot: character.id === slot.requiredCharacterId,
           branchLabel: this.resolveManualSlotCharacterBranchLabel(slot.role, character),
+          supportOnly: isSupportOnlyCharacter(character),
         })),
       isLeaderSlot: this.isLeaderManualSlotRole(slot.role),
       isActive: slot.role === this.activeManualSlotRole(),
@@ -6379,9 +6383,16 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       return;
     }
 
+    // 869f6td4p. Requiring a pick forces it into the crew, so a Support-only one is never required.
+    const supportOnly = isSupportOnlyCharacter(this.lockedCharacterRecords()[characterId]);
+
     this.manualSlots.update((currentSlots) =>
       currentSlots.map((slot) => {
         if (slot.role !== role || !slot.characterIds.includes(characterId)) {
+          return slot;
+        }
+
+        if (supportOnly && slot.requiredCharacterId !== characterId) {
           return slot;
         }
 
@@ -6398,9 +6409,27 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     role: AutoBuildManualSlotRole,
     character: Pick<CharacterListItem, 'id' | 'name'>,
   ): string {
-    return this.resolveManualSlotSelection(role).requiredCharacterId === character.id
-      ? this.t('manual.required.actions.clearFor', { name: character.name })
+    if (this.resolveManualSlotSelection(role).requiredCharacterId === character.id) {
+      return this.t('manual.required.actions.clearFor', { name: character.name });
+    }
+
+    // 869f6td4p. The toggle refuses a Support-only pick, so it says why instead of going quiet.
+    return isSupportOnlyCharacter(this.lockedCharacterRecords()[character.id])
+      ? this.t('manual.slotSelection.supportOnly')
       : this.t('manual.required.actions.requireFor', { name: character.name });
+  }
+
+  /**
+   * 869f6td4p. The compact picker's thumbs are pictures only, so a refused one said nothing but its
+   * name. When it cannot be picked its tooltip and accessible name carry the reason too, the one the
+   * list view prints under the card. A native button, so a changing label reaches assistive tech.
+   */
+  public manualCandidateThumbLabel(card: ManualCharacterCardView): string {
+    const blocked = !card.isSelectedInActiveSlot && !card.isSelectableInActiveSlot;
+
+    return blocked && card.selectionSupportLabel
+      ? `${card.character.name} - ${card.selectionSupportLabel}`
+      : card.character.name;
   }
 
   public requiredManualPickButtonIcon(role: AutoBuildManualSlotRole, characterId: number): string {
@@ -6418,10 +6447,16 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
 
   public canAssignCharacterToManualSlot(
     role: AutoBuildManualSlotRole,
-    character: Pick<CharacterDetailRecord, 'id' | 'cost'>,
+    character: Pick<CharacterDetailRecord, 'id' | 'cost'> &
+      Partial<Pick<CharacterDetailRecord, 'detail'>>,
   ): boolean {
     if (this.isCharacterSelectedInManualSlot(role, character.id)) {
       return true;
+    }
+
+    // 869f6td4p. No crew slot takes a Support-only character, a leader slot included.
+    if (isSupportOnlyCharacter(character)) {
+      return false;
     }
 
     return (
@@ -7586,8 +7621,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       const rawContent = await file.text();
       const payload = parseAutoTeamSelectionImportPayload(rawContent);
       const importedCharacterIds = this.collectSelectionPresetImportCharacterIds(payload);
+      // 869f6td4p. With their details, so a Support-only pick is marked and never required.
       const availableLockedCharacters =
-        await this.repository.getCharactersByIds(importedCharacterIds);
+        await this.repository.getDetailedCharactersByIds(importedCharacterIds);
       const importResult = sanitizeAutoTeamSelectionImportPayload(payload, {
         availableTypes: this.availableTypes,
         availableClasses: this.availableClasses(),
@@ -7911,9 +7947,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         team.slots.filter((characterId): characterId is number => typeof characterId === 'number'),
       ),
     ];
+    // 869f6td4p. With their details, so a Support-only pick is marked and never required.
     const availableLockedCharacters =
       selectedCharacterIds.length > 0
-        ? await this.repository.getCharactersByIds(selectedCharacterIds)
+        ? await this.repository.getDetailedCharactersByIds(selectedCharacterIds)
         : [];
 
     await this.applySelectionPresetState(
@@ -9566,10 +9603,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         actionLabel: isSelectedInActiveSlot
           ? this.i18n.translate('common.actions.remove')
           : this.t('manual.actions.addChoice'),
-        selectionSupportLabel: this.resolveManualCharacterSelectionSupport(
-          character.id,
-          activeRole,
-        ),
+        // 869f6td4p. Marked, never hidden: the card stays in the picker and says why it is refused.
+        selectionSupportLabel: isSupportOnlyCharacter(character)
+          ? this.t('manual.slotSelection.supportOnly')
+          : this.resolveManualCharacterSelectionSupport(character.id, activeRole),
         selectedBranchLabel,
         branchActions: this.resolveManualCandidateBranchActions(character, activeRole),
       };

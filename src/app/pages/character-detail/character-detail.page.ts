@@ -37,6 +37,7 @@ import {
 } from './character-progression.presenter';
 import { UserStateService } from '../../core/services/user-state.service';
 import { resolveCharacterRegionStatus } from '../../core/services/character-region.utils';
+import { isSupportOnlyCharacter } from '../../core/grammar/support-only-character';
 import {
   buildCharacterOverridesTransferPayload,
   downloadCharacterOverridesExport,
@@ -137,6 +138,11 @@ export class CharacterDetailPage implements OnInit {
    * this character already has local changes, when they stay out and "Reset" is never hidden.
    */
   public readonly localToolsOpen = signal(false);
+  /**
+   * 869f6td4p. A character that can only go in a Support slot says so here, where a reader looks it
+   * up; every team screen refuses it in a crew slot and names the same reason.
+   */
+  public readonly supportOnly = computed(() => isSupportOnlyCharacter(this.character()));
   /** 869f13c8r. How many of this reader's saved teams use this character; the line hides at 0. */
   public readonly savedTeamCount = computed(() => {
     const currentCharacter = this.character();

@@ -37,6 +37,21 @@ Character rows are normalized from upstream unit/detail data plus manual overlay
 - `partyConflictKeys` are keys derived from the card name. They decide "same character" only for a unit with no `families`; super-criteria and name matching in the Auto Team Builder, and the SEO pages' related characters, read them
 - `characterTags` drive tag filters and captain coverage requirements
 - `builderAbilities` are canonical ability entries used by Auto Team Builder and Captain Coverage filters
+- a **Support-only** character (869f6td4p) has `supportData` and no Captain Ability (no
+  `captainAbility` text and no `captainAbilityVariants` text) and no `specialText`. The official
+  Global letter of 2026-04-16 says such characters "do not have any Specials, Captain Abilities,
+  Co-Op Captain Abilities, or Pirate Rumble Combat Stats" and can only be added to a Support slot.
+  The rule is `src/app/core/grammar/support-only-character.ts`, read at runtime from the record the
+  app already holds - the importer is unchanged and no column says it. No crew slot takes one -
+  Captain, Friend Captain and subs alike - on Manual Team Builder, Captain Coverage and the Auto
+  Team Builder's manual picks, and each says why; they stay in every list and the Character screen
+  says what they are for (marked, never hidden). A saved team that already holds one is kept exactly
+  as stored: Manual Team Builder names the seat in its validation panel, Captain Coverage marks the
+  seat, and the Auto Team Builder marks the pick and never requires it, so the build leaves it out.
+  The census is `supportOnlyCharacters` in `src/app/core/data/dataset-measurements.json`, counted
+  with the same function - 6 when this was written (2026-09-25). The Auto Team Builder never picked
+  one by itself (its candidate pool keeps only units with Captain, special or sailor text), and the
+  Rumble pool leaves them out too, since their Rumble data carries no ability and no special.
 
 For normal upstream records, `detail.characterId` must match the row `id`.
 Reserved manual overlay records (`id >= 900000`) may instead store an existing

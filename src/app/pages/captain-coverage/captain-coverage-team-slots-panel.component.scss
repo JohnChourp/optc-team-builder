@@ -123,6 +123,14 @@
   font-weight: 700;
 }
 
+/* 869f6td4p. A Support-only character in a crew seat, from a team saved before the rule. */
+.coverage-team-slot__warning {
+  color: var(--ion-color-warning);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
 /* The clear button has to stay above the jump surface. */
 .coverage-team-slot__clear {
   position: relative;
