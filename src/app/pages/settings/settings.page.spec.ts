@@ -1428,6 +1428,8 @@ function createPage() {
     mergeFavoriteIds: vi.fn(),
   };
   const i18n = {
+    // Settings loads every scope it reads before an import builds a summary.
+    preloadScope: vi.fn().mockResolvedValue(undefined),
     setLanguage: vi.fn().mockResolvedValue(undefined),
     translate: vi.fn((key: string, params?: Record<string, string | number>) => {
       if (key === 'management.confirm.deleteSavedTeams') {

@@ -44,7 +44,7 @@ function createSettings(googleAccount: GoogleAccountService) {
   };
   const page = new SettingsPage(
     {} as never,
-    { translate: (key: string) => key } as never,
+    { preloadScope: () => Promise.resolve(), translate: (key: string) => key } as never,
     {} as never,
     {} as never,
     { available: false, consent: signal('unknown') } as never,

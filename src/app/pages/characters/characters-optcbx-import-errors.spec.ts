@@ -81,6 +81,7 @@ function copy(
 /** `AppI18nService.translate` over the real copy. A key with nothing behind it shows as the raw key, as Transloco does. */
 function translatorFor(language: Language) {
   return {
+    preloadScope: () => Promise.resolve(),
     translate: (key: string, params?: Record<string, unknown>, scope?: string) =>
       (scope ? copy(language, scope, key, params) : undefined) ?? (scope ? `${scope}.${key}` : key),
   };
