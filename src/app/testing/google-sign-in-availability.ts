@@ -1,10 +1,25 @@
 import { Capacitor } from '@capacitor/core';
 import { vi } from 'vitest';
 
+import { BROWSER_STORAGE_KEYS } from '../core/data/browser-storage-keys.data';
 import { GoogleAccountService } from '../core/services/google-account.service';
 
-/** The key `GoogleAccountService` remembers a signed-in reader under, in `window.localStorage`. */
-const REMEMBERED_SESSION_KEY = 'optc_google_account_session';
+/**
+ * Where `GoogleAccountService` remembers a signed-in reader in `window.localStorage`, read from
+ * the storage-key registry rather than written out again: the registry is the one place that key
+ * is named, and `storage-keys` refuses a second constant for it.
+ */
+function rememberedSessionStorageKey(): string {
+  const record = BROWSER_STORAGE_KEYS.find(
+    (entry) => entry.constantName === 'GOOGLE_ACCOUNT_SESSION_KEY',
+  );
+
+  if (!record) {
+    throw new Error('createAndroidGoogleAccount: the registry no longer names GOOGLE_ACCOUNT_SESSION_KEY.');
+  }
+
+  return record.key;
+}
 
 /**
  * The real `GoogleAccountService`, as the Android app builds it - signed out, whatever ran before.
@@ -45,7 +60,7 @@ export async function createAndroidGoogleAccount(options: {
   vi.unstubAllGlobals();
 
   try {
-    window.localStorage?.removeItem(REMEMBERED_SESSION_KEY);
+    window.localStorage?.removeItem(rememberedSessionStorageKey());
   } catch {
     // No storage in this environment: nothing can be remembered.
   }
