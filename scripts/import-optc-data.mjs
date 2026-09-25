@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 
+import { execFile } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { copyFile, mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { promisify } from 'node:util';
 import vm from 'node:vm';
 
 import {
@@ -38,6 +40,11 @@ import {
   applyPartyConflictKeys,
   normalizePartyConflictOverrideMap,
 } from './lib/party-conflict-keys.mjs';
+import {
+  FORM_DROPPED_FIELDS,
+  FORM_UPSTREAM_SOURCES,
+  isEmptyUpstreamValue,
+} from './lib/optc-upstream-forms.mjs';
 import { normalizeRumbleUnits } from './lib/rumble-data-normalizer.mjs';
 import {
   attachProgressionData,
@@ -100,8 +107,25 @@ export const dataImportSources = Object.freeze({
     rawBaseUrl: 'https://raw.githubusercontent.com/optc-db/optc-db.github.io/master',
     githubApiBase: 'https://api.github.com/repos/optc-db/optc-db.github.io',
     ref: 'master',
+    /*
+     * 869f63gtc. Both sources report `window.dbVersion = 36` - `version.js` has not changed since
+     * 2016-05-23 in either - so the version label cannot tell them apart, and an import from this
+     * one would roll the dataset back two years under the same label. `parseArgs` refuses it unless
+     * `--allow-stale-source` says the stale data is really wanted.
+     */
+    stale: Object.freeze({
+      since: '2024-08-14',
+      reason:
+        'optc-db/optc-db.github.io stopped changing on 2024-08-14 while 2Shankz/optc-db.github.io is live, and both report dbVersion 36, so an import from it would roll the dataset back two years under the same version label.',
+    }),
   }),
 });
+
+/** 869f63gtc. The one flag that lets a stale source through `parseArgs`. */
+export const STALE_SOURCE_FLAG = '--allow-stale-source';
+
+const COMMIT_SHA_PATTERN = /^[0-9a-f]{40}$/u;
+const execFileAsync = promisify(execFile);
 
 export const packDefinitions = [
   {
@@ -157,6 +181,100 @@ export function buildSourceFileUrl(source, relativePath) {
   return `${source.rawBaseUrl}/${relativePath}`;
 }
 
+/**
+ * 869f63gtc. A branch name moves; a commit does not. The importer resolves the source's branch to
+ * the commit it points at when the import starts, then reads EVERY file - the data files, the
+ * version file, the image listings - at that commit, so the files agree with each other and with the
+ * commit the manifest records, even when upstream pushes in the middle of an import.
+ */
+export function pinImportSourceToCommit(source, commit) {
+  if (!COMMIT_SHA_PATTERN.test(String(commit ?? ''))) {
+    throw new Error(
+      `Cannot pin ${source.repository} to "${commit}": expected a full 40-character commit sha.`,
+    );
+  }
+
+  return Object.freeze({
+    ...source,
+    ref: commit,
+    commit,
+    rawBaseUrl: `https://raw.githubusercontent.com/${source.repository}/${commit}`,
+  });
+}
+
+export function buildSourceCommitUrl(source, ref = source.ref) {
+  return `${source.githubApiBase}/commits/${encodeURIComponent(ref)}`;
+}
+
+async function listRemoteRefWithGit(source, ref) {
+  const { stdout } = await execFileAsync(
+    'git',
+    [
+      'ls-remote',
+      `https://github.com/${source.repository}.git`,
+      `refs/heads/${ref}`,
+      `refs/tags/${ref}`,
+    ],
+    { timeout: 30_000 },
+  );
+
+  return String(stdout).trim().split(/\s+/u)[0] ?? '';
+}
+
+/**
+ * 869f63gtc. The commit `ref` names in the source repository right now, or an error - never a
+ * guess. The GitHub API answers first; `git ls-remote` answers when the API cannot (its
+ * unauthenticated budget is 60 requests an hour, and the image listings spend six of them), because
+ * it does not count against that budget. With neither, the import stops: it records the commit it
+ * read, so it does not run without one.
+ */
+export async function resolveSourceCommit(
+  source,
+  { ref = source.ref, fetchImpl = fetch, listRemoteRef = listRemoteRefWithGit } = {},
+) {
+  if (COMMIT_SHA_PATTERN.test(ref)) {
+    return ref;
+  }
+
+  const failures = [];
+
+  try {
+    const response = await fetchImpl(buildSourceCommitUrl(source, ref), {
+      headers: { ...buildGithubRequestHeaders(), Accept: 'application/vnd.github.sha' },
+    });
+
+    if (response.ok) {
+      const sha = String(await response.text()).trim();
+
+      if (COMMIT_SHA_PATTERN.test(sha)) {
+        return sha;
+      }
+
+      failures.push(`the GitHub API answered "${sha.slice(0, 60)}", not a commit`);
+    } else {
+      failures.push(`the GitHub API answered ${response.status}`);
+    }
+  } catch (error) {
+    failures.push(`the GitHub API failed (${error?.message ?? error})`);
+  }
+
+  try {
+    const sha = String(await listRemoteRef(source, ref)).trim();
+
+    if (COMMIT_SHA_PATTERN.test(sha)) {
+      return sha;
+    }
+
+    failures.push(`git ls-remote found no branch or tag "${ref}"`);
+  } catch (error) {
+    failures.push(`git ls-remote failed (${error?.message ?? error})`);
+  }
+
+  throw new Error(
+    `Could not resolve ${source.repository}@${ref} to a commit: ${failures.join('; ')}. The import records the commit it read, so it does not run without one.`,
+  );
+}
+
 export function buildPackListingUrl(source, pack) {
   return `${source.githubApiBase}/contents/${pack.listingPath}?ref=${source.ref}`;
 }
@@ -170,6 +288,12 @@ export function parseArgs(args = process.argv.slice(2)) {
   const defaults = {
     downloadImages: 'none',
     source: '2shankz',
+    /*
+     * 869f63gtc. `--ref=<branch, tag or commit>` reads the source at that point instead of its
+     * branch head - the way to rebuild a dataset from the commit its manifest records.
+     */
+    ref: null,
+    allowStaleSource: false,
   };
 
   for (const arg of args) {
@@ -180,10 +304,27 @@ export function parseArgs(args = process.argv.slice(2)) {
 
     if (arg.startsWith('--source=')) {
       defaults.source = arg.split('=')[1];
+      continue;
+    }
+
+    if (arg.startsWith('--ref=')) {
+      defaults.ref = arg.slice('--ref='.length).trim() || null;
+      continue;
+    }
+
+    if (arg === STALE_SOURCE_FLAG) {
+      defaults.allowStaleSource = true;
     }
   }
 
-  resolveImportSource(defaults.source);
+  const source = resolveImportSource(defaults.source);
+
+  if (source.stale && !defaults.allowStaleSource) {
+    throw new Error(
+      `Refusing --source=${source.key}: ${source.stale.reason} Pass ${STALE_SOURCE_FLAG} if the stale data is really intended.`,
+    );
+  }
+
   return defaults;
 }
 
@@ -1440,6 +1581,95 @@ export function resolveCharacterFamilies(familyEntry) {
   ];
 }
 
+function listFormRows(units) {
+  if (!units || typeof units !== 'object' || Array.isArray(units)) {
+    return [];
+  }
+
+  return Object.entries(units).flatMap(([rawKey, entry]) => {
+    const parsedMapId = parseUnitMapId(rawKey);
+    const parsedEntryId = parseUnitMapId(entry?.id);
+    const baseCharacterId = parsedEntryId?.baseCharacterId ?? parsedMapId?.baseCharacterId;
+    const variantKey = parsedEntryId?.variantKey ?? parsedMapId?.variantKey;
+
+    return baseCharacterId && variantKey && entry && typeof entry === 'object'
+      ? [{ rawKey, baseCharacterId, variantKey, entry }]
+      : [];
+  });
+}
+
+/**
+ * 869f63gv6. The fields a form row drops (`FORM_DROPPED_FIELDS`) are dropped because every one of
+ * them is empty in every form row. The import checks that before it reads anything, and stops -
+ * naming each field, how many rows carry it and the first - rather than drop real data with no
+ * trace, which is what the type-only read did.
+ *
+ * Only the import runs this. The nightly release check normalizes the same units to find new ids,
+ * and its own fixtures require it to tolerate variant rows of shapes nobody has seen yet.
+ */
+export function assertFormRowsDropNothing(units) {
+  const carriedDroppedFields = new Map();
+
+  for (const { rawKey, entry } of listFormRows(units)) {
+    for (const field of FORM_DROPPED_FIELDS) {
+      if (!isEmptyUpstreamValue(entry[field])) {
+        carriedDroppedFields.set(field, [...(carriedDroppedFields.get(field) ?? []), rawKey]);
+      }
+    }
+  }
+
+  if (carriedDroppedFields.size > 0) {
+    const carried = [...carriedDroppedFields.entries()]
+      .map(([field, keys]) => `${field} in ${keys.length} (first ${keys[0]})`)
+      .join(', ');
+
+    throw new Error(
+      `units.js form rows carry values in fields the import drops as always empty: ${carried}. Keep the field in FORM_UPSTREAM_SOURCES and the character_forms table, or confirm upstream left it empty, before importing.`,
+    );
+  }
+}
+
+/**
+ * 869f63gv6. A dual or VS unit's forms, from the `<id>-<n>` keys of upstream's units.js - 414 keys
+ * for 207 units, two each, when this was written. They were read for their TYPE alone (merged into
+ * the unit's comma-joined `type`) and everything else was dropped without a record: #1983 Smoker &
+ * Tashigi is Striker/Slasher, its Smoker form INT Striker/Driven and its Tashigi form PSY
+ * Slasher/Cerebral, so a Driven filter never saw the Smoker form.
+ *
+ * Returns `characterId -> forms`, each form `{ key, ...FORM_UPSTREAM_SOURCES fields }`, in key
+ * order. Every other field of a form row is dropped - see `assertFormRowsDropNothing`, which the
+ * import runs first.
+ */
+export function normalizeCharacterForms(units) {
+  const formsById = new Map();
+
+  for (const { baseCharacterId, variantKey, entry } of listFormRows(units)) {
+    const read = (field) => entry[FORM_UPSTREAM_SOURCES[field].upstream];
+    const forms = formsById.get(baseCharacterId) ?? [];
+
+    forms.push({
+      key: variantKey,
+      name: normalizeCharacterName(read('name')),
+      type: normalizeUnitTypeTokens(read('type')).join(','),
+      classes: normalizeCharacterClasses(read('classes') ?? []),
+      combo: toFiniteNumber(read('combo')),
+      minHp: toFiniteNumber(read('minHp')),
+      minAtk: toFiniteNumber(read('minAtk')),
+      minRcv: toFiniteNumber(read('minRcv')),
+      maxHp: toFiniteNumber(read('maxHp')),
+      maxAtk: toFiniteNumber(read('maxAtk')),
+      maxRcv: toFiniteNumber(read('maxRcv')),
+    });
+    formsById.set(baseCharacterId, forms);
+  }
+
+  for (const forms of formsById.values()) {
+    forms.sort((left, right) => left.key.localeCompare(right.key, 'en', { numeric: true }));
+  }
+
+  return formsById;
+}
+
 /**
  * 869f63gkm. Whether an alias is written in Latin script: at least one letter, and every letter
  * Latin. `aliases.js` lists a Japanese name, a French name and then community names per unit; only
@@ -1520,6 +1750,7 @@ export function normalizeCharacters(
 ) {
   const rumbleById = new Map(normalizeRumbleUnits(rumbleUnits).map((entry) => [entry.id, entry]));
   const normalizedUnitEntries = buildNormalizedUnitEntries(units);
+  const formsById = normalizeCharacterForms(units);
 
   return normalizedUnitEntries.map(
     ({
@@ -1586,6 +1817,7 @@ export function normalizeCharacters(
         },
         regionRelease: resolveRegionRelease(flagsById[characterId]),
         families: resolveCharacterFamilies(familiesById[characterId]),
+        forms: formsById.get(characterId) ?? [],
         assets,
         detail: normalizedDetail,
       };
@@ -1686,15 +1918,26 @@ async function hashFile(targetPath) {
 }
 
 async function main() {
-  const { downloadImages, source: sourceKey } = parseArgs();
-  const selectedSource = resolveImportSource(sourceKey);
+  const { downloadImages, source: sourceKey, ref, allowStaleSource } = parseArgs();
+  const requestedSource = resolveImportSource(sourceKey);
+
+  if (requestedSource.stale && allowStaleSource) {
+    console.warn(
+      `[import-optc-data] WARNING: importing from a STALE source, as ${STALE_SOURCE_FLAG} asked. ${requestedSource.stale.reason}`,
+    );
+  }
+
+  /* 869f63gtc. Every file below is read at this one commit, and the manifest records it. */
+  const requestedRef = ref ?? requestedSource.ref;
+  const sourceCommit = await resolveSourceCommit(requestedSource, { ref: requestedRef });
+  const selectedSource = pinImportSourceToCommit(requestedSource, sourceCommit);
 
   await mkdir(dataDir, { recursive: true });
   await mkdir(offlineDir, { recursive: true });
   await mkdir(exactImagesDir, { recursive: true });
 
   console.log(
-    `Import source: ${selectedSource.label} (${selectedSource.repository}@${selectedSource.ref}).`,
+    `Import source: ${selectedSource.label} (${selectedSource.repository}@${requestedRef}, commit ${sourceCommit}).`,
   );
 
   const [
@@ -1796,6 +2039,8 @@ async function main() {
   const exactOverridePackAssets = buildPackAssetOverridesFromExactOverrides(imageOverrides);
   mergeThumbnailOverrides(assetsById, thumbnailOverrides);
   mergeThumbnailOverrides(assetsById, exactOverridePackAssets);
+  /* 869f63gv6. Before anything is written: a form row may not carry a field the import drops. */
+  assertFormRowsDropNothing(unitsWindow.units);
   const manualExactLocalPaths = await materializeExactImageSources(
     selectedSource,
     imageOverrides,
@@ -1902,6 +2147,7 @@ async function main() {
     sourceVersion,
     packStatuses,
     new Date().toISOString(),
+    { repository: selectedSource.repository, commit: sourceCommit },
   );
   const unresolvedCatalog = createUnresolvedCatalog(
     characters,
@@ -1953,7 +2199,7 @@ async function main() {
 
   if (keptGeneratedAt) {
     console.log(
-      `Dataset unchanged: generatedAt stays ${keptGeneratedAt} and the generated files are byte-identical, so installed clients download nothing.`,
+      `Dataset unchanged: generatedAt stays ${keptGeneratedAt}, the recorded source commit stays the one the data last changed at, and the generated files are byte-identical, so installed clients download nothing.`,
     );
   }
 

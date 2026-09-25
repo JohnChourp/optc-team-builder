@@ -4,6 +4,7 @@
   "stages": [
     "applyExactLocalAssets",
     "applyShipThumbnailOverrides",
+    "assertFormRowsDropNothing",
     "buildCharacterAssetsMap",
     "buildDeterministicCharacterAssetsMap",
     "buildDeterministicThumbnailOverrides",
@@ -27,8 +28,10 @@
     "normalizeCharacters",
     "normalizeShips",
     "parseArgs",
+    "pinImportSourceToCommit",
     "resolveCharacterIterationLimit",
-    "resolveImportSource"
+    "resolveImportSource",
+    "resolveSourceCommit"
   ],
   "dataFileCount": 14,
   "readerlessDataFileCount": 1,
@@ -158,5 +161,249 @@
       "readerCount": 2,
       "readerlessReason": null
     }
-  ]
+  ],
+  "upstreamFiles": {
+    "note": "Every file in upstream common/data. `status` read is extracted from scripts/import-optc-data.mjs; every other status, and its reason, is UNREAD_UPSTREAM_FILES in scripts/lib/upstream-file-register.mjs. Sizes and last changes are the listing fetched by `npm run dataset:pipeline -- --refresh-upstream` at `commit`.",
+    "repository": "2Shankz/optc-db.github.io",
+    "directory": "common/data",
+    "commit": "80610c7bb152f0aebe910a29a6904c54169971e4",
+    "listedAt": "2026-09-25",
+    "fileCount": 32,
+    "statusCounts": {
+      "read": 14,
+      "pending": 0,
+      "deliberately-unread": 11,
+      "never-evaluated": 7,
+      "unclassified": 0
+    },
+    "importerAlsoReads": [
+      "common/js/utils.js"
+    ],
+    "files": [
+      {
+        "name": "aliases.js",
+        "bytes": 353153,
+        "lastChanged": "2026-03-01T06:22:05Z",
+        "status": "read",
+        "reason": null
+      },
+      {
+        "name": "altspecials.js",
+        "bytes": 170892,
+        "lastChanged": "2026-01-22T13:48:27Z",
+        "status": "deliberately-unread",
+        "reason": "Executable: functions over the reference damage calculator's own battle state (`p.unit`, `p.percHP`, `$scope`), not data. The app reads the same abilities as text from details.js and parses them itself."
+      },
+      {
+        "name": "availableClasses.js",
+        "bytes": 186,
+        "lastChanged": "2025-06-04T08:50:58Z",
+        "status": "never-evaluated",
+        "reason": null
+      },
+      {
+        "name": "availableTags.js",
+        "bytes": 7416,
+        "lastChanged": "2026-08-14T02:48:45Z",
+        "status": "never-evaluated",
+        "reason": null
+      },
+      {
+        "name": "banners.js",
+        "bytes": 4056,
+        "lastChanged": "2026-09-20T22:32:18Z",
+        "status": "read",
+        "reason": null
+      },
+      {
+        "name": "capspecials.js",
+        "bytes": 10919,
+        "lastChanged": "2026-01-22T13:48:27Z",
+        "status": "deliberately-unread",
+        "reason": "Executable: functions over the reference damage calculator's own battle state (`p.unit`, `p.percHP`, `$scope`), not data. The app reads the same abilities as text from details.js and parses them itself."
+      },
+      {
+        "name": "captains.js",
+        "bytes": 865791,
+        "lastChanged": "2026-03-01T06:08:46Z",
+        "status": "deliberately-unread",
+        "reason": "Executable: functions over the reference damage calculator's own battle state (`p.unit`, `p.percHP`, `$scope`), not data. The app reads the same abilities as text from details.js and parses them itself."
+      },
+      {
+        "name": "cooldowns.js",
+        "bytes": 81325,
+        "lastChanged": "2026-09-25T04:02:24Z",
+        "status": "read",
+        "reason": null
+      },
+      {
+        "name": "defenses.js",
+        "bytes": 26119,
+        "lastChanged": "2016-10-08T17:12:23Z",
+        "status": "never-evaluated",
+        "reason": null
+      },
+      {
+        "name": "details.js",
+        "bytes": 12488886,
+        "lastChanged": "2026-09-25T04:02:24Z",
+        "status": "read",
+        "reason": null
+      },
+      {
+        "name": "drops.js",
+        "bytes": 350965,
+        "lastChanged": "2026-09-25T04:02:24Z",
+        "status": "read",
+        "reason": null
+      },
+      {
+        "name": "effects.js",
+        "bytes": 75531,
+        "lastChanged": "2026-03-01T06:08:46Z",
+        "status": "deliberately-unread",
+        "reason": "Executable: functions over the reference damage calculator's own battle state (`p.unit`, `p.percHP`, `$scope`), not data. The app reads the same abilities as text from details.js and parses them itself."
+      },
+      {
+        "name": "events.js",
+        "bytes": 3581,
+        "lastChanged": "2026-01-22T13:48:29Z",
+        "status": "deliberately-unread",
+        "reason": "Executable: functions over the reference damage calculator's own battle state (`p.unit`, `p.percHP`, `$scope`), not data. The app reads the same abilities as text from details.js and parses them itself."
+      },
+      {
+        "name": "evolutions.js",
+        "bytes": 144146,
+        "lastChanged": "2026-09-25T04:02:24Z",
+        "status": "read",
+        "reason": null
+      },
+      {
+        "name": "families.js",
+        "bytes": 164570,
+        "lastChanged": "2026-09-25T04:02:24Z",
+        "status": "read",
+        "reason": null
+      },
+      {
+        "name": "festival.js",
+        "bytes": 97741,
+        "lastChanged": "2026-09-25T04:02:24Z",
+        "status": "never-evaluated",
+        "reason": null
+      },
+      {
+        "name": "filterOptions.js",
+        "bytes": 1893,
+        "lastChanged": "2026-01-05T22:10:23Z",
+        "status": "never-evaluated",
+        "reason": null
+      },
+      {
+        "name": "flags.js",
+        "bytes": 155481,
+        "lastChanged": "2026-09-25T04:02:24Z",
+        "status": "read",
+        "reason": null
+      },
+      {
+        "name": "format-rumble-json.sh",
+        "bytes": 395,
+        "lastChanged": "2021-01-18T02:58:51Z",
+        "status": "deliberately-unread",
+        "reason": "Tooling: the shell script upstream uses to sort and reformat rumble.json. It holds no data."
+      },
+      {
+        "name": "json.html",
+        "bytes": 887,
+        "lastChanged": "2026-01-22T13:32:36Z",
+        "status": "deliberately-unread",
+        "reason": "Tooling: a page that prints units.js, details.js or cooldowns.js as JSON in a browser - three files the importer already reads directly."
+      },
+      {
+        "name": "matchers.js",
+        "bytes": 364510,
+        "lastChanged": "2026-09-19T22:20:14Z",
+        "status": "never-evaluated",
+        "reason": null
+      },
+      {
+        "name": "rumble.js",
+        "bytes": 9849311,
+        "lastChanged": "2026-09-19T22:54:43Z",
+        "status": "deliberately-unread",
+        "reason": "A duplicate: the Pirate Rumble data again as a window.rumble script. The importer reads the same data as rumble.json, which needs no evaluation."
+      },
+      {
+        "name": "rumble.json",
+        "bytes": 10679331,
+        "lastChanged": "2026-09-19T22:54:43Z",
+        "status": "read",
+        "reason": null
+      },
+      {
+        "name": "rumble.schema.json",
+        "bytes": 24305,
+        "lastChanged": "2024-01-10T21:34:42Z",
+        "status": "deliberately-unread",
+        "reason": "Tooling: the JSON Schema upstream validates rumble.json against. It describes a file the importer reads and holds no data itself."
+      },
+      {
+        "name": "sailors.js",
+        "bytes": 260709,
+        "lastChanged": "2026-03-01T06:08:46Z",
+        "status": "deliberately-unread",
+        "reason": "Executable: functions over the reference damage calculator's own battle state (`p.unit`, `p.percHP`, `$scope`), not data. The app reads the same abilities as text from details.js and parses them itself."
+      },
+      {
+        "name": "ships.js",
+        "bytes": 46782,
+        "lastChanged": "2023-10-04T19:35:21Z",
+        "status": "read",
+        "reason": null
+      },
+      {
+        "name": "shops.js",
+        "bytes": 4277,
+        "lastChanged": "2026-09-25T04:02:24Z",
+        "status": "read",
+        "reason": null
+      },
+      {
+        "name": "specials.js",
+        "bytes": 1147265,
+        "lastChanged": "2026-03-01T06:08:46Z",
+        "status": "deliberately-unread",
+        "reason": "Executable: functions over the reference damage calculator's own battle state (`p.unit`, `p.percHP`, `$scope`), not data. The app reads the same abilities as text from details.js and parses them itself."
+      },
+      {
+        "name": "tags.js",
+        "bytes": 163110,
+        "lastChanged": "2026-09-25T04:02:24Z",
+        "status": "read",
+        "reason": null
+      },
+      {
+        "name": "units.js",
+        "bytes": 1401058,
+        "lastChanged": "2026-09-25T04:02:24Z",
+        "status": "read",
+        "reason": null
+      },
+      {
+        "name": "version.js",
+        "bytes": 23,
+        "lastChanged": "2016-05-23T07:49:19Z",
+        "status": "read",
+        "reason": null
+      },
+      {
+        "name": "zombies.js",
+        "bytes": 27834,
+        "lastChanged": "2023-08-24T20:55:31Z",
+        "status": "never-evaluated",
+        "reason": null
+      }
+    ]
+  }
 }

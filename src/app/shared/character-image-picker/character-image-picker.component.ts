@@ -58,6 +58,7 @@ import {
 } from '../ability-filter-rail/ability-filter-rail.component';
 import { AbilityTagSetPickerComponent } from '../ability-tag-set-picker/ability-tag-set-picker.component';
 import { CharacterFacetFilterComponent } from '../character-facet-filter/character-facet-filter.component';
+import { FormClassMarkerComponent } from '../character-facet-filter/form-class-marker.component';
 import {
   CharacterTagFilterComponent,
   type CharacterTagFilterChange,
@@ -84,6 +85,7 @@ const PAGE_SIZE = 48;
     AbilityFilterRailComponent,
     AbilityTagSetPickerComponent,
     CharacterFacetFilterComponent,
+    FormClassMarkerComponent,
     CharacterTagFilterComponent,
     TranslocoDirective,
     TranslocoPipe,

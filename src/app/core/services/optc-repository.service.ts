@@ -22,6 +22,7 @@ import {
   type CharacterEvolutionBranch,
   type CharacterProgression,
   type CharacterFacetMatchMode,
+  type CharacterForm,
   type CharacterRecord,
   type CharacterSupportEntry,
   type DetailedCharacterSearchQuery,
@@ -888,6 +889,7 @@ export class OptcRepositoryService {
   private readonly sqlPromise: Promise<SqlJsStatic>;
   private readonly databasePromise: Promise<Database>;
   private manifestPromise?: Promise<DatasetManifest>;
+  private characterFormsPromise?: Promise<ReadonlyMap<number, CharacterForm[]>>;
   private autoBuilderAbilityCatalogPromise?: Promise<AutoBuildAbilityCatalog>;
   private detailedCatalogPromise?: Promise<CharacterDetailRecord[]>;
   private detailedCatalogOverrideRevision = -1;
@@ -1810,12 +1812,73 @@ export class OptcRepositoryService {
     );
   }
 
+  /**
+   * 869f63gv6. Every dual or VS unit's forms, read once - 414 rows for 207 units when this was
+   * written - and attached to each record by id, so no character query has to join them. A
+   * database without the table (a seed older than the forms) simply has no forms.
+   */
+  private getCharacterFormsById(): Promise<ReadonlyMap<number, CharacterForm[]>> {
+    this.characterFormsPromise ??= this.selectAll(
+      `
+        SELECT character_id, form_key, name, type, classes_json, combo,
+          min_hp, min_atk, min_rcv, max_hp, max_atk, max_rcv
+        FROM character_forms
+        ORDER BY character_id ASC, form_key ASC
+      `,
+    )
+      .then((rows) => {
+        const formsById = new Map<number, CharacterForm[]>();
+
+        for (const row of rows) {
+          const characterId = Number(row['character_id']);
+          const key = String(row['form_key'] ?? '').trim();
+
+          if (!Number.isInteger(characterId) || characterId <= 0 || !key.length) {
+            continue;
+          }
+
+          const forms = formsById.get(characterId) ?? [];
+
+          forms.push({
+            key,
+            name: String(row['name'] ?? ''),
+            type: String(row['type'] ?? ''),
+            classes: this.parseJson<string[]>(row['classes_json'], []),
+            combo: Number(row['combo'] ?? 0),
+            stats: {
+              min: {
+                hp: parseNullableNumber(row['min_hp']),
+                atk: parseNullableNumber(row['min_atk']),
+                rcv: parseNullableNumber(row['min_rcv']),
+              },
+              max: {
+                hp: parseNullableNumber(row['max_hp']),
+                atk: parseNullableNumber(row['max_atk']),
+                rcv: parseNullableNumber(row['max_rcv']),
+              },
+            },
+          });
+          formsById.set(characterId, forms);
+        }
+
+        for (const forms of formsById.values()) {
+          forms.sort((left, right) => left.key.localeCompare(right.key, 'en', { numeric: true }));
+        }
+
+        return formsById;
+      })
+      .catch(() => new Map<number, CharacterForm[]>());
+
+    return this.characterFormsPromise;
+  }
+
   private async decorateCharacterRows(rows: SqlRow[]): Promise<CharacterListItem[]> {
     await this.characterOverrides.ready();
     const manifest = await this.getDatasetManifest();
     const installedPacks = new Map(manifest.packs.map((pack) => [pack.key, pack]));
     const overridesByCharacterId = this.characterOverrides.overridesByCharacterId();
     const datasetCaptainById = await this.loadOverriddenDatasetCaptains(rows, overridesByCharacterId);
+    const formsById = await this.getCharacterFormsById();
 
     const decoratedRows: CharacterListItem[] = [];
 
@@ -1883,6 +1946,8 @@ export class OptcRepositoryService {
         // 869f63grj. Upstream's families decide which cards are the same character. `[]` - a unit
         // upstream names no family for, or a manually added one - leaves that to the name.
         families: this.parseJson<string[]>(row['families_json'], []),
+        // 869f63gv6. Only a dual or VS unit carries forms; every other record has no key at all.
+        ...(formsById.has(Number(row['id'])) ? { forms: formsById.get(Number(row['id'])) } : {}),
         imageUrl: this.resolveImageUrl(assets, { preferExactLocal: false, installedPacks }),
       };
 

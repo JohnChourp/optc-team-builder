@@ -394,15 +394,36 @@ export function matchesCaptainCoverageTier(
     return false;
   }
 
-  // Fallback tier: target matches iff it does NOT satisfy any more-specific subset tier in the
-  // same entry. This is the natural complement reading of "all other characters".
-  if (conditions.fallbackOther) {
-    return !subsetTiersInEntry.some((subset) =>
-      matchesTierCharacterConditionsInner(subset, target, targetCharacterTags),
-    );
-  }
+  /*
+   * 869f63gv6. A dual or VS unit holds one class set at a time - its own, or one form's after a
+   * swap - so it meets the tier when ONE of those states does. That keeps both halves of a unit
+   * that is "all other characters" as itself and Driven as its Smoker form: it is in the fallback
+   * tier AND in the Driven tier, where a union of its classes would have dropped it from the first.
+   * Every state keeps the unit's own type; only classes move.
+   */
+  return resolveCaptainCoverageClassStates(target).some((state) =>
+    // Fallback tier: target matches iff it does NOT satisfy any more-specific subset tier in the
+    // same entry. This is the natural complement reading of "all other characters".
+    conditions.fallbackOther
+      ? !subsetTiersInEntry.some((subset) =>
+          matchesTierCharacterConditionsInner(subset, state, targetCharacterTags),
+        )
+      : matchesTierCharacterConditionsInner(tier, state, targetCharacterTags),
+  );
+}
 
-  return matchesTierCharacterConditionsInner(tier, target, targetCharacterTags);
+/** 869f63gv6. The unit as it is, then as each of its forms - the same unit with that form's classes. */
+function resolveCaptainCoverageClassStates(target: CharacterListItem): CharacterListItem[] {
+  return [
+    target,
+    ...(target.forms ?? []).map((form) => ({
+      ...target,
+      classes: [...form.classes],
+      primaryClass: form.classes[0] ?? '',
+      secondaryClass: form.classes[1] ?? null,
+      forms: [],
+    })),
+  ];
 }
 
 function resolveTargetDetailCharacterTags(target: CharacterListItem): readonly string[] {

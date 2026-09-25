@@ -33,5 +33,9 @@
   "a11y": {
     "applied": "Εφαρμόστηκε φίλτρο: {{count}} τιμή/τιμές, {{mode}}.",
     "cleared": "Το φίλτρο καθαρίστηκε."
+  },
+  "formMarker": {
+    "afterSwap": "{{classes}} μετά από swap",
+    "afterSwapAs": "{{classes}} μετά από swap (ως {{forms}})"
   }
 }

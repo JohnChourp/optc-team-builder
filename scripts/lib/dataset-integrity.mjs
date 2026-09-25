@@ -81,6 +81,8 @@ function validateCharacters(characters, errors) {
       errors.push(`character ${characterId ?? index} is missing a name.`);
     }
 
+    validateCharacterForms(character.forms, characterId ?? index, errors);
+
     if (!isRecord(character.detail)) {
       errors.push(`character ${characterId ?? index} is missing detail data.`);
       return;
@@ -116,6 +118,48 @@ function validateCharacters(characters, errors) {
   });
 
   return characterIds;
+}
+
+/**
+ * 869f63gv6. A dual or VS unit's forms. Absent on a character with none (and on every manual one);
+ * when present, each is a named form with one valid type and a unique key, because the app shows
+ * each by name and counts its classes after a swap.
+ */
+function validateCharacterForms(forms, characterLabel, errors) {
+  if (forms === undefined) {
+    return;
+  }
+
+  if (!Array.isArray(forms)) {
+    errors.push(`character ${characterLabel} forms must be an array.`);
+    return;
+  }
+
+  const keys = new Set();
+
+  forms.forEach((form, formIndex) => {
+    const key = normalizeString(form?.key);
+
+    if (!key.length || keys.has(key)) {
+      errors.push(`character ${characterLabel} form ${formIndex} has a missing or repeated key.`);
+    }
+
+    keys.add(key);
+
+    if (!normalizeString(form?.name).length) {
+      errors.push(`character ${characterLabel} form ${key || formIndex} is missing a name.`);
+    }
+
+    if (!['STR', 'DEX', 'QCK', 'PSY', 'INT'].includes(normalizeString(form?.type))) {
+      errors.push(
+        `character ${characterLabel} form ${key || formIndex} has type "${String(form?.type)}", not one type.`,
+      );
+    }
+
+    if (!Array.isArray(form?.classes)) {
+      errors.push(`character ${characterLabel} form ${key || formIndex} classes must be an array.`);
+    }
+  });
 }
 
 function isManualCharacterId(value) {
@@ -175,6 +219,25 @@ function validateManifest(manifest, characters, ships, errors) {
 
   if (!normalizeString(manifest.sourceVersion).length) {
     errors.push('manifest.sourceVersion is required.');
+  }
+
+  /*
+   * 869f63gtc. Optional as a pair - a fixture or an older manifest carries neither - but never half
+   * a pair, and never a value that only looks recorded: a repository is `owner/name` and a commit is
+   * a full sha, because a short or empty one cannot be rebuilt from.
+   */
+  if ('sourceRepository' in manifest || 'sourceCommit' in manifest) {
+    if (!/^[\w.-]+\/[\w.-]+$/u.test(normalizeString(manifest.sourceRepository))) {
+      errors.push(
+        `manifest.sourceRepository must name an owner/repository, received ${String(manifest.sourceRepository)}.`,
+      );
+    }
+
+    if (!/^[0-9a-f]{40}$/u.test(normalizeString(manifest.sourceCommit))) {
+      errors.push(
+        `manifest.sourceCommit must be a full commit sha, received ${String(manifest.sourceCommit)}.`,
+      );
+    }
   }
 
   assertCount('manifest.characterCount', manifest.characterCount, characters?.length ?? 0, errors);

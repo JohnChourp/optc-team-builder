@@ -31,12 +31,31 @@ export interface CharacterFacetRecordLike {
   readonly classes?: readonly string[] | null;
   readonly primaryClass?: string | null;
   readonly secondaryClass?: string | null;
+  /** 869f63gv6. A dual or VS unit's forms. Each one's classes apply after a swap. */
+  readonly forms?: readonly CharacterFormFacetLike[] | null;
+}
+
+/** The subset of a `CharacterForm` the class facet reads. */
+export interface CharacterFormFacetLike {
+  readonly name?: string | null;
+  readonly classes?: readonly string[] | null;
+}
+
+/**
+ * 869f63gv6. What the "after swap" marker says: the classes a record matches only once it has
+ * swapped into one of its forms, and the forms that hold them.
+ */
+export interface FormOnlyClassMatch {
+  readonly classes: readonly string[];
+  readonly forms: readonly string[];
 }
 
 /** The SQL-side row shape: LIKE runs against columns, so the harness does too. */
 export interface CharacterFacetSqlRow {
   readonly type: string;
   readonly classesJson: string;
+  /** 869f63gv6. One `character_forms.classes_json` per form of the unit. */
+  readonly formClassesJson?: readonly string[];
 }
 
 /**
@@ -47,6 +66,13 @@ export interface CharacterFacetSqlRow {
  */
 export const CHARACTER_TYPE_LIKE_CLAUSE = "(',' || c.type || ',') LIKE ? ESCAPE '\\'";
 export const CHARACTER_CLASS_LIKE_CLAUSE = "c.classes_json LIKE ? ESCAPE '\\'";
+/**
+ * 869f63gv6. The same test against one of the unit's forms, inside
+ * `EXISTS (SELECT 1 FROM character_forms f WHERE f.character_id = c.id AND ...)`. The class clause
+ * binds every value twice - once for the unit's own classes, once for its forms' - so a fake driver
+ * that counts one template has to count this one too.
+ */
+export const CHARACTER_FORM_CLASS_LIKE_CLAUSE = "f.classes_json LIKE ? ESCAPE '\\'";
 
 /**
  * UI-layer default. `any` — matches the mode every host hard-coded before this
@@ -148,7 +174,8 @@ export function toggleCharacterFacetValue(values: readonly string[], value: stri
  * ('INT,PSY' and 'PSY,INT'), so it is split, never compared whole.
  * `class` prefers the full `classes` array and falls back to the
  * primary/secondary pair only when the array is empty — reading the array first
- * is what makes a 3-class local override findable.
+ * is what makes a 3-class local override findable. These are the unit's OWN
+ * classes; a dual or VS unit's forms are read by `readCharacterClassStates`.
  */
 export function readCharacterFacetValues(
   kind: CharacterFacetKind,
@@ -172,6 +199,111 @@ export function readCharacterFacetValues(
   return [record.primaryClass, record.secondaryClass]
     .map((value) => String(value ?? '').trim())
     .filter((value) => value.length > 0);
+}
+
+/**
+ * 869f63gv6. The class sets a unit can hold, one at a time: its own, then each form's.
+ *
+ * A dual or VS unit's classes after a swap are its form's classes, and the game never gives it two
+ * forms' classes at once - #1983 Smoker & Tashigi is Striker/Slasher, Striker/Driven as Smoker and
+ * Slasher/Cerebral as Tashigi, and never Driven and Cerebral together. So a class filter matches a
+ * unit when ONE of these sets matches it. For "any" that is every form's class counted; for "all"
+ * it keeps "a character holds at most two classes" true, which the capacity rule above relies on.
+ * It is the model the type column already follows: a dual unit's own state holds both its forms'
+ * types, and each form holds one.
+ */
+export function readCharacterClassStates(record: CharacterFacetRecordLike): string[][] {
+  return [
+    readCharacterFacetValues('class', record),
+    ...(record.forms ?? []).map((form) =>
+      (form.classes ?? [])
+        .map((value) => String(value ?? '').trim())
+        .filter((value) => value.length > 0),
+    ),
+  ];
+}
+
+/**
+ * 869f63gv6. The marker a class match carries when the unit's own classes do not satisfy the
+ * selection and one or more of its forms' do - or `null`, when the unit matches as it is, or not at
+ * all. For "any" it names the selected classes only a form holds; for "all", every selected class.
+ */
+export function resolveFormOnlyClassMatch(
+  record: CharacterFacetRecordLike,
+  selection: CharacterFacetSelection | null | undefined,
+): FormOnlyClassMatch | null {
+  const normalized = normalizeCharacterFacetSelection('class', selection);
+  const forms = record.forms ?? [];
+
+  if (!normalized.values.length || !forms.length) {
+    return null;
+  }
+
+  const ownClasses = readCharacterFacetValues('class', record);
+
+  if (matchesCharacterFacetValues(ownClasses, normalized)) {
+    return null;
+  }
+
+  const ownKeys = new Set(ownClasses.map(foldCharacterFacetValue));
+  const matchingForms = forms.filter((form) =>
+    matchesCharacterFacetValues(form.classes ?? [], normalized),
+  );
+
+  if (!matchingForms.length) {
+    return null;
+  }
+
+  const formHolds = (value: string) =>
+    matchingForms.some((form) =>
+      (form.classes ?? []).some(
+        (formClass) =>
+          foldCharacterFacetValue(String(formClass ?? '')) === foldCharacterFacetValue(value),
+      ),
+    );
+
+  return {
+    classes:
+      normalized.matchMode === 'all'
+        ? [...normalized.values]
+        : normalized.values.filter(
+            (value) => formHolds(value) && !ownKeys.has(foldCharacterFacetValue(value)),
+          ),
+    forms: matchingForms
+      .map((form) => String(form.name ?? '').trim())
+      .filter((name) => name.length > 0),
+  };
+}
+
+/** 869f63gv6. Several markers for one card - a class filter and a Captain's boost - as one. */
+export function mergeFormOnlyClassMatches(
+  ...matches: ReadonlyArray<FormOnlyClassMatch | null | undefined>
+): FormOnlyClassMatch | null {
+  const present = matches.filter((match): match is FormOnlyClassMatch => Boolean(match));
+
+  if (!present.length) {
+    return null;
+  }
+
+  const unique = (values: readonly string[]) => {
+    const seen = new Set<string>();
+
+    return values.filter((value) => {
+      const key = foldCharacterFacetValue(value);
+
+      if (seen.has(key)) {
+        return false;
+      }
+
+      seen.add(key);
+      return true;
+    });
+  };
+
+  return {
+    classes: unique(present.flatMap((match) => match.classes)),
+    forms: unique(present.flatMap((match) => match.forms)),
+  };
 }
 
 export function matchesCharacterFacetValues(
@@ -203,6 +335,13 @@ export function matchesCharacterFacet(
 
   if (!normalized.values.length) {
     return true;
+  }
+
+  // 869f63gv6. A class matches in the unit's own state or in any one form, never across two.
+  if (kind === 'class') {
+    return readCharacterClassStates(record).some((classes) =>
+      matchesCharacterFacetValues(classes, normalized),
+    );
   }
 
   return matchesCharacterFacetValues(readCharacterFacetValues(kind, record), normalized);
@@ -243,12 +382,21 @@ export function buildCharacterFacetSqlClause(
 
   const template = kind === 'type' ? CHARACTER_TYPE_LIKE_CLAUSE : CHARACTER_CLASS_LIKE_CLAUSE;
   const joiner = normalized.matchMode === 'any' ? ' OR ' : ' AND ';
+  const params = normalized.values.map((value) =>
+    kind === 'type' ? `%,${escapeSqlLikePattern(value)},%` : `%"${escapeSqlLikePattern(value)}"%`,
+  );
+  const own = `(${normalized.values.map(() => template).join(joiner)})`;
+
+  if (kind === 'type') {
+    return { clause: own, params };
+  }
+
+  // 869f63gv6. The unit's own classes, or one form's - `readCharacterClassStates` in SQL.
+  const forms = `(${normalized.values.map(() => CHARACTER_FORM_CLASS_LIKE_CLAUSE).join(joiner)})`;
 
   return {
-    clause: `(${normalized.values.map(() => template).join(joiner)})`,
-    params: normalized.values.map((value) =>
-      kind === 'type' ? `%,${escapeSqlLikePattern(value)},%` : `%"${escapeSqlLikePattern(value)}"%`,
-    ),
+    clause: `(${own} OR EXISTS (SELECT 1 FROM character_forms f WHERE f.character_id = c.id AND ${forms}))`,
+    params: [...params, ...params],
   };
 }
 
@@ -307,10 +455,29 @@ export function matchesCharacterFacetSqlClause(
   const template = kind === 'type' ? CHARACTER_TYPE_LIKE_CLAUSE : CHARACTER_CLASS_LIKE_CLAUSE;
   // Read the joiner out of the EMITTED clause, so a wrong joiner fails the parity spec.
   const joinsWithOr = built.clause.includes(`${template} OR ${template}`);
-  const columnValue = kind === 'type' ? `,${row.type},` : row.classesJson;
-  const results = built.params.map((pattern) => evaluateSqlLikePattern(columnValue, pattern));
+  const ownCount = built.clause.split(template).length - 1;
+  const matchesColumn = (columnValue: string, patterns: readonly string[]) => {
+    const results = patterns.map((pattern) => evaluateSqlLikePattern(columnValue, pattern));
 
-  return joinsWithOr || built.params.length === 1 ? results.some(Boolean) : results.every(Boolean);
+    return joinsWithOr || patterns.length === 1 ? results.some(Boolean) : results.every(Boolean);
+  };
+
+  if (kind === 'type') {
+    return matchesColumn(`,${row.type},`, built.params);
+  }
+
+  // 869f63gv6. The own half binds the first params; the EXISTS half, if emitted, the rest.
+  const ownPatterns = built.params.slice(0, ownCount);
+  const formPatterns = built.params.slice(ownCount);
+
+  return (
+    matchesColumn(row.classesJson, ownPatterns) ||
+    (formPatterns.length > 0 &&
+      built.clause.includes(CHARACTER_FORM_CLASS_LIKE_CLAUSE) &&
+      (row.formClassesJson ?? []).some((formClassesJson) =>
+        matchesColumn(formClassesJson, formPatterns),
+      ))
+  );
 }
 
 /** Maps two facets onto the detailed query's four fields. Used by hosts 2 and 4. */

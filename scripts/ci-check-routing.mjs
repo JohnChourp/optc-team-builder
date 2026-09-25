@@ -270,7 +270,7 @@ export const SCRIPT_SUITES = {
   'source-data': {
     label: 'Source data validation tests',
     command:
-      'npx vitest run scripts/lib/dataset-integrity.spec.ts scripts/lib/optc-dataset.spec.ts scripts/lib/manual-character-overlay.spec.ts scripts/lib/manual-character-apply.spec.ts scripts/lib/manual-character-prune.spec.ts scripts/lib/party-conflict-keys.spec.ts scripts/lib/rumble-data-normalizer.spec.ts scripts/lib/super-special-criteria.spec.ts scripts/upsert-manual-character.spec.ts scripts/check-dataset-spec-pins.spec.ts scripts/optc-upstream-progression.spec.ts scripts/import-optc-families.spec.ts scripts/optc-upstream-false-units.spec.ts scripts/import-optc-acquisition.spec.ts scripts/import-optc-search-aliases.spec.ts && npm run dataset:spec-pins',
+      'npx vitest run scripts/lib/dataset-integrity.spec.ts scripts/lib/optc-dataset.spec.ts scripts/lib/manual-character-overlay.spec.ts scripts/lib/manual-character-apply.spec.ts scripts/lib/manual-character-prune.spec.ts scripts/lib/party-conflict-keys.spec.ts scripts/lib/rumble-data-normalizer.spec.ts scripts/lib/super-special-criteria.spec.ts scripts/upsert-manual-character.spec.ts scripts/check-dataset-spec-pins.spec.ts scripts/optc-upstream-progression.spec.ts scripts/import-optc-families.spec.ts scripts/optc-upstream-false-units.spec.ts scripts/import-optc-acquisition.spec.ts scripts/import-optc-search-aliases.spec.ts scripts/import-optc-source-commit.spec.ts scripts/import-optc-forms.spec.ts && npm run dataset:spec-pins',
   },
   'perf-budget': {
     label: 'Performance budget script tests',
@@ -1154,13 +1154,24 @@ function isImportPipelinePath(filePath) {
     filePath === 'scripts/generate-import-pipeline.mjs' ||
     filePath === 'scripts/generate-import-pipeline.spec.ts' ||
     filePath === 'scripts/lib/import-pipeline.mjs' ||
-    filePath === 'docs/import-pipeline.json'
+    filePath === 'docs/import-pipeline.json' ||
+    /* 869f63gtp. The upstream file register the same document carries, and its two specs. */
+    filePath === 'scripts/lib/upstream-file-register.mjs' ||
+    filePath === 'scripts/upstream-file-register.spec.ts' ||
+    filePath === 'scripts/upstream-file-register-nightly.spec.ts'
   );
 }
 
-/* 869f138r4. Non-terminating: the importer and the hand-maintained data it reads. */
+/*
+ * 869f138r4. Non-terminating: the importer and the hand-maintained data it reads - and, 869f63gtp,
+ * the nightly release check, whose upstream-register finding is specified in this lane.
+ */
 function touchesImportPipelineSources(filePath) {
-  return filePath === 'scripts/import-optc-data.mjs' || filePath.startsWith('scripts/data/');
+  return (
+    filePath === 'scripts/import-optc-data.mjs' ||
+    filePath.startsWith('scripts/data/') ||
+    filePath === 'scripts/check-optc-release-needed.mjs'
+  );
 }
 
 /* 869f138qw. Terminating: the pack contract generator, its reader, and the document it writes. */
@@ -1797,7 +1808,12 @@ function isSourceDataPath(filePath) {
      */
     filePath === 'scripts/optc-upstream-false-units.spec.ts' ||
     filePath === 'scripts/import-optc-acquisition.spec.ts' ||
-    filePath === 'scripts/import-optc-search-aliases.spec.ts'
+    filePath === 'scripts/import-optc-search-aliases.spec.ts' ||
+    /* 869f63gtc. The commit every import reads at, and the source it refuses. */
+    filePath === 'scripts/import-optc-source-commit.spec.ts' ||
+    /* 869f63gv6. A dual or VS unit's forms, and what each keeps and drops. */
+    filePath === 'scripts/lib/optc-upstream-forms.mjs' ||
+    filePath === 'scripts/import-optc-forms.spec.ts'
   );
 }
 
@@ -2117,6 +2133,11 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
 
     if (isImportPipelinePath(filePath)) {
       addScriptSuite(scriptSuites, 'import-pipeline');
+      /* 869f63gtp. The nightly release check reads the register's library too. */
+      if (filePath === 'scripts/lib/upstream-file-register.mjs') {
+        categories.add('release-check');
+        addScriptSuite(scriptSuites, 'release-check');
+      }
       continue;
     }
 

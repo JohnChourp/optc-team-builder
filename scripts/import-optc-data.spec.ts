@@ -35,7 +35,9 @@ describe('import-optc-data ship thumbnail pack', () => {
   });
 
   it('resolves the upstream optc-db source config explicitly', () => {
-    const source = resolveImportSource(parseArgs(['--source=optc-db']).source);
+    const source = resolveImportSource(
+      parseArgs(['--source=optc-db', '--allow-stale-source']).source,
+    );
 
     expect(source).toEqual(dataImportSources['optc-db']);
     expect(buildSourceFileUrl(source, 'common/data/details.js')).toBe(

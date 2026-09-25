@@ -1,0 +1,16 @@
+<ng-container *transloco="let t; scope: 'character-facet-filter'; read: 'character-facet-filter'">
+  @if (resolved; as marker) {
+    <small class="form-class-marker" data-testid="form-class-marker">
+      @if (marker.forms.length) {
+        {{
+          t('formMarker.afterSwapAs', {
+            classes: marker.classes.join(', '),
+            forms: marker.forms.join(', ')
+          })
+        }}
+      } @else {
+        {{ t('formMarker.afterSwap', { classes: marker.classes.join(', ') }) }}
+      }
+    </small>
+  }
+</ng-container>

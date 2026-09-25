@@ -40589,6 +40589,56 @@ function loadGeneratedSeedCharactersById(): Map<number, CharacterDetailRecord> {
     searchIndex = parsedTuple.endIndex + 1;
   }
 
+  // 869f63gv6. A dual or VS unit's forms, read by column name and attached as the repository does.
+  const formMarker = 'INSERT INTO character_forms (';
+
+  searchIndex = 0;
+
+  while (searchIndex < sql.length) {
+    const insertIndex = sql.indexOf(formMarker, searchIndex);
+
+    if (insertIndex === -1) {
+      break;
+    }
+
+    const valuesIndex = sql.indexOf('VALUES', insertIndex);
+    const columns = sql
+      .slice(insertIndex + formMarker.length, valuesIndex)
+      .replace(/\)\s*$/u, '')
+      .split(',')
+      .map((column) => column.trim());
+    const parsedTuple = parseSqlTupleValues(sql, sql.indexOf('(', valuesIndex));
+    const read = (column: string) => parsedTuple.values[columns.indexOf(column)];
+    const record = recordsById.get(Number(read('character_id')));
+
+    if (record) {
+      record.forms = [
+        ...(record.forms ?? []),
+        {
+          key: String(read('form_key')),
+          name: String(read('name')),
+          type: String(read('type')),
+          classes: JSON.parse(String(read('classes_json'))) as string[],
+          combo: Number(read('combo')),
+          stats: {
+            min: {
+              hp: toNullableNumber(read('min_hp')),
+              atk: toNullableNumber(read('min_atk')),
+              rcv: toNullableNumber(read('min_rcv')),
+            },
+            max: {
+              hp: toNullableNumber(read('max_hp')),
+              atk: toNullableNumber(read('max_atk')),
+              rcv: toNullableNumber(read('max_rcv')),
+            },
+          },
+        },
+      ];
+    }
+
+    searchIndex = parsedTuple.endIndex + 1;
+  }
+
   return recordsById;
 }
 

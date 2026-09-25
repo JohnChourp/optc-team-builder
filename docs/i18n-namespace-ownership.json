@@ -115,7 +115,8 @@
       "consumers": [
         "src/app/pages/faq/faq.data.ts",
         "src/app/shared/character-facet-filter/character-facet-filter.component.html",
-        "src/app/shared/character-facet-filter/character-facet-filter.component.ts"
+        "src/app/shared/character-facet-filter/character-facet-filter.component.ts",
+        "src/app/shared/character-facet-filter/form-class-marker.component.html"
       ]
     },
     {

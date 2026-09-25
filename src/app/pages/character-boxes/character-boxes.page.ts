@@ -71,6 +71,7 @@ import {
   type AbilityTagSetPickerSection,
 } from '../../shared/ability-tag-set-picker/ability-tag-set-picker.component';
 import { CharacterFacetFilterComponent } from '../../shared/character-facet-filter/character-facet-filter.component';
+import { FormClassMarkerComponent } from '../../shared/character-facet-filter/form-class-marker.component';
 import {
   CharacterFilterRowComponent,
   type CharacterFilterCostBound,
@@ -128,6 +129,7 @@ interface CharacterBoxCharacterCardView {
     AbilityFilterRailComponent,
     AbilityTagSetPickerComponent,
     CharacterFacetFilterComponent,
+    FormClassMarkerComponent,
     CharacterFilterRowComponent,
     CharacterTagFilterComponent,
     CharacterBoxesStylePanelsComponent,

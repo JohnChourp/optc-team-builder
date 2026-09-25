@@ -6,14 +6,16 @@ This document records the canonical local data shapes used by OPTC Team Builder.
 
 The importer writes these files:
 
-- `optc-manifest.json`: dataset metadata, counts, schema version, source version, and offline pack summaries.
-- `optc-seed.sql`: SQLite seed containing `characters`, `character_details`, `character_evolutions`, `character_drops`, `character_acquisition`, `ships`, and `meta`. The source of truth for the dataset; the app only executes it as a fallback. **Every table, column, type and row count is generated from it into [dataset-schema.json](dataset-schema.json)** by `npm run dataset:schema` (869f138qt) - this page documents the application shapes those rows become, that file documents the rows.
+- `optc-manifest.json`: dataset metadata, counts, schema version, source version, the upstream repository and commit the data was read at (`sourceRepository`, `sourceCommit`), and offline pack summaries.
+- `optc-seed.sql`: SQLite seed containing `characters`, `character_details`, `character_evolutions`, `character_drops`, `character_acquisition`, `character_forms`, `ships`, and `meta`. The source of truth for the dataset; the app only executes it as a fallback. **Every table, column, type and row count is generated from it into [dataset-schema.json](dataset-schema.json)** by `npm run dataset:schema` (869f138qt) - this page documents the application shapes those rows become, that file documents the rows.
 - `optc-seed.sqlite.gz` (build output, not committed): the same rows as a gzipped SQLite database, built from `optc-seed.sql` by `npm run dataset:binary` before every build. This is what the app downloads and opens - see [dataset-delivery.md](dataset-delivery.md).
 - `optc-auto-builder-abilities.json`: ability catalog consumed by Auto Team Builder filters and saved enemy requirements. Written minified, and an index over `character_details` rather than a second set of facts - see [The catalogue is an index over the database](#the-catalogue-is-an-index-over-the-database--869f138qm).
 - `optc-unresolved-images.json`: characters that still need image coverage for the installed offline packs. Read by scripts only; not shipped.
 - `optc-preview.json`: the first 24 character records and 12 ships, a sample the scripts read. The app does not read it and it is not shipped (869f138py).
 
 `generatedAt` in these files is the time the data last changed, not the time of the last import: an import that would change nothing but that timestamp leaves all five files byte-identical, so a release with no new data costs an installed client nothing (869f138qb, see [dataset-delivery.md](dataset-delivery.md)).
+
+`sourceRepository` and `sourceCommit` say which upstream built the data (869f63gtc). `sourceVersion` cannot: both candidate repositories report `dbVersion 36`, and their `version.js` has not changed since 2016-05-23. The importer resolves the source's `master` to a commit when it starts and reads every file at that one commit, so the files agree with each other and with the commit recorded; `--ref=<branch, tag or commit>` reads another point instead, which is how a dataset is rebuilt from the commit its manifest names. The manual-character overlay rebuilds the manifest and carries both fields through. Like `generatedAt`, `sourceCommit` is the commit the data **last changed** at: upstream commits things the importer never reads, and the seed embeds the manifest, so an import whose only differences are the timestamp and the commit keeps the previous files byte-for-byte - the new commit's data is identical to what they record. A different `sourceRepository` always counts as a change. The importer refuses `--source=optc-db`, the original repository whose data stopped changing on 2024-08-14, unless `--allow-stale-source` says the two-year-old data is really intended; the manifest then names the stale repository.
 
 `optc-manifest.json` is versioned with `schemaVersion: 2` (it shipped as `1`; the field is read from the file, and this sentence is the one place that has to be moved by hand). The repository service normalizes older manifests without this field to `1`, so existing local builds keep loading. Breaking generated dataset changes must increment this value and update `DatasetManifest`.
 
@@ -36,6 +38,7 @@ Character rows are normalized from upstream unit/detail data plus manual overlay
 - `families` (the `families_json` column) is upstream's `common/data/families.js` list of the character(s) on each card, and decides which cards are the same character - the duplicate-character rule in `src/app/core/grammar/same-character-keys.ts` (869f63grj). `[]` means upstream names no family for the unit
 - `searchAliases` (the `search_aliases` column, 869f63gkm) is the names players use for the unit, from upstream's `common/data/aliases.js`: community nicknames and the French names, **Latin script only** (the Japanese names cost about three times the bytes, for names this app's players rarely type), lower-cased and space-separated, leaving out any the unit's search text or a longer alias already contains. Every character search reads it after the search text, through `normalizeCharacterSearchText` - the SQL clause is `optc_search_text(c.search_text || ' ' || c.search_aliases)` - and nothing displays it. It is a column of its own, not part of `search_text`, because the builders read `search_text` for more than search (super-criteria and name keys, the VS check) and must not see community names. `''` for a unit with none and for a manually added one; a manual character's own `searchAliases` still go into its search text, as before
 - the Character screen's **Getting and improving this unit** section reads three tables, loaded for one character on demand: `character_evolutions` (both directions), `character_drops` (the stages it drops from) and `character_acquisition` (869f63gm1: `{ "flags", "shops", "banners" }` - the `flags.js` acquisition keys `rr`, `lrr` and its kind `tmlrr`/`kclrr`/`pflrr`/`slrr`/`superlrr`/`annilrr`, `promo`, `special` (Login Bonus), `shop` and `tmshop`; the `shops.js` lists that sell the unit; the `banners.js` list that pulls it, `FP`). A unit none of them names has no row, which means "nothing recorded", never "not obtainable": the section's "How to get it" card says only what upstream records and is omitted otherwise. A drop slot holds unit ids and nothing else - a unit's skull (`"1446-skull"`) and a score challenge's `challengeData` are not units, which 269 drop entries and all 863 unit-skull evolvers were until 869f63gm1; an evolver `"<id>-skull"` is kept as a token and shown as "Skull of <name>"
+- `forms` (the `character_forms` table, 869f63gv6) are a dual or VS unit's forms, from upstream's `<id>-<n>` keys in `units.js` - 414 rows for 207 units when this was written, two each. Each keeps its name, type, classes, combo and stats; the fields every form row leaves empty (stars, cost, sockets, level cap, EXP, growth) are dropped, and the import fails if one ever carries a value. The kept and dropped fields are generated into [Dataset Provenance](#dataset-provenance). A unit without forms has no `forms` at all. See [Dual and VS forms](#dual-and-vs-forms--869f63gv6) for how the app counts them
 - `partyConflictKeys` are keys derived from the card name. They decide "same character" only for a unit with no `families`; super-criteria and name matching in the Auto Team Builder, and the SEO pages' related characters, read them
 - `characterTags` drive tag filters and captain coverage requirements
 - `builderAbilities` are canonical ability entries used by Auto Team Builder and Captain Coverage filters
@@ -54,6 +57,36 @@ Character rows are normalized from upstream unit/detail data plus manual overlay
   with the same function - 6 when this was written (2026-09-25). The Auto Team Builder never picked
   one by itself (its candidate pool keeps only units with Captain, special or sailor text), and the
   Rumble pool leaves them out too, since their Rumble data carries no ability and no special.
+
+### Dual and VS forms — 869f63gv6
+
+**The rule.** A dual or VS unit is in one state at a time: as itself, or - after a swap - as one
+of its forms. Its classes are that state's classes: its own before a swap, the form's after. #1983
+Smoker & Tashigi is Striker/Slasher as itself, INT Striker/Driven as Smoker and PSY
+Slasher/Cerebral as Tashigi - and never Driven and Cerebral at once. The import used to keep only
+the forms' types, merged into the unit's comma-joined `type`, and drop everything else, so a
+Driven filter or a Driven-boosting Captain never saw the Smoker form.
+
+So the app counts a form's classes the way it has always counted the forms' types, one state at a
+time - the combined unit's own state already holds both its forms' types, which is why `type` is
+comma-joined, and types are unchanged:
+
+- **Class filters** (`matchesCharacterFacet` and `buildCharacterFacetSqlClause`, every screen with
+  the shared class filter, and the Auto Team Builder's selected classes): *any* matches when the
+  unit's own classes or any one form's hold a selected class; *all* matches only when ONE state
+  holds every selected class. That keeps "a character holds at most two classes" true, which the
+  filter's `all` capacity rule relies on.
+- **Captain Coverage's class-scoped matching**: a Captain's class-scoped boost covers the unit
+  through a form, and a tier's class conditions are met in any one state - so #1983 sits in both a
+  Driven tier (as Smoker) and the "all other characters" tier (as itself).
+- **Marked, never silent.** Every match that exists only through a form carries a marker on the
+  card - Characters, Character Boxes, Manual Team Builder, the character picker, Captain Coverage
+  and the Auto Team Builder's result slots: EN *"Driven after swap (as Smoker)"*, EL *«Driven μετά
+  από swap (ως Smoker)»*. The **Character** screen lists each form with its type and classes.
+- **What does not count a form's classes**, deliberately: a crew-level condition (a crew that needs
+  N Driven characters, or has none of a class), a Super Special criterion, the Auto Team Builder's
+  avoid and prefer rules, and Pirate Rumble. Each reads a crew, a battle or another game mode rather
+  than one unit's state after a swap, and none was part of this rule.
 
 For normal upstream records, `detail.characterId` must match the row `id`.
 Reserved manual overlay records (`id >= 900000`) may instead store an existing
@@ -136,6 +169,21 @@ screen where they can be corrected. EN + EL.
 `docs/import-pipeline.json` lists the importer's stages and, for every hand-maintained file under
 `scripts/data/`, which script reads it. Generated, so it moves with the importer rather than
 lagging it.
+
+**Every upstream file is registered - 869f63gtp.** `upstreamFiles` in the same document lists every
+file in upstream's `common/data` (32 when it was written) with its size, its last upstream change
+and its status: `read`, extracted from the importer's own source and never retyped; `pending`,
+adopted by open work that names itself; `deliberately-unread`, with the reason - seven are
+executable functions over the reference calculator's battle state and four are tooling or a
+duplicate of a file the importer reads; or `never-evaluated`, which says that nobody has judged the
+file rather than let silence imply a decision. The classifications live in
+`scripts/lib/upstream-file-register.mjs`. `npm run dataset:pipeline -- --check` fails when the
+register and the importer disagree: a file the importer reads that the listing lacks, a listed
+file nobody classified, a classified file the importer reads after all, or a classification for a
+file upstream no longer has. The listing is refreshed, with network, by
+`npm run dataset:pipeline -- --refresh-upstream`. The nightly release check lists upstream again and
+reports - never blocking a release - a file the register does not classify, which is how
+`flags.js`, `drops.js` and `banners.js` each appeared upstream and sat unread with nobody told.
 
 **The format question is closed and recorded.** The seed is a SQL text dump because it is diffable
 and about twenty scripts read it as text; what *ships* is a gzipped SQLite database built from it at
@@ -597,7 +645,7 @@ _Generated by `npm run dataset:provenance` from the importer itself. Do not edit
 
 | Shipped column | Origin | Source or transform |
 | --- | --- | --- |
-| `id` | derived | The upstream row index plus one, used as the stable character id. |
+| `id` | derived | The key of the upstream units.js entry, which is the unit id: units.js is an object keyed by id, with gaps below the highest id, so the id is never a position. A key with a suffix (1983-1, 1983-2) is a form of the unit before the hyphen: it never becomes a character of its own and is stored in character_forms. Only the legacy array format used the row index plus one. |
 | `name` | upstream | `units.js .name` |
 | `is_incomplete` | derived | True when a MANUAL overlay character was added without full stats. Derived, never carried upstream, and set on no other path: the upstream importer always writes 0, so 0 of 4,622 shipped rows carry it (measured 2026-09-20, v0.5.3). An always-false column, kept because the overlay can still set it. |
 | `type` | upstream | `units.js [1]` |
@@ -627,5 +675,31 @@ _Generated by `npm run dataset:provenance` from the importer itself. Do not edit
 | `search_text` | derived | Built from name, type, classes and the character tags by createCharacterSearchText (a manual character adds its id and its own search aliases). Upstream's community names are the separate search_aliases column. |
 | `families_json` | upstream | `families.js` |
 | `search_aliases` | upstream | `aliases.js, Latin script only` |
+
+A dual or VS unit's forms are rows of `character_forms`, read from units.js <id>-<n> keys, one per form of a dual or VS unit. What each form row keeps:
+
+| Form column | Upstream source |
+| --- | --- |
+| `name` | `units.js <id>-<n> .name` |
+| `type` | `units.js <id>-<n> .type` |
+| `classes_json` | `units.js <id>-<n> .class` |
+| `combo` | `units.js <id>-<n> .combo` |
+| `min_hp` | `units.js <id>-<n> .minHP` |
+| `min_atk` | `units.js <id>-<n> .minATK` |
+| `min_rcv` | `units.js <id>-<n> .minRCV` |
+| `max_hp` | `units.js <id>-<n> .maxHP` |
+| `max_atk` | `units.js <id>-<n> .maxATK` |
+| `max_rcv` | `units.js <id>-<n> .maxRCV` |
+
+And what it drops:
+
+| Upstream field | Why it is dropped |
+| --- | --- |
+| `units.js <id>-<n> .stars` | Empty in every form row: a form shares its unit's rarity, cost, sockets, level cap and growth. The import fails when a form row carries a value here, rather than drop it without a trace. |
+| `units.js <id>-<n> .cost` | Empty in every form row: a form shares its unit's rarity, cost, sockets, level cap and growth. The import fails when a form row carries a value here, rather than drop it without a trace. |
+| `units.js <id>-<n> .sockets` | Empty in every form row: a form shares its unit's rarity, cost, sockets, level cap and growth. The import fails when a form row carries a value here, rather than drop it without a trace. |
+| `units.js <id>-<n> .maxLevel` | Empty in every form row: a form shares its unit's rarity, cost, sockets, level cap and growth. The import fails when a form row carries a value here, rather than drop it without a trace. |
+| `units.js <id>-<n> .maxEXP` | Empty in every form row: a form shares its unit's rarity, cost, sockets, level cap and growth. The import fails when a form row carries a value here, rather than drop it without a trace. |
+| `units.js <id>-<n> .growth` | Empty in every form row: a form shares its unit's rarity, cost, sockets, level cap and growth. The import fails when a form row carries a value here, rather than drop it without a trace. |
 
 <!-- generated:dataset-provenance end -->

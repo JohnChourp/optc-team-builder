@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { type CharacterFacetKind, type CharacterFacetMatchMode } from '../models/optc.models';
 import {
   CHARACTER_CLASS_LIKE_CLAUSE,
+  CHARACTER_FORM_CLASS_LIKE_CLAUSE,
   MAX_HELD_CHARACTER_FACET_VALUES,
   CHARACTER_TYPE_LIKE_CLAUSE,
   buildCharacterFacetSqlClause,
@@ -214,9 +215,10 @@ describe('character facet filter utils', () => {
 
   it('escapes SQL LIKE wildcards and backslashes in class literals', () => {
     expect(escapeSqlLikePattern('A%B_C\\D')).toBe('A\\%B\\_C\\\\D');
+    // 869f63gv6. Bound twice: once for the unit's own classes, once for its forms'.
     expect(
       buildCharacterFacetSqlClause('class', { values: ['A%B'], matchMode: 'any' })?.params,
-    ).toEqual(['%"A\\%B"%']);
+    ).toEqual(['%"A\\%B"%', '%"A\\%B"%']);
     expect(evaluateSqlLikePattern('["A%B"]', '%"A\\%B"%')).toBe(true);
     expect(evaluateSqlLikePattern('["AZZB"]', '%"A\\%B"%')).toBe(false);
   });
@@ -228,7 +230,9 @@ describe('character facet filter utils', () => {
     expect(
       buildCharacterFacetSqlClause('class', { values: ['Fighter', 'Slasher'], matchMode: 'all' })
         ?.clause,
-    ).toBe(`(${CHARACTER_CLASS_LIKE_CLAUSE} AND ${CHARACTER_CLASS_LIKE_CLAUSE})`);
+    ).toBe(
+      `((${CHARACTER_CLASS_LIKE_CLAUSE} AND ${CHARACTER_CLASS_LIKE_CLAUSE}) OR EXISTS (SELECT 1 FROM character_forms f WHERE f.character_id = c.id AND (${CHARACTER_FORM_CLASS_LIKE_CLAUSE} AND ${CHARACTER_FORM_CLASS_LIKE_CLAUSE})))`,
+    );
   });
 
   it('keeps the emitted type clause identical to the exported constant', () => {
@@ -241,7 +245,9 @@ describe('character facet filter utils', () => {
     ).toBe(`(${CHARACTER_TYPE_LIKE_CLAUSE})`);
     expect(
       buildCharacterFacetSqlClause('class', { values: ['Fighter'], matchMode: 'any' })?.clause,
-    ).toBe(`(${CHARACTER_CLASS_LIKE_CLAUSE})`);
+    ).toBe(
+      `((${CHARACTER_CLASS_LIKE_CLAUSE}) OR EXISTS (SELECT 1 FROM character_forms f WHERE f.character_id = c.id AND (${CHARACTER_FORM_CLASS_LIKE_CLAUSE})))`,
+    );
   });
 
   it('evaluates SQL LIKE wildcards the way SQLite does', () => {

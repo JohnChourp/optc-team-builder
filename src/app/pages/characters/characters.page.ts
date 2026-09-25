@@ -86,6 +86,7 @@ import {
   type CharacterFilterOption,
 } from '../../shared/character-filter-row/character-filter-row.component';
 import { CharacterFacetFilterComponent } from '../../shared/character-facet-filter/character-facet-filter.component';
+import { FormClassMarkerComponent } from '../../shared/character-facet-filter/form-class-marker.component';
 import {
   CharacterTagFilterComponent,
   type CharacterTagFilterChange,
@@ -143,6 +144,7 @@ interface CharacterCatalogCardView {
     IonToolbar,
     AbilityFilterRailComponent,
     CharacterFacetFilterComponent,
+    FormClassMarkerComponent,
     CharacterFilterRowComponent,
     CharacterTagFilterComponent,
     CharactersCatalogPanelComponent,

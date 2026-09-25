@@ -38,7 +38,8 @@
     "superSpecialEffect": "Super special effect",
     "target": "Στόχευση",
     "type": "Type",
-    "uses": "Χρήσεις"
+    "uses": "Χρήσεις",
+    "form": "Μετά από swap"
   },
   "loading": "Φόρτωση offline εγγραφής χαρακτήρα...",
   "status": {

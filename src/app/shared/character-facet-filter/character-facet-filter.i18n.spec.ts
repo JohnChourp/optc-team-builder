@@ -28,6 +28,9 @@ const LEAF_KEYS = [
   'support.all',
   'a11y.applied',
   'a11y.cleared',
+  // 869f63gv6. The "after swap" marker a class match through a dual or VS unit's form carries.
+  'formMarker.afterSwap',
+  'formMarker.afterSwapAs',
 ] as const;
 
 /**

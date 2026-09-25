@@ -38,7 +38,8 @@
     "superSpecialEffect": "Super special effect",
     "target": "Targeting",
     "type": "Type",
-    "uses": "Uses"
+    "uses": "Uses",
+    "form": "After swap"
   },
   "loading": "Loading offline character record...",
   "status": {

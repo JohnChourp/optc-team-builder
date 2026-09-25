@@ -165,7 +165,7 @@
     "test:i18n-greek-coverage": "vitest run scripts/check-i18n-greek-coverage.spec.ts && npm run i18n:greek-coverage",
     "test:i18n-ownership": "vitest run scripts/generate-i18n-ownership.spec.ts && npm run i18n:ownership",
     "test:i18n-regression": "vitest run scripts/i18n-regression-check.spec.ts && npm run i18n:regression && npm run i18n:validate",
-    "test:import-pipeline": "vitest run scripts/generate-import-pipeline.spec.ts && npm run dataset:pipeline -- --check",
+    "test:import-pipeline": "vitest run scripts/generate-import-pipeline.spec.ts scripts/upstream-file-register.spec.ts scripts/upstream-file-register-nightly.spec.ts && npm run dataset:pipeline -- --check",
     "test:ionic-host-property": "vitest run scripts/check-ionic-host-property.spec.ts && npm run ionic:host-property",
     "test:locale-formatting": "vitest run scripts/check-locale-formatting.spec.ts scripts/check-locale-formatting-intl.spec.ts scripts/check-locale-formatting-precision.spec.ts scripts/check-locale-formatting-timestamp.spec.ts src/app/core/i18n/app-locale-format.spec.ts && npm run i18n:locale-formatting",
     "test:maintainer-doctor": "vitest run scripts/maintainer-environment-doctor.spec.ts",

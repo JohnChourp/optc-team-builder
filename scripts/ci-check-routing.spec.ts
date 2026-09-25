@@ -274,7 +274,8 @@ describe('ci-check-routing', () => {
     ]);
 
     expect(plan.fullPlan).toBe(false);
-    expect(plan.scriptSuites).toEqual(['release-check', 'perf-budget']);
+    // 869f63gtp. The detector's upstream-register finding is specified in the import-pipeline lane.
+    expect(plan.scriptSuites).toEqual(['release-check', 'perf-budget', 'import-pipeline']);
   });
 
   it('routes release runbook drift tooling to its focused suite and docs gates', () => {

@@ -107,6 +107,7 @@ import {
 } from '../../shared/ability-tag-set-picker/ability-tag-set-picker.component';
 import { CaptainTeamConditionStatusComponent } from '../../shared/captain-team-condition-status/captain-team-condition-status.component';
 import { CharacterFacetFilterComponent } from '../../shared/character-facet-filter/character-facet-filter.component';
+import { FormClassMarkerComponent } from '../../shared/character-facet-filter/form-class-marker.component';
 import {
   CharacterTagSetPickerComponent,
   type CharacterTagMatchIndex,
@@ -232,6 +233,7 @@ function createEmptyManualTeamSlots(): Array<CharacterDetailRecord | null> {
     AbilityTagSetPickerComponent,
     CaptainTeamConditionStatusComponent,
     CharacterFacetFilterComponent,
+    FormClassMarkerComponent,
     TeamCoverageSummaryComponent,
     CharacterAbilityGroupsComponent,
     CharacterTagSetPickerComponent,
