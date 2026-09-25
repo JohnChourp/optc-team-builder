@@ -10,6 +10,11 @@
  * rule, when a recorded field has stopped moving, or when an artifact's producer no longer
  * contains the step that makes it.
  *
+ * 869f63gu4. It also derives which `app-config.js` each build gets - the key x build target
+ * table in `appConfigByBuildTarget` - and writes its readable half into the generated section
+ * of `docs/release-secrets-register.md`. `--check` fails when a workflow's build environment,
+ * the writer or the npm script chain changes without the table following.
+ *
  * Run: npm run release:contract
  */
 import { execFileSync } from 'node:child_process';
@@ -20,6 +25,11 @@ import process from 'node:process';
 import { pathToFileURL } from 'node:url';
 
 import {
+  formatAppConfigTargetsMarkdown,
+  readAppConfigTargets,
+  replaceAppConfigSection,
+} from './lib/app-config-targets.mjs';
+import {
   AUTOMATIC_OUTPUT_SIGNATURES,
   MANUAL_OUTPUTS,
   buildVersionFields,
@@ -27,6 +37,7 @@ import {
 } from './lib/release-contract.mjs';
 
 const OUTPUT_PATH = 'docs/release-contract.json';
+const SECRETS_REGISTER_PATH = 'docs/release-secrets-register.md';
 export const SCHEMA_VERSION = 1;
 
 const TRACKED_FILES = [
@@ -90,7 +101,7 @@ export function measureVersionFields(root = process.cwd()) {
   }
 }
 
-export function buildReleaseContract(root = process.cwd()) {
+export function buildReleaseContract(root = process.cwd(), appConfig = readAppConfigTargets(root)) {
   const versionFields = buildVersionFields(measureVersionFields(root));
 
   return {
@@ -100,6 +111,7 @@ export function buildReleaseContract(root = process.cwd()) {
     versionFields,
     automaticOutputs: [...AUTOMATIC_OUTPUT_SIGNATURES].sort((a, b) => a.id.localeCompare(b.id)),
     manualOutputs: [...MANUAL_OUTPUTS].sort((a, b) => a.id.localeCompare(b.id)),
+    appConfigByBuildTarget: appConfig.record,
   };
 }
 
@@ -112,9 +124,11 @@ function readProducers(root) {
 function main(argv) {
   const check = argv.includes('--check');
   const root = process.cwd();
-  const contract = buildReleaseContract(root);
-  const problems = checkReleaseContract(contract, readProducers(root));
+  const appConfig = readAppConfigTargets(root);
+  const contract = buildReleaseContract(root, appConfig);
+  const problems = [...checkReleaseContract(contract, readProducers(root)), ...appConfig.problems];
   const serialized = `${JSON.stringify(contract, null, 2)}\n`;
+  const section = formatAppConfigTargetsMarkdown(appConfig.record);
 
   if (problems.length > 0) {
     console.error(`[release-contract] ${problems.length} problem(s):`);
@@ -124,6 +138,8 @@ function main(argv) {
   }
 
   const outputPath = path.join(root, OUTPUT_PATH);
+  const registerPath = path.join(root, SECRETS_REGISTER_PATH);
+  const register = readFileSync(registerPath, 'utf8');
 
   if (check) {
     let current = '';
@@ -140,15 +156,27 @@ function main(argv) {
       return;
     }
 
+    if (!register.includes(section)) {
+      console.error(
+        `[release-contract] The generated section of ${SECRETS_REGISTER_PATH} is stale. Run \`npm run release:contract\`.`,
+      );
+      process.exitCode = 1;
+      return;
+    }
+
     console.log(
       `[release-contract] OK - ${contract.versionFields.length} version field(s) measured, ` +
-        `${contract.automaticOutputs.length} automatic and ${contract.manualOutputs.length} manual output(s).`,
+        `${contract.automaticOutputs.length} automatic and ${contract.manualOutputs.length} manual output(s), ` +
+        `${appConfig.record.keys.length} app-config key(s) across ${appConfig.record.targets.length} build(s).`,
     );
     return;
   }
 
   writeFileSync(outputPath, serialized, 'utf8');
-  console.log(`[release-contract] wrote ${OUTPUT_PATH} (${contract.versionFields.length} version fields).`);
+  writeFileSync(registerPath, replaceAppConfigSection(register, section), 'utf8');
+  console.log(
+    `[release-contract] wrote ${OUTPUT_PATH} (${contract.versionFields.length} version fields) and the generated section of ${SECRETS_REGISTER_PATH}.`,
+  );
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {

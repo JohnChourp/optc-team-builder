@@ -86,13 +86,30 @@ remove ios/.
 
 ## What is *not* part of the footprint
 
-`APP_GOOGLE_IOS_CLIENT_ID` looks like iOS-native scaffolding and is not. It is
-read by `scripts/write-app-config.mjs` and supplied by **four** workflows —
-including `deploy-pages.yml`, which builds the website — gated by
-`APP_REQUIRE_GOOGLE_IOS_CLIENT_ID`.
+`APP_GOOGLE_IOS_CLIENT_ID` looks like iOS-native scaffolding and is not: it is a
+key of the app's runtime config. `scripts/write-app-config.mjs` reads it, and four
+build steps in **three** workflows name it — the two that build the website
+(`deploy-pages.yml`, and the Pages job of `release-android.yml`) and two
+verification builds (`guide-discoverability.yml`, and the cache-freshness job of
+`deploy-pages.yml`). The APK's build step does not.
 
-Anyone removing "the iOS things" by name would have taken Google sign-in down on
-the web app. It stays regardless of what happens to ios/.
+**It also keeps nothing working.** The secret does not exist (2026-09-25,
+`gh secret list`, names only), so every one of those builds writes the key empty,
+and the live site's `googleIosClientId` was empty on 2026-09-23 while Google
+sign-in worked there: the web and Android decide sign-in from the web client id,
+and only an `ios` platform consults the iOS one. Nothing gates it either — the
+writer's `--require-google-ios-client-id` flag and `APP_REQUIRE_GOOGLE_IOS_CLIENT_ID`
+are set by no npm script and no workflow.
+
+It stays anyway, because removing it would mean editing the sign-in configuration
+path for no gain, and `npx cap add ios` would need it back. Which build carries
+which key is generated in the
+[release secrets register](release-secrets-register.md#which-app-configjs-each-build-gets).
+
+**Corrected 2026-09-25 (869f63gu4).** This section said the id was supplied by
+**four workflows**, was **gated by** `APP_REQUIRE_GOOGLE_IOS_CLIENT_ID`, and that
+removing it *"would have taken Google sign-in down on the web app"*. Three
+workflows name it, no workflow sets that gate, and web sign-in never depended on it.
 
 ## What this costs today
 
