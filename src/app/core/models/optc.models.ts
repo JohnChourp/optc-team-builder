@@ -232,6 +232,13 @@ export interface CharacterRecord {
   regionArtwork: CharacterRegionArtwork;
   regionRelease: CharacterRegionRelease;
   assets: CharacterAssets;
+  /**
+   * 869f63grj. The character(s) on this card, as upstream's `common/data/families.js` names them -
+   * `["Monkey D. Luffy"]`, or one name per character on a card that carries several. It decides
+   * which cards are the same in-game character (`same-character-keys.ts`). Empty or absent for a
+   * unit upstream names no family for, and for a manually added one; the name decides those.
+   */
+  families?: string[];
 }
 
 export interface CharacterDetail {

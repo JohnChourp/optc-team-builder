@@ -1415,6 +1415,29 @@ export function resolveRegionRelease(flagEntry) {
   return { availableOnGlobal: Boolean(flagEntry.global) };
 }
 
+/**
+ * 869f63grj. The character(s) on one card, from upstream `common/data/families.js`: one name per
+ * character, spelled as upstream spells it (`"Monkey D. Luffy"`), in upstream's order, each once.
+ *
+ * `[]` means upstream has no entry for the unit - 82 units measured on 2026-09-24, nearly all of
+ * them fodder - and the app then decides "same character" from the card name, as it did for every
+ * unit before this. It is never a claim that the card has no character.
+ */
+export function resolveCharacterFamilies(familyEntry) {
+  if (!Array.isArray(familyEntry)) {
+    return [];
+  }
+
+  return [
+    ...new Set(
+      familyEntry
+        .filter((family) => typeof family === 'string')
+        .map((family) => family.trim())
+        .filter((family) => family.length > 0),
+    ),
+  ];
+}
+
 export function normalizeCharacters(
   units,
   details,
@@ -1422,6 +1445,7 @@ export function normalizeCharacters(
   assetsById,
   tagsById = {},
   flagsById = {},
+  familiesById = {},
 ) {
   const rumbleById = new Map(normalizeRumbleUnits(rumbleUnits).map((entry) => [entry.id, entry]));
   const normalizedUnitEntries = buildNormalizedUnitEntries(units);
@@ -1487,6 +1511,7 @@ export function normalizeCharacters(
           thumbnailJapan: Boolean(assets.thumbnailJapan),
         },
         regionRelease: resolveRegionRelease(flagsById[characterId]),
+        families: resolveCharacterFamilies(familiesById[characterId]),
         assets,
         detail: normalizedDetail,
       };
@@ -1608,6 +1633,7 @@ async function main() {
     evolutionsWindow,
     dropsWindow,
     flagsWindow,
+    familiesWindow,
     rumble,
     sourceVersion,
     imageOverrides,
@@ -1635,6 +1661,12 @@ async function main() {
      * Plain data like the three above, not an executable function like `captains.js`.
      */
     evaluateLegacyFile('common/data/flags.js', selectedSource),
+    /*
+     * 869f63grj. Which character(s) each card is, as upstream names them. It decides which cards
+     * are the same character, a rule the app used to guess from the card name - and the guess
+     * disagreed with this file on 18,449 unit pairs. Plain data like the files above.
+     */
+    evaluateLegacyFile('common/data/families.js', selectedSource),
     fetchJson(buildSourceFileUrl(selectedSource, 'common/data/rumble.json'), selectedSource),
     fetchVersion(selectedSource),
     loadCharacterImageOverrides(),
@@ -1694,6 +1726,7 @@ async function main() {
           assetsById,
           tagsWindow.tags ?? {},
           flagsWindow.flags ?? {},
+          familiesWindow.families ?? {},
         ),
         manualExactLocalPaths,
       ),
