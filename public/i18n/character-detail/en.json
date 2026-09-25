@@ -108,7 +108,9 @@
     "evolvesFrom": "Evolves from",
     "sameCaptainAbility": "Same Captain Ability · cost {{cost}}",
     "evolvesInto": "Evolves into, and what it costs",
-    "dropsFrom": "Drops from"
+    "dropsFrom": "Drops from",
+    "skullOf": "Skull of {{name}}",
+    "skullOfCount": "Skull of {{name}} ×{{count}}"
   },
   "region": {
     "japanOnly": "Japan only"

@@ -24,6 +24,15 @@ import { normalizeHtmlToText } from '../../core/services/html-text.utils';
  * stamina, and a wrong "there is no way to get this" costs them the unit.
  */
 
+/**
+ * 869f63gm1. A line shown as a translated phrase rather than as its plain text - a unit's skull.
+ * Translated where it is shown, so the phrase follows the reader's language when they switch it.
+ */
+export interface ProgressionDisplayText {
+  key: string;
+  params?: Record<string, string | number>;
+}
+
 export interface ProgressionDisplayRow {
   labelKey: string;
   value: string;
@@ -38,6 +47,11 @@ export interface ProgressionDisplayNote {
 export interface ProgressionDisplayList {
   labelKey: string;
   items: string[];
+  /**
+   * 869f63gm1. Parallel to `items`: an entry is shown in place of its item, which stays as the
+   * plain fallback. Present only when at least one item has one.
+   */
+  texts?: Array<ProgressionDisplayText | null>;
   /** Parallel to `items`, present only when at least one item has a note. */
   notes?: Array<ProgressionDisplayNote | null>;
 }
@@ -50,6 +64,20 @@ export interface ProgressionDisplayCard {
 
 /** Resolves a character id to a display name; unknown ids come back as null, never as "#123". */
 export type CharacterNameResolver = (characterId: number) => string | null;
+
+/** A unit's own skull, as upstream names the evolver: `"4000-skull"`. */
+const UNIT_SKULL_TOKEN = /^(\d+)-skull$/u;
+
+/**
+ * 869f63gm1. The unit whose skull a token is - `"4000-skull"` is 4000 - or null for any other token
+ * (`"ink"`, the type skulls `"skullQCK"`). Upstream uses 189 such tokens, 863 times, always for the
+ * unit the evolution produces.
+ */
+export function resolveSkullCharacterId(token: string | null): number | null {
+  const match = UNIT_SKULL_TOKEN.exec(token ?? '');
+
+  return match ? Number(match[1]) : null;
+}
 
 /** Every character id this progression needs a name for, so the page can fetch them in one query. */
 export function collectProgressionCharacterIds(progression: CharacterProgression): number[] {
@@ -65,6 +93,13 @@ export function collectProgressionCharacterIds(progression: CharacterProgression
     for (const material of branch.materials) {
       if (material.characterId !== null) {
         ids.add(material.characterId);
+      }
+
+      // 869f63gm1. "Skull of Kaido" needs Kaido's name.
+      const skullOf = resolveSkullCharacterId(material.token);
+
+      if (skullOf !== null) {
+        ids.add(skullOf);
       }
     }
   }
@@ -149,15 +184,41 @@ export function buildInvestmentCard(
  * upstream list rather than being sorted into something unrecognisable.
  */
 export function summarizeMaterials(materials: readonly string[]): string[] {
+  return countMaterials(materials).map(([material, count]) =>
+    count > 1 ? `${material} ×${count}` : material,
+  );
+}
+
+function countMaterials(materials: readonly string[]): Array<[string, number]> {
   const counts = new Map<string, number>();
 
   for (const material of materials) {
     counts.set(material, (counts.get(material) ?? 0) + 1);
   }
 
-  return [...counts.entries()].map(([material, count]) =>
-    count > 1 ? `${material} ×${count}` : material,
-  );
+  return [...counts.entries()];
+}
+
+/**
+ * 869f63gm1. "Skull of Kaido" for Kaido's own skull, with its count when an evolution needs
+ * several - upstream asks for up to five. Null for any other material, which keeps its plain text.
+ */
+function skullText(
+  material: string,
+  count: number,
+  resolveName: CharacterNameResolver,
+): ProgressionDisplayText | null {
+  const characterId = resolveSkullCharacterId(material);
+
+  if (characterId === null) {
+    return null;
+  }
+
+  const name = nameOf(characterId, resolveName);
+
+  return count > 1
+    ? { key: 'progression.skullOfCount', params: { name, count } }
+    : { key: 'progression.skullOf', params: { name } };
 }
 
 /** What `resolveCheaperSameCaptainAbilityForms` reads: the cost and the Captain Ability. */
@@ -248,6 +309,12 @@ export function buildEvolutionCard(
         ? nameOf(material.characterId, resolveName)
         : (material.token ?? ''),
     );
+    const counted = countMaterials(materials.filter((entry) => entry.length > 0));
+    // 869f63gm1. A unit's own skull reads "Skull of <name>", never its raw token.
+    const texts = [
+      null,
+      ...counted.map(([material, count]) => skullText(material, count, resolveName)),
+    ];
 
     lists.push({
       labelKey: 'progression.evolvesInto',
@@ -257,8 +324,9 @@ export function buildEvolutionCard(
        */
       items: [
         nameOf(branch.toId, resolveName),
-        ...summarizeMaterials(materials.filter((entry) => entry.length > 0)),
+        ...counted.map(([material, count]) => (count > 1 ? `${material} ×${count}` : material)),
       ],
+      ...(texts.some((text) => text !== null) ? { texts } : {}),
     });
   }
 

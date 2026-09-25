@@ -13,12 +13,22 @@
  * rather than three inline loops:
  *
  *  - **an evolver is not always a character.** `evolvers` mixes ids with string tokens - `"ink"`,
- *    `'skullINT'`, `'2138-skull'` - which are Rainbow Ink and the type skulls. Dropping them loses
- *    half of what an evolution costs; treating them as ids invents characters.
+ *    `'skullINT'`, `'2138-skull'` - which are Rainbow Ink, the type skulls and a unit's own skull.
+ *    Dropping them loses half of what an evolution costs; treating them as ids invents characters.
  *  - **a drop stage's slot keys are free text.** 164 distinct keys across the file, mixing `'1'`
  *    with `'1st Stage'`, `'30 Stamina'`, `'All Bosses'` and boss names, alongside scalar metadata
  *    (`name`, `dropID`, `thumb`, `global`, `nakama`, `completion`, `gamewith`). A slot is
  *    identified by its VALUE being an array of numbers, never by its key matching a pattern.
+ *
+ * 869f63gm1. Both rules above were written down and then broken by one line: `toCharacterId` read
+ * its value with `Number.parseInt`, which takes the digits a string STARTS with and ignores the
+ * rest. So `'1446-skull'` - the skull an evolution of #16 needs, dropping from a 3D2Y stage - was
+ * read as unit #1446, and a stage's `challengeData` (`[['1,400,000 Damage', ...]]`, rewards for a
+ * score) as unit #1. Measured on 2026-09-25 against the shipped seed: 269 of 5,008 drop entries
+ * were not drops of the unit at all, and on 198 characters the Character screen's drop card was
+ * built from nothing else; and all 863 unit-skull evolvers - 189 tokens, every one the target's own
+ * skull - were stored as "character <n>", so #2099's evolution read "5× #4000". An id is now a whole
+ * number and nothing else, and `challengeData` is metadata by name as well.
  */
 
 /** Stage metadata keys that are never a drop slot, whatever their value looks like. */
@@ -31,10 +41,28 @@ const STAGE_METADATA_KEYS = new Set([
   'completion',
   'gamewith',
   'notes',
+  /*
+   * 869f63gm1. A score challenge's thresholds and rewards: `[['600,000 Damage', '1x Green Elder'],
+   * ...]`. Refused by the id rule below as it is written today, and named here as well because a
+   * challenge written as bare numbers (`[5, 15, 25]`) would pass that rule and become three units.
+   */
+  'challengeData',
 ]);
 
+/** A unit id: a positive whole number, or the same written as digits (an object key). */
+const CHARACTER_ID_PATTERN = /^\d+$/u;
+
 function toCharacterId(value) {
-  const id = typeof value === 'number' ? value : Number.parseInt(String(value ?? ''), 10);
+  /*
+   * 869f63gm1. Never `Number.parseInt` on anything else: it reads `'1446-skull'` as 1446 and
+   * `['1,400,000 Damage', ...]` as 1, which is how a skull and a score threshold became units.
+   */
+  const id =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'string' && CHARACTER_ID_PATTERN.test(value)
+        ? Number(value)
+        : Number.NaN;
 
   return Number.isInteger(id) && id > 0 ? id : null;
 }

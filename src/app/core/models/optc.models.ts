@@ -301,7 +301,10 @@ export interface CharacterDetailRecord extends CharacterListItem {
 export interface CharacterEvolutionMaterial {
   /** The material's character id, when it is a character. */
   characterId: number | null;
-  /** The upstream token when it is not - `"ink"`, `"skullQCK"`. Never both, never neither. */
+  /**
+   * The upstream token when it is not - `"ink"`, `"skullQCK"`, or a unit's own skull, `"4000-skull"`
+   * (869f63gm1: that one was stored as character 4000 until then). Never both, never neither.
+   */
   token: string | null;
 }
 

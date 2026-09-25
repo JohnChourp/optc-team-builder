@@ -418,7 +418,15 @@
                               <ul>
                                 @for (item of list.items; track $index) {
                                   <li>
-                                    {{ item }}
+                                    <!--
+                                      869f63gm1. A unit's skull is a phrase in the reader's
+                                      language.
+                                    -->
+                                    @if (list.texts?.[$index]; as text) {
+                                      {{ t(text.key, text.params) }}
+                                    } @else {
+                                      {{ item }}
+                                    }
                                     <!-- 869f63gn4. "Same Captain Ability · cost 40" on an earlier form. -->
                                     @if (list.notes?.[$index]; as note) {
                                       <small class="detail-list-block__note">

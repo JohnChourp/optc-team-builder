@@ -108,7 +108,9 @@
     "evolvesFrom": "Προέρχεται από",
     "sameCaptainAbility": "Ίδιο Captain Ability · cost {{cost}}",
     "evolvesInto": "Εξελίσσεται σε, και τι κοστίζει",
-    "dropsFrom": "Πέφτει από"
+    "dropsFrom": "Πέφτει από",
+    "skullOf": "Κρανίο: {{name}}",
+    "skullOfCount": "Κρανίο: {{name}} ×{{count}}"
   },
   "region": {
     "japanOnly": "Μόνο Japan"
