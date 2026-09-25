@@ -25,35 +25,55 @@ const team: SavedTeam = {
 };
 const EXPORTED_AT = '2026-09-25T08:00:00.000Z';
 
+/** The WebView's own origin in the APK, measured on the emulator. */
+const APK_WEBVIEW_ORIGIN = 'https://localhost';
+/** A preview or local server: anything but the published site. */
+const PREVIEW_ORIGIN = 'http://localhost:4200';
+
+/*
+ * Every case says where it runs - the platform AND the page's origin - instead of inheriting
+ * them. `ng test` reuses a worker process across spec files, and measured 2026-09-25, a file that
+ * ran after `google-account.service.spec.ts` in the same process inherited its
+ * `vi.stubGlobal('location', ...)` with origin https://optcteambuilder.com, so the web case's
+ * control ("the origin is not the published site") failed on state it never set.
+ */
+function runOn(platform: 'native' | 'web', origin: string): void {
+  vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(platform === 'native');
+  vi.stubGlobal('location', { origin });
+}
+
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe('the host a copied share link names', () => {
   it('is the published site in the Android app, never the phone itself', () => {
-    vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(true);
+    runOn('native', APK_WEBVIEW_ORIGIN);
 
     const link = new URL(buildSavedTeamShareUrl(team, undefined, EXPORTED_AT));
 
+    // The page's own origin is https://localhost there, exactly as in the APK, and is ignored.
+    expect(globalThis.location.origin).toBe(APK_WEBVIEW_ORIGIN);
     expect(link.origin).toBe('https://optcteambuilder.com');
     expect(link.hostname).not.toBe('localhost');
     expect(link.pathname).toBe('/tabs/manual-team-builder');
   });
 
   it('is the site the reader is on, on the web, so previews and local servers keep working', () => {
-    vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(false);
+    runOn('web', PREVIEW_ORIGIN);
 
     const link = new URL(buildSavedTeamShareUrl(team, undefined, EXPORTED_AT));
 
-    // The control: this environment's own origin is NOT the published site, so this proves
-    // the web path reads it rather than happening to agree with the constant.
+    // The control: the page's origin is NOT the published site, so this proves the web path
+    // reads it rather than happening to agree with the constant.
     expect(globalThis.location.origin).not.toBe(APP_SITE_BASE_URL);
-    expect(link.origin).toBe(globalThis.location.origin);
+    expect(link.origin).toBe(PREVIEW_ORIGIN);
   });
 
   it('still carries the whole team, whichever host it names', () => {
     for (const native of [true, false]) {
-      vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(native);
+      runOn(native ? 'native' : 'web', native ? APK_WEBVIEW_ORIGIN : PREVIEW_ORIGIN);
 
       const shared = parseSavedTeamShareInput(buildSavedTeamShareUrl(team, undefined, EXPORTED_AT));
 
@@ -63,7 +83,7 @@ describe('the host a copied share link names', () => {
   });
 
   it('keeps an explicit origin, which the browser tests pass for their own server', () => {
-    vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(true);
+    runOn('native', APK_WEBVIEW_ORIGIN);
 
     expect(new URL(buildSavedTeamShareUrl(team, 'http://127.0.0.1:4200', EXPORTED_AT)).origin).toBe(
       'http://127.0.0.1:4200',

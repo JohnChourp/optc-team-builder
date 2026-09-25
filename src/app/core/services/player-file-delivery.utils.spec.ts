@@ -52,8 +52,16 @@ function createBrowser() {
   return { anchors, blobs, click, document: dom.window.document, urlRef };
 }
 
+/*
+ * Every case says which platform it runs on rather than inheriting it: `ng test` reuses a worker
+ * process across spec files, so the ambient platform is whatever the last file left.
+ */
 function onPhone(): void {
   vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(true);
+}
+
+function onWebsite(): void {
+  vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(false);
 }
 
 afterEach(() => {
@@ -66,6 +74,7 @@ describe('givePlayerFile on the website', () => {
   it('downloads through a hidden anchor, exactly as every export did before', async () => {
     const browser = createBrowser();
 
+    onWebsite();
     const outcome = givePlayerFile(FILE, browser.document, browser.urlRef);
 
     // Synchronous: the click has happened before the call returns, inside the tap.
@@ -81,6 +90,7 @@ describe('givePlayerFile on the website', () => {
   it('downloads the contents byte for byte, with the type the exports always carried', async () => {
     const browser = createBrowser();
 
+    onWebsite();
     await givePlayerFile(FILE, browser.document, browser.urlRef);
 
     expect(browser.blobs).toHaveLength(1);
@@ -91,6 +101,7 @@ describe('givePlayerFile on the website', () => {
   it('never reaches for the phone plugins or the notice', async () => {
     const browser = createBrowser();
 
+    onWebsite();
     await givePlayerFile(FILE, browser.document, browser.urlRef);
 
     expect(Filesystem.writeFile).not.toHaveBeenCalled();
@@ -101,6 +112,7 @@ describe('givePlayerFile on the website', () => {
   it('still removes the anchor and frees the URL when the click throws, and throws where it did', () => {
     const browser = createBrowser();
 
+    onWebsite();
     browser.click.mockImplementation(() => {
       throw new Error('blocked');
     });

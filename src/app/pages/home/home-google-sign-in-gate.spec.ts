@@ -2,7 +2,7 @@ import '@angular/compiler';
 import { Injector, runInInjectionContext } from '@angular/core';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { GoogleAccountService } from '../../core/services/google-account.service';
 import {
@@ -46,7 +46,14 @@ const FRESH_INSTALL = Object.fromEntries(
   ]),
 ) as SyncScopeSummary;
 
+/**
+ * Built after `createAndroidGoogleAccount`, which puts back any global an earlier spec file left
+ * stubbed - so the dismissal flag is cleared in the storage the page will really read, not in a
+ * leftover stub's. A `beforeEach` runs too early for that.
+ */
 function createHome(googleAccount: GoogleAccountService): HomePage {
+  globalThis.localStorage?.removeItem(FIRST_RUN_TRANSFER_DISMISSED_KEY);
+
   const injector = Injector.create({
     providers: [
       { provide: GoogleAccountService, useValue: googleAccount },
@@ -67,10 +74,6 @@ function buttonAround(rendered: string, marker: string): string {
 
   return rendered.slice(open, rendered.indexOf('>', open) + 1);
 }
-
-beforeEach(() => {
-  globalThis.localStorage?.removeItem(FIRST_RUN_TRANSFER_DISMISSED_KEY);
-});
 
 afterEach(() => {
   vi.restoreAllMocks();
