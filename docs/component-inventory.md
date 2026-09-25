@@ -89,6 +89,7 @@ drifts and when a component is reachable by neither a route nor a template.
 | `CharacterImagePickerComponent` | shared | 2 templates | yes | - |
 | `CharacterTagFilterComponent` | shared | 8 templates | yes | yes |
 | `CharacterTagSetPickerComponent` | shared | 5 templates | yes | - |
+| `FormClassMarkerComponent` | shared | 6 templates | yes | yes |
 | `ShipPickerComponent` | shared | 3 templates | yes | yes |
 | `SpecialAbilityPickerComponent` | shared | 1 template | yes | - |
 | `TeamCoverageSummaryComponent` | shared | 4 templates | yes | - |

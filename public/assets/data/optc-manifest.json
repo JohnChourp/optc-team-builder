@@ -1,7 +1,9 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-25T08:18:03.747Z",
+  "generatedAt": "2026-09-25T12:43:03.861Z",
   "sourceVersion": "36",
+  "sourceRepository": "2Shankz/optc-db.github.io",
+  "sourceCommit": "c62e993b770ed572d067496c27c64db15ebe44eb",
   "characterCount": 4622,
   "detailCount": 4531,
   "shipCount": 66,

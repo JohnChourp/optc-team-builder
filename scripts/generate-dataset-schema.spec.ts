@@ -172,13 +172,15 @@ describe('the committed document', () => {
 
     /* The numbers the task got wrong, pinned to what the artifact says. */
     // 869f63gm1 added `character_acquisition`: how a unit is obtained besides a drop.
-    expect(document.tableCount).toBe(7);
+    // 869f63gv6 added `character_forms`: the forms of a dual or VS unit.
+    expect(document.tableCount).toBe(8);
     expect(document.createIndexStatements).toBe(0);
     expect(document.tables.map((table: { name: string }) => table.name)).toEqual([
       'character_acquisition',
       'character_details',
       'character_drops',
       'character_evolutions',
+      'character_forms',
       'characters',
       'meta',
       'ships',

@@ -430,3 +430,40 @@ describe('the seed round trip', () => {
     ]);
   });
 });
+
+describe('the shipped seed', () => {
+  const seed = readSource('public/assets/data/optc-seed.sql');
+
+  it('carries #1983 as the unit and its two forms, and every form beside its unit', async () => {
+    const SQL = await loadSqlJs();
+    const database = new SQL.Database(buildDatasetDatabaseBytes(SQL, seed));
+
+    try {
+      const [unit] = database.exec('SELECT type, classes_json FROM characters WHERE id = 1983');
+      const [forms] = database.exec(
+        'SELECT form_key, name, type, classes_json FROM character_forms WHERE character_id = 1983 ORDER BY form_key',
+      );
+      const [orphans] = database.exec(
+        'SELECT COUNT(*) FROM character_forms f LEFT JOIN characters c ON c.id = f.character_id WHERE c.id IS NULL',
+      );
+      const [typeRows] = database.exec(
+        'SELECT c.type, f.type FROM character_forms f JOIN characters c ON c.id = f.character_id',
+      );
+
+      expect(unit?.values).toEqual([['INT,PSY', '["Striker","Slasher"]']]);
+      expect(forms?.values).toEqual([
+        ['1', 'Smoker', 'INT', '["Striker","Driven"]'],
+        ['2', 'Tashigi', 'PSY', '["Slasher","Cerebral"]'],
+      ]);
+      expect(orphans?.values).toEqual([[0]]);
+      /* The unit's comma-joined type has always been its forms' types; the two records agree. */
+      expect((typeRows?.values ?? []).length).toBeGreaterThan(0);
+
+      for (const [unitType, formType] of typeRows?.values ?? []) {
+        expect(String(unitType).split(','), `${unitType} / ${formType}`).toContain(String(formType));
+      }
+    } finally {
+      database.close();
+    }
+  });
+});
