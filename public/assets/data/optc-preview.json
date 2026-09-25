@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-20T19:29:43.194Z",
+  "generatedAt": "2026-09-24T22:25:32.537Z",
   "characters": [
     {
       "id": 1,
@@ -85,6 +85,9 @@
         "thumbnailGlobal": "0/000/0001.png",
         "thumbnailJapan": "0/000/0001.png"
       },
+      "families": [
+        "Monkey D. Luffy"
+      ],
       "detail": {
         "characterId": 1,
         "captainAbility": null,
@@ -272,6 +275,9 @@
         "thumbnailGlobal": "0/000/0002.png",
         "thumbnailJapan": "0/000/0002.png"
       },
+      "families": [
+        "Monkey D. Luffy"
+      ],
       "detail": {
         "characterId": 2,
         "captainAbility": "Boosts ATK of all characters by 1.5x",
@@ -472,6 +478,9 @@
         "thumbnailGlobal": "0/000/0003.png",
         "thumbnailJapan": "0/000/0003.png"
       },
+      "families": [
+        "Monkey D. Luffy"
+      ],
       "detail": {
         "characterId": 3,
         "captainAbility": "Boosts ATK of all characters by 1.5x",
@@ -658,6 +667,9 @@
         "thumbnailGlobal": "0/000/0004.png",
         "thumbnailJapan": "0/000/0004.png"
       },
+      "families": [
+        "Monkey D. Luffy"
+      ],
       "detail": {
         "characterId": 4,
         "captainAbility": "Boosts ATK of [STR] characters by 2x and ATK of all others by 1.5x",
@@ -939,6 +951,9 @@
         "thumbnailGlobal": "0/000/0005.png",
         "thumbnailJapan": "0/000/0005.png"
       },
+      "families": [
+        "Roronoa Zoro"
+      ],
       "detail": {
         "characterId": 5,
         "captainAbility": "Boosts ATK of [DEX] characters by 1.5x",
@@ -1114,6 +1129,9 @@
         "thumbnailGlobal": "0/000/0006.png",
         "thumbnailJapan": "0/000/0006.png"
       },
+      "families": [
+        "Roronoa Zoro"
+      ],
       "detail": {
         "characterId": 6,
         "captainAbility": "Boosts ATK of [DEX] characters by 1.5x",
@@ -1277,6 +1295,9 @@
         "thumbnailGlobal": "0/000/0007.png",
         "thumbnailJapan": "0/000/0007.png"
       },
+      "families": [
+        "Roronoa Zoro"
+      ],
       "detail": {
         "characterId": 7,
         "captainAbility": "Boosts ATK of [DEX] characters by 1.5x",
@@ -1445,6 +1466,9 @@
         "thumbnailGlobal": "0/000/0008.png",
         "thumbnailJapan": "0/000/0008.png"
       },
+      "families": [
+        "Roronoa Zoro"
+      ],
       "detail": {
         "characterId": 8,
         "captainAbility": "Boosts ATK and HP of [DEX] characters by 2x",
@@ -1715,6 +1739,9 @@
         "thumbnailGlobal": "0/000/0009.png",
         "thumbnailJapan": "0/000/0009.png"
       },
+      "families": [
+        "Nami"
+      ],
       "detail": {
         "characterId": 9,
         "captainAbility": "Reduces damage received from [INT] enemies by 20%",
@@ -1891,6 +1918,9 @@
         "thumbnailGlobal": "0/000/0010.png",
         "thumbnailJapan": "0/000/0010.png"
       },
+      "families": [
+        "Nami"
+      ],
       "detail": {
         "characterId": 10,
         "captainAbility": "Boosts ATK of [INT] characters by 1.5x",
@@ -2053,6 +2083,9 @@
         "thumbnailGlobal": "0/000/0011.png",
         "thumbnailJapan": "0/000/0011.png"
       },
+      "families": [
+        "Nami"
+      ],
       "detail": {
         "characterId": 11,
         "captainAbility": "Boosts ATK of [INT] characters by 1.5x",
@@ -2236,6 +2269,9 @@
         "thumbnailGlobal": "0/000/0012.png",
         "thumbnailJapan": "0/000/0012.png"
       },
+      "families": [
+        "Nami"
+      ],
       "detail": {
         "characterId": 12,
         "captainAbility": "Boosts ATK and HP of [INT] characters by 1.5x",
@@ -2532,6 +2568,9 @@
         "thumbnailGlobal": "0/000/0013.png",
         "thumbnailJapan": "0/000/0013.png"
       },
+      "families": [
+        "Usopp"
+      ],
       "detail": {
         "characterId": 13,
         "captainAbility": "Boosts ATK of Shooter characters by 1.2x",
@@ -2782,6 +2821,9 @@
         "thumbnailGlobal": "0/000/0014.png",
         "thumbnailJapan": "0/000/0014.png"
       },
+      "families": [
+        "Usopp"
+      ],
       "detail": {
         "characterId": 14,
         "captainAbility": "Boosts ATK of [PSY] characters by 1.5x",
@@ -3034,6 +3076,9 @@
         "thumbnailGlobal": "0/000/0015.png",
         "thumbnailJapan": "0/000/0015.png"
       },
+      "families": [
+        "Usopp"
+      ],
       "detail": {
         "characterId": 15,
         "captainAbility": "Boosts ATK of [PSY] characters by 1.5x",
@@ -3268,6 +3313,9 @@
         "thumbnailGlobal": "0/000/0016.png",
         "thumbnailJapan": "0/000/0016.png"
       },
+      "families": [
+        "Usopp"
+      ],
       "detail": {
         "characterId": 16,
         "captainAbility": "Boosts ATK and HP of [PSY] characters by 1.5x",
@@ -3685,6 +3733,10 @@
         "thumbnailGlobal": "0/000/0017.png",
         "thumbnailJapan": "0/000/0017.png"
       },
+      "families": [
+        "Vinsmoke Sanji",
+        "Sanji"
+      ],
       "detail": {
         "characterId": 17,
         "captainAbility": "Boosts ATK of [QCK] characters by 1.5x",
@@ -3851,6 +3903,10 @@
         "thumbnailGlobal": "0/000/0018.png",
         "thumbnailJapan": "0/000/0018.png"
       },
+      "families": [
+        "Vinsmoke Sanji",
+        "Sanji"
+      ],
       "detail": {
         "characterId": 18,
         "captainAbility": "Boosts HP of [QCK] characters by 1.5x",
@@ -4013,6 +4069,10 @@
         "thumbnailGlobal": "0/000/0019.png",
         "thumbnailJapan": "0/000/0019.png"
       },
+      "families": [
+        "Vinsmoke Sanji",
+        "Sanji"
+      ],
       "detail": {
         "characterId": 19,
         "captainAbility": "Boosts ATK of [QCK] characters by 1.5x",
@@ -4173,6 +4233,10 @@
         "thumbnailGlobal": "0/000/0020.png",
         "thumbnailJapan": "0/000/0020.png"
       },
+      "families": [
+        "Vinsmoke Sanji",
+        "Sanji"
+      ],
       "detail": {
         "characterId": 20,
         "captainAbility": "Boosts ATK and HP of [QCK] characters by 1.5x",
@@ -4533,6 +4597,9 @@
         "thumbnailGlobal": "0/000/0021.png",
         "thumbnailJapan": "0/000/0021.png"
       },
+      "families": [
+        "Tony Tony Chopper"
+      ],
       "detail": {
         "characterId": 21,
         "captainAbility": "Boosts RCV of [PSY] characters by 1.2x",
@@ -4684,6 +4751,9 @@
         "thumbnailGlobal": "0/000/0022.png",
         "thumbnailJapan": "0/000/0022.png"
       },
+      "families": [
+        "Tony Tony Chopper"
+      ],
       "detail": {
         "characterId": 22,
         "captainAbility": "Boosts RCV of [PSY] characters by 1.5x",
@@ -4900,6 +4970,9 @@
         "thumbnailGlobal": "0/000/0023.png",
         "thumbnailJapan": "0/000/0023.png"
       },
+      "families": [
+        "Tony Tony Chopper"
+      ],
       "detail": {
         "characterId": 23,
         "captainAbility": "Boosts RCV of [INT] characters by 1.5x",
@@ -5030,6 +5103,9 @@
         "thumbnailGlobal": "0/000/0024.png",
         "thumbnailJapan": "0/000/0024.png"
       },
+      "families": [
+        "Tony Tony Chopper"
+      ],
       "detail": {
         "characterId": 24,
         "captainAbility": "Boosts RCV of [STR] characters by 1.5x",
