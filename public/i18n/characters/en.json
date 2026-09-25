@@ -99,7 +99,11 @@
     "eyebrow": "OPTCbx compatibility",
     "errors": {
       "dropJson": "Drop a JSON file exported by OPTCbx.",
-      "generic": "The OPTCbx import failed. Please try another export file."
+      "generic": "The OPTCbx import failed. Please try another export file.",
+      "notJson": "This file is not a JSON file. Pick the JSON file you saved from OPTCbx with /export.",
+      "notOptcbxExport": "This file is not an OPTCbx export: it has no list of characters. Pick the JSON file you saved from OPTCbx with /export. A file exported from this app goes in Settings, under All Data.",
+      "entryWithoutNumber": "Entry {{entry}} in this OPTCbx export has no character number. Export the box from OPTCbx again, or remove that entry from the file, then pick it again.",
+      "noCharacters": "This OPTCbx export has no characters in it. Export your box from OPTCbx again, then pick the new file."
     },
     "ignoredDuplicates": "{{count}} duplicate export entries were ignored before import.",
     "importFavorites": "Import favorites",

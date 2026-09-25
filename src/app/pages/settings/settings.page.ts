@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import {
+  FAILURE_I18N_SCOPE,
   buildFailureLines,
   resolveFailureFamily,
 } from '../../core/services/failure-message.utils';
@@ -38,7 +39,11 @@ import {
   InventoryCaptureImportService,
   type InventoryCapturePreview,
 } from '../../core/services/inventory-capture-import.service';
-import { OptcbxImportService } from '../../core/services/optcbx-import.service';
+import {
+  OPTCBX_IMPORT_I18N_SCOPE,
+  OptcbxImportError,
+  OptcbxImportService,
+} from '../../core/services/optcbx-import.service';
 import {
   RUNTIME_MEDIA_MAX_ENTRIES,
   readRuntimeMediaUrls,
@@ -132,6 +137,25 @@ interface CombinedImportSectionError {
   label: string;
   messages: string[];
 }
+
+/**
+ * Every translation scope this page reads, loaded before an import builds its summary.
+ *
+ * Found live on 2026-09-25: after Import all data with a Saved Teams file the summary read
+ * "Saved Teams: saved-teams.import.successTitle". A summary is translated once, when it is built,
+ * and then kept - and `translate` returns the raw key for a scope that is not loaded yet, starting
+ * the load only afterwards. This page's template loads its own scope; the others are loaded by
+ * their own screens, so on a device that had not opened those screens first, every summary built
+ * from them showed raw keys. Loaded again for every import, because the reader can change the
+ * language in between, and the failure sentences come from a scope loaded for the first language.
+ */
+export const SETTINGS_TRANSLATION_SCOPES = [
+  'settings',
+  'characters',
+  'saved-teams',
+  'saved-enemies',
+  FAILURE_I18N_SCOPE,
+] as const;
 
 @Component({
   selector: 'app-settings-page',
@@ -854,6 +878,7 @@ export class SettingsPage implements OnInit {
     this.inventoryCaptureFeedback.set(null);
 
     try {
+      await this.loadTranslationScopes();
       const applySummary = await this.inventoryCaptureImport.applyPreview(preview, {
         boxName: this.inventoryCaptureBoxName().trim() || preview.suggestedBoxName,
         boxSelection: this.inventoryCaptureBoxSelection(),
@@ -1026,6 +1051,7 @@ export class SettingsPage implements OnInit {
     this.inventoryCaptureFeedback.set(null);
 
     try {
+      await this.loadTranslationScopes();
       const preview =
         sourceKind === 'optcbx-json'
           ? await this.inventoryCaptureImport.buildPreviewFromOptcbxFile(file)
@@ -1217,6 +1243,11 @@ export class SettingsPage implements OnInit {
   private resolveInventoryCaptureError(
     error: InventoryCaptureImportError | Error | unknown,
   ): string {
+    // Before the `key` check below: that key is in the `characters` scope, not this page's.
+    if (error instanceof OptcbxImportError) {
+      return this.reportOptcbxImportError(error);
+    }
+
     if (error && typeof error === 'object' && 'key' in error && typeof error.key === 'string') {
       return this.i18n.translate(error.key, undefined, 'settings');
     }
@@ -1261,6 +1292,7 @@ export class SettingsPage implements OnInit {
     this.allDataFeedback.set(null);
 
     try {
+      await this.loadTranslationScopes();
       const rawContent = await file.text();
       const importCandidate = parseAllDataImportCandidate(rawContent);
       let feedback: TransferFeedback;
@@ -1729,6 +1761,11 @@ export class SettingsPage implements OnInit {
   }
 
   private resolveAllDataImportError(error: unknown): string {
+    // A favourites file picked here reaches the OPTCbx parser; its key is not in this page's scope.
+    if (error instanceof OptcbxImportError) {
+      return this.reportOptcbxImportError(error);
+    }
+
     if (error && typeof error === 'object' && 'key' in error && typeof error.key === 'string') {
       return this.i18n.translate(error.key, undefined, 'settings');
     }
@@ -1760,6 +1797,7 @@ export class SettingsPage implements OnInit {
     this.favoritesFeedback.set(null);
 
     try {
+      await this.loadTranslationScopes();
       this.favoritesFeedback.set(
         await this.importFavoritesContent({
           rawContent: await file.text(),
@@ -1858,6 +1896,10 @@ export class SettingsPage implements OnInit {
   }
 
   private resolveFavoritesImportError(error: unknown): string {
+    if (error instanceof OptcbxImportError) {
+      return this.reportOptcbxImportError(error);
+    }
+
     if (error instanceof Error && error.message.trim().length > 0) {
       return error.message;
     }
@@ -1865,11 +1907,26 @@ export class SettingsPage implements OnInit {
     return this.i18n.translate('import.errors.generic', undefined, 'characters');
   }
 
+  /**
+   * 869f6td63. What a file the OPTCbx parser turned down owes the reader: its reason, in their
+   * language, with what to do.
+   *
+   * Three imports on this page reach that parser - Favorites, Import all data and the inventory
+   * capture - and each showed its English message as it was. Those words are kept in Recent
+   * problems below, the one place they are shown.
+   */
+  private reportOptcbxImportError(error: OptcbxImportError): string {
+    this.errorLog.record('import', error.name, error.message);
+
+    return this.i18n.translate(error.key, error.parameters, OPTCBX_IMPORT_I18N_SCOPE);
+  }
+
   private async importFavoriteShips(file: File): Promise<void> {
     this.favoriteShipsImporting.set(true);
     this.favoriteShipsFeedback.set(null);
 
     try {
+      await this.loadTranslationScopes();
       this.favoriteShipsFeedback.set(
         await this.importFavoriteShipsContent({
           fileName: file.name,
@@ -2011,6 +2068,7 @@ export class SettingsPage implements OnInit {
     this.characterBoxesFeedback.set(null);
 
     try {
+      await this.loadTranslationScopes();
       this.characterBoxesFeedback.set(
         await this.importCharacterBoxesContent({
           fileName: file.name,
@@ -2146,6 +2204,7 @@ export class SettingsPage implements OnInit {
     this.characterOverridesFeedback.set(null);
 
     try {
+      await this.loadTranslationScopes();
       this.characterOverridesFeedback.set(
         await this.importCharacterOverridesContent({
           fileName: file.name,
@@ -2342,6 +2401,7 @@ export class SettingsPage implements OnInit {
     this.savedTeamsFeedback.set(null);
 
     try {
+      await this.loadTranslationScopes();
       this.savedTeamsFeedback.set(
         await this.importSavedTeamsContent({
           fileName: file.name,
@@ -2538,6 +2598,7 @@ export class SettingsPage implements OnInit {
     this.savedEnemiesFeedback.set(null);
 
     try {
+      await this.loadTranslationScopes();
       this.savedEnemiesFeedback.set(
         await this.importSavedEnemiesContent({
           fileName: file.name,
@@ -2726,6 +2787,11 @@ export class SettingsPage implements OnInit {
    * error. It sits between the first and second sentence so the message still
    * ENDS on the thing to do.
    */
+  /** See {@link SETTINGS_TRANSLATION_SCOPES}. Never rejects: a scope that fails to load is retried by `translate`. */
+  private async loadTranslationScopes(): Promise<void> {
+    await Promise.all(SETTINGS_TRANSLATION_SCOPES.map((scope) => this.i18n.preloadScope(scope)));
+  }
+
   private failureDetails(
     familyId: string,
     extra?: string | readonly string[] | null,
