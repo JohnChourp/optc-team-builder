@@ -92,6 +92,10 @@ export const UPSTREAM_DECLARED_COLUMNS = Object.freeze({
     source: 'flags.js .global',
     note: 'Whether the unit has released on Global. The authoritative release flag, replacing the thumbnail-presence proxy that disagreed with it for 927 of 4,397 units.',
   },
+  families_json: {
+    source: 'families.js',
+    note: 'The character(s) on the card, as upstream names them (869f63grj). They decide which cards are the same character, replacing a guess from the card name that disagreed with this file on 18,449 unit pairs; a unit upstream names no family for stores [] and is decided by its name.',
+  },
 });
 
 /** normalizedField -> seed column. The importer names fields in camelCase and the seed in snake. */

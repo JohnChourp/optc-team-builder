@@ -3,7 +3,9 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
+import partyConflictOverrides from '../../core/data/auto-team-builder-party-conflict-overrides.json';
 import { MAX_HELD_CHARACTER_FACET_VALUES } from '../../core/services/character-facet-filter.utils';
+import { resolveCharacterSameCharacterKeys } from '../../core/services/character-party-conflict-keys.utils';
 import { FAQ_SECTIONS } from './faq.data';
 
 const template = readFileSync(resolve(process.cwd(), 'src/app/pages/faq/faq.page.html'), 'utf8');
@@ -133,21 +135,37 @@ describe('FaqPage content', () => {
     );
   });
 
-  it('counts the built-in name aliases the answer claims', () => {
-    // Spelled out in prose in two languages, so the count cannot be checked any
-    // other way. Adding a 35th alias fails here and points at both sentences.
-    const source = readFileSync(
-      resolve(process.cwd(), 'src/app/core/services/character-party-conflict-keys.utils.ts'),
-      'utf8',
-    );
-    const table = source.slice(
-      source.indexOf('CHARACTER_NAME_KEY_ALIASES'),
-      source.indexOf('const PARTY_CONFLICT_KEY_OVERRIDES'),
-    );
+  it('states where the same-character answer comes from, and the corrections it makes', () => {
+    /*
+     * 869f63grj. The answer used to promise "Thirty-four" built-in name aliases, bound to the size
+     * of an alias table that no longer decides anything: the community database's families do. So
+     * each sentence is bound to the behaviour that makes it true instead of to a count.
+     */
+    // A card the database names is decided by that name, whatever the card is called.
+    expect(
+      resolveCharacterSameCharacterKeys({
+        id: 900001,
+        name: 'Lucy',
+        families: ['Monkey D. Luffy'],
+      }),
+    ).toEqual(['monkey d. luffy']);
+    // "A card it does not name yet is judged by its name."
+    expect(
+      resolveCharacterSameCharacterKeys({ id: 900002, name: 'Monkey D. Luffy - A New Card' }),
+    ).toContain('monkey d. luffy');
 
-    expect(table.match(/^ {2}'?[a-z0-9 ]+'?:/gmu)).toHaveLength(34);
-    expect(english.entries['conflicts']?.bullets['aliases']).toContain('Thirty-four');
-    expect(greek.entries['conflicts']?.bullets['aliases']).toContain('τριάντα τέσσερα');
+    // The hand correction the answer names: both Blackback cards, without the shared "BB".
+    const overrides = partyConflictOverrides as Record<string, string[]>;
+
+    for (const blackbackId of ['2179', '3537']) {
+      expect(overrides[blackbackId]).toContain('blackback');
+      expect(overrides[blackbackId]).not.toContain('bb');
+    }
+
+    expect(english.entries['conflicts']?.bullets['aliases']).toContain('Lucy as Luffy');
+    expect(english.entries['conflicts']?.bullets['aliases']).toContain('two Blackback cards');
+    expect(greek.entries['conflicts']?.bullets['aliases']).toContain('ο Lucy ως Luffy');
+    expect(greek.entries['conflicts']?.bullets['aliases']).toContain('δύο κάρτες του Blackback');
   });
 
   it('does not re-answer empty results, it points at the answer that owns them', () => {

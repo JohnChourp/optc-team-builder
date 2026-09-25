@@ -21,6 +21,13 @@ export interface RumbleBuilderSettingsExportPayload {
 
 export interface RumbleTeamExportSlot {
   slotIndex: number;
+  /**
+   * 869f6td6h. An opponent unit's seat on the board: its index in the active row or on the bench.
+   * `slotIndex` numbers only the FILLED slots, so a unit in the third seat of an otherwise empty
+   * row came back in the first. Written for opponent units only, and optional: a file without it
+   * imports as it always did, and `schemaVersion` stays 2, so an older app still opens new files.
+   */
+  position?: number;
   role: RumbleTeamSlot['role'];
   score: number;
   reasonChips: string[];
@@ -281,10 +288,16 @@ function buildRumbleTeamExportResult(
 function buildRumbleOpponentTeamExport(slots: RumbleTeamSlot[]): RumbleOpponentTeamExport {
   const activeSlots = slots
     .filter((slot) => slot.role === 'active')
-    .map((slot, slotIndex) => buildRumbleTeamExportSlot(slot, slotIndex));
+    .map((slot, slotIndex) => ({
+      ...buildRumbleTeamExportSlot(slot, slotIndex),
+      position: slot.index,
+    }));
   const benchSlots = slots
     .filter((slot) => slot.role === 'bench')
-    .map((slot, slotIndex) => buildRumbleTeamExportSlot(slot, activeSlots.length + slotIndex));
+    .map((slot, slotIndex) => ({
+      ...buildRumbleTeamExportSlot(slot, activeSlots.length + slotIndex),
+      position: slot.index,
+    }));
   const team = [...activeSlots, ...benchSlots];
 
   return {

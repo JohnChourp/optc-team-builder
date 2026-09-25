@@ -138,7 +138,7 @@ import {
   resolveCaptainCoverageBranchDisplay,
   resolveCaptainCoverageBranchOptions,
 } from '../../core/services/captain-coverage.utils';
-import { resolveCharacterPartyConflictKeys } from '../../core/services/auto-team-builder.utils';
+import { resolveCharacterSameCharacterKeys } from '../../core/services/character-party-conflict-keys.utils';
 import {
   buildMechanicChecklist,
   collectRequestedAbilityRequirements,
@@ -9660,7 +9660,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           .replace(/\s+/g, ' ')
           .trim();
 
-        for (const conflictKey of resolveCharacterPartyConflictKeys(record)) {
+        for (const conflictKey of resolveCharacterSameCharacterKeys(record)) {
           if (conflictKey.length === 0 || slotConflictKeys.has(conflictKey)) {
             continue;
           }
@@ -9701,7 +9701,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     }
 
     for (const record of slot.records) {
-      const partyConflictKeys = resolveCharacterPartyConflictKeys(record);
+      const partyConflictKeys = resolveCharacterSameCharacterKeys(record);
 
       if (
         partyConflictKeys.length === 0 ||
