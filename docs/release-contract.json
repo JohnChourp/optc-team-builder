@@ -134,5 +134,175 @@
         ".github/workflows/release-android.yml"
       ]
     }
-  ]
+  ],
+  "appConfigByBuildTarget": {
+    "note": "Generated from scripts/write-app-config.mjs, package.json and .github/workflows/. Names where each key comes from and whether it is empty - never a value. Whether a named secret exists is GitHub state, not repository state: see docs/release-secrets-register.md.",
+    "writer": "scripts/write-app-config.mjs",
+    "keys": [
+      {
+        "key": "ga4MeasurementId",
+        "variable": "APP_GA4_MEASUREMENT_ID",
+        "whenNotSupplied": "empty"
+      },
+      {
+        "key": "googleDriveBackendUrl",
+        "variable": "APP_GOOGLE_DRIVE_BACKEND_URL",
+        "whenNotSupplied": "empty"
+      },
+      {
+        "key": "googleDriveFolderName",
+        "variable": "APP_GOOGLE_DRIVE_FOLDER_NAME",
+        "whenNotSupplied": "the writer's default, not empty"
+      },
+      {
+        "key": "googleIosClientId",
+        "variable": "APP_GOOGLE_IOS_CLIENT_ID",
+        "whenNotSupplied": "empty"
+      },
+      {
+        "key": "googleWebClientId",
+        "variable": "APP_GOOGLE_WEB_CLIENT_ID",
+        "whenNotSupplied": "empty"
+      }
+    ],
+    "gates": [
+      {
+        "key": "googleIosClientId",
+        "flag": "--require-google-ios-client-id",
+        "variable": "APP_REQUIRE_GOOGLE_IOS_CLIENT_ID"
+      },
+      {
+        "key": "googleWebClientId",
+        "flag": "--require-google-web-client-id",
+        "variable": "APP_REQUIRE_GOOGLE_WEB_CLIENT_ID"
+      }
+    ],
+    "targets": [
+      {
+        "id": "website",
+        "label": "Website",
+        "what": "optcteambuilder.com - built on every push to main and again by every release",
+        "reachesPlayers": true,
+        "buildScript": "build:pages",
+        "writerRunBy": [
+          "config:app:web-strict"
+        ],
+        "steps": [
+          {
+            "workflow": ".github/workflows/deploy-pages.yml",
+            "job": "build",
+            "step": "Build GitHub Pages artifact",
+            "environment": "github-pages"
+          },
+          {
+            "workflow": ".github/workflows/release-android.yml",
+            "job": "deploy-pages",
+            "step": "Build GitHub Pages artifact",
+            "environment": "github-pages"
+          }
+        ],
+        "requires": [
+          {
+            "key": "googleWebClientId",
+            "by": "--require-google-web-client-id"
+          }
+        ],
+        "keys": {
+          "ga4MeasurementId": "secret APP_GA4_MEASUREMENT_ID",
+          "googleDriveBackendUrl": "nothing - empty",
+          "googleDriveFolderName": "nothing - the writer's default",
+          "googleIosClientId": "secret APP_GOOGLE_IOS_CLIENT_ID",
+          "googleWebClientId": "secret APP_GOOGLE_WEB_CLIENT_ID"
+        }
+      },
+      {
+        "id": "apk",
+        "label": "APK",
+        "what": "the signed APK attached to each GitHub Release",
+        "reachesPlayers": true,
+        "buildScript": "build:ionic",
+        "writerRunBy": [
+          "config:app"
+        ],
+        "steps": [
+          {
+            "workflow": ".github/workflows/release-android.yml",
+            "job": "release",
+            "step": "Run Android release",
+            "environment": null
+          }
+        ],
+        "requires": [],
+        "keys": {
+          "ga4MeasurementId": "nothing - empty",
+          "googleDriveBackendUrl": "nothing - empty",
+          "googleDriveFolderName": "nothing - the writer's default",
+          "googleIosClientId": "nothing - empty",
+          "googleWebClientId": "nothing - empty"
+        }
+      },
+      {
+        "id": "guide-discoverability",
+        "label": "Guide discoverability build",
+        "what": "a verification build, checked and discarded",
+        "reachesPlayers": false,
+        "buildScript": "build:pages",
+        "writerRunBy": [
+          "config:app:web-strict"
+        ],
+        "steps": [
+          {
+            "workflow": ".github/workflows/guide-discoverability.yml",
+            "job": "verify",
+            "step": "Build GitHub Pages artifact",
+            "environment": null
+          }
+        ],
+        "requires": [
+          {
+            "key": "googleWebClientId",
+            "by": "--require-google-web-client-id"
+          }
+        ],
+        "keys": {
+          "ga4MeasurementId": "secret APP_GA4_MEASUREMENT_ID",
+          "googleDriveBackendUrl": "nothing - empty",
+          "googleDriveFolderName": "nothing - the writer's default",
+          "googleIosClientId": "secret APP_GOOGLE_IOS_CLIENT_ID",
+          "googleWebClientId": "secret APP_GOOGLE_WEB_CLIENT_ID, else a fallback written in the workflow"
+        }
+      },
+      {
+        "id": "pwa-cache-freshness",
+        "label": "PWA cache-freshness build",
+        "what": "a verification build, checked and discarded",
+        "reachesPlayers": false,
+        "buildScript": "build:pages",
+        "writerRunBy": [
+          "config:app:web-strict"
+        ],
+        "steps": [
+          {
+            "workflow": ".github/workflows/deploy-pages.yml",
+            "job": "cache-freshness",
+            "step": "Verify PWA cache freshness",
+            "environment": "github-pages"
+          }
+        ],
+        "requires": [
+          {
+            "key": "googleWebClientId",
+            "by": "--require-google-web-client-id"
+          }
+        ],
+        "keys": {
+          "ga4MeasurementId": "secret APP_GA4_MEASUREMENT_ID",
+          "googleDriveBackendUrl": "nothing - empty",
+          "googleDriveFolderName": "nothing - the writer's default",
+          "googleIosClientId": "secret APP_GOOGLE_IOS_CLIENT_ID",
+          "googleWebClientId": "secret APP_GOOGLE_WEB_CLIENT_ID"
+        }
+      }
+    ]
+  }
 }

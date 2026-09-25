@@ -530,7 +530,7 @@
       "environments": [
         "node"
       ],
-      "specCount": 2
+      "specCount": 3
     },
     {
       "id": "overlay-contrast",
@@ -700,7 +700,7 @@
       "environments": [
         "node"
       ],
-      "specCount": 1
+      "specCount": 2
     },
     {
       "id": "release-readiness",
