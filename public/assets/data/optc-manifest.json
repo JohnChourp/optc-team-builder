@@ -1,11 +1,11 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-25T12:43:03.861Z",
+  "generatedAt": "2026-09-25T13:03:53.718Z",
   "sourceVersion": "36",
   "sourceRepository": "2Shankz/optc-db.github.io",
-  "sourceCommit": "c62e993b770ed572d067496c27c64db15ebe44eb",
-  "characterCount": 4622,
-  "detailCount": 4531,
+  "sourceCommit": "80610c7bb152f0aebe910a29a6904c54169971e4",
+  "characterCount": 4626,
+  "detailCount": 4535,
   "shipCount": 66,
   "rumbleCount": 4604,
   "availableTypes": [
@@ -33,8 +33,8 @@
       "id": "thumbnails-glo",
       "label": "Global thumbnails",
       "localBasePath": "assets/offline-packs/thumbnails-glo",
-      "fileCount": 5389,
-      "totalBytes": 54849048,
+      "fileCount": 5394,
+      "totalBytes": 54897762,
       "installed": true,
       "checksum": "df94f79786955eedd082930b70946c4aa0d71e27"
     },
@@ -43,8 +43,8 @@
       "id": "thumbnails-jap",
       "label": "Japan thumbnails",
       "localBasePath": "assets/offline-packs/thumbnails-jap",
-      "fileCount": 5581,
-      "totalBytes": 114091989,
+      "fileCount": 5586,
+      "totalBytes": 114140823,
       "installed": true,
       "checksum": "dd8283e86a3614e7105a6c59d6d153c189ecab65"
     },

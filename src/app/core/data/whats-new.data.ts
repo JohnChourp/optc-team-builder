@@ -31,6 +31,145 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.7.0',
+    date: '2026-09-25',
+    userVisible: true,
+    headline: {
+      en: 'Plan a Treasure Map, keep a class out of your team, and see how to get any character',
+      el: 'Σχεδίασε ένα Treasure Map, κράτα μια class έξω από την ομάδα σου, και δες πώς αποκτάς κάθε χαρακτήρα',
+    },
+    summaryEn:
+      'A big one, with four Halloween characters on top. Saved Teams can now check a whole Treasure Map plan for units you used twice, a saved enemy can keep a type or class out of the team Auto Team Builder builds, and Auto Team Rumble Builder can avoid a style for an Assault Rumble boss. The Character screen now tells you how to get a character, reads a support\'s Auto+ and a unit\'s Grand Party in words, and no longer lists score thresholds and skulls as if they were characters. Search finds characters by the names the community uses and ignores punctuation. A class filter also finds dual and VS characters by the class they take after a swap. In the Android app, an export now reaches you through the share sheet, a share link opens the team, the back key on Home leaves the app and an update downloads only once. And many fixes besides: Captains that boost by cost or rarity count again, saving a team a second time on Captain Coverage keeps its notes and ship, an imported enemy keeps what its mechanics require, and dropdowns no longer run past the edge of a phone screen.',
+    summaryEl:
+      'Μεγάλη ενημέρωση, και τέσσερις χαρακτήρες του Halloween από πάνω. Οι Αποθηκευμένες ομάδες ελέγχουν πλέον ολόκληρο ένα πλάνο Treasure Map για χαρακτήρες που χρησιμοποίησες δύο φορές, ένας αποθηκευμένος εχθρός μπορεί να κρατά ένα type ή μια class έξω από την ομάδα που φτιάχνει το Auto Team Builder, και το Auto Team Rumble Builder μπορεί να αποφεύγει ένα style για ένα boss του Assault Rumble. Η οθόνη Χαρακτήρα σου λέει τώρα πώς αποκτάς τον χαρακτήρα, διαβάζει σε λέξεις το Auto+ ενός support και το Grand Party ενός χαρακτήρα, και δεν δείχνει πια όρια σκορ και κρανία σαν να ήταν χαρακτήρες. Η αναζήτηση βρίσκει χαρακτήρες με τα ονόματα που χρησιμοποιεί η κοινότητα και αγνοεί τα σημεία στίξης. Ένα φίλτρο class βρίσκει πλέον και dual και VS χαρακτήρες με την class που παίρνουν μετά από swap. Στο Android app, μια εξαγωγή φτάνει πλέον σε σένα μέσα από το μενού κοινοποίησης, ένα share link ανοίγει την ομάδα, το κουμπί πίσω στην Αρχική βγαίνει από την εφαρμογή και μια ενημέρωση κατεβαίνει μόνο μία φορά. Και πολλές ακόμη διορθώσεις: οι Captains που ενισχύουν με βάση το cost ή το rarity μετράνε ξανά, η δεύτερη αποθήκευση μιας ομάδας στο Captain Coverage κρατά τις σημειώσεις και το πλοίο της, ένας εισαγόμενος εχθρός κρατά ό,τι απαιτούν οι μηχανισμοί του, και τα αναδυόμενα μενού επιλογής δεν ξεφεύγουν πια από την άκρη της οθόνης του κινητού.',
+    added: [
+      {
+        en: 'Four new characters join the roster: **Zoro & Robin - Jolly Halloween Party** (6-star PSY Cerebral/Powerhouse), **Usopp & Franky - Jolly Halloween Party** (6-star PSY Powerhouse/Shooter), **Nami - Jolly Halloween Party** (5-star PSY Cerebral/Striker) and **Sir Crocodile: Ruler\'s Delectation - Happy Spooky Halloween!** (5+ star INT Cerebral/Driven). They are already everywhere the app lists characters: search, the **Characters** screen, **Captain Coverage**, both team builders and the ability filters.',
+        el: 'Τέσσερις νέοι χαρακτήρες μπαίνουν στη λίστα: **Zoro & Robin - Jolly Halloween Party** (6 αστέρων PSY Cerebral/Powerhouse), **Usopp & Franky - Jolly Halloween Party** (6 αστέρων PSY Powerhouse/Shooter), **Nami - Jolly Halloween Party** (5 αστέρων PSY Cerebral/Striker) και **Sir Crocodile: Ruler\'s Delectation - Happy Spooky Halloween!** (5+ αστέρων INT Cerebral/Driven). Βρίσκονται ήδη παντού όπου η εφαρμογή δείχνει χαρακτήρες: στην αναζήτηση, στην οθόνη **Χαρακτήρες**, στο **Captain Coverage**, και στους δύο team builders και στα φίλτρα ικανοτήτων.',
+      },
+      {
+        en: 'On **Saved Teams**, tick the teams of a Treasure Map plan and press **Check as a Treasure Map plan**. It marks every unit you used more than once - leaving out the **Friend Captain** seats and the team you mark as the **Ambush team** - and it never blocks or saves anything.',
+        el: 'Στις **Αποθηκευμένες ομάδες**, τσέκαρε τις ομάδες ενός πλάνου Treasure Map και πάτησε **Έλεγχος ως πλάνο Treasure Map**. Σημειώνει κάθε χαρακτήρα που χρησιμοποίησες πάνω από μία φορά - εκτός από τις θέσεις **Friend Captain** και την ομάδα που σημειώνεις ως **Ομάδα Ambush** - και δεν μπλοκάρει ούτε αποθηκεύει ποτέ τίποτα.',
+      },
+      {
+        en: 'The enemy pop-up on **Saved Enemies** has a new **Avoid or prefer** section, to keep types or classes out of the team or rank them higher. **Auto Team Builder** keeps avoided units out unless no team can be built without them, and then the **Final team report** says so. Choose **Rank them lower** to only push them down instead.',
+        el: 'Το αναδυόμενο παράθυρο του εχθρού στους **Αποθηκευμένους εχθρούς** έχει νέα ενότητα **Αποφυγή ή προτίμηση**, για να κρατάς types ή classes έξω από την ομάδα ή να τα ανεβάζεις στην κατάταξη. Το **Auto Team Builder** κρατά έξω όσους αποφεύγονται, εκτός αν δεν βγαίνει ομάδα χωρίς αυτούς - και τότε το **Τελικό report ομάδας** το λέει. Διάλεξε **Να κατατάσσονται χαμηλότερα** για να πέφτουν απλώς πιο χαμηλά.',
+      },
+      {
+        en: 'On **Auto Team Rumble Builder**, the new **Avoid style / type / class** filter keeps those units out of the team - for an Assault Rumble boss that punishes a style. When it leaves too few units for a team, the page says so.',
+        el: 'Στο **Auto Team Rumble Builder**, το νέο φίλτρο **Αποφυγή style / type / class** κρατά αυτούς τους χαρακτήρες έξω από την ομάδα - για ένα boss του Assault Rumble που τιμωρεί ένα style. Όταν αφήνει πολύ λίγους χαρακτήρες για ομάδα, η σελίδα το λέει.',
+      },
+      {
+        en: 'The **Character** screen has a new **How to get it** card: the recruits, shops, stages and login bonuses that give the character, or **By evolving** when that is the only way. 4,561 characters have one.',
+        el: 'Η οθόνη **Χαρακτήρα** έχει νέα κάρτα **Πώς τον αποκτάς**: τα recruits, τα καταστήματα, τα stages και τα login bonuses που δίνουν τον χαρακτήρα, ή **Με εξέλιξη από** όταν αυτός είναι ο μόνος τρόπος. Την έχουν 4.561 χαρακτήρες.',
+      },
+      {
+        en: 'On the **Character** screen, a support\'s **Auto+** reads as its own line in words - for example "at stage 3, fires the supported character\'s Special by itself" - and support text no longer shows stray formatting codes.',
+        el: 'Στην οθόνη **Χαρακτήρα**, το **Auto+** ενός support διαβάζεται σε δική του γραμμή, σε λέξεις - για παράδειγμα «στο stage 3, ενεργοποιεί αυτόματα το Special του υποστηριζόμενου χαρακτήρα» - και το κείμενο του support δεν δείχνει πια σκόρπιους κωδικούς μορφοποίησης.',
+      },
+      {
+        en: 'The **Character** screen has a **Grand Party** card, right after the Rumble card: the **Leader Skill**, the **Burst** and the **Burst Condition** in words, such as "After 2 crew members are defeated".',
+        el: 'Η οθόνη **Χαρακτήρα** έχει κάρτα **Grand Party**, αμέσως μετά την κάρτα του Rumble: το **Leader Skill**, το **Burst** και τη **Συνθήκη Burst** σε λέξεις, όπως «Αφού ηττηθούν 2 μέλη του crew».',
+      },
+      {
+        en: 'The **Special charge timeline** on **Auto Team Builder** now counts cuts at the start of the quest: an **event cut** you enter, for your Boosted units or the **Whole team**, and the Captain\'s, Friend Captain\'s and ship\'s own cuts. With **If Limit Broken** on, it adds Cooldown Reduction potentials and crewmate cuts. Each row says where its cut came from.',
+        el: 'Ο **Χρόνος φόρτισης των specials** στο **Auto Team Builder** μετρά πλέον τις μειώσεις στην αρχή του quest: μια **μείωση από το event** που δίνεις, για τους Boosted χαρακτήρες σου ή για **Όλη η ομάδα**, και τις μειώσεις του ίδιου του Captain, του Friend Captain και του πλοίου. Με το **Αν έχει γίνει Limit Break** ανοιχτό, προσθέτει τα Cooldown Reduction potentials και τις μειώσεις των crewmates. Κάθε γραμμή λέει από πού ήρθε η μείωσή της.',
+      },
+      {
+        en: 'Search on **Characters**, **Character Boxes**, **Manual Team Builder**, **Captain Coverage**, **Rumble Characters** and **Auto Team Rumble Builder** finds characters by the names the community uses, such as "V2 Legend Rayleigh" or "Story Katakuri", and ignores punctuation - "Monkey D Luffy" now finds every Luffy card, dot or no dot.',
+        el: 'Η αναζήτηση στους **Χαρακτήρες**, στα **Boxes χαρακτήρων**, στο **Manual Team Builder**, στο **Captain Coverage**, στους **Rumble χαρακτήρες** και στο **Auto Team Rumble Builder** βρίσκει χαρακτήρες με τα ονόματα που χρησιμοποιεί η κοινότητα, όπως «V2 Legend Rayleigh» ή «Story Katakuri», και αγνοεί τα σημεία στίξης - το «Monkey D Luffy» βρίσκει πλέον κάθε κάρτα του Luffy, με τελεία ή χωρίς.',
+      },
+      {
+        en: 'On the **Character** screen, an earlier form under **Evolves from** is marked **Same Captain Ability · cost N** when its Captain Ability is exactly the same and it costs less.',
+        el: 'Στην οθόνη **Χαρακτήρα**, μια προηγούμενη μορφή κάτω από το **Προέρχεται από** σημειώνεται **Ίδιο Captain Ability · cost N** όταν έχει ακριβώς το ίδιο Captain Ability και μικρότερο cost.',
+      },
+    ],
+    improved: [
+      {
+        en: 'In the **side menu**, the language switcher names both languages, **English** and **Ελληνικά**, and marks the one you are using, for screen readers too.',
+        el: 'Στο **πλαϊνό μενού**, η εναλλαγή γλώσσας γράφει και τις δύο γλώσσες, **English** και **Ελληνικά**, και σημειώνει αυτή που χρησιμοποιείς, και για αναγνώστες οθόνης.',
+      },
+      {
+        en: 'More of the app speaks Greek when you choose it: a failed OPTCbx import on **Characters** or **Settings** says what to do instead of showing an English error, and the **Compare teams** summary on **Auto Team Builder** and the **Drive sync review** on the **Account** screen are translated.',
+        el: 'Περισσότερα σημεία της εφαρμογής μιλούν Ελληνικά όταν το διαλέγεις: ένα αποτυχημένο import από το OPTCbx στους **Χαρακτήρες** ή στις **Ρυθμίσεις** λέει τι να κάνεις αντί να δείχνει ένα αγγλικό μήνυμα λάθους, και η περίληψη της **Σύγκρισης ομάδων** στο **Auto Team Builder** και το **Drive sync review** στην οθόνη **Λογαριασμός** είναι μεταφρασμένα.',
+      },
+      {
+        en: 'Whether two cards are the same character is now decided by the game data\'s own list of families instead of a guess from the name - on **Manual Team Builder**, **Captain Coverage**, **Auto Team Builder** and **Auto Team Rumble Builder**.',
+        el: 'Το αν δύο κάρτες είναι ο ίδιος χαρακτήρας το αποφασίζει πλέον η λίστα οικογενειών των ίδιων των δεδομένων του παιχνιδιού, όχι μια εικασία από το όνομα - στο **Manual Team Builder**, στο **Captain Coverage**, στο **Auto Team Builder** και στο **Auto Team Rumble Builder**.',
+      },
+      {
+        en: 'The **Class** filter on **Characters**, **Character Boxes**, **Manual Team Builder**, **Captain Coverage** and **Auto Team Builder** now also finds dual and VS characters whose class comes after a swap, and marks them - for example "Driven after swap (as Smoker)". The **Character** screen lists each form with its type and classes under **After swap**.',
+        el: 'Το φίλτρο **Class** στους **Χαρακτήρες**, στα **Boxes χαρακτήρων**, στο **Manual Team Builder**, στο **Captain Coverage** και στο **Auto Team Builder** βρίσκει πλέον και dual και VS χαρακτήρες που παίρνουν την class μετά από swap, και τους σημειώνει - για παράδειγμα «Driven μετά από swap (ως Smoker)». Η οθόνη **Χαρακτήρα** δείχνει κάθε μορφή με το type και τις classes της κάτω από το **Μετά από swap**.',
+      },
+      {
+        en: '**Name A→Z** sorts the same way on every screen, and **Character Boxes** keeps its order after you save a local edit.',
+        el: 'Το **Name A→Z** ταξινομεί με τον ίδιο τρόπο σε κάθε οθόνη, και τα **Boxes χαρακτήρων** κρατούν τη σειρά τους αφού αποθηκεύσεις μια τοπική επεξεργασία.',
+      },
+      {
+        en: 'Text no longer touches the edge of 25 cards across the app, and the **Privacy**, **Cookies** and **Terms** links at the bottom of the screen are readable and stay on screen at any text size.',
+        el: 'Το κείμενο δεν ακουμπά πια την άκρη σε 25 κάρτες σε όλη την εφαρμογή, και οι σύνδεσμοι **Απόρρητο**, **Cookies** και **Όροι** στο κάτω μέρος της οθόνης διαβάζονται και μένουν μέσα στην οθόνη σε κάθε μέγεθος κειμένου.',
+      },
+      {
+        en: 'In the **Android app**, Google sign-in and Drive sync are no longer offered, because that build cannot sign in yet. The **side menu** drops its **Log in** row, and **Home** and the **Account** screen explain how to move your data with **Export all data** and **Import all data** in **Settings** instead.',
+        el: 'Στο **Android app**, η σύνδεση με Google και το Drive sync δεν προσφέρονται πια, γιατί αυτή η έκδοση δεν μπορεί ακόμη να συνδεθεί. Το **πλαϊνό μενού** δεν έχει πια τη γραμμή **Σύνδεση**, και η **Αρχική** και η οθόνη **Λογαριασμός** εξηγούν πώς μεταφέρεις τα δεδομένα σου με την **Εξαγωγή όλων** και την **Εισαγωγή όλων** στις **Ρυθμίσεις**.',
+      },
+    ],
+    fixed: [
+      {
+        en: 'In the **Android app**, the back key on **Home** leaves the app, the top and bottom bars stay dark to match the app, and an update downloads once instead of twice when Android first asks for permission to install it.',
+        el: 'Στο **Android app**, το κουμπί πίσω στην **Αρχική** βγαίνει από την εφαρμογή, οι μπάρες πάνω και κάτω μένουν σκούρες όπως η εφαρμογή, και μια ενημέρωση κατεβαίνει μία φορά αντί για δύο όταν το Android ζητά πρώτη φορά άδεια να την εγκαταστήσει.',
+      },
+      {
+        en: 'In the **Android app**, every export - from **Settings**, **Saved Teams**, **Saved Enemies**, the **Character** screen, **Auto Team Builder** and **Auto Team Rumble Builder** - now opens the share sheet so you can save or send the file, and a copied share link opens the team on optcteambuilder.com.',
+        el: 'Στο **Android app**, κάθε εξαγωγή - από τις **Ρυθμίσεις**, τις **Αποθηκευμένες ομάδες**, τους **Αποθηκευμένους εχθρούς**, την οθόνη **Χαρακτήρα**, το **Auto Team Builder** και το **Auto Team Rumble Builder** - ανοίγει πλέον το μενού κοινοποίησης για να αποθηκεύσεις ή να στείλεις το αρχείο, και ένα share link που αντέγραψες ανοίγει την ομάδα στο optcteambuilder.com.',
+      },
+      {
+        en: '**Export all data** in **Settings** and **Google Drive sync** on the **Account** screen no longer save your Rumble opponents and your **Boosted** list as empty when you had not opened those screens yet. A **Merge** keeps the Rumble opponents and Crew Forge profiles that only Drive has, and synced lists keep their order.',
+        el: 'Η **Εξαγωγή όλων** στις **Ρυθμίσεις** και το **Sync με Google Drive** στην οθόνη **Λογαριασμός** δεν αποθηκεύουν πια άδειους τους αντιπάλους σου στο Rumble και τη λίστα **Boosted**, όταν δεν είχες ανοίξει ακόμη εκείνες τις οθόνες. Ένα **Merge** κρατά τους αντιπάλους του Rumble και τα προφίλ του Crew Forge που έχει μόνο το Drive, και οι λίστες κρατούν τη σειρά τους μετά το sync.',
+      },
+      {
+        en: 'On **Captain Coverage**, Captains that boost by cost or rarity no longer read **0 boosted**, and saving a team a second time keeps its notes and ship.',
+        el: 'Στο **Captain Coverage**, οι Captains που ενισχύουν με βάση το cost ή το rarity δεν δείχνουν πια **0 boosted**, και η δεύτερη αποθήκευση μιας ομάδας κρατά τις σημειώσεις και το πλοίο της.',
+      },
+      {
+        en: 'Saving a local edit of a character on the **Character** screen without changing anything no longer drops parts of the character.',
+        el: 'Η αποθήκευση μιας τοπικής επεξεργασίας χαρακτήρα στην οθόνη **Χαρακτήρα** χωρίς καμία αλλαγή δεν χάνει πια κομμάτια του χαρακτήρα.',
+      },
+      {
+        en: 'On **Saved Enemies**, an imported enemy keeps the requirements its mechanics imply, and two enemies with Greek or Japanese names no longer overwrite each other when imported.',
+        el: 'Στους **Αποθηκευμένους εχθρούς**, ένας εχθρός που εισάγεις κρατά τις απαιτήσεις που προκύπτουν από τους μηχανισμούς του, και δύο εχθροί με ελληνικά ή ιαπωνικά ονόματα δεν αντικαθιστούν πια ο ένας τον άλλον στο import.',
+      },
+      {
+        en: 'The **Team Coverage** panel on **Manual Team Builder**, **Captain Coverage**, **Auto Team Builder** and **Saved Teams** now shows for a team with no Friend Captain, and the **White Tiger** and **Polar Tang** ship chips count all six units they boost.',
+        el: 'Το πάνελ **Κάλυψη ομάδας** στο **Manual Team Builder**, στο **Captain Coverage**, στο **Auto Team Builder** και στις **Αποθηκευμένες ομάδες** εμφανίζεται πλέον και για ομάδα χωρίς Friend Captain, και τα chips των πλοίων **White Tiger** και **Polar Tang** μετρούν και τους έξι χαρακτήρες που ενισχύουν.',
+      },
+      {
+        en: 'Support-only characters can no longer take a crew seat on **Manual Team Builder**, **Captain Coverage** and **Auto Team Builder** - they belong in a Support slot, and the builder says why.',
+        el: 'Οι χαρακτήρες μόνο για Support δεν μπορούν πια να πάρουν θέση στο πλήρωμα στο **Manual Team Builder**, στο **Captain Coverage** και στο **Auto Team Builder** - ανήκουν σε Support slot, και ο builder εξηγεί γιατί.',
+      },
+      {
+        en: 'On **Crew Forge**, replacing the screenshot while a build is running no longer leaves teams from the old screenshot on screen.',
+        el: 'Στο **Crew Forge**, η αντικατάσταση του screenshot ενώ τρέχει ένα build δεν αφήνει πια στην οθόνη ομάδες από το παλιό screenshot.',
+      },
+      {
+        en: 'On **Auto Team Rumble Builder**, every unit is scored as it is before Level Limit Break, as the top of the page now says; a unit\'s LLB line was being counted on top of the line it replaces. An opponent team also keeps its board positions through **Download team JSON** and **Import team**.',
+        el: 'Στο **Auto Team Rumble Builder**, κάθε χαρακτήρας βαθμολογείται όπως είναι πριν από το Level Limit Break, όπως λέει πλέον το πάνω μέρος της σελίδας - η γραμμή LLB ενός χαρακτήρα μετρούσε επιπλέον της γραμμής που αντικαθιστά. Επίσης, μια ομάδα αντιπάλου κρατά τις θέσεις της στο ταμπλό μέσα από τη **Λήψη ομάδας JSON** και το **Import team**.',
+      },
+      {
+        en: 'The **Character** screen no longer lists score thresholds and skulls as drops or as characters to evolve with; a skull now reads **Skull of** the character, with how many you need.',
+        el: 'Η οθόνη **Χαρακτήρα** δεν δείχνει πια όρια σκορ και κρανία σαν drops ή σαν χαρακτήρες για εξέλιξη - ένα κρανίο γράφεται πλέον **Κρανίο:** και ο χαρακτήρας, μαζί με πόσα χρειάζεσαι.',
+      },
+      {
+        en: 'A Greek or accented Google name no longer turns into garbled letters after a restart, in the **side menu** and on the **Account** screen. **Import all data** in **Settings** no longer shows raw text codes after importing saved teams, and its messages follow a language switch.',
+        el: 'Ένα ελληνικό ή τονισμένο όνομα Google δεν γίνεται πια ακατανόητοι χαρακτήρες μετά από επανεκκίνηση, στο **πλαϊνό μενού** και στην οθόνη **Λογαριασμός**. Η **Εισαγωγή όλων** στις **Ρυθμίσεις** δεν δείχνει πια ωμούς κωδικούς κειμένου μετά το import αποθηκευμένων ομάδων, και τα μηνύματά της ακολουθούν την αλλαγή γλώσσας.',
+      },
+      {
+        en: 'Dropdowns no longer run past the edge of a phone screen when you choose many values - in the enemy pop-up on **Saved Enemies**, the avoid filter on **Auto Team Rumble Builder**, the **Class** filter on **Characters** and the other screens that share it, and **Roles** on **Rumble Characters**.',
+        el: 'Τα μενού επιλογής δεν ξεφεύγουν πια από την άκρη της οθόνης του κινητού όταν διαλέγεις πολλές τιμές - στο αναδυόμενο παράθυρο του εχθρού στους **Αποθηκευμένους εχθρούς**, στο φίλτρο αποφυγής στο **Auto Team Rumble Builder**, στο φίλτρο **Class** στους **Χαρακτήρες** και στις άλλες οθόνες που το μοιράζονται, και στα **Roles** στους **Rumble χαρακτήρες**.',
+      },
+    ],
+  },
+  {
     version: '0.6.5',
     date: '2026-09-24',
     userVisible: true,
