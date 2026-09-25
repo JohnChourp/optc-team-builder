@@ -186,7 +186,7 @@
     "test:published-teams": "vitest run scripts/check-published-teams.spec.ts scripts/check-published-teams-same-character.spec.ts && npm run teams:published",
     "test:pwa-shell": "vitest run scripts/lib/page-error-origin.spec.ts && node ./scripts/pwa-shell-check.mjs",
     "test:release-check": "vitest run scripts/bump-version.spec.ts scripts/check-optc-release-needed.spec.ts scripts/check-optc-upstream-monitor.spec.ts scripts/backtest-optc-release-detector.spec.ts scripts/release-detector-status.spec.ts scripts/release-decision-history.spec.ts scripts/release-provenance-report.spec.ts scripts/post-dispatch-production-smoke.spec.ts",
-    "test:release-contract": "vitest run scripts/generate-release-contract.spec.ts && node ./scripts/generate-release-contract.mjs --check",
+    "test:release-contract": "vitest run scripts/generate-release-contract.spec.ts scripts/generate-release-contract-app-config.spec.ts && node ./scripts/generate-release-contract.mjs --check",
     "test:release-readiness": "vitest run scripts/release-readiness-report.spec.ts",
     "test:release-runbook-drift": "vitest run scripts/check-release-runbook-drift.spec.ts",
     "test:route-sitemap-coverage": "vitest run scripts/lib/public-routes.spec.ts scripts/lib/public-page-language.spec.ts scripts/check-route-sitemap-coverage.spec.ts && npm run routes:sitemap-coverage",

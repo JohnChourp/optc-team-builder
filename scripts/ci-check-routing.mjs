@@ -751,7 +751,9 @@ function isReleaseContractPath(filePath) {
   return (
     filePath === 'scripts/generate-release-contract.mjs' ||
     filePath === 'scripts/generate-release-contract.spec.ts' ||
+    filePath === 'scripts/generate-release-contract-app-config.spec.ts' ||
     filePath === 'scripts/lib/release-contract.mjs' ||
+    filePath === 'scripts/lib/app-config-targets.mjs' ||
     filePath === 'docs/release-contract.json' ||
     filePath === 'scripts/bump-version.sh' ||
     filePath === 'scripts/bump-version.spec.ts' ||
@@ -761,6 +763,15 @@ function isReleaseContractPath(filePath) {
     filePath === 'android/app/build.gradle' ||
     filePath === 'src/app/core/data/app-version.data.ts'
   );
+}
+
+/*
+ * 869f63gu4. Non-terminating: the contract also DERIVES which app-config.js each build gets
+ * from the writer, and writes that table into the secrets register. Both route elsewhere too.
+ * The workflows it reads already take the full plan.
+ */
+function touchesReleaseContractSources(filePath) {
+  return filePath === 'scripts/write-app-config.mjs' || filePath === 'docs/release-secrets-register.md';
 }
 
 /*
@@ -1929,6 +1940,10 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
 
     if (touchesSecurityConfigSources(filePath)) {
       addScriptSuite(scriptSuites, 'security-config');
+    }
+
+    if (touchesReleaseContractSources(filePath)) {
+      addScriptSuite(scriptSuites, 'release-contract');
     }
 
     if (touchesI18nNamespaces(filePath)) {

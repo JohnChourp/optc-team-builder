@@ -78,7 +78,7 @@ export const NPM_SCRIPT_REGISTRY = [
     script: 'release:contract',
     class: 'manual',
     reason:
-      '869f13d7j/869f13d7n. Regenerates the release contract by BUMPING A FIXTURE of the real tree and diffing, so it is the write half of a measurement rather than of a list. The CHECK half runs in the release-contract lane as `generate-release-contract.mjs --check`; this is run deliberately when a version field or a release step legitimately changes. Same split as dataset:provenance and dataset:consumers.',
+      '869f13d7j/869f13d7n. Regenerates the release contract by BUMPING A FIXTURE of the real tree and diffing, so it is the write half of a measurement rather than of a list. 869f63gu4 added the app-config key x build target table, derived from write-app-config.mjs, package.json and the workflows, and its generated section in docs/release-secrets-register.md. The CHECK half runs in the release-contract lane as `generate-release-contract.mjs --check`; this is run deliberately when a version field, a release step or a build environment legitimately changes. Same split as dataset:provenance and dataset:consumers.',
   },
   {
     script: 'suites:environments',
