@@ -79,12 +79,23 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
       Math.ceil(normalizedPayload.length / 4) * 4,
       '=',
     );
-    const decodedPayload =
+    const binaryPayload =
       typeof globalThis.atob === 'function' ? globalThis.atob(paddedPayload) : null;
 
-    if (!decodedPayload) {
+    if (!binaryPayload) {
       return null;
     }
+
+    /*
+     * 869f6td25. `atob` returns one character per BYTE, and a JWT payload is UTF-8 - so every name
+     * outside ASCII came back garbled, "Γιάννης" as a run of Latin-1 letters, on each refresh after
+     * sign-in, and that garbled name was what got remembered. The sign-in plugin decodes UTF-8
+     * itself, which is why sign-in looked right. A name remembered garbled heals on the next
+     * refresh or sign-in, because both remember the profile decoded here.
+     */
+    const decodedPayload = new TextDecoder().decode(
+      Uint8Array.from(binaryPayload, (character) => character.charCodeAt(0)),
+    );
 
     return JSON.parse(decodedPayload) as Record<string, unknown>;
   } catch {

@@ -3,13 +3,20 @@
   gap: 18px;
 }
 
+// `.glass-card` has no padding, so every Settings card is listed here - and in the 679px block below.
+// 869f6td0f added the four that were missing; Game version also copies Performance's grid.
 .intro-card,
+.game-version-card,
 .analytics-card,
 .performance-card,
-.data-card {
+.data-card,
+.stored-data-card,
+.recent-errors-card,
+.about-card {
   padding: 18px;
 }
 
+.game-version-card,
 .analytics-card,
 .performance-card {
   display: grid;
@@ -311,9 +318,13 @@
 
 @media (max-width: 679px) {
   .intro-card,
+  .game-version-card,
   .analytics-card,
   .performance-card,
-  .data-card {
+  .data-card,
+  .stored-data-card,
+  .recent-errors-card,
+  .about-card {
     padding: 14px;
   }
 

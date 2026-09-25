@@ -225,43 +225,51 @@
   margin: 0;
 }
 
+/*
+ * 869f63gnc. The safe-area inset is padding HERE, outside the bar, and the border sits on the bar:
+ * `--app-footer-bar-height` follows the bar's measured height (followFooterBarHeight), and every
+ * reader of that variable adds `env(safe-area-inset-bottom)` itself.
+ */
 .app-footer-meta {
   position: relative;
   z-index: 5;
   width: 100%;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-bottom: env(safe-area-inset-bottom);
   background: rgba(3, 5, 12, 0.98);
   box-shadow: 0 -12px 24px rgba(0, 0, 0, 0.18);
 }
 
+/*
+ * 869f63gnc. The row WRAPS. It used to be one nowrap line scrolling sideways behind a hidden
+ * scrollbar, so at a 200% system text size Cookies and Terms left the screen with nothing to say
+ * they were there. At the default text size it is still one line on phones from about 363px wide,
+ * and the vertical padding went from 8px to 6px so that line stays the old ~28px with 12px links.
+ */
 .app-footer-meta__inner {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 4px 12px;
   min-height: 0;
-  padding: 8px 16px calc(8px + env(safe-area-inset-bottom));
-  white-space: nowrap;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.app-footer-meta__inner::-webkit-scrollbar {
-  display: none;
+  padding: 6px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .app-legal-nav {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  white-space: nowrap;
+  gap: 4px 8px;
 }
 
+// 0.75rem - 12px at the default text size - from 0.56rem, 9px, which was too small to read (869f63gnc).
 .app-legal-nav__link {
   color: rgba(255, 244, 200, 0.62);
-  font-size: 0.56rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.07em;
+  line-height: 1.2;
   text-decoration: none;
   text-transform: uppercase;
 }
@@ -291,7 +299,8 @@
   text-align: center;
   text-decoration: none;
   text-transform: uppercase;
-  text-wrap: nowrap;
+  // No `nowrap` (869f63gnc): the credit fits one line down to 360px even at 200% text, and where it
+  // cannot - narrower still - two lines beat the version being clipped at the edge of the screen.
   backdrop-filter: none;
   opacity: 0.82;
   transition:
@@ -338,7 +347,7 @@
 
   .app-footer-meta__inner {
     justify-content: flex-start;
-    gap: 10px;
+    gap: 4px 10px;
     padding-inline: 12px;
   }
 

@@ -19,14 +19,24 @@ export type DriveSyncReviewChoice = 'device' | 'drive' | 'remove';
 
 export type DriveSyncReviewRowStatus = 'added' | 'changed' | 'kept' | 'removed';
 
+/**
+ * 869f6td68. Words the review shows for a row. `text` is the item's own - its name, its id, a
+ * number - and is shown as it is; `key` is a phrase in the `settings` scope, filled in from
+ * `params`. The fallbacks and counts here were English, and the Account page showed them as they
+ * were: "5 slots" and "Saved team" on a Greek screen.
+ */
+export type DriveSyncReviewText =
+  | { readonly text: string }
+  | { readonly key: string; readonly params?: Readonly<Record<string, number | string>> };
+
 export interface DriveSyncReviewRow {
   choice: DriveSyncReviewChoice;
   choices: DriveSyncReviewChoice[];
-  detail: string;
+  detail: DriveSyncReviewText;
   deviceItem: unknown | null;
   driveItem: unknown | null;
   key: string;
-  label: string;
+  label: DriveSyncReviewText;
   section: DriveSyncReviewSectionKey;
   status: DriveSyncReviewRowStatus;
 }
@@ -63,11 +73,16 @@ export interface DriveSyncReviewDraft {
 
 interface SectionConfig<T> {
   buildPayload: (items: T[], exportedAt: string) => Partial<AllDataTransferPayload>;
-  detail: (item: T) => string;
+  detail: (item: T) => DriveSyncReviewText;
   getItems: (payload: AllDataTransferPayload) => T[];
   key: DriveSyncReviewSectionKey;
-  label: (item: T) => string;
+  label: (item: T) => DriveSyncReviewText;
   rowKey: (item: T) => string;
+}
+
+/** The item's own name, or id, as it is - or, when it has neither, a phrase to translate. */
+function ownOr(own: string, key: string, params?: Record<string, number | string>): DriveSyncReviewText {
+  return own ? { text: own } : { key, ...(params ? { params } : {}) };
 }
 
 const sectionConfigs: [SectionConfig<never>, ...SectionConfig<never>[]] = [
@@ -77,10 +92,10 @@ const sectionConfigs: [SectionConfig<never>, ...SectionConfig<never>[]] = [
         characters: items,
       },
     }),
-    detail: (item) => `#${readNumber(item, 'number') ?? ''}`,
+    detail: (item) => ({ text: `#${readNumber(item, 'number') ?? ''}` }),
     getItems: (payload) => (payload.favorites?.characters ?? []) as never[],
     key: 'favorites',
-    label: (item) => readString(item, 'name') || `#${readNumber(item, 'number') ?? ''}`,
+    label: (item) => ({ text: readString(item, 'name') || `#${readNumber(item, 'number') ?? ''}` }),
     rowKey: (item) => String(readNumber(item, 'number') ?? ''),
   },
   {
@@ -92,10 +107,13 @@ const sectionConfigs: [SectionConfig<never>, ...SectionConfig<never>[]] = [
         source: 'favorite-ships',
       },
     }),
-    detail: (item) => `#${readNumber(item, 'id') ?? ''}`,
+    detail: (item) => ({ text: `#${readNumber(item, 'id') ?? ''}` }),
     getItems: (payload) => (payload.favoriteShips?.ships ?? []) as never[],
     key: 'favoriteShips',
-    label: (item) => readString(item, 'name') || `Ship #${readNumber(item, 'id') ?? ''}`,
+    label: (item) =>
+      ownOr(readString(item, 'name'), 'driveSync.review.rowLabels.ship', {
+        id: readNumber(item, 'id') ?? '',
+      }),
     rowKey: (item) => String(readNumber(item, 'id') ?? ''),
   },
   {
@@ -107,10 +125,17 @@ const sectionConfigs: [SectionConfig<never>, ...SectionConfig<never>[]] = [
         source: 'character-boxes',
       },
     }),
-    detail: (item) => `${readArray(item, 'characterIds').length} characters`,
+    detail: (item) => ({
+      key: 'driveSync.review.rowDetails.characters',
+      params: { count: readArray(item, 'characterIds').length },
+    }),
     getItems: (payload) => (payload.characterBoxes?.boxes ?? []) as never[],
     key: 'characterBoxes',
-    label: (item) => readString(item, 'name') || readString(item, 'id') || 'Character box',
+    label: (item) =>
+      ownOr(
+        readString(item, 'name') || readString(item, 'id'),
+        'driveSync.review.rowLabels.characterBox',
+      ),
     rowKey: (item) => readString(item, 'id'),
   },
   {
@@ -122,11 +147,13 @@ const sectionConfigs: [SectionConfig<never>, ...SectionConfig<never>[]] = [
         source: 'character-overrides',
       },
     }),
-    detail: (item) => `#${readNumber(item, 'characterId') ?? ''}`,
+    detail: (item) => ({ text: `#${readNumber(item, 'characterId') ?? ''}` }),
     getItems: (payload) => (payload.characterOverrides?.overrides ?? []) as never[],
     key: 'characterOverrides',
     label: (item) =>
-      readString(item, 'name') || `Character #${readNumber(item, 'characterId') ?? ''}`,
+      ownOr(readString(item, 'name'), 'driveSync.review.rowLabels.character', {
+        id: readNumber(item, 'characterId') ?? '',
+      }),
     rowKey: (item) => String(readNumber(item, 'characterId') ?? ''),
   },
   {
@@ -138,10 +165,14 @@ const sectionConfigs: [SectionConfig<never>, ...SectionConfig<never>[]] = [
         teams: items,
       },
     }),
-    detail: (item) => `${readArray(item, 'slots').filter((slot) => slot !== null).length} slots`,
+    detail: (item) => ({
+      key: 'driveSync.review.rowDetails.slots',
+      params: { count: readArray(item, 'slots').filter((slot) => slot !== null).length },
+    }),
     getItems: (payload) => (payload.savedTeams?.teams ?? []) as never[],
     key: 'savedTeams',
-    label: (item) => readString(item, 'name') || readString(item, 'id') || 'Saved team',
+    label: (item) =>
+      ownOr(readString(item, 'name') || readString(item, 'id'), 'driveSync.review.rowLabels.savedTeam'),
     rowKey: (item) => readString(item, 'id'),
   },
   {
@@ -153,10 +184,17 @@ const sectionConfigs: [SectionConfig<never>, ...SectionConfig<never>[]] = [
         source: 'saved-rumble-teams',
       },
     }),
-    detail: (item) => `${readArray(item, 'teams').length} teams`,
+    detail: (item) => ({
+      key: 'driveSync.review.rowDetails.teams',
+      params: { count: readArray(item, 'teams').length },
+    }),
     getItems: (payload) => (payload.savedRumbleTeams?.rumbleTeams ?? []) as never[],
     key: 'savedRumbleTeams',
-    label: (item) => readString(item, 'name') || readString(item, 'id') || 'Saved Rumble team',
+    label: (item) =>
+      ownOr(
+        readString(item, 'name') || readString(item, 'id'),
+        'driveSync.review.rowLabels.savedRumbleTeam',
+      ),
     rowKey: (item) => readString(item, 'id'),
   },
   {
@@ -168,11 +206,17 @@ const sectionConfigs: [SectionConfig<never>, ...SectionConfig<never>[]] = [
         source: 'saved-enemies',
       },
     }),
-    detail: (item) =>
-      `${readArray(item, 'requiredAbilities').length} abilities, ${readArray(item, 'enemyMechanics').length} mechanics`,
+    detail: (item) => ({
+      key: 'driveSync.review.rowDetails.abilitiesAndMechanics',
+      params: {
+        abilities: readArray(item, 'requiredAbilities').length,
+        mechanics: readArray(item, 'enemyMechanics').length,
+      },
+    }),
     getItems: (payload) => (payload.savedEnemies?.enemies ?? []) as never[],
     key: 'savedEnemies',
-    label: (item) => readString(item, 'name') || readString(item, 'id') || 'Saved enemy',
+    label: (item) =>
+      ownOr(readString(item, 'name') || readString(item, 'id'), 'driveSync.review.rowLabels.savedEnemy'),
     rowKey: (item) => readString(item, 'id'),
   },
 ];

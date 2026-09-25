@@ -45,6 +45,7 @@ import {
 } from '../../core/models/optcbx-import.models';
 import { AppI18nService } from '../../core/services/app-i18n.service';
 import { CharacterCatalogCacheService } from '../../core/services/character-catalog-cache.service';
+import { ErrorLogService } from '../../core/services/error-log.service';
 import {
   countCharacterFacetMatches,
   createEmptyCharacterFacetSelection,
@@ -52,7 +53,11 @@ import {
 } from '../../core/services/character-facet-filter.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { formatDownloadSize } from '../../core/services/update-payload-size.utils';
-import { OptcbxImportService } from '../../core/services/optcbx-import.service';
+import {
+  OPTCBX_IMPORT_I18N_SCOPE,
+  OptcbxImportError,
+  OptcbxImportService,
+} from '../../core/services/optcbx-import.service';
 import { UserStateService } from '../../core/services/user-state.service';
 import { resolveCharacterRegionStatus } from '../../core/services/character-region.utils';
 import {
@@ -516,6 +521,7 @@ export class CharactersPage implements OnInit {
     private readonly optcbxImport: OptcbxImportService,
     private readonly i18n: AppI18nService,
     private readonly route: ActivatedRoute,
+    private readonly errorLog: ErrorLogService,
   ) {
     this.favoriteIds = this.userState.favoriteCharacterIds;
     this.gameRegionPreference = this.userState.gameRegionPreference;
@@ -1023,6 +1029,17 @@ export class CharactersPage implements OnInit {
   }
 
   private resolveImportError(error: unknown): string {
+    /*
+     * 869f6td63. A file the OPTCbx parser turned down gets its reason in the reader's language,
+     * with what to do. This used to return the parser's English message as it was, on the Greek UI
+     * too; those words now go to Recent problems on Settings, the one place they are kept.
+     */
+    if (error instanceof OptcbxImportError) {
+      this.errorLog.record('import', error.name, error.message);
+
+      return this.i18n.translate(error.key, error.parameters, OPTCBX_IMPORT_I18N_SCOPE);
+    }
+
     if (error instanceof Error && error.message.trim()) {
       return error.message;
     }

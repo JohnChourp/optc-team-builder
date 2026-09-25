@@ -99,7 +99,11 @@
     "eyebrow": "Συμβατότητα OPTCbx",
     "errors": {
       "dropJson": "Ρίξε ένα JSON αρχείο που έγινε export από το OPTCbx.",
-      "generic": "Το import του OPTCbx απέτυχε. Δοκίμασε άλλο export αρχείο."
+      "generic": "Το import του OPTCbx απέτυχε. Δοκίμασε άλλο export αρχείο.",
+      "notJson": "Αυτό το αρχείο δεν είναι αρχείο JSON. Διάλεξε το αρχείο JSON που αποθήκευσες από το OPTCbx με το /export.",
+      "notOptcbxExport": "Αυτό το αρχείο δεν είναι export του OPTCbx: δεν έχει λίστα χαρακτήρων. Διάλεξε το αρχείο JSON που αποθήκευσες από το OPTCbx με το /export. Ένα αρχείο που έκανες export από αυτή την εφαρμογή μπαίνει στις Ρυθμίσεις, στο All Data.",
+      "entryWithoutNumber": "Η εγγραφή {{entry}} σε αυτό το export του OPTCbx δεν έχει αριθμό χαρακτήρα. Κάνε ξανά export το box από το OPTCbx, ή σβήσε αυτή την εγγραφή από το αρχείο, και διάλεξέ το ξανά.",
+      "noCharacters": "Αυτό το export του OPTCbx δεν έχει κανέναν χαρακτήρα. Κάνε ξανά export το box σου από το OPTCbx και διάλεξε το νέο αρχείο."
     },
     "ignoredDuplicates": "{{count}} διπλές εγγραφές export αγνοήθηκαν πριν από το import.",
     "importFavorites": "Εισαγωγή favorites",

@@ -173,19 +173,24 @@
           [attr.aria-label]="'tabs.languageSwitcherAriaLabel' | transloco"
           role="group"
         >
+          <!--
+            869f63gnt. Each language is named in its own language, whatever language the menu is
+            in, and the current one is PRESSED rather than disabled: a disabled button leaves the
+            tab order and tells a screen reader nothing about "current". Native buttons, because
+            an Ionic control moves aria state into its shadow button once and never updates it.
+            The name is the button's whole label, so there is no aria-label to override it.
+          -->
           @for (language of availableLanguages; track language.id) {
             <button
               type="button"
               class="language-flag-button"
               [class.language-flag-button--active]="activeLanguage() === language.id"
-              [disabled]="activeLanguage() === language.id"
-              [attr.aria-label]="
-                'tabs.languageSwitchTo'
-                  | transloco: { language: ('common.languages.' + language.id | transloco) }
-              "
+              [attr.aria-pressed]="activeLanguage() === language.id"
+              [attr.lang]="language.id"
               (click)="onLanguageSelect(language.id)"
             >
-              <span aria-hidden="true">{{ language.flag }}</span>
+              <span class="language-flag-button__flag" aria-hidden="true">{{ language.flag }}</span>
+              <span>{{ language.label }}</span>
             </button>
           }
         </div>

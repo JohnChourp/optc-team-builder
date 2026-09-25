@@ -39,14 +39,19 @@ import { ErrorHandler, Inject, Injectable, type Signal, signal } from '@angular/
  * may quote it themselves - which is their choice to make and not ours.
  */
 
-/** Which mechanism caught it. Kept because the three fail in different ways. */
+/** Which mechanism caught it. Kept because they fail in different ways. */
 export type ErrorLogKind =
   /** Angular's own handler: anything thrown inside the framework's zone. */
   | 'angular'
   /** A `window.onerror` event: a synchronous throw that escaped everything. */
   | 'window'
   /** An `unhandledrejection`: a promise nobody caught, which Angular never sees. */
-  | 'rejection';
+  | 'rejection'
+  /**
+   * 869f6td63. A file an import turned down. The screen caught it and told the reader, in their
+   * language, what to do; this keeps the parser's own words, which the screen no longer shows.
+   */
+  | 'import';
 
 export interface ErrorLogEntry {
   /** ISO-8601, so an export sorts and a reader can say "around then". */
@@ -128,7 +133,7 @@ function parseEntries(raw: string): ErrorLogEntry[] {
     return [];
   }
 
-  const kinds = new Set<string>(['angular', 'window', 'rejection']);
+  const kinds = new Set<string>(['angular', 'window', 'rejection', 'import']);
 
   return parsed
     .filter(
