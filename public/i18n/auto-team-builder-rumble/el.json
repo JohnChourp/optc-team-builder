@@ -107,6 +107,17 @@
         "tertiary": "Tertiary",
         "ignored": "Ignored"
       }
+    },
+    "avoid": {
+      "toggle": "Αποφυγή style / type / class",
+      "support": {
+        "off": "Για boss του Assault Rumble που «τιμωρεί» ένα style, type ή class.",
+        "on": "Οι χαρακτήρες με τα παρακάτω styles, types και classes δεν μπαίνουν στην ομάδα."
+      },
+      "styles": "Styles προς αποφυγή",
+      "stylesPlaceholder": "Επίλεξε styles",
+      "types": "Types προς αποφυγή",
+      "classes": "Classes προς αποφυγή"
     }
   },
   "performance": {
@@ -158,7 +169,8 @@
     "strictTypesTitle": "Δεν βρέθηκε ομάδα με τα active only-selected filters",
     "hardFiltersCopy": "Δεν μπόρεσε να χτιστεί πλήρης Rumble ομάδα κρατώντας τα active only-selected type/class filters.",
     "relaxedTitle": "Χρησιμοποιήθηκαν relaxed targets",
-    "relaxedCopy": "Ο builder χαλάρωσε μόνο τα παρακάτω soft target values για να επιστρέψει ομάδα."
+    "relaxedCopy": "Ο builder χαλάρωσε μόνο τα παρακάτω soft target values για να επιστρέψει ομάδα.",
+    "avoidShortfall": "Η αποφυγή των {{values}} άφησε έξω {{count}} χαρακτήρες, οπότε δεν φτάνουν για πλήρη ομάδα. Απόφυγε λιγότερα για περισσότερες επιλογές."
   },
   "summary": {
     "eyebrow": "Σύνοψη ομάδας",
