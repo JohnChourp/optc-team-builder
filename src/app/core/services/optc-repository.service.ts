@@ -895,6 +895,7 @@ export class OptcRepositoryService {
           captain_average_boost,
           region_json,
           region_release_json,
+          families_json,
           assets_json,
           search_text
         FROM characters
@@ -1120,6 +1121,7 @@ export class OptcRepositoryService {
             c.captain_average_boost,
             c.region_json,
             c.region_release_json,
+            c.families_json,
             c.assets_json,
             c.search_text,
             d.detail_json
@@ -1216,6 +1218,7 @@ export class OptcRepositoryService {
           c.captain_average_boost,
           c.region_json,
           c.region_release_json,
+          c.families_json,
           c.assets_json,
           c.search_text,
           d.detail_json
@@ -1443,6 +1446,7 @@ export class OptcRepositoryService {
             c.captain_average_boost,
             c.region_json,
             c.region_release_json,
+            c.families_json,
             c.assets_json,
             c.search_text,
             d.detail_json
@@ -1557,6 +1561,7 @@ export class OptcRepositoryService {
           captain_average_boost,
           region_json,
           region_release_json,
+          families_json,
           assets_json,
           search_text
         FROM characters
@@ -1603,6 +1608,7 @@ export class OptcRepositoryService {
           c.captain_average_boost,
           c.region_json,
           c.region_release_json,
+          c.families_json,
           c.assets_json,
           c.search_text,
           d.detail_json
@@ -1788,6 +1794,9 @@ export class OptcRepositoryService {
         regionArtwork,
         regionRelease,
         assets,
+        // 869f63grj. Upstream's families decide which cards are the same character. `[]` - a unit
+        // upstream names no family for, or a manually added one - leaves that to the name.
+        families: this.parseJson<string[]>(row['families_json'], []),
         imageUrl: this.resolveImageUrl(assets, { preferExactLocal: false, installedPacks }),
       };
 
@@ -1932,6 +1941,7 @@ export class OptcRepositoryService {
           c.captain_average_boost,
           c.region_json,
           c.region_release_json,
+          c.families_json,
           c.assets_json,
           c.search_text,
           d.detail_json

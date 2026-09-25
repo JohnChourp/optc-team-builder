@@ -21,9 +21,9 @@
  *
  * What each one does carry is a rationale that can be checked against the dataset, which is the
  * only claim this file is entitled to make. `scripts/check-published-teams.mjs` checks it: every
- * character id exists, every stage is one of the 787 the dataset carries, and the four SUB slots
- * hold no two characters that share a `partyConflictKeys` entry - the rule the dataset encodes and
- * that applies to subs only, never to the two leader seats.
+ * character id exists, every stage is one of the 787 the dataset carries, and no sub repeats the
+ * Captain or another sub - by the same-character rule the app itself applies (upstream's families
+ * first, 869f63grj), which never constrains the Friend Captain seat.
  */
 export interface PublishedTeam {
   readonly id: string;

@@ -10,7 +10,6 @@ import {
   SavedTeamsImportError,
   buildSavedTeamShareCode,
   buildSavedTeamSharePayload,
-  buildSavedTeamShareUrl,
   buildSavedTeamsTransferPayload,
   decodeSavedTeamShareCode,
   parseSavedTeamsImportContent,
@@ -19,6 +18,7 @@ import {
   sanitizeSavedTeamsImportPayload,
   type SavedTeamsTransferPayload,
 } from './saved-teams-transfer.utils';
+import { buildSavedTeamShareUrl } from './saved-teams-export.utils';
 
 interface CodecFuzzCorpus {
   exportedAt: string;

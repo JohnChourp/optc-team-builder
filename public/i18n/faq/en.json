@@ -68,8 +68,8 @@
       "bullets": {
         "leaders": "The Captain and the Friend Captain may be the same character. That is legal in the game, and two different cards of the same character can hold the two leader seats.",
         "subs": "The Captain and the four subs must all be different characters. Two different cards of the same character count as the same character here - a second Luffy card cannot sit beside your Luffy Captain.",
-        "aliases": "The app knows the names the game gives the same character in different arcs, so Zorojuro counts as Zoro, Onami as Nami, Whitebeard as Edward Newgate and Aokiji as Kuzan. Thirty-four such pairs are built in.",
-        "duo": "A card with two characters in its name conflicts with each of them separately, so a Kid & Killer card blocks both a Kid and a Killer elsewhere in the crew.",
+        "aliases": "Which cards are the same character comes from the community database the app's data is built from. It names the character on almost every card, so Zorojuro counts as Zoro, Onami as Nami, Lucy as Luffy and Aokiji as Kuzan, and a card it does not name yet is judged by its name. Where it is wrong the app corrects it by hand: it lists Blackback under the nickname BB, which is also Blackbeard's, so the two Blackback cards are kept apart from Blackbeard.",
+        "duo": "A card with more than one character conflicts with each of them separately, so a Kid & Killer card blocks both a Kid and a Killer elsewhere in the crew, and a Straw Hat Pirates card blocks each Straw Hat on it.",
         "whereItShows": "In Manual Team Builder a blocked character stays in the list with its reason underneath, and a repeat already placed raises \"Repeated character in your crew\". In Auto Team Builder the same rule is why a candidate can be rejected for conflicting with unique base-character rules."
       },
       "links": {

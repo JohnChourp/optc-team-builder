@@ -54,6 +54,7 @@ import { type CaptainBoosts, resolveCaptainBoosts } from '../grammar/captain-boo
 import {
   normalizePartyConflictKey,
   resolveCharacterPartyConflictKeys,
+  resolveCharacterSameCharacterKeys,
 } from './character-party-conflict-keys.utils';
 import { matchesAbilityRequirement } from './auto-team-builder-ability-match.utils';
 import {
@@ -230,7 +231,7 @@ interface PreparedAutoBuildRecord {
   typeTokens: AutoTeamBuilderType[];
   characterTagKeys: string[];
   demandTagKeys: string[];
-  partyConflictKeys: string[];
+  sameCharacterKeys: string[];
   superCriteriaKeys: string[];
   superEffectTexts: string[];
   effectFacts: PreparedAutoBuildEffectFacts;
@@ -524,10 +525,10 @@ export function buildAutoBuildAbilityCoverageBreakdown(
 
 export { resolveCharacterPartyConflictKeys };
 
-function resolveCandidatePartyConflictKeys(candidate: AutoBuildCandidate): string[] {
+function resolveCandidateSameCharacterKeys(candidate: AutoBuildCandidate): string[] {
   return (
-    PREPARED_RECORD_BY_CANDIDATE.get(candidate)?.partyConflictKeys ??
-    resolveCharacterPartyConflictKeys(candidate.character)
+    PREPARED_RECORD_BY_CANDIDATE.get(candidate)?.sameCharacterKeys ??
+    resolveCharacterSameCharacterKeys(candidate.character)
   );
 }
 
@@ -1018,14 +1019,14 @@ function hasAnyPartyConflictKey(
   candidate: AutoBuildCandidate,
   usedPartyConflictKeys: Set<string>,
 ): boolean {
-  return resolveCandidatePartyConflictKeys(candidate).some((key) => usedPartyConflictKeys.has(key));
+  return resolveCandidateSameCharacterKeys(candidate).some((key) => usedPartyConflictKeys.has(key));
 }
 
 function addCandidatePartyConflictKeys(
   usedPartyConflictKeys: Set<string>,
   candidate: AutoBuildCandidate,
 ): void {
-  resolveCandidatePartyConflictKeys(candidate).forEach((key) => usedPartyConflictKeys.add(key));
+  resolveCandidateSameCharacterKeys(candidate).forEach((key) => usedPartyConflictKeys.add(key));
 }
 
 function isExtraDropLeaderAbilityRequirement(requirement: AutoBuildAbilityRequirement): boolean {
@@ -2428,7 +2429,7 @@ function* resolveConstrainedSubSelectionOptions(
   const leaderCharacterIdSet = new Set(leaderCandidates.map((candidate) => candidate.character.id));
   const leaderPartyConflictKeySet =
     input.requireUniqueBaseCharacterNames && leaderCandidates[0]
-      ? new Set(resolveCandidatePartyConflictKeys(leaderCandidates[0]))
+      ? new Set(resolveCandidateSameCharacterKeys(leaderCandidates[0]))
       : new Set<string>();
   const coverage = createTeamCoverageState(leaderCandidates);
   const constrainedRoles = AUTO_BUILD_MANUAL_SUB_SLOT_ROLES.filter(
@@ -2634,7 +2635,8 @@ function prepareAutoBuildRecord(
     typeTokens: resolveCharacterTypeTokens(record.type),
     characterTagKeys: characterTags.map((tag) => normalizeCaptainTagKey(tag)),
     demandTagKeys: characterTags.map((tag) => normalizeTagKeyForDemand(tag)),
-    partyConflictKeys,
+    // 869f63grj. The duplicate rule reads upstream's families; super-criteria keep the name keys.
+    sameCharacterKeys: resolveCharacterSameCharacterKeys(record),
     superCriteriaKeys: [
       ...new Set(
         [...partyConflictKeys, ...searchableText]
@@ -2878,7 +2880,7 @@ function selectSubs(
   const leaderCharacterIdSet = new Set(leaderCandidates.map((candidate) => candidate.character.id));
   const leaderPartyConflictKeySet =
     input.requireUniqueBaseCharacterNames && leaderCandidates[0]
-      ? new Set(resolveCandidatePartyConflictKeys(leaderCandidates[0]))
+      ? new Set(resolveCandidateSameCharacterKeys(leaderCandidates[0]))
       : new Set<string>();
   const createEmptySelectionResult = (): AutoBuildSubSelectionResult => ({
     selected: [],

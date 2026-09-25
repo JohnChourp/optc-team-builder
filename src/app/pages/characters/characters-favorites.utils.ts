@@ -1,4 +1,8 @@
 import { type CharacterListItem } from "../../core/models/optc.models";
+import {
+  givePlayerFile,
+  JSON_EXPORT_MIME_TYPE,
+} from "../../core/services/player-file-delivery.utils";
 
 interface OptcbxFavoritesExportCharacter {
   number: number;
@@ -63,22 +67,13 @@ export function downloadOptcbxFavoritesExport(
     return;
   }
 
-  const objectUrl = urlRef.createObjectURL(
-    new Blob([JSON.stringify(payload, null, 2) + "\n"], {
-      type: "application/json;charset=utf-8",
-    }),
+  void givePlayerFile(
+    {
+      filename: buildOptcbxFavoritesExportFilename(exportedAt),
+      contents: JSON.stringify(payload, null, 2) + "\n",
+      mimeType: JSON_EXPORT_MIME_TYPE,
+    },
+    documentRef,
+    urlRef,
   );
-  const anchor = documentRef.createElement("a");
-
-  anchor.href = objectUrl;
-  anchor.download = buildOptcbxFavoritesExportFilename(exportedAt);
-  anchor.style.display = "none";
-  documentRef.body.appendChild(anchor);
-
-  try {
-    anchor.click();
-  } finally {
-    documentRef.body.removeChild(anchor);
-    urlRef.revokeObjectURL(objectUrl);
-  }
 }

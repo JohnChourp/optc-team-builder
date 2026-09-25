@@ -1,5 +1,16 @@
 import { type SavedTeam } from '../../core/models/optc.models';
 
+/*
+ * NO RUNTIME IMPORT in this module - the one above is a type and is erased.
+ *
+ * `scripts/perf-saved-team-codecs.mjs` transpiles this file alone and imports it from a
+ * `data:` URL, and `scripts/perf-explanation-compare.mjs` serves it to a page on its own.
+ * Neither can resolve an import, so one here breaks both scheduled perf runs while every
+ * unit test stays green. Anything that needs the platform or another module belongs in
+ * `saved-teams-export.utils.ts`, which is where the export file and the share link went
+ * (869f63gqg).
+ */
+
 export const SAVED_TEAM_SHARE_QUERY_PARAM = 'teamShare';
 export const SAVED_TEAMS_TRANSFER_SCHEMA_VERSION = 1;
 export const SAVED_TEAMS_TRANSFER_SOURCE = 'saved-teams';
@@ -334,25 +345,6 @@ export function buildSavedTeamsTransferPayloadFromSharePayload(
   return buildSavedTeamsTransferPayload([payload.team], payload.exportedAt);
 }
 
-export function buildSavedTeamShareUrl(
-  team: SavedTeam,
-  origin = resolveShareUrlOrigin(),
-  exportedAt = new Date().toISOString(),
-): string {
-  const shareCode = encodeSavedTeamSharePayload(buildSavedTeamSharePayload(team, exportedAt));
-  const sharePath = '/tabs/manual-team-builder';
-
-  if (!origin.length) {
-    return `${sharePath}?${SAVED_TEAM_SHARE_QUERY_PARAM}=${shareCode}`;
-  }
-
-  const shareUrl = new URL(sharePath, origin);
-
-  shareUrl.searchParams.set(SAVED_TEAM_SHARE_QUERY_PARAM, shareCode);
-
-  return shareUrl.toString();
-}
-
 export function buildSavedTeamShareCode(
   team: SavedTeam,
   exportedAt = new Date().toISOString(),
@@ -435,35 +427,6 @@ export function buildSavedTeamsExportFilename(exportedAt: string): string {
     `${padTimestampPart(exportDate.getMinutes())}` +
     `${padTimestampPart(exportDate.getSeconds())}.json`
   );
-}
-
-export function downloadSavedTeamsExport(
-  payload: SavedTeamsTransferPayload | null,
-  documentRef: Document = document,
-  urlRef: Pick<typeof URL, 'createObjectURL' | 'revokeObjectURL'> = URL,
-): void {
-  if (!payload) {
-    return;
-  }
-
-  const objectUrl = urlRef.createObjectURL(
-    new Blob([JSON.stringify(payload, null, 2) + '\n'], {
-      type: 'application/json;charset=utf-8',
-    }),
-  );
-  const anchor = documentRef.createElement('a');
-
-  anchor.href = objectUrl;
-  anchor.download = buildSavedTeamsExportFilename(payload.exportedAt);
-  anchor.style.display = 'none';
-  documentRef.body.appendChild(anchor);
-
-  try {
-    anchor.click();
-  } finally {
-    documentRef.body.removeChild(anchor);
-    urlRef.revokeObjectURL(objectUrl);
-  }
 }
 
 export function parseSavedTeamsImportPayload(rawContent: string): SavedTeamsTransferPayload {

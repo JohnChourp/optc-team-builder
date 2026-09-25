@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { IonIcon, IonModal } from '@ionic/angular';
 import { IonButton } from '@ionic/angular/ion-button';
 import { IonButtons } from '@ionic/angular/ion-buttons';
@@ -63,6 +64,7 @@ import { AccountStylePanelsComponent } from './account-style-panels.component';
     IonTitle,
     IonToolbar,
     AccountStylePanelsComponent,
+    RouterLink,
     TranslocoDirective,
   ],
   templateUrl: './account.page.html',

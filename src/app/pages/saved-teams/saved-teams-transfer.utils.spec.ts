@@ -11,18 +11,17 @@ import {
   SAVED_TEAMS_TRANSFER_SOURCE,
   buildSavedTeamShareCode,
   buildSavedTeamSharePayload,
-  buildSavedTeamShareUrl,
   buildSavedTeamsExportFilename,
   buildSavedTeamsTransferPayload,
   clearUnavailableSavedTeamSlots,
   decodeSavedTeamShareCode,
-  downloadSavedTeamsExport,
   parseSavedTeamsImportContent,
   parseSavedTeamsImportPayload,
   resolveSavedTeamFromShareInput,
   SavedTeamsImportError,
   sanitizeSavedTeamsImportPayload,
 } from './saved-teams-transfer.utils';
+import { buildSavedTeamShareUrl, downloadSavedTeamsExport } from './saved-teams-export.utils';
 
 describe('Saved teams transfer utils', () => {
   const team = {

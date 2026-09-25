@@ -16,6 +16,10 @@ import {
   type BoostedCharactersTransferPayload,
 } from '../auto-team-builder/boosted-characters-transfer.utils';
 import { cloneRequiredCharacterGroups } from '../../core/services/required-character-groups.utils';
+import {
+  givePlayerFile,
+  JSON_EXPORT_MIME_TYPE,
+} from '../../core/services/player-file-delivery.utils';
 
 export interface AllDataTransferPayload {
   schemaVersion: 1;
@@ -360,24 +364,15 @@ export function downloadAllDataExport(
     return;
   }
 
-  const objectUrl = urlRef.createObjectURL(
-    new Blob([JSON.stringify(payload, null, 2) + '\n'], {
-      type: 'application/json;charset=utf-8',
-    }),
+  void givePlayerFile(
+    {
+      filename: buildAllDataExportFilename(payload.exportedAt),
+      contents: JSON.stringify(payload, null, 2) + '\n',
+      mimeType: JSON_EXPORT_MIME_TYPE,
+    },
+    documentRef,
+    urlRef,
   );
-  const anchor = documentRef.createElement('a');
-
-  anchor.href = objectUrl;
-  anchor.download = buildAllDataExportFilename(payload.exportedAt);
-  anchor.style.display = 'none';
-  documentRef.body.appendChild(anchor);
-
-  try {
-    anchor.click();
-  } finally {
-    documentRef.body.removeChild(anchor);
-    urlRef.revokeObjectURL(objectUrl);
-  }
 }
 
 export function parseAllDataImportCandidate(rawContent: string): AllDataImportCandidate {

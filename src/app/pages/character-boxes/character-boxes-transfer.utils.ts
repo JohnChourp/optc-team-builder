@@ -1,4 +1,8 @@
 import { type CharacterBox } from "../../core/models/optc.models";
+import {
+  givePlayerFile,
+  JSON_EXPORT_MIME_TYPE,
+} from "../../core/services/player-file-delivery.utils";
 
 export interface CharacterBoxesTransferPayload {
   schemaVersion: 1;
@@ -135,24 +139,15 @@ export function downloadCharacterBoxesExport(
     return;
   }
 
-  const objectUrl = urlRef.createObjectURL(
-    new Blob([JSON.stringify(payload, null, 2) + "\n"], {
-      type: "application/json;charset=utf-8",
-    }),
+  void givePlayerFile(
+    {
+      filename: buildCharacterBoxesExportFilename(payload.exportedAt),
+      contents: JSON.stringify(payload, null, 2) + "\n",
+      mimeType: JSON_EXPORT_MIME_TYPE,
+    },
+    documentRef,
+    urlRef,
   );
-  const anchor = documentRef.createElement("a");
-
-  anchor.href = objectUrl;
-  anchor.download = buildCharacterBoxesExportFilename(payload.exportedAt);
-  anchor.style.display = "none";
-  documentRef.body.appendChild(anchor);
-
-  try {
-    anchor.click();
-  } finally {
-    documentRef.body.removeChild(anchor);
-    urlRef.revokeObjectURL(objectUrl);
-  }
 }
 
 export function parseCharacterBoxesImportPayload(rawContent: string): CharacterBoxesTransferPayload {
