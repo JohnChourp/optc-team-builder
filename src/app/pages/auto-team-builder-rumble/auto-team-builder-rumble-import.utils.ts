@@ -189,7 +189,7 @@ export function buildOpponentCharacterIdSlotsFromImportPayload(payload: RumbleTe
       const characterId = normalizePositiveInteger(slot.unit?.character?.id);
 
       if (characterId) {
-        active[index] = characterId;
+        active[resolveOpponentSeat(slot.position, index, active)] = characterId;
       } else {
         unknownSlotCount += 1;
       }
@@ -201,13 +201,38 @@ export function buildOpponentCharacterIdSlotsFromImportPayload(payload: RumbleTe
       const characterId = normalizePositiveInteger(slot.unit?.character?.id);
 
       if (characterId) {
-        bench[index] = characterId;
+        bench[resolveOpponentSeat(slot.position, index, bench)] = characterId;
       } else {
         unknownSlotCount += 1;
       }
     });
 
   return { active, bench, unknownSlotCount };
+}
+
+/**
+ * 869f6td6h. The seat an imported opponent unit goes back to: the board `position` the file
+ * carries, when it is a seat on this row that is still free. A file from before positions were
+ * written - or a hand-edited one naming a seat out of range or already taken - falls back to the
+ * old reading, the unit's order in the list, and then to the first free seat. One is always free:
+ * the lists are cut to the row's length, and each unit takes one seat.
+ */
+function resolveOpponentSeat(
+  position: unknown,
+  listIndex: number,
+  seats: ReadonlyArray<number | null>,
+): number {
+  if (
+    typeof position === 'number' &&
+    Number.isInteger(position) &&
+    position >= 0 &&
+    position < seats.length &&
+    seats[position] === null
+  ) {
+    return position;
+  }
+
+  return seats[listIndex] === null ? listIndex : seats.indexOf(null);
 }
 
 function buildSavedRumbleTeamSlotSnapshot(slot: RumbleTeamSlot): SavedRumbleTeamSlot {

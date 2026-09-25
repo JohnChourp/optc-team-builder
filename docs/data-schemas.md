@@ -250,6 +250,19 @@ Import/export supports the saved enemies transfer payload:
 }
 ```
 
+An import keeps only the required character groups and battle requirements a file carries. The ones
+it leaves out are derived exactly as they are when a stored enemy loads: the manual abilities first,
+then the ones the enemy mechanics imply, at most six groups
+([869f6td1y](https://app.clickup.com/t/90121749478/869f6td1y)).
+
+A single-enemy file (`"source": "optc-enemy-skill"`, `"exportType": "enemy"`) carries no id, so the
+import builds one from the name: `enemy-skill-` plus a slug of it - NFKC-normalised, lower-cased,
+quotes dropped, and every run of characters other than letters, combining marks and digits of any
+script turned into one `-`, trimmed at both ends. An ASCII name gets exactly the id it always did.
+A name with no letter or digit at all gets `enemy-skill-untitled-` plus a hash of the whole enemy
+record, so importing the same file again updates that enemy instead of adding a second one
+([869f6td37](https://app.clickup.com/t/90121749478/869f6td37)).
+
 ## Saved Teams
 
 The saved-team format lifecycle is governed by

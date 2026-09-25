@@ -6,7 +6,7 @@ import {
   type AutoBuildRequiredCharacterGroup,
 } from '../models/auto-team-builder-ability.models';
 import {
-  deriveAbilityRequirementsFromEnemyMechanics,
+  appendAbilityRequirementsFromEnemyMechanics,
   normalizeEnemyMechanicRequirements,
 } from './enemy-mechanic-draft.utils';
 import {
@@ -93,15 +93,16 @@ export function normalizeBattleRequirementsWithLegacyFallback(options: {
           normalizeAbilityRequirementSourceScope(requirement.sourceScope) !== 'captainAbility',
       )
     : [];
-  const derivedRequiredAbilities =
-    deriveAbilityRequirementsFromEnemyMechanics(legacyEnemyMechanics);
+  // 869f6td1y. The reader's own requirements first, as the loader and the editor order them.
   const fallbackRequiredGroups =
     legacyRequiredGroups.length > 0
       ? legacyRequiredGroups
-      : expandRequiredAbilitiesToCharacterGroups([
-          ...derivedRequiredAbilities,
-          ...manualRequiredAbilities,
-        ]).groups;
+      : expandRequiredAbilitiesToCharacterGroups(
+          appendAbilityRequirementsFromEnemyMechanics(
+            manualRequiredAbilities,
+            legacyEnemyMechanics,
+          ),
+        ).groups;
 
   if (!legacyEnemyMechanics.length && !fallbackRequiredGroups.length) {
     return [];

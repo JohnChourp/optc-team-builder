@@ -1149,11 +1149,20 @@ export class CaptainCoveragePage implements OnInit {
     this.saveFeedbackError.set('');
 
     try {
+      const teamId = this.currentTeamId();
+      /*
+       * 869f6td2b. This page has no notes and no ship, so it never changes them - and a second Save
+       * must not write them either. It used to send '' and null every time, and the page stays alive
+       * behind "View saved teams": notes and a ship added there between two saves were wiped by the
+       * second one. `teamId` only ever holds the id this page's own save returned, so the saved
+       * teams are already loaded when it is read.
+       */
+      const storedTeam = teamId ? this.userState.getSavedTeamById(teamId) : null;
       const saved = await this.userState.saveTeam({
-        id: this.currentTeamId() ?? undefined,
+        id: teamId ?? undefined,
         name: this.teamName(),
-        notes: '',
-        shipId: null,
+        notes: storedTeam?.notes ?? '',
+        shipId: storedTeam?.shipId ?? null,
         slots: this.buildSavedTeamSlots(),
       });
 

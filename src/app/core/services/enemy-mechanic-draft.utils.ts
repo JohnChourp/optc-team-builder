@@ -648,6 +648,24 @@ export function deriveAbilityRequirementsFromEnemyMechanics(
   );
 }
 
+/*
+ * 869f6td1y. The one order a saved enemy's requirements are derived in: the reader's own first,
+ * then the ones its mechanics imply. The loader, the battle fallback and the editor each built this
+ * list themselves and disagreed - the first two put the mechanics first, the editor put them last.
+ *
+ * The order is not cosmetic. The list becomes at most `MAX_REQUIRED_CHARACTER_GROUPS` groups and
+ * the cap cuts from the END, so with the mechanics first an enemy implying six groups lost the
+ * reader's own requirement, and nothing said so: on the brain's Eustass Kid file the cut one was
+ * the only ability the file asked for by name. The cap itself, and the `truncatedCount` it reports,
+ * stay with `expandRequiredAbilitiesToCharacterGroups`.
+ */
+export function appendAbilityRequirementsFromEnemyMechanics(
+  manualRequirements: AutoBuildAbilityRequirement[],
+  mechanics: AutoBuildEnemyMechanicRequirement[],
+): AutoBuildAbilityRequirement[] {
+  return [...manualRequirements, ...deriveAbilityRequirementsFromEnemyMechanics(mechanics)];
+}
+
 export function mergeAbilityRequirements(
   requirements: AutoBuildAbilityRequirement[],
 ): AutoBuildAbilityRequirement[] {
