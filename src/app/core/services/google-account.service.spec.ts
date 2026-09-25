@@ -2,7 +2,7 @@ import '@angular/compiler';
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { socialLogin } from '../../../test-mocks/social-login';
 
@@ -38,6 +38,31 @@ describe('GoogleAccountService', () => {
       pathname: '/',
       search: '',
     });
+  });
+
+  /*
+   * Put back everything a test here changed AFTER it, not only before the next one here.
+   *
+   * `ng test` runs Vitest with `isolate: false` and reuses each worker process for several spec
+   * files, so what the LAST test in this file leaves is what the next file in the same process
+   * starts with. Measured 2026-09-25 with the queue forced: this file ended with `window` still
+   * stubbed - its in-memory localStorage holding a remembered session for `google-user-1` - and
+   * `location` on optcteambuilder.com, and the next file got a signed-in account from them. The
+   * shared `socialLogin` mock kept this file's resolved values too; `clearAllMocks` resets calls,
+   * not implementations.
+   */
+  afterEach(() => {
+    vi.unstubAllGlobals();
+
+    for (const method of Object.values(socialLogin)) {
+      method.mockReset();
+    }
+
+    try {
+      window.localStorage.removeItem('optc_google_account_session');
+    } catch {
+      // No storage in this environment, so nothing was remembered in it.
+    }
   });
 
   it('restores a signed-in session from the stored authorization state', async () => {
