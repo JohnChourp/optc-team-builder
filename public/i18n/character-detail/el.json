@@ -37,7 +37,8 @@
     "stars": "Αστέρια",
     "superSpecialEffect": "Super special effect",
     "target": "Στόχευση",
-    "type": "Type"
+    "type": "Type",
+    "uses": "Χρήσεις"
   },
   "loading": "Φόρτωση offline εγγραφής χαρακτήρα...",
   "status": {
@@ -70,7 +71,8 @@
     "progression": "Πώς τον αποκτάς και πώς τον ανεβάζεις",
     "investment": "Επένδυση",
     "evolution": "Evolution",
-    "dropSources": "Πού πέφτει"
+    "dropSources": "Πού πέφτει",
+    "grandParty": "Grand Party"
   },
   "superSpecial": {
     "criteriaLabel": "Criteria",
@@ -78,7 +80,39 @@
   },
   "support": {
     "maxLevelEffect": "Effect σε max level",
-    "supportedCharactersLabel": "Υποστηριζόμενοι χαρακτήρες"
+    "supportedCharactersLabel": "Υποστηριζόμενοι χαρακτήρες",
+    "autoPlus": {
+      "label": "Auto+",
+      "or": "ή",
+      "stage": "στο stage {{stage}}",
+      "finalStage": "στο τελευταίο stage",
+      "enemyBarrier": "όταν ένας εχθρός έχει Barrier",
+      "enemyInflicts": "όταν ένας εχθρός σού προκαλεί {{status}}",
+      "enemyApplies": "όταν ένας εχθρός εφαρμόζει {{status}}",
+      "fires": "ενεργοποιεί αυτόματα το {{effect}} του υποστηριζόμενου χαρακτήρα",
+      "neverFires": "δεν ενεργοποιεί ποτέ αυτόματα το {{effect}} του υποστηριζόμενου χαρακτήρα"
+    }
+  },
+  "grandParty": {
+    "leaderSkill": "Leader Skill",
+    "burst": "Burst",
+    "burstCondition": "Συνθήκη Burst",
+    "condition": {
+      "defeatCrew": "Αφού ηττηθούν {{count}} μέλη του crew",
+      "defeatEnemies": "Αφού ηττηθούν {{count}} εχθροί",
+      "specialCrew": "Αφού το crew σου χρησιμοποιήσει {{count}} Rumble Specials",
+      "specialEnemies": "Αφού οι εχθροί χρησιμοποιήσουν {{count}} Rumble Specials",
+      "timeAfter": "Μετά από {{count}} δευτερόλεπτα",
+      "timeExactly": "Ακριβώς στα {{count}} δευτερόλεπτα",
+      "damageTimes": "Αφού κάνεις damage {{count}} φορές",
+      "damageDealt": "Αφού κάνεις {{count}} damage",
+      "damageTaken": "Αφού δεχτείς {{count}} damage",
+      "hitsTaken": "Αφού δεχτείς {{count}} χτυπήματα",
+      "debuffsTaken": "Αφού δεχτείς {{count}} debuffs",
+      "attacksLanded": "Αφού πετύχεις {{count}} {{attack}} attacks",
+      "debuffLanded": "Αφού πετύχεις {{attribute}} {{count}} φορές",
+      "actions": "Αφού κάνεις {{action}} {{count}} φορές"
+    }
   },
   "stats": {
     "maxAtk": "Max ATK",

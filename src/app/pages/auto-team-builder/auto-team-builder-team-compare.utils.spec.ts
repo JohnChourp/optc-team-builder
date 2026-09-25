@@ -163,13 +163,16 @@ describe('auto-team-builder-team-compare utils', () => {
       exportedAt: '2026-06-25T08:00:00.000Z',
     });
 
+    // 869f6td68. An unnamed team is named by a key the page translates; `label` stays the id's text.
     expect(parseAutoTeamCompareImportPayload(JSON.stringify(presetPayload))).toMatchObject({
       label: 'Imported generated team',
+      labelKey: 'compare.unnamedTeam.importedGenerated',
       shipId: 9001,
       slotIds: [101, 102, 103, 104, 105, 106],
     });
     expect(parseAutoTeamCompareImportPayload(JSON.stringify(generatedExport))).toMatchObject({
       label: 'Imported generated team',
+      labelKey: 'compare.unnamedTeam.importedGenerated',
       shipId: 9001,
       slotIds: [101, 102, 103, 104, 105, 106],
     });

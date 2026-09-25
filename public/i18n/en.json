@@ -28,10 +28,6 @@
       "untitledEnemy": "Untitled Enemy",
       "untitledCrew": "Untitled Crew",
       "untitledRumbleTeam": "Untitled Rumble Team"
-    },
-    "languages": {
-      "el": "Greek",
-      "en": "English"
     }
   },
   "characterAbilityGroups": {
@@ -211,7 +207,6 @@
       "savedSync": "Saved & Sync"
     },
     "languageSwitcherAriaLabel": "Language switcher",
-    "languageSwitchTo": "Switch language to {{ language }}",
     "manualTeamBuilder": "Manual Team Builder",
     "menuTitle": "Menu",
     "navigationAriaLabel": "Main navigation",

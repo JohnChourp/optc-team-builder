@@ -119,14 +119,16 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
+  gap: 8px;
+  min-width: 48px;
   height: 48px;
-  padding: 0;
+  padding: 0 14px;
   border: 0;
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.04);
   color: inherit;
-  font-size: 1.45rem;
+  font-size: 0.95rem;
+  font-weight: 600;
   line-height: 1;
   cursor: pointer;
   transition:
@@ -135,25 +137,37 @@
     opacity 150ms ease;
 }
 
-.language-flag-button:hover:not(:disabled),
-.language-flag-button:focus-visible:not(:disabled) {
+.language-flag-button__flag {
+  font-size: 1.25rem;
+}
+
+.language-flag-button:hover,
+.language-flag-button:focus-visible {
   background: rgba(255, 255, 255, 0.09);
   transform: translateY(-1px);
   outline: none;
-}
-
-.language-flag-button:disabled {
-  cursor: default;
 }
 
 .language-flag-button:not(.language-flag-button--active) {
   opacity: 0.76;
 }
 
-.language-flag-button--active {
+/*
+ * 869f63gnt. The current language is pressed, not disabled, so it can take focus now - and a
+ * focused current button keeps its gold, with a ring that says where focus is.
+ */
+.language-flag-button--active,
+.language-flag-button--active:hover {
   background: rgba(245, 200, 76, 0.18);
   outline: 1px solid rgba(245, 200, 76, 0.24);
   opacity: 1;
+  cursor: default;
+}
+
+.language-flag-button--active:focus-visible {
+  background: rgba(245, 200, 76, 0.18);
+  outline: 2px solid rgba(245, 200, 76, 0.7);
+  outline-offset: 2px;
 }
 
 .menu-item {

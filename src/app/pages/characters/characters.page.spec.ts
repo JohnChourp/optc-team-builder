@@ -1276,6 +1276,8 @@ function createPage(overrides: { favoriteIds?: number[]; importParam?: string | 
   const route = {
     snapshot: { queryParamMap: { get: (key: string) => (key === 'import' ? importParam : null) } },
   };
+  /* 869f6td63. Where a file the OPTCbx parser turned down leaves its own words. */
+  const errorLog = { record: vi.fn() };
   const page = new CharactersPage(
     repository as never,
     characterCatalogCache as never,
@@ -1283,6 +1285,7 @@ function createPage(overrides: { favoriteIds?: number[]; importParam?: string | 
     optcbxImport as never,
     i18n as never,
     route as never,
+    errorLog as never,
   );
 
   return {
@@ -1294,5 +1297,6 @@ function createPage(overrides: { favoriteIds?: number[]; importParam?: string | 
     optcbxImport,
     i18n,
     route,
+    errorLog,
   };
 }

@@ -12,6 +12,38 @@ interface OptcbxExportPayload {
   thumbnails?: unknown[];
 }
 
+/**
+ * 869f6td63. The scope every {@link OptcbxImportError} key lives in. The Characters screen owns the
+ * OPTCbx import; Settings reaches the same parser from its favourites import, Import all data and
+ * the inventory capture, and translates from here too.
+ */
+export const OPTCBX_IMPORT_I18N_SCOPE = "characters";
+
+export type OptcbxImportErrorKey =
+  | "import.errors.notJson"
+  | "import.errors.notOptcbxExport"
+  | "import.errors.entryWithoutNumber"
+  | "import.errors.noCharacters";
+
+/**
+ * 869f6td63. A file the parser turned down, as a key a screen translates.
+ *
+ * The parser used to throw plain `Error`s, and every screen showed their English `message` as it
+ * was - on the Greek UI too, where the i18n guards could not see it, because they compare keys.
+ * `message` is still the parser's own English words: the Recent problems log on Settings keeps
+ * them, and nothing else shows them.
+ */
+export class OptcbxImportError extends Error {
+  public constructor(
+    message: string,
+    public readonly key: OptcbxImportErrorKey,
+    public readonly parameters?: Record<string, string | number>,
+  ) {
+    super(message);
+    this.name = "OptcbxImportError";
+  }
+}
+
 @Injectable({ providedIn: "root" })
 export class OptcbxImportService {
   public constructor(private readonly repository: OptcRepositoryService) {}
@@ -22,7 +54,7 @@ export class OptcbxImportService {
     try {
       parsed = JSON.parse(rawContent) as unknown;
     } catch {
-      throw new Error("The selected file is not valid JSON.");
+      throw new OptcbxImportError("The selected file is not valid JSON.", "import.errors.notJson");
     }
 
     return this.parseExportPayload(parsed);
@@ -30,7 +62,10 @@ export class OptcbxImportService {
 
   public parseExportPayload(value: unknown): OptcbxParsedImport {
     if (!this.isExportPayload(value)) {
-      throw new Error("The selected file is not a raw OPTCbx export.");
+      throw new OptcbxImportError(
+        "The selected file is not a raw OPTCbx export.",
+        "import.errors.notOptcbxExport",
+      );
     }
 
     const seen = new Set<number>();
@@ -41,7 +76,11 @@ export class OptcbxImportService {
       const normalizedNumber = this.normalizeCharacterNumber(entry?.number);
 
       if (normalizedNumber === null) {
-        throw new Error(`Character entry ${index + 1} is missing a valid number field.`);
+        throw new OptcbxImportError(
+          `Character entry ${index + 1} is missing a valid number field.`,
+          "import.errors.entryWithoutNumber",
+          { entry: index + 1 },
+        );
       }
 
       if (seen.has(normalizedNumber)) {
@@ -54,7 +93,10 @@ export class OptcbxImportService {
     });
 
     if (!importedNumbers.length) {
-      throw new Error("The OPTCbx export does not contain any character ids.");
+      throw new OptcbxImportError(
+        "The OPTCbx export does not contain any character ids.",
+        "import.errors.noCharacters",
+      );
     }
 
     return {
