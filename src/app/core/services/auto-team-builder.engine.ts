@@ -7,6 +7,7 @@ import {
   type AutoBuildResult,
   type AutoBuildSlotExplanationReason,
   type AutoTeamBuilderType,
+  resolveAutoBuildAvoidMode,
   shouldTreatSelectedClassesAsNeutral,
 } from '../models/auto-team-builder.models';
 import { type CharacterDetailRecord } from '../models/optc.models';
@@ -17,6 +18,7 @@ import {
   resolveRequiredManualCharacterIds,
   resolveCharacterPartyConflictKeys,
   resolveCharacterTypeTokens,
+  resolveRelaxedAvoidedValues,
   resolveUnsatisfiedSuperSpecialCriteriaCharacterNames,
   resolveUnsatisfiedSuperTandemCriteriaCharacterNames,
   teamMatchesRequestedLeaderSuperEffectScope,
@@ -633,6 +635,13 @@ export function runAutoTeamBuildAttempt(
   const teamMeetsRequestedCaptainCoverage =
     attempt.coverage.leaderCriteria.allSlotsMatch &&
     attempt.coverage.leaderCriteria.allLeaderTiersCovered;
+  // 869f63gma. Axis 13, the same shape: the attempt was ALLOWED to rank a hard avoid instead of
+  // keeping it, and it is reported only for the avoided values the finished team really holds.
+  const relaxedAvoidedValues =
+    resolveAutoBuildAvoidMode(requestedInput) === 'hard' &&
+    resolveAutoBuildAvoidMode(input) === 'soft'
+      ? resolveRelaxedAvoidedValues(attempt.slots, requestedInput)
+      : [];
 
   const relaxation: AutoBuildResult['relaxation'] = {
     usedFallback: !inputsMatch(requestedInput, input) || allowedLeadersWithSuperEffects,
@@ -671,6 +680,7 @@ export function runAutoTeamBuildAttempt(
     ...(ignoredSuperTandemCriteriaCharacterNames.length
       ? { ignoredSuperTandemCriteriaCharacterNames }
       : {}),
+    ...(relaxedAvoidedValues.length ? { relaxedAvoidedValues } : {}),
   };
 
   return appendFallbackExplanationReasons({
@@ -870,6 +880,10 @@ export class AutoTeamBuildFallbackPlanner {
       (requestedInput.requireFullCaptainAbilityCoverage ||
         requestedInput.requireBothLeadersFullCaptainAbilityCoverage) &&
       !requestedInput.allowPartialCaptainAbilityCoverage;
+    // 869f63gma. Relaxing a hard avoid ranks it instead, so the team still takes as few as it can.
+    const canRelaxHardAvoid =
+      resolveAutoBuildAvoidMode(requestedInput) === 'hard' &&
+      Boolean(requestedInput.avoidedTypes?.length || requestedInput.avoidedClasses?.length);
 
     this.zeroDropAttempts = buildZeroDropFallbackAttempts(
       requestedInput,
@@ -879,6 +893,7 @@ export class AutoTeamBuildFallbackPlanner {
       canRelaxLeaderSuperSpecialCriteria,
       canRelaxSuperTandemCriteria,
       canRelaxCaptainAbilityCoverage,
+      canRelaxHardAvoid,
     );
     this.baseSubsetInput = buildBaseSubsetInput(
       requestedInput,
@@ -886,6 +901,7 @@ export class AutoTeamBuildFallbackPlanner {
       canRelaxLeaderSuperSpecialCriteria,
       canRelaxSuperTandemCriteria,
       canRelaxCaptainAbilityCoverage,
+      canRelaxHardAvoid,
     );
     this.subsetCandidates = buildSubsetCandidates(requestedInput, this.baseSubsetInput, records);
     this.maxScheduledFallbackAttempts = resolveMaxScheduledFallbackAttemptCount(
@@ -1056,6 +1072,7 @@ function buildZeroDropFallbackAttempts(
   canRelaxLeaderSuperSpecialCriteria: boolean,
   canRelaxSuperTandemCriteria: boolean,
   canRelaxCaptainAbilityCoverage: boolean,
+  canRelaxHardAvoid: boolean,
 ): AutoTeamBuildPlannedAttempt[] {
   const relaxationOptions: AutoTeamBuildZeroDropRelaxationOption[] = [];
 
@@ -1118,6 +1135,16 @@ function buildZeroDropFallbackAttempts(
     });
   }
 
+  // 869f63gma. Last, so among attempts that relax as many rules, the enemy's avoid is kept longest.
+  if (canRelaxHardAvoid) {
+    relaxationOptions.push({
+      apply: (input) => ({ ...input, avoidMode: 'soft' }),
+      allowedLeadersWithSuperEffects: false,
+      ignoredLeaderSuperEffectScope: false,
+      ignoredLeaderSuperSpecialCriteria: false,
+    });
+  }
+
   return dedupeFallbackAttempts(
     buildZeroDropRelaxationOptionSubsets(relaxationOptions).map((options) =>
       buildZeroDropFallbackAttempt(requestedInput, options),
@@ -1166,9 +1193,11 @@ function buildBaseSubsetInput(
   canRelaxLeaderSuperSpecialCriteria: boolean,
   canRelaxSuperTandemCriteria: boolean,
   canRelaxCaptainAbilityCoverage: boolean,
+  canRelaxHardAvoid: boolean,
 ): AutoBuildInput {
   return {
     ...requestedInput,
+    ...(canRelaxHardAvoid ? { avoidMode: 'soft' as const } : {}),
     requireAllSlotsInLeaderSuperEffectScope: canRelaxLeaderSuperEffectScope
       ? false
       : requestedInput.requireAllSlotsInLeaderSuperEffectScope,
@@ -1335,6 +1364,7 @@ function buildSubsetAttempt(
       requireBothLeadersFullCaptainAbilityCoverage:
         baseInput.requireBothLeadersFullCaptainAbilityCoverage,
       allowPartialCaptainAbilityCoverage: baseInput.allowPartialCaptainAbilityCoverage,
+      ...(baseInput.avoidMode !== undefined ? { avoidMode: baseInput.avoidMode } : {}),
     },
     requireLeadersWithoutSuperEffects: false,
     allowedLeadersWithSuperEffects: shouldReportAllowedLeadersWithSuperEffects(
@@ -1550,6 +1580,7 @@ function buildFallbackAttemptKey(attempt: AutoTeamBuildPlannedAttempt): string {
     attempt.input.minimumLeaderSuperEffectMatchingSlots ?? 'null',
     attempt.input.allowPartialCaptainAbilityCoverage ? 'partial-captain' : 'strict-captain',
     attempt.requireLeadersWithoutSuperEffects ? '1' : '0',
+    resolveAutoBuildAvoidMode(attempt.input) === 'soft' ? 'ranked-avoid' : 'kept-avoid',
   ].join('::');
 }
 
@@ -1608,7 +1639,13 @@ function inputsMatch(left: AutoBuildInput, right: AutoBuildInput): boolean {
     left.leaderCostRange.max === right.leaderCostRange.max &&
     left.subCostRange.min === right.subCostRange.min &&
     left.subCostRange.max === right.subCostRange.max &&
-    left.maxTotalCost === right.maxTotalCost
+    left.maxTotalCost === right.maxTotalCost &&
+    // 869f63gma. Without these a team whose hard avoid was relaxed would read as the exact search.
+    sameOrderedValues(left.avoidedTypes ?? [], right.avoidedTypes ?? []) &&
+    sameOrderedValues(left.avoidedClasses ?? [], right.avoidedClasses ?? []) &&
+    resolveAutoBuildAvoidMode(left) === resolveAutoBuildAvoidMode(right) &&
+    sameOrderedValues(left.preferredTypes ?? [], right.preferredTypes ?? []) &&
+    sameOrderedValues(left.preferredClasses ?? [], right.preferredClasses ?? [])
   );
 }
 

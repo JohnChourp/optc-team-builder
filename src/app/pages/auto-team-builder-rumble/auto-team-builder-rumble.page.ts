@@ -108,6 +108,12 @@ import {
   AutoTeamBuilderRumbleRosterPanelComponent,
 } from './auto-team-builder-rumble-style-panels.component';
 import { formattingLanguage } from '../../core/i18n/app-locale-format';
+import {
+  collectRumbleStyles,
+  hasRumbleAvoidRules,
+  resolveRumbleAvoidedCharacterIds,
+  type RumbleAvoidRules,
+} from './auto-team-builder-rumble-avoid.utils';
 import { applyIonicModalDialogLabel } from '../../shared/a11y/ionic-modal-dialog-label.utils';
 
 type LoadingProgressRowTone = 'primary' | 'secondary' | 'fallback';
@@ -259,6 +265,21 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
     DEFAULT_RUMBLE_BUFF_FOCUS.map((preference) => ({ ...preference })),
   );
   public readonly excludedCharacterIds = signal<number[]>([]);
+  /**
+   * 869f63gyq. The opt-in avoid filter. Off, the builder is exactly what it was. Page state only:
+   * not saved with a team, not exported, not restored - see `auto-team-builder-rumble-avoid.utils.ts`.
+   */
+  public readonly avoidEnabled = signal(false);
+  public readonly avoidedStyles = signal<string[]>([]);
+  public readonly avoidedTypes = signal<AutoTeamBuilderType[]>([]);
+  public readonly avoidedClasses = signal<string[]>([]);
+  public readonly availableRumbleStyles = signal<string[]>([]);
+  /** What the avoid left out of the build on screen, so a short team can say why. */
+  private readonly lastBuildAvoid = signal<{ values: string[]; count: number } | null>(null);
+  private rumbleStyleIndex: {
+    candidates: CharacterDetailRecord[];
+    styleById: Map<number, string | null>;
+  } | null = null;
   public readonly importFeedback = signal<RumbleImportFeedback | null>(null);
   private readonly excludedCharacterRecordsById = signal<Record<number, CharacterDetailRecord>>({});
   private readonly buildProgressNowMs = signal(0);
@@ -482,6 +503,25 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
       (currentResult.input.onlySelectedTypes || currentResult.input.onlySelectedClasses) &&
       currentResult.selectedCount === 0,
     );
+  });
+  public readonly avoidSupportLabel = computed(() =>
+    this.avoidEnabled() ? this.t('filters.avoid.support.on') : this.t('filters.avoid.support.off'),
+  );
+  /**
+   * 869f63gyq. A team the avoid left short says so, beside the builder's own partial and empty
+   * states, rather than the avoid being dropped to fill the seats.
+   */
+  public readonly avoidShortfallLabel = computed(() => {
+    const avoid = this.lastBuildAvoid();
+
+    if (!avoid?.count || !(this.insufficientStateVisible() || this.emptyStateVisible())) {
+      return '';
+    }
+
+    return this.t('states.avoidShortfall', {
+      values: avoid.values.join(' / '),
+      count: avoid.count,
+    });
   });
   public readonly relaxedStateVisible = computed(() => {
     const currentResult = this.currentResult();
@@ -870,6 +910,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
 
     const previousTeamResults = this.teamResults();
     const previousTeamIndex = this.selectedTeamIndex();
+    const previousAvoid = this.lastBuildAvoid();
     const abortController = new AbortController();
 
     this.buildAbortController = abortController;
@@ -936,6 +977,7 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
       if (abortController.signal.aborted || this.isRumbleBuildCancelledError(error)) {
         this.teamResults.set(previousTeamResults);
         this.selectedTeamIndex.set(previousTeamIndex);
+        this.lastBuildAvoid.set(previousAvoid);
         this.errorMessage.set('');
         return;
       }
@@ -1076,6 +1118,40 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
 
   public onClassChange(event: CustomEvent<{ value?: string[] | string | null }>): void {
     this.selectedClasses.set(this.resolveSelectedClasses(event.detail.value));
+    this.resetBuildState();
+  }
+
+  /** 869f63gyq. Turning the avoid on reads the styles the data carries, for its picker. */
+  public async onAvoidToggle(event: CustomEvent<{ checked: boolean }>): Promise<void> {
+    this.avoidEnabled.set(event.detail.checked);
+    this.resetBuildState();
+
+    if (event.detail.checked) {
+      await this.loadRumbleStyleIndex();
+    }
+  }
+
+  public onAvoidedStylesChange(event: CustomEvent<{ value?: string[] | string | null }>): void {
+    const values = Array.isArray(event.detail.value)
+      ? event.detail.value
+      : event.detail.value
+        ? [event.detail.value]
+        : [];
+    const available = new Set(this.availableRumbleStyles());
+
+    this.avoidedStyles.set([...new Set(values.filter((style) => available.has(style)))]);
+    this.resetBuildState();
+  }
+
+  public onAvoidedTypesChange(
+    event: CustomEvent<{ value?: AutoTeamBuilderType[] | AutoTeamBuilderType | null }>,
+  ): void {
+    this.avoidedTypes.set(this.resolveSelectedTypes(event.detail.value));
+    this.resetBuildState();
+  }
+
+  public onAvoidedClassesChange(event: CustomEvent<{ value?: string[] | string | null }>): void {
+    this.avoidedClasses.set(this.resolveSelectedClasses(event.detail.value));
     this.resetBuildState();
   }
 
@@ -1881,17 +1957,21 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
   private async resolveCandidateCharacterIdsForBuild(): Promise<number[] | undefined> {
     const selectedBox = this.selectedCharacterBox();
     const excludedIds = new Set(this.excludedCharacterIds());
+    // 869f63gyq. The avoid narrows whichever pool the build would have used, and nothing else.
+    const avoidedIds = await this.resolveAvoidedCharacterIdsForBuild();
 
     if (selectedBox) {
       const favoriteIds = this.favoritesOnly() ? new Set(this.favoriteCharacterIds()) : null;
 
       return [...new Set(selectedBox.characterIds)].filter(
         (characterId) =>
-          !excludedIds.has(characterId) && (!favoriteIds || favoriteIds.has(characterId)),
+          !excludedIds.has(characterId) &&
+          !avoidedIds.has(characterId) &&
+          (!favoriteIds || favoriteIds.has(characterId)),
       );
     }
 
-    if (!excludedIds.size) {
+    if (!excludedIds.size && !avoidedIds.size) {
       return undefined;
     }
 
@@ -1905,7 +1985,64 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
 
     return candidates
       .map((candidate) => candidate.id)
-      .filter((candidateId) => !excludedIds.has(candidateId));
+      .filter((candidateId) => !excludedIds.has(candidateId) && !avoidedIds.has(candidateId));
+  }
+
+  /**
+   * 869f63gyq. The units the avoid leaves out, read over the WHOLE candidate list - the style comes
+   * from the engine's `normalizeRumbleData`, which follows `basedOn`, and a child can only inherit
+   * its parent's style from a list that still holds the parent. Records what it left out for the
+   * shortfall line.
+   */
+  private async resolveAvoidedCharacterIdsForBuild(): Promise<Set<number>> {
+    const rules: RumbleAvoidRules = {
+      styles: this.avoidedStyles(),
+      types: this.avoidedTypes(),
+      classes: this.avoidedClasses(),
+    };
+
+    if (!this.avoidEnabled() || !hasRumbleAvoidRules(rules)) {
+      this.lastBuildAvoid.set(null);
+      return new Set();
+    }
+
+    const index = await this.loadRumbleStyleIndex();
+    const avoidedIds = resolveRumbleAvoidedCharacterIds(
+      index.candidates,
+      (candidate) => index.styleById.get(candidate.id) ?? null,
+      rules,
+    );
+
+    this.lastBuildAvoid.set({
+      values: [...rules.styles, ...rules.types, ...rules.classes],
+      count: avoidedIds.size,
+    });
+
+    return avoidedIds;
+  }
+
+  private async loadRumbleStyleIndex(): Promise<{
+    candidates: CharacterDetailRecord[];
+    styleById: Map<number, string | null>;
+  }> {
+    const candidates = await this.repository.getRumbleBuilderCandidates();
+
+    if (this.rumbleStyleIndex?.candidates !== candidates) {
+      const charactersById = new Map(candidates.map((candidate) => [candidate.id, candidate]));
+
+      this.rumbleStyleIndex = {
+        candidates,
+        styleById: new Map(
+          candidates.map((candidate) => [
+            candidate.id,
+            this.rumbleBuilder.normalizeRumbleData(candidate, charactersById)?.rumbleType ?? null,
+          ]),
+        ),
+      };
+      this.availableRumbleStyles.set(collectRumbleStyles(this.rumbleStyleIndex.styleById.values()));
+    }
+
+    return this.rumbleStyleIndex;
   }
 
   private manualPickerCandidateMatchesScope(

@@ -8084,7 +8084,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
 
     expect(payload).not.toBeNull();
     expect(payload).toMatchObject({
-      schemaVersion: 33,
+      schemaVersion: 34,
       exportedAt: '2026-03-25T10:00:00.000Z',
       source: 'auto-team-builder',
       exportType: 'preset',
@@ -8171,7 +8171,7 @@ describe('AutoTeamBuilderPage preset export state', () => {
 
     const payload = page.buildSelectionExportPayload('2026-05-05T20:14:45.183Z');
 
-    expect(payload?.schemaVersion).toBe(33);
+    expect(payload?.schemaVersion).toBe(34);
     expect(payload?.generatedTeamExport).toMatchObject({
       source: 'auto-team-builder',
       team: [
@@ -8323,7 +8323,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       availableLockedCharacters: [captain],
     });
 
-    expect(payload.schemaVersion).toBe(33);
+    expect(payload.schemaVersion).toBe(34);
     expect(
       payload.manualSelection.manualSlots.find((slot) => slot.role === 'captain'),
     ).toMatchObject({
@@ -8368,7 +8368,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       availableLockedCharacters: [],
     });
 
-    expect(payload.schemaVersion).toBe(33);
+    expect(payload.schemaVersion).toBe(34);
     expect(payload.filters.selectedCharacterTags).toEqual(['Straw Hat Pirates']);
     expect(payload.filters.selectedCharacterNames).toEqual(['zoro', 'luffy']);
     expect(result.state.selectedCharacterTags).toEqual(['Straw Hat Pirates']);
@@ -8490,7 +8490,7 @@ describe('AutoTeamBuilder preset export helpers', () => {
       exportedAt: '2026-03-25T10:00:00.000Z',
     });
 
-    expect(payload.schemaVersion).toBe(33);
+    expect(payload.schemaVersion).toBe(34);
     expect(payload.filters.leaderBoostRanges).toEqual({
       ATK: { min: 5, max: 6 },
       HP: { min: 1.25, max: 1.5 },
@@ -9054,7 +9054,7 @@ describe('AutoTeamBuilder preset import helpers', () => {
       availableLockedCharacters: [createCharacterRecord(101)],
     });
 
-    expect(payload.schemaVersion).toBe(33);
+    expect(payload.schemaVersion).toBe(34);
     expect(result.state.requiredAbilities).toEqual([
       {
         abilityKey: 'remove_bind',

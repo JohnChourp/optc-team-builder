@@ -32,6 +32,7 @@ import {
   type AutoBuildSlotExplanationReason,
   type AutoBuildUtilityRole,
   type AutoTeamBuilderType,
+  resolveAutoBuildAvoidMode,
 } from '../models/auto-team-builder.models';
 import {
   normalizeAbilityEffectTargetScope,
@@ -276,6 +277,19 @@ interface BuildSlotExplanationOptions {
 }
 
 const PREPARED_RECORD_BY_CANDIDATE = new WeakMap<AutoBuildCandidate, PreparedAutoBuildRecord>();
+
+/**
+ * 869f63gma. Whether a candidate carries one of the input's avoided or preferred types or classes.
+ * Worked out once, when the candidate is built for an attempt's input, because the ranking reads it
+ * on every comparison; a candidate built anywhere else is worked out on demand.
+ */
+interface AvoidPreferCandidateMatch {
+  avoided: boolean;
+  preferred: boolean;
+}
+
+const NO_AVOID_PREFER_MATCH: AvoidPreferCandidateMatch = { avoided: false, preferred: false };
+const AVOID_PREFER_MATCH_BY_CANDIDATE = new WeakMap<AutoBuildCandidate, AvoidPreferCandidateMatch>();
 
 function createProgressExclusionCounts(): AutoBuildProgressExclusionCounts {
   return {
@@ -1661,16 +1675,29 @@ export function buildAutoTeamResultFromPreparedContext(
     : options.autoFillCharacterIds
       ? new Set(options.autoFillCharacterIds)
       : null;
+  /*
+   * 869f63gma. A hard avoid takes its units out of the three pools the search fills seats from -
+   * the leaders, the subs and the borrowed Friend Captains - and out of nothing else, so a unit the
+   * reader picked stays exactly where they put it.
+   */
   const leaderAutoFillCandidates = (
     leaderAutoFillCandidateIdSet
       ? candidates.filter((candidate) => leaderAutoFillCandidateIdSet.has(candidate.character.id))
       : candidates
-  ).filter((candidate) => !ignoredOverflowLockedCharacterIdSet?.has(candidate.character.id));
+  ).filter(
+    (candidate) =>
+      !ignoredOverflowLockedCharacterIdSet?.has(candidate.character.id) &&
+      !isHardAvoidedCandidate(candidate, input),
+  );
   const subAutoFillCandidates = (
     subAutoFillCandidateIdSet
       ? candidates.filter((candidate) => subAutoFillCandidateIdSet.has(candidate.character.id))
       : candidates
-  ).filter((candidate) => !ignoredOverflowLockedCharacterIdSet?.has(candidate.character.id));
+  ).filter(
+    (candidate) =>
+      !ignoredOverflowLockedCharacterIdSet?.has(candidate.character.id) &&
+      !isHardAvoidedCandidate(candidate, input),
+  );
   const manualFriendCaptainCandidates = manualSlotCandidateMap.get('friendCaptain') ?? [];
   const friendCaptainCandidates = resolveFriendCaptainCandidatePool(
     input,
@@ -1678,7 +1705,7 @@ export function buildAutoTeamResultFromPreparedContext(
     options.friendCaptainRecords ?? [],
     options.friendCaptainContext,
     leaderAutoFillCandidateIdSet,
-  );
+  ).filter((candidate) => !isHardAvoidedCandidate(candidate, input));
   const requiredManualCaptain = requiredManualSlotCandidateMap.get('captain');
   const requiredManualFriendCaptain = requiredManualSlotCandidateMap.get('friendCaptain');
   const captainOptions = resolveLeaderCandidateOptions(
@@ -2208,6 +2235,18 @@ function compareAutoFillLeaderCandidates(
    * surrounding code rather than a decision: subs are ranked by a summed score where a boost
    * needs a magnitude, leaders by a sequence of tiebreaks where it needs a position.
    */
+  /*
+   * 869f63gma. The enemy's avoid and prefer rules, ahead of the boost: they are the reader's request
+   * for this fight, and a boost is only a fact about this week. Below the two things they asked for
+   * by name, for the same reason the boost is.
+   */
+  const avoidPreferDifference =
+    resolveAvoidPreferRankScore(right, input) - resolveAvoidPreferRankScore(left, input);
+
+  if (avoidPreferDifference !== 0) {
+    return avoidPreferDifference;
+  }
+
   const boostedDifference = compareBoostedLeaderOrder(left, right, input.boostedCharacterIds);
 
   if (boostedDifference !== 0) {
@@ -2679,7 +2718,126 @@ function buildAutoBuildCandidateFromPreparedRecord(
     recencyScore: total <= 1 ? 1 : 1 - index / (total - 1),
   };
   PREPARED_RECORD_BY_CANDIDATE.set(candidate, preparedRecord);
+
+  if (hasAvoidPreferInput(input)) {
+    AVOID_PREFER_MATCH_BY_CANDIDATE.set(
+      candidate,
+      resolveAvoidPreferMatchFromRecord(preparedRecord, input),
+    );
+  }
+
   return candidate;
+}
+
+function hasAvoidPreferInput(input: AutoBuildInput): boolean {
+  return Boolean(
+    input.avoidedTypes?.length ||
+    input.avoidedClasses?.length ||
+    input.preferredTypes?.length ||
+    input.preferredClasses?.length,
+  );
+}
+
+function resolveAvoidPreferMatchFromRecord(
+  record: Pick<PreparedAutoBuildRecord, 'typeTokens' | 'classKeys'>,
+  input: AutoBuildInput,
+): AvoidPreferCandidateMatch {
+  return {
+    avoided: resolveFacetMatches(record, input.avoidedTypes, input.avoidedClasses).length > 0,
+    preferred: resolveFacetMatches(record, input.preferredTypes, input.preferredClasses).length > 0,
+  };
+}
+
+function resolveCandidateAvoidPreferMatch(
+  candidate: AutoBuildCandidate,
+  input: AutoBuildInput,
+): AvoidPreferCandidateMatch {
+  if (!hasAvoidPreferInput(input)) {
+    return NO_AVOID_PREFER_MATCH;
+  }
+
+  return (
+    AVOID_PREFER_MATCH_BY_CANDIDATE.get(candidate) ??
+    resolveAvoidPreferMatchFromRecord(
+      {
+        typeTokens: resolveCandidateTypeTokens(candidate),
+        classKeys: resolveCandidateClassKeys(candidate),
+      },
+      input,
+    )
+  );
+}
+
+/**
+ * 869f63gma. A candidate the search may not place: hard mode, and it carries an avoided type or
+ * class. Applied to the seats the search fills - never to the reader's own picks.
+ */
+function isHardAvoidedCandidate(candidate: AutoBuildCandidate, input: AutoBuildInput): boolean {
+  return (
+    resolveAutoBuildAvoidMode(input) === 'hard' &&
+    resolveCandidateAvoidPreferMatch(candidate, input).avoided
+  );
+}
+
+/**
+ * 869f63gma. The values of `types` and `classes` a record carries, in the order they were given.
+ *
+ * Matched by the builder's own selected-type and selected-class matching,
+ * `resolveMatchedSelectedTypes` and `resolveMatchedSelectedClasses`, over the same tokens: a dual
+ * unit's `INT,PSY` is split into both types, so avoiding INT catches it, and a class matches either
+ * of the unit's classes, case-folded. No second rule for a dual unit exists anywhere.
+ */
+function resolveFacetMatches(
+  record: Pick<PreparedAutoBuildRecord, 'typeTokens' | 'classKeys'>,
+  types: AutoTeamBuilderType[] = [],
+  classes: string[] = [],
+): string[] {
+  return [
+    ...resolveMatchedSelectedTypes(record, types),
+    ...resolveMatchedSelectedClasses(record, classes),
+  ];
+}
+
+/** 869f63gma. `resolveFacetMatches` for a character that is not a candidate - a slot, a record. */
+export function resolveCharacterFacetMatches(
+  character: Pick<CharacterDetailRecord, 'type' | 'classes'>,
+  types: AutoTeamBuilderType[] = [],
+  classes: string[] = [],
+): string[] {
+  if (!types.length && !classes.length) {
+    return [];
+  }
+
+  return resolveFacetMatches(
+    {
+      typeTokens: resolveCharacterTypeTokens(character.type),
+      classKeys: character.classes.map((characterClass) => characterClass.toLowerCase()),
+    },
+    types,
+    classes,
+  );
+}
+
+/**
+ * 869f63gma. The avoided values the team holds in the seats the search filled - what a relaxed
+ * hard avoid actually let in. The reader's own picks are theirs and never count.
+ */
+export function resolveRelaxedAvoidedValues(
+  slots: readonly AutoBuildSlot[],
+  input: Pick<AutoBuildInput, 'avoidedTypes' | 'avoidedClasses' | 'manualSlots'>,
+): string[] {
+  const manualCharacterIds = new Set(input.manualSlots.flatMap((slot) => slot.characterIds));
+  const held = new Set(
+    slots
+      .filter((slot) => !manualCharacterIds.has(slot.character.id))
+      .flatMap((slot) =>
+        resolveCharacterFacetMatches(slot.character, input.avoidedTypes, input.avoidedClasses),
+      ),
+  );
+
+  return [...(input.avoidedTypes ?? []), ...(input.avoidedClasses ?? [])].filter((value) =>
+    held.has(value),
+  );
 }
 
 export function hasReadableEffectText(record: CharacterDetailRecord): boolean {
@@ -4116,6 +4274,30 @@ function resolveSubCoverageRoleScore(candidate: AutoBuildCandidate): number {
  */
 export const BOOSTED_CHARACTER_SCORE = 1;
 
+/**
+ * 869f63gma. What a preferred and an avoided unit are worth beside those counts - and unlike the
+ * boost, these are meant to decide.
+ *
+ * The reader asked for them outright, so a preferred unit outranks every unit that is not, and an
+ * avoided one ranks below every unit that is not, whatever else either matches. The counts they sit
+ * beside cannot reach a thousand - two types, two classes, the reader's own tags and names, the
+ * all-classes point and a boost - so the order they already give is kept within each group. The
+ * penalty is twice the bonus, so a unit that is both still ranks below every unit that is not
+ * avoided. Still a rank, not a filter: the demand terms compared before this score are untouched,
+ * so an avoided unit the requirements cannot do without is kept. No number reaches the reader.
+ */
+export const PREFERRED_UNIT_RANK_BONUS = 1000;
+export const AVOIDED_UNIT_RANK_PENALTY = 2 * PREFERRED_UNIT_RANK_BONUS;
+
+function resolveAvoidPreferRankScore(candidate: AutoBuildCandidate, input: AutoBuildInput): number {
+  const match = resolveCandidateAvoidPreferMatch(candidate, input);
+
+  return (
+    (match.preferred ? PREFERRED_UNIT_RANK_BONUS : 0) -
+    (match.avoided ? AVOIDED_UNIT_RANK_PENALTY : 0)
+  );
+}
+
 function resolveSubSelectedFilterScore(
   candidate: AutoBuildCandidate,
   input: AutoBuildInput,
@@ -4126,7 +4308,8 @@ function resolveSubSelectedFilterScore(
     candidate.matchedSelectedCharacterTags.length +
     candidate.matchedSelectedCharacterNames.length +
     (input.requireAllSelectedClassesPerCharacter && candidate.matchesAllSelectedClasses ? 1 : 0) +
-    (input.boostedCharacterIds?.includes(candidate.character.id) ? BOOSTED_CHARACTER_SCORE : 0)
+    (input.boostedCharacterIds?.includes(candidate.character.id) ? BOOSTED_CHARACTER_SCORE : 0) +
+    resolveAvoidPreferRankScore(candidate, input)
   );
 }
 
