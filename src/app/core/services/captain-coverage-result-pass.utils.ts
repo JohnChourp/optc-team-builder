@@ -18,6 +18,11 @@ import {
 } from './captain-coverage-filter.utils';
 import { matchesCharacterFacet } from './character-facet-filter.utils';
 import { compareCharacterNamesNoCase } from './character-name-order.utils';
+import {
+  type CharacterSearchTerm,
+  matchesCharacterSearchTerm,
+  toCharacterSearchTerm,
+} from '../grammar/character-search-text';
 import { matchesCharacterTagSets } from './character-tag-set.utils';
 
 /**
@@ -144,6 +149,8 @@ export function runCaptainCoverageResultPass(
     requireSuperTypesClassesPresence,
     searchTerm,
   } = params;
+  // 869f63gkm. Words rather than punctuation, as every character search reads them.
+  const term = toCharacterSearchTerm(searchTerm);
   const characterBoxIdSet = params.characterBoxIds ? new Set(params.characterBoxIds) : null;
   const favoriteIdSet = new Set(params.favoriteIds);
   const requiredAbilityCharacterIds = filterState.requiredAbilityCharacterIds;
@@ -221,7 +228,7 @@ export function runCaptainCoverageResultPass(
 
     // Search runs last because it reads the coverage chips, which only exist
     // once the coverage above has been resolved.
-    if (searchTerm.length && !matchesCaptainCoverageSearchTerm(character, coverage, searchTerm)) {
+    if (term && !matchesCaptainCoverageSearchTerm(character, coverage, term)) {
       continue;
     }
 
@@ -245,20 +252,20 @@ export function runCaptainCoverageResultPass(
 export function matchesCaptainCoverageSearchTerm(
   character: CharacterListItem,
   coverage: CaptainCoverageResult | null,
-  searchTerm: string,
+  searchTerm: CharacterSearchTerm,
 ): boolean {
-  return [
-    character.id,
-    character.name,
-    character.type,
-    character.primaryClass,
-    character.secondaryClass ?? '',
-    ...character.classes,
-    ...(coverage?.chips.map((chip) => chip.label) ?? []),
-  ]
-    .join(' ')
-    .toLowerCase()
-    .includes(searchTerm);
+  return matchesCharacterSearchTerm(
+    [
+      character.id,
+      character.name,
+      character.type,
+      character.primaryClass,
+      character.secondaryClass ?? '',
+      ...character.classes,
+      ...(coverage?.chips.map((chip) => chip.label) ?? []),
+    ].join(' '),
+    searchTerm,
+  );
 }
 
 /*

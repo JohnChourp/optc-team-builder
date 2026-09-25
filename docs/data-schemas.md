@@ -201,6 +201,18 @@ had just spent a wave shrinking. **The answer is no, and the number is written h
 asked a fourth time.** Re-check with `npm run perf:dataset` if the row count ever changes by an
 order of magnitude.
 
+**869f63gkm, 2026-09-25: the search now pays for a JavaScript call per row it reaches.** Search
+compares words, not punctuation, so the loader registers `optc_search_text`
+(`src/app/core/grammar/character-search-text.ts`) with SQLite on both load paths and the repository
+reads `optc_search_text(c.search_text) LIKE ...`. `npm run perf:dataset` times that clause now,
+loading the same grammar file, because timing the bare `LIKE` the app no longer runs would stay
+green over a search that had become slow. Measured on an M4 Pro, 20 repeats: `searchAverageMs`
+**0.29 → 1.36**, `combinedAverageMs` **0.90 → 0.78**. The second went DOWN because the repository
+puts the search clause last and SQLite evaluates the terms in the order written: first, the
+function ran on all 4,622 rows of a type-and-class search (5.4 ms); last, on the 310 the facets let
+through. A search with no other filter reaches most of the table and costs about 4.5 ms here -
+still a fraction of a frame, and no reason for an index.
+
 **Where do they run?** All of them on the main thread, in `optc-repository.service.ts`. The app's
 three Web Workers exist for the long CPU passes — Auto Team Builder's search, its Rumble variant,
 and Captain Coverage's filter pass — and not for SQL. The numbers above are why that split is

@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 
+import { normalizeCharacterSearchText } from '../grammar/character-search-text';
 import { type DatasetManifest, type LocalCharacterOverride } from '../models/optc.models';
 import {
   CHARACTER_CLASS_LIKE_CLAUSE,
@@ -10,7 +11,12 @@ import {
   evaluateSqlLikePattern,
 } from './character-facet-filter.utils';
 import { compareCharacterNamesNoCase } from './character-name-order.utils';
-import { OptcRepositoryService } from './optc-repository.service';
+
+import {
+  CHARACTER_SEARCH_LITERAL_LIKE_CLAUSE,
+  CHARACTER_SEARCH_TEXT_LIKE_CLAUSE,
+  OptcRepositoryService,
+} from './optc-repository.service';
 
 interface TestSqlRow {
   [key: string]: string | number | null;
@@ -1719,20 +1725,6 @@ function filterCharacterRowsForQuery(
   let filteredRows = [...rows];
 
   let paramIndex = 0;
-  const detailedSearchTermToken = "c.search_text LIKE '%' || ? || '%'";
-
-  if (query.includes(detailedSearchTermToken)) {
-    const searchTerm = String(params[paramIndex] ?? '')
-      .trim()
-      .toLowerCase();
-
-    filteredRows = filteredRows.filter((row) =>
-      String(row['search_text'] ?? '')
-        .toLowerCase()
-        .includes(searchTerm),
-    );
-    paramIndex += 1;
-  }
 
   // Imported, never re-typed. A hard-coded copy that misses the ESCAPE suffix
   // makes `${token} AND ${token}` never match, silently downgrading every
@@ -1818,6 +1810,28 @@ function filterCharacterRowsForQuery(
     const maxCost = Number(params[paramIndex]);
 
     filteredRows = filteredRows.filter((row) => Number(row['cost'] ?? 0) <= maxCost);
+    paramIndex += 1;
+  }
+
+  // 869f63gkm. The search clause is the service's LAST, so its parameter is read last. Imported,
+  // never re-typed, like the facet clauses above: the normalised clause is what the registered
+  // `optc_search_text` function answers in the real database.
+  if (query.includes(CHARACTER_SEARCH_TEXT_LIKE_CLAUSE)) {
+    const searchTerm = String(params[paramIndex] ?? '');
+
+    filteredRows = filteredRows.filter((row) =>
+      normalizeCharacterSearchText(String(row['search_text'] ?? '')).includes(searchTerm),
+    );
+  } else if (query.includes(CHARACTER_SEARCH_LITERAL_LIKE_CLAUSE)) {
+    const searchTerm = String(params[paramIndex] ?? '')
+      .trim()
+      .toLowerCase();
+
+    filteredRows = filteredRows.filter((row) =>
+      String(row['search_text'] ?? '')
+        .toLowerCase()
+        .includes(searchTerm),
+    );
   }
 
   return applyOrderingAndWindow(filteredRows, query, params);

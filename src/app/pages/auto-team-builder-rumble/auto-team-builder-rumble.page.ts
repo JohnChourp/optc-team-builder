@@ -71,6 +71,10 @@ import {
   createEmptyCharacterTagSetSelection,
   matchesCharacterTagSets,
 } from '../../core/services/character-tag-set.utils';
+import {
+  matchesCharacterSearchTerm,
+  toCharacterSearchTerm,
+} from '../../core/grammar/character-search-text';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import {
   UserStateService,
@@ -673,7 +677,8 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
     }));
   });
   public readonly manualPickerResults = computed(() => {
-    const searchTerm = this.manualPickerSearchTerm().trim().toLowerCase();
+    // 869f63gkm. Words rather than punctuation, as every character search reads them.
+    const searchTerm = toCharacterSearchTerm(this.manualPickerSearchTerm());
     const target = this.manualPickerTarget();
     const selectedIds = this.resolveSelectedCharacterIds(target);
     const tagSelection = this.characterTagSetSelection();
@@ -686,16 +691,15 @@ export class AutoTeamBuilderRumblePage implements OnInit, OnDestroy {
           return true;
         }
 
-        const haystack = [
-          candidate.character.id.toString(),
-          candidate.character.name,
-          candidate.character.type,
-          ...candidate.character.classes,
-        ]
-          .join(' ')
-          .toLowerCase();
-
-        return haystack.includes(searchTerm);
+        return matchesCharacterSearchTerm(
+          [
+            candidate.character.id.toString(),
+            candidate.character.name,
+            candidate.character.type,
+            ...candidate.character.classes,
+          ].join(' '),
+          searchTerm,
+        );
       })
       // Runs BEFORE the `.slice(0, 80)` cap, so the visible grid is the first 80
       // of the tag-filtered candidates rather than a tag-filtered slice of the

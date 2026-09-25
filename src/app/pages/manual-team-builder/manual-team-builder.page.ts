@@ -62,6 +62,10 @@ import {
 } from '../../core/services/captain-coverage.utils';
 import { maySlotHoldCharacter } from '../../core/services/character-party-conflict-keys.utils';
 import {
+  matchesCharacterSearchTerm,
+  toCharacterSearchTerm,
+} from '../../core/grammar/character-search-text';
+import {
   compareCharactersByPowerFirst,
   OptcRepositoryService,
 } from '../../core/services/optc-repository.service';
@@ -1783,7 +1787,8 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
   private async loadTagFilteredCandidates(
     allowedCharacterIds: number[] | undefined,
   ): Promise<CharacterDetailRecord[]> {
-    const searchTerm = this.searchTerm().trim().toLowerCase();
+    // 869f63gkm. The repository's own search rule, words rather than punctuation.
+    const searchTerm = toCharacterSearchTerm(this.searchTerm());
     /*
      * Same facets, same predicate, same order and same cap as the repository
      * path above. These two paths swap the moment a character-tag filter is set,
@@ -1806,10 +1811,11 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
         }
 
         if (
-          searchTerm.length > 0 &&
-          !`${character.searchText ?? ''} ${character.name} ${character.id}`
-            .toLowerCase()
-            .includes(searchTerm)
+          searchTerm &&
+          !matchesCharacterSearchTerm(
+            `${character.searchText ?? ''} ${character.name} ${character.id}`,
+            searchTerm,
+          )
         ) {
           return false;
         }
