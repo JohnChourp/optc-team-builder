@@ -1154,7 +1154,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
    * 869f1k107. How many stages the reader expects to fight, and the two cooldown columns for the
    * built team.
    *
-   * The turn count cannot come from the dataset - its whole schema is six tables and none is a
+   * The turn count cannot come from the dataset - its whole schema is seven tables and none is a
    * stage table - so it is one field the reader enters, which 869f12xbm established up front.
    */
   /**
