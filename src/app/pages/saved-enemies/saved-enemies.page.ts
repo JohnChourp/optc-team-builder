@@ -52,6 +52,7 @@ import {
   type AbilityRequirementVisualMeta,
 } from '../../core/services/ability-requirement-draft.utils';
 import {
+  appendAbilityRequirementsFromEnemyMechanics,
   createEnemyMechanicDrafts,
   deriveAbilityRequirementsFromEnemyMechanics,
   formatEnemyMechanicSummary,
@@ -868,10 +869,10 @@ export class SavedEnemiesPage implements OnInit, ViewWillEnter {
       enemy.requiredAbilities,
       enemy.enemyMechanics,
     );
-    const migratedRequiredAbilities = [
-      ...manualRequiredAbilities,
-      ...deriveAbilityRequirementsFromEnemyMechanics(enemy.enemyMechanics),
-    ];
+    const migratedRequiredAbilities = appendAbilityRequirementsFromEnemyMechanics(
+      manualRequiredAbilities,
+      enemy.enemyMechanics,
+    );
     this.requiredAbilityDrafts.set(
       createSpecialAbilityDrafts(migratedRequiredAbilities, this.availableAbilityCatalogItems()),
     );
