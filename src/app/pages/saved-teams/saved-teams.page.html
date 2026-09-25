@@ -326,6 +326,23 @@
                 >
                   {{ t('tools.export') }}
                 </ion-button>
+                <!--
+                  869f63gy7. A native button: it is a disclosure, and an ion-button moves aria-*
+                  into its shadow button once, at load, so a changing aria-expanded goes stale.
+                -->
+                <button
+                  type="button"
+                  data-testid="saved-teams-treasure-map-toggle"
+                  class="saved-team-native-button saved-team-native-button--warning"
+                  [class.saved-teams-treasure-map-toggle--open]="treasureMapPlan() !== null"
+                  aria-controls="saved-teams-treasure-map-check"
+                  [attr.aria-expanded]="treasureMapPlan() ? 'true' : 'false'"
+                  [disabled]="!hasSelection()"
+                  (click)="toggleTreasureMapCheck()"
+                >
+                  <ion-icon [icon]="treasureMapIcon" aria-hidden="true"></ion-icon>
+                  {{ t('treasureMap.open') }}
+                </button>
                 <ion-button
                   fill="outline"
                   color="danger"
@@ -336,6 +353,80 @@
                 </ion-button>
               </div>
             </div>
+            <!--
+              869f63gy7. The selected teams checked as one Treasure Map plan. A repeated unit is
+              MARKED next to the teams that share it and nothing is refused or stored: the plan is
+              the selection, checked live.
+            -->
+            @if (treasureMapPlan(); as plan) {
+              <section
+                id="saved-teams-treasure-map-check"
+                class="saved-teams-treasure-map"
+                data-testid="saved-teams-treasure-map-check"
+                aria-labelledby="saved-teams-treasure-map-title"
+              >
+                <h3 id="saved-teams-treasure-map-title">{{ t('treasureMap.title') }}</h3>
+                <p>{{ t('treasureMap.copy') }}</p>
+                <p>{{ t('treasureMap.count', { count: plan.teamCount }) }}</p>
+                <p
+                  class="saved-teams-treasure-map__status"
+                  [class.saved-teams-treasure-map__status--clear]="!plan.repeatedUnitCount"
+                  role="status"
+                >
+                  {{
+                    plan.repeatedUnitCount
+                      ? t('treasureMap.repeated', { count: plan.repeatedUnitCount })
+                      : t('treasureMap.none')
+                  }}
+                </p>
+                <ul class="saved-teams-treasure-map__teams">
+                  @for (row of plan.rows; track row.teamId) {
+                    <li class="saved-teams-treasure-map__team">
+                      <div class="saved-teams-treasure-map__team-head">
+                        <strong>{{ row.name }}</strong>
+                        <button
+                          type="button"
+                          class="saved-team-native-button saved-teams-treasure-map__ambush"
+                          [class.saved-teams-treasure-map__ambush--active]="row.isAmbush"
+                          [attr.data-testid]="'saved-teams-treasure-map-ambush-' + row.teamId"
+                          [attr.aria-pressed]="row.isAmbush ? 'true' : 'false'"
+                          [attr.aria-label]="t('treasureMap.ambushAria', { name: row.name })"
+                          (click)="toggleTreasureMapAmbushTeam(row.teamId)"
+                        >
+                          {{ t('treasureMap.ambush') }}
+                        </button>
+                      </div>
+                      @if (row.conflicts.length) {
+                        <ul class="saved-teams-treasure-map__conflicts">
+                          @for (conflict of row.conflicts; track conflict.characterId) {
+                            @if (conflict.otherTeamNames) {
+                              <li>
+                                {{
+                                  t('treasureMap.alsoIn', {
+                                    name: conflict.unitName,
+                                    teams: conflict.otherTeamNames,
+                                  })
+                                }}
+                              </li>
+                            }
+                            @if (conflict.usesInTeam > 1) {
+                              <li>
+                                {{
+                                  t('treasureMap.inTeam', {
+                                    name: conflict.unitName,
+                                    count: conflict.usesInTeam,
+                                  })
+                                }}
+                              </li>
+                            }
+                          }
+                        </ul>
+                      }
+                    </li>
+                  }
+                </ul>
+              </section>
+            }
             @if (!filteredSavedTeamCards().length) {
               @if (hasSearchQuery()) {
                 <div class="saved-teams-filter-empty" data-testid="saved-teams-search-empty">

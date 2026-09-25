@@ -37,7 +37,8 @@
     "stars": "Stars",
     "superSpecialEffect": "Super special effect",
     "target": "Targeting",
-    "type": "Type"
+    "type": "Type",
+    "uses": "Uses"
   },
   "loading": "Loading offline character record...",
   "status": {
@@ -70,7 +71,8 @@
     "progression": "Getting and improving this unit",
     "investment": "Investment",
     "evolution": "Evolution",
-    "howToGet": "How to get it"
+    "howToGet": "How to get it",
+    "grandParty": "Grand Party"
   },
   "superSpecial": {
     "criteriaLabel": "Criteria",
@@ -78,7 +80,39 @@
   },
   "support": {
     "maxLevelEffect": "Max level effect",
-    "supportedCharactersLabel": "Supported characters"
+    "supportedCharactersLabel": "Supported characters",
+    "autoPlus": {
+      "label": "Auto+",
+      "or": "or",
+      "stage": "at stage {{stage}}",
+      "finalStage": "at the final stage",
+      "enemyBarrier": "when an enemy has a Barrier",
+      "enemyInflicts": "when an enemy inflicts you with {{status}}",
+      "enemyApplies": "when an enemy applies {{status}}",
+      "fires": "fires the supported character's {{effect}} by itself",
+      "neverFires": "never fires the supported character's {{effect}} by itself"
+    }
+  },
+  "grandParty": {
+    "leaderSkill": "Leader Skill",
+    "burst": "Burst",
+    "burstCondition": "Burst Condition",
+    "condition": {
+      "defeatCrew": "After {{count}} crew members are defeated",
+      "defeatEnemies": "After {{count}} enemies are defeated",
+      "specialCrew": "After your crew uses {{count}} Rumble Specials",
+      "specialEnemies": "After the enemies use {{count}} Rumble Specials",
+      "timeAfter": "After {{count}} seconds",
+      "timeExactly": "At exactly {{count}} seconds",
+      "damageTimes": "After dealing damage {{count}} times",
+      "damageDealt": "After dealing {{count}} damage",
+      "damageTaken": "After taking {{count}} damage",
+      "hitsTaken": "After taking {{count}} hits",
+      "debuffsTaken": "After receiving {{count}} debuffs",
+      "attacksLanded": "After landing {{count}} {{attack}} attacks",
+      "debuffLanded": "After landing {{attribute}} {{count}} times",
+      "actions": "After {{count}} {{action}} actions"
+    }
   },
   "stats": {
     "maxAtk": "Max ATK",

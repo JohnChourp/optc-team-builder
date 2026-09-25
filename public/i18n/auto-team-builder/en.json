@@ -864,6 +864,12 @@
     "sideBShort": "B",
     "loading": "Loading team data...",
     "snapshotSummary": "{{name}} · {{filled}} filled slots",
+    "unnamedTeam": {
+      "current": "Current generated team",
+      "importedGenerated": "Imported generated team",
+      "importedSaved": "Imported saved team",
+      "saved": "Saved team"
+    },
     "changed": "Changed",
     "same": "Same",
     "emptySlot": "Empty",

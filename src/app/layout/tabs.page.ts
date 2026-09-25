@@ -30,7 +30,7 @@ import {
   shieldHalfOutline,
   sparklesOutline,
 } from 'ionicons/icons';
-import { type SupportedLanguage } from '../core/i18n/app-i18n.types';
+import { APP_I18N_AVAILABLE_LANGUAGES, type SupportedLanguage } from '../core/i18n/app-i18n.types';
 import { AppI18nService } from '../core/services/app-i18n.service';
 import { GoogleAccountService } from '../core/services/google-account.service';
 import { WhatsNewModalComponent } from '../shared/whats-new/whats-new-modal.component';
@@ -44,7 +44,12 @@ interface NavigationItem {
 interface LanguageItem {
   flag: string;
   id: SupportedLanguage;
+  /** 869f63gnt. The language's own name for itself - what its button says, in any menu language. */
+  label: string;
 }
+
+/** 869f63gnt. Decoration beside a language's name: a flag stands for a country, not a language. */
+const LANGUAGE_FLAGS: Readonly<Record<SupportedLanguage, string>> = { en: '🇬🇧', el: '🇬🇷' };
 
 interface NavigationGroup {
   icon: string | readonly string[];
@@ -96,10 +101,9 @@ export class TabsPage {
     fragment: 'ignored',
     matrixParams: 'ignored',
   };
-  public readonly availableLanguages: readonly LanguageItem[] = [
-    { id: 'en', flag: '🇬🇧' },
-    { id: 'el', flag: '🇬🇷' },
-  ];
+  public readonly availableLanguages: readonly LanguageItem[] = APP_I18N_AVAILABLE_LANGUAGES.map(
+    ({ id, label }) => ({ id, flag: LANGUAGE_FLAGS[id], label }),
+  );
   public readonly navigationGroups: readonly NavigationGroup[] = [
     {
       icon: gridOutline,

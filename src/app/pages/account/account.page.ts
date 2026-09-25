@@ -43,6 +43,7 @@ import {
   type DriveSyncReviewRowStatus,
   type DriveSyncReviewSection,
   type DriveSyncReviewSectionKey,
+  type DriveSyncReviewText,
   updateDriveSyncReviewRowChoice,
 } from '../drive-sync/drive-sync-review.utils';
 import { applyIonicModalDialogLabel } from '../../shared/a11y/ionic-modal-dialog-label.utils';
@@ -378,6 +379,17 @@ export class AccountPage {
 
   public labelModalDialog(event: Event, label: string): void {
     applyIonicModalDialogLabel(event, label);
+  }
+
+  /**
+   * 869f6td68. A review row's name or detail in the reader's language: an item's own name or id as
+   * it is, and every phrase around it through `t`, from the template's `settings` scope.
+   */
+  public reviewText(
+    translate: (key: string, params?: Readonly<Record<string, number | string>>) => string,
+    text: DriveSyncReviewText,
+  ): string {
+    return 'key' in text ? translate(text.key, text.params) : text.text;
   }
 
   public getReviewRowImage(row: DriveSyncReviewRow): string | null {

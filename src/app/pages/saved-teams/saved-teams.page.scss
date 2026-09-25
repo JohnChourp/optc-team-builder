@@ -71,3 +71,101 @@
 .published-list__item ion-button {
   margin: 0;
 }
+
+/* A native tool that needs a selection is unavailable without one, like the Ionic tools beside it. */
+.saved-team-native-button:disabled {
+  cursor: default;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* 869f63gy7. The Treasure Map plan check over the selected teams. */
+.saved-teams-treasure-map-toggle--open {
+  background: rgba(245, 200, 76, 0.16);
+}
+
+.saved-teams-treasure-map {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding: 14px;
+  border: 1px solid rgba(245, 200, 76, 0.32);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.saved-teams-treasure-map h3,
+.saved-teams-treasure-map p {
+  margin: 0;
+}
+
+.saved-teams-treasure-map h3,
+.saved-teams-treasure-map__team-head strong {
+  color: #ffffff;
+  overflow-wrap: anywhere;
+}
+
+.saved-teams-treasure-map p {
+  color: rgba(248, 251, 255, 0.72);
+  font-size: 0.92rem;
+}
+
+.saved-teams-treasure-map p.saved-teams-treasure-map__status {
+  color: #f7a7ce;
+  font-weight: 700;
+}
+
+.saved-teams-treasure-map p.saved-teams-treasure-map__status--clear {
+  color: #86efac;
+}
+
+.saved-teams-treasure-map__teams,
+.saved-teams-treasure-map__conflicts {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.saved-teams-treasure-map__team {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.saved-teams-treasure-map__team-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.saved-teams-treasure-map__conflicts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.saved-teams-treasure-map__conflicts li {
+  padding: 3px 10px;
+  border: 1px solid rgba(255, 112, 112, 0.42);
+  border-radius: 999px;
+  background: rgba(255, 112, 112, 0.12);
+  color: #ffc9c9;
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
+}
+
+.saved-teams-treasure-map__ambush {
+  border-color: rgba(248, 251, 255, 0.28);
+}
+
+.saved-teams-treasure-map__ambush--active {
+  border-color: rgba(245, 200, 76, 0.78);
+  background: rgba(245, 200, 76, 0.16);
+  color: #f5c84c;
+}
