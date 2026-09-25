@@ -4,14 +4,8 @@ import {
   normalizeAbilityRequirementEffectValue,
   normalizeAbilityRequirementSourceScope,
 } from "../../core/models/auto-team-builder-ability.models";
-import {
-  cloneBattleRequirements,
-  normalizeBattleRequirementsWithLegacyFallback,
-} from "../../core/services/auto-team-builder-battle.utils";
-import {
-  cloneRequiredCharacterGroups,
-  expandRequiredAbilitiesToCharacterGroups,
-} from "../../core/services/required-character-groups.utils";
+import { cloneBattleRequirements } from "../../core/services/auto-team-builder-battle.utils";
+import { cloneRequiredCharacterGroups } from "../../core/services/required-character-groups.utils";
 import {
   givePlayerFile,
   JSON_EXPORT_MIME_TYPE,
@@ -161,16 +155,39 @@ function normalizeEnemyImageDataUrl(value: unknown): string | null {
 function normalizeEntityIdSegment(value: string): string {
   return value
     .trim()
+    .normalize("NFKC")
     .toLowerCase()
     .replace(/["']/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/[^\p{L}\p{M}\p{N}]+/gu, "-")
     .replace(/^-+|-+$/g, "");
 }
 
-function buildImportedEnemyId(name: string): string {
+/* FNV-1a over the code points, in base 36 - stable on every device; an id, not a checksum. */
+function buildStableTextHash(value: string): string {
+  let hash = 0x811c9dc5;
+
+  for (const character of value) {
+    hash ^= character.codePointAt(0) ?? 0;
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+
+  return hash.toString(36);
+}
+
+/*
+ * 869f6td37. The slug kept only a-z and 0-9, so EVERY Greek or Japanese name - and every blank
+ * one - became `enemy-skill-untitled`, and the second such import overwrote the first. It now keeps
+ * the letters (with their combining marks) and digits of any script, NFKC-normalised and
+ * lower-cased. For an ASCII name that is exactly the slug it always was, so an enemy imported
+ * before keeps its identity. A name with no letter or digit at all takes a hash of the enemy it
+ * describes: two such enemies stay two, and the same file imported twice still updates one.
+ */
+function buildImportedEnemyId(name: string, enemy: Record<string, unknown>): string {
   const normalizedNameSegment = normalizeEntityIdSegment(name);
 
-  return `enemy-skill-${normalizedNameSegment || "untitled"}`;
+  return normalizedNameSegment
+    ? `enemy-skill-${normalizedNameSegment}`
+    : `enemy-skill-untitled-${buildStableTextHash(JSON.stringify(enemy))}`;
 }
 
 function normalizeRequiredAbilities(value: unknown): SavedEnemy["requiredAbilities"] {
@@ -214,13 +231,12 @@ function normalizeRequiredAbilities(value: unknown): SavedEnemy["requiredAbiliti
 
 function normalizeRequiredCharacterGroups(
   value: unknown,
-  fallbackRequiredAbilities: SavedEnemy["requiredAbilities"],
-): SavedEnemy["requiredCharacterGroups"] {
+): NonNullable<SavedEnemy["requiredCharacterGroups"]> {
   if (!Array.isArray(value)) {
-    return expandRequiredAbilitiesToCharacterGroups(fallbackRequiredAbilities).groups;
+    return [];
   }
 
-  const groups = cloneRequiredCharacterGroups(
+  return cloneRequiredCharacterGroups(
     value.flatMap((entry, index) => {
       if (!isRecord(entry)) {
         return [];
@@ -237,10 +253,6 @@ function normalizeRequiredCharacterGroups(
       ];
     }),
   );
-
-  return groups.length > 0
-    ? groups
-    : expandRequiredAbilitiesToCharacterGroups(fallbackRequiredAbilities).groups;
 }
 
 function normalizeEnemyMechanics(value: unknown): SavedEnemy["enemyMechanics"] {
@@ -387,7 +399,7 @@ export function parseSavedEnemiesImportPayloadValue(
       exportedAt,
       enemies: [
         {
-          id: buildImportedEnemyId(normalizedEnemyName),
+          id: buildImportedEnemyId(normalizedEnemyName, enemy),
           name: normalizedEnemyName,
           notes: typeof enemy["notes"] === "string" ? enemy["notes"] : "",
           rawEnemyText: normalizeRawEnemyText(enemy["rawEnemyText"]),
@@ -476,7 +488,11 @@ export function sanitizeSavedEnemiesImportPayload(
     const enemyMechanics = normalizeEnemyMechanics(enemy["enemyMechanics"]);
     const requiredCharacterGroups = normalizeRequiredCharacterGroups(
       enemy["requiredCharacterGroups"],
-      requiredAbilities,
+    );
+    const battleRequirements = cloneBattleRequirements(
+      Array.isArray(enemy["battleRequirements"])
+        ? (enemy["battleRequirements"] as SavedEnemy["battleRequirements"])
+        : undefined,
     );
     const sanitizedEnemy: SavedEnemy = {
       id: normalizedEnemyId,
@@ -496,14 +512,15 @@ export function sanitizeSavedEnemiesImportPayload(
         mapValue: (value) => value.toLowerCase(),
       }),
       requiredAbilities,
-      requiredCharacterGroups,
-      battleRequirements: normalizeBattleRequirementsWithLegacyFallback({
-        battles: Array.isArray(enemy["battleRequirements"])
-          ? (enemy["battleRequirements"] as SavedEnemy["battleRequirements"])
-          : undefined,
-        requiredCharacterGroups,
-        enemyMechanics,
-      }),
+      /*
+       * 869f6td1y. Only the groups and battles the file carries. The ones it leaves out are derived
+       * by the loader's own `normalizeSavedEnemy`, which `mergeImportedEnemies` runs next, from the
+       * manual abilities AND the mechanics. Building them here from the manual abilities alone
+       * stored an April-2026 or single-enemy file without the requirements its mechanics imply,
+       * for good: stored groups are never derived again.
+       */
+      ...(requiredCharacterGroups.length ? { requiredCharacterGroups } : {}),
+      ...(battleRequirements.length ? { battleRequirements } : {}),
       enemyMechanics,
       requireAllSelectedTypesInTeam: Boolean(enemy["requireAllSelectedTypesInTeam"]),
       requireAllSelectedClassesPerCharacter: Boolean(

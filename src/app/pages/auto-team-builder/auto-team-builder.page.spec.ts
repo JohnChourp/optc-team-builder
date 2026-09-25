@@ -10294,16 +10294,17 @@ describe('AutoTeamBuilder enemy preset handoff', () => {
         derivedAbilityKey: 'remove_enemy_barrier',
       },
     ]);
+    // 869f6td1y. The enemy's own ability first, then the barrier's - the order Saved Enemies uses.
     expect(page.pageRequiredAbilities()).toEqual([
       {
-        abilityKey: 'remove_enemy_barrier',
-        minTurns: 3,
+        abilityKey: 'remove_bind',
+        minTurns: 5,
         slotTokens: [],
         requiredCharacterCount: 1,
       },
       {
-        abilityKey: 'remove_bind',
-        minTurns: 5,
+        abilityKey: 'remove_enemy_barrier',
+        minTurns: 3,
         slotTokens: [],
         requiredCharacterCount: 1,
       },
@@ -10365,16 +10366,17 @@ describe('AutoTeamBuilder enemy preset handoff', () => {
             derivedAbilityKey: 'remove_enemy_barrier',
           },
         ],
+        // 869f6td1y. The enemy's own ability first, as in the test above.
         requiredAbilities: [
           {
-            abilityKey: 'remove_enemy_barrier',
-            minTurns: 3,
+            abilityKey: 'remove_bind',
+            minTurns: 5,
             slotTokens: [],
             requiredCharacterCount: 1,
           },
           {
-            abilityKey: 'remove_bind',
-            minTurns: 5,
+            abilityKey: 'remove_enemy_barrier',
+            minTurns: 3,
             slotTokens: [],
             requiredCharacterCount: 1,
           },
