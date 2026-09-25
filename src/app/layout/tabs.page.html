@@ -14,41 +14,49 @@
   <ion-content class="tabs-menu__content">
     <div class="tabs-menu__shell">
       <nav class="tabs-menu__nav-panel" [attr.aria-label]="'tabs.navigationAriaLabel' | transloco">
-        <div class="tabs-menu__account-entry">
-          @if (googleAccountSignedIn()) {
-            <ion-menu-toggle autoHide="true">
+        <!--
+          869f63gqt. Offered only where Google sign-in can work - the same check the Google
+          account service makes. A build without the Google client id, which today is the
+          Android app, showed this row disabled with nothing saying why. It shows nothing
+          there now, and comes back on its own once the build carries the id.
+        -->
+        @if (googleAccountAvailable()) {
+          <div class="tabs-menu__account-entry">
+            @if (googleAccountSignedIn()) {
+              <ion-menu-toggle autoHide="true">
+                <ion-item
+                  button
+                  detail="false"
+                  class="menu-item menu-item--account"
+                  [routerLink]="[accountRoute]"
+                  routerLinkActive="menu-item--active"
+                  [routerLinkActiveOptions]="navItemActiveMatchOptions"
+                  routerDirection="root"
+                >
+                  <ion-icon slot="start" [icon]="accountIcon"></ion-icon>
+                  <ion-label>
+                    @if (accountDisplayName()) {
+                      {{ accountDisplayName() }}
+                    } @else {
+                      {{ 'tabs.account' | transloco }}
+                    }
+                  </ion-label>
+                </ion-item>
+              </ion-menu-toggle>
+            } @else {
               <ion-item
                 button
                 detail="false"
                 class="menu-item menu-item--account"
-                [routerLink]="[accountRoute]"
-                routerLinkActive="menu-item--active"
-                [routerLinkActiveOptions]="navItemActiveMatchOptions"
-                routerDirection="root"
+                [disabled]="googleAccountStatus() === 'signing-in'"
+                (click)="signInWithGoogle()"
               >
-                <ion-icon slot="start" [icon]="accountIcon"></ion-icon>
-                <ion-label>
-                  @if (accountDisplayName()) {
-                    {{ accountDisplayName() }}
-                  } @else {
-                    {{ 'tabs.account' | transloco }}
-                  }
-                </ion-label>
+                <ion-icon slot="start" [icon]="loginIcon"></ion-icon>
+                <ion-label>{{ 'tabs.login' | transloco }}</ion-label>
               </ion-item>
-            </ion-menu-toggle>
-          } @else {
-            <ion-item
-              button
-              detail="false"
-              class="menu-item menu-item--account"
-              [disabled]="!googleAccountAvailable() || googleAccountStatus() === 'signing-in'"
-              (click)="signInWithGoogle()"
-            >
-              <ion-icon slot="start" [icon]="loginIcon"></ion-icon>
-              <ion-label>{{ 'tabs.login' | transloco }}</ion-label>
-            </ion-item>
-          }
-        </div>
+            }
+          </div>
+        }
 
         <ion-accordion-group
           class="tabs-menu__accordion-group"

@@ -121,7 +121,12 @@ const BOOST_INSTEAD_SUFFIX_PATTERN =
   /\bby\s+(\d+(?:\.\d+)?x(?:-\d+(?:\.\d+)?x)?)\s+instead\b/gi;
 const SELF_ACTIVATION_RIDER_PATTERN =
   /(?:,\s*|\s+and\s+)(?:(?:at|from)\s+(?:the\s+)?start\s+of\s+(?:the\s+)?(?:fight|quest|adventure),?\s+)?this character activates their own special\b[^,.;]*/gi;
-const START_OF_FIGHT_EFFECT_PATTERN =
+/**
+ * "at the start of the fight", "from the start of the quest", "at start of fight". Exported for
+ * 869f63gm7, whose start-of-quest cooldown cuts are timed by exactly this phrase - one timing
+ * grammar rather than a second copy of it.
+ */
+export const START_OF_FIGHT_EFFECT_PATTERN =
   /\b(?:at|from)\s+(?:the\s+)?start\s+of\s+(?:the\s+)?(?:fight|quest|adventure)\b/i;
 const BRACKETED_LABEL_PATTERN = /\[([^\]]+)\]/g;
 const BOOST_TARGET_FRAGMENT_PATTERNS = [

@@ -5,6 +5,7 @@ import { AlertController, IonIcon, IonRouterOutlet } from '@ionic/angular';
 import { IonApp } from '@ionic/angular/ion-app';
 import { IonButton } from '@ionic/angular/ion-button';
 import { IonProgressBar } from '@ionic/angular/ion-progress-bar';
+import { IonToast } from '@ionic/angular/ion-toast';
 import {
   NavigationCancel,
   NavigationEnd,
@@ -18,6 +19,7 @@ import { Meta, Title } from '@angular/platform-browser';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { closeOutline, cloudDownloadOutline, refreshOutline } from 'ionicons/icons';
 import packageJson from '../../package.json';
+import { APP_SITE_BASE_URL } from './core/data/app-site-url.data';
 import { PreferencesAdapterService } from './core/services/preferences-adapter.service';
 import { AnalyticsConsentService } from './core/services/analytics-consent.service';
 import { shouldAskForAnalyticsConsent } from './core/services/analytics-consent-prompt.utils';
@@ -28,6 +30,11 @@ import { AppUpdateService } from './core/services/app-update.service';
 import { CharacterCatalogCacheService } from './core/services/character-catalog-cache.service';
 import { GoogleAnalyticsService } from './core/services/google-analytics.service';
 import { NativeUpdateService } from './core/services/native-update.service';
+import {
+  dismissPlayerFileNotice,
+  playerFileNotice,
+} from './core/services/player-file-delivery.utils';
+import { describePlayerFileNotice } from './core/services/player-file-notice.utils';
 import { ToolbarBackNavigationService } from './core/services/toolbar-back-navigation.service';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -50,7 +57,6 @@ interface RouteSeoData {
  * matching `analyticsConsent` and the other preference keys in this app.
  */
 const INSTALL_BANNER_DISMISSED_PREFERENCE_KEY = 'installPromptDismissed';
-const appSiteBaseUrl = 'https://optcteambuilder.com';
 const appHomeTitle = 'OPTC Team Builder | One Piece Treasure Cruise Tools';
 const defaultSeo: RouteSeoData = {
   title: appHomeTitle,
@@ -63,7 +69,16 @@ const defaultSeo: RouteSeoData = {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [IonApp, IonButton, IonIcon, IonProgressBar, IonRouterOutlet, RouterLink, TranslocoPipe],
+  imports: [
+    IonApp,
+    IonButton,
+    IonIcon,
+    IonProgressBar,
+    IonRouterOutlet,
+    IonToast,
+    RouterLink,
+    TranslocoPipe,
+  ],
   template: `
     <ion-app class="app-shell">
       @if (routeLoading()) {
@@ -228,6 +243,20 @@ const defaultSeo: RouteSeoData = {
           }
         </div>
       }
+
+      <!--
+        869f63gqg. An export in the Android app opens the share sheet, and this says what
+        the sheet is for - or, when the file could not be written or shared, says so
+        instead of the silence the old download link left. Nothing sets it on the website,
+        where an export is still a download.
+      -->
+      <ion-toast
+        position="top"
+        [isOpen]="playerFileNotice() !== null"
+        [message]="playerFileNoticeMessage()"
+        [duration]="playerFileNotice() === 'failed' ? 8000 : 6000"
+        (didDismiss)="dismissPlayerFileNotice()"
+      ></ion-toast>
 
       <footer class="app-footer-meta">
         <div class="app-footer-meta__inner">
@@ -444,6 +473,21 @@ export class AppComponent {
    * nothing here claims a feature will work - only that some will not.
    */
   public readonly showOfflineBanner = computed(() => !this.network.online());
+
+  /**
+   * 869f63gqg. Set by `givePlayerFile` on a phone only: while the share sheet is open, and
+   * when an export could not be written or shared. `describePlayerFileNotice` holds the words.
+   */
+  public readonly playerFileNotice = playerFileNotice;
+  public readonly playerFileNoticeMessage = computed(() =>
+    describePlayerFileNotice(this.playerFileNotice(), (key, params, scope) =>
+      this.i18n.translate(key, params, scope),
+    ),
+  );
+
+  public dismissPlayerFileNotice(): void {
+    dismissPlayerFileNotice();
+  }
 
   public constructor() {
     /*
@@ -871,8 +915,8 @@ export class AppComponent {
     const normalizedRoutePath = routePath.replace(/^\/+|\/+$/g, '');
 
     return normalizedRoutePath.length
-      ? `${appSiteBaseUrl}/${normalizedRoutePath}/`
-      : `${appSiteBaseUrl}/`;
+      ? `${APP_SITE_BASE_URL}/${normalizedRoutePath}/`
+      : `${APP_SITE_BASE_URL}/`;
   }
 
   private updateCanonicalLink(canonicalUrl: string): void {

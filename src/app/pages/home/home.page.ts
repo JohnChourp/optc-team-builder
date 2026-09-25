@@ -84,8 +84,8 @@ export class HomePage {
    * 869f13d6j. Shown only on an installation that holds nothing of the reader's.
    *
    * It detects nothing about other installations - reading another origin's storage is
-   * impossible by design - so it states the one fact it has, names the two routes that
-   * work, and goes away when dismissed.
+   * impossible by design - so it states the one fact it has, names the routes that work on
+   * this build, and goes away when dismissed.
    */
   private readonly transferNoticeDismissed = signal(this.readTransferNoticeDismissed());
 

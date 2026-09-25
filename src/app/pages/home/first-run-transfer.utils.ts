@@ -5,9 +5,13 @@ import { type SyncScopeSummary } from '../../core/services/user-data-transfer.se
  * Whether a fresh installation should say, plainly, that it is empty.
  *
  * 869f13d6j. A reader can hold the website, the installed PWA and the APK at once - three
- * installations of one product, each with its own browser storage, and Google Drive sync is
- * the only bridge between them. Saved teams, boxes, enemies, overrides and favourites all
- * live in that storage.
+ * installations of one product, each with its own browser storage, and the bridges between
+ * them are Google Drive sync and an exported file. Saved teams, boxes, enemies, overrides and
+ * favourites all live in that storage.
+ *
+ * 869f63gqt. Drive sync needs Google sign-in, which a build without the Google client id -
+ * today the Android app - does not have. There the file is the only bridge, and the notice
+ * says so rather than offering a route that ends at a disabled button.
  *
  * So the most likely silent data loss in this product happens at the moment somebody
  * commits to the app: they install it, find nothing, and have no way to know whether their
@@ -21,7 +25,8 @@ import { type SyncScopeSummary } from '../../core/services/user-data-transfer.se
  * are elsewhere.
  *
  * What it knows is exactly one fact: **this installation is empty**. It says that, says
- * where data could be, and offers the two routes that actually work. Then it goes away.
+ * where data could be, and offers the routes that actually work on this build. Then it goes
+ * away.
  */
 
 /**

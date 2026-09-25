@@ -15,18 +15,33 @@
           <!--
             869f13d6j. Only on an installation holding nothing of the reader's. It detects
             nothing about other installations - that is impossible across origins - so it
-            states the one fact it has and names the two routes that actually work.
+            states the one fact it has and names the routes that actually work.
+
+            869f63gqt. Which routes work depends on the build. Drive sync needs Google sign-in,
+            and a build without the Google client id - today the Android app - cannot sign in,
+            so there the Drive button was a dead end and the copy promised a route that is not
+            there. Such a build names the file route alone and makes it the primary action.
           -->
           <section class="glass-card first-run-transfer" data-test="home-first-run-transfer">
             <h2>{{ t('firstRunTransfer.title') }}</h2>
-            <p>{{ t('firstRunTransfer.body') }}</p>
+            @if (googleAccountAvailable()) {
+              <p>{{ t('firstRunTransfer.body') }}</p>
+            } @else {
+              <p>{{ t('firstRunTransfer.bodyFileOnly') }}</p>
+            }
             <div class="first-run-transfer__actions">
-              <ion-button size="small" fill="solid" [routerLink]="['/tabs/drive-sync']" routerDirection="root">
-                {{ t('firstRunTransfer.drive') }}
-              </ion-button>
-              <ion-button size="small" fill="outline" color="light" [routerLink]="['/tabs/settings']" routerDirection="root">
-                {{ t('firstRunTransfer.import') }}
-              </ion-button>
+              @if (googleAccountAvailable()) {
+                <ion-button size="small" fill="solid" [routerLink]="['/tabs/drive-sync']" routerDirection="root">
+                  {{ t('firstRunTransfer.drive') }}
+                </ion-button>
+                <ion-button size="small" fill="outline" color="light" [routerLink]="['/tabs/settings']" routerDirection="root">
+                  {{ t('firstRunTransfer.import') }}
+                </ion-button>
+              } @else {
+                <ion-button size="small" fill="solid" [routerLink]="['/tabs/settings']" routerDirection="root">
+                  {{ t('firstRunTransfer.import') }}
+                </ion-button>
+              }
               <!--
                 A native button, as every dismiss in this app is: ion-button copies aria-*
                 into its shadow button once, at load, so a changing state goes stale there.
@@ -102,7 +117,7 @@
                 }
               </div>
             </a>
-          } @else {
+          } @else if (googleAccountAvailable()) {
             <div class="home-account__body">
               <span class="home-account__avatar home-account__avatar--icon" aria-hidden="true">
                 <ion-icon [icon]="accountIcon"></ion-icon>
@@ -110,26 +125,36 @@
               <div>
                 <span>{{ t('account.signedOutEyebrow') }}</span>
                 <strong>{{ t('account.signedOutTitle') }}</strong>
-                <small>
-                  {{
-                    googleAccountAvailable()
-                      ? t('account.signedOutCopy')
-                      : t('account.unavailableCopy')
-                  }}
-                </small>
+                <small>{{ t('account.signedOutCopy') }}</small>
               </div>
               <ion-button
                 fill="outline"
                 color="warning"
-                [disabled]="!googleAccountAvailable() || googleAccountStatus() === 'signing-in'"
+                [disabled]="googleAccountStatus() === 'signing-in'"
                 (click)="signInWithGoogle()"
               >
                 <ion-icon slot="start" [icon]="loginIcon"></ion-icon>
-                {{
-                  googleAccountAvailable()
-                    ? t('account.actions.signIn')
-                    : t('account.actions.unavailable')
-                }}
+                {{ t('account.actions.signIn') }}
+              </ion-button>
+            </div>
+          } @else {
+            <!--
+              869f63gqt. A build without the Google client id cannot sign in. This panel used to
+              say "Log in for Drive sync" over a disabled button reading "Google sign-in
+              unavailable" - a dead end. It says instead where the reader's data lives and how
+              it moves, and sends them to the export and import that do work.
+            -->
+            <div class="home-account__body" data-test="home-account-unavailable">
+              <span class="home-account__avatar home-account__avatar--icon" aria-hidden="true">
+                <ion-icon [icon]="accountIcon"></ion-icon>
+              </span>
+              <div>
+                <span>{{ t('account.signedOutEyebrow') }}</span>
+                <strong>{{ t('account.unavailableTitle') }}</strong>
+                <small>{{ t('account.unavailableCopy') }}</small>
+              </div>
+              <ion-button fill="outline" color="warning" [routerLink]="['/tabs/settings']" routerDirection="root">
+                {{ t('account.actions.openSettings') }}
               </ion-button>
             </div>
           }

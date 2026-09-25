@@ -168,6 +168,11 @@ import {
   type SpecialCooldownRecord,
 } from './special-charge-timeline.utils';
 import {
+  buildStartOfQuestCutsBySlot,
+  clampEventCutTurns,
+  type StartCutPart,
+} from './special-charge-start-cut.utils';
+import {
   AUTO_TEAM_BUILDER_SELECTION_SESSION_KEY,
   isDefaultSelectionState,
   narrowToAvailable,
@@ -207,10 +212,12 @@ import {
 import { copyTextToClipboard } from '../../shared/clipboard/clipboard-copy.utils';
 import { Capacitor } from '@capacitor/core';
 import packageJson from '../../../../package.json';
+import { buildSavedTeamsTransferPayload } from '../saved-teams/saved-teams-transfer.utils';
+import { downloadSavedTeamsExport } from '../saved-teams/saved-teams-export.utils';
 import {
-  buildSavedTeamsTransferPayload,
-  downloadSavedTeamsExport,
-} from '../saved-teams/saved-teams-transfer.utils';
+  givePlayerFile,
+  JSON_EXPORT_MIME_TYPE,
+} from '../../core/services/player-file-delivery.utils';
 import {
   AutoTeamCompareImportError,
   buildAutoTeamCompareDiff,
@@ -1166,9 +1173,28 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   );
 
   public readonly timelineTurns = signal(DEFAULT_TIMELINE_TURNS);
+  /**
+   * 869f63gm7. The cut the reader's event gives at the start - a Treasure Map booster's 10, say -
+   * whether it reaches the whole team rather than only the Boosted list, and whether to count what
+   * Limit Break unlocks. All three are the reader's to say: the dataset carries no event data, and
+   * the app never assumes investment (869f13c8m), so the last one starts off.
+   */
+  public readonly timelineEventCut = signal(0);
+  public readonly timelineEventCutWholeTeam = signal(false);
+  public readonly timelineCountLimitBreak = signal(false);
   private readonly specialCooldowns = signal<ReadonlyMap<number, SpecialCooldownRecord>>(new Map());
   public readonly specialChargeTimeline = computed<SpecialChargeTimeline | null>(() =>
-    buildSpecialChargeTimeline(this.result(), this.timelineTurns(), this.specialCooldowns()),
+    buildSpecialChargeTimeline(
+      this.result(),
+      this.timelineTurns(),
+      this.specialCooldowns(),
+      buildStartOfQuestCutsBySlot(this.result(), {
+        eventCutTurns: this.timelineEventCut(),
+        eventCutWholeTeam: this.timelineEventCutWholeTeam(),
+        boostedCharacterIds: this.boostedCharacterIds(),
+        countLimitBreak: this.timelineCountLimitBreak(),
+      }),
+    ),
   );
   public readonly errorMessage = signal('');
   /** Why the last build shows no team, as a code the debug report can carry (869exmkf4). */
@@ -4994,6 +5020,16 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
      */
     const speedsUp = entry.baseTurns !== entry.maxLevelTurns;
 
+    // 869f63gm7. The start of the quest took the whole cooldown - "with 20 turns to spare" would
+    // bury the one thing worth saying.
+    if (entry.maxLevelTurns === 0) {
+      return this.i18n.translate(
+        speedsUp ? 'chargeTimeline.entryAtStart' : 'chargeTimeline.entryAtStartFixed',
+        { base: entry.baseTurns },
+        'auto-team-builder',
+      );
+    }
+
     if (entry.spareTurns === 0) {
       return this.i18n.translate(
         speedsUp ? 'chargeTimeline.entryExact' : 'chargeTimeline.entryExactFixed',
@@ -5086,6 +5122,71 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     const raw = (event.target as HTMLInputElement | null)?.value ?? '';
 
     this.timelineTurns.set(clampTimelineTurns(Number(raw)));
+  }
+
+  public onTimelineEventCutChange(event: Event): void {
+    const raw = (event.target as HTMLInputElement | null)?.value ?? '';
+
+    this.timelineEventCut.set(clampEventCutTurns(Number(raw)));
+  }
+
+  public toggleTimelineEventCutWholeTeam(): void {
+    this.timelineEventCutWholeTeam.update((wholeTeam) => !wholeTeam);
+  }
+
+  public toggleTimelineCountLimitBreak(): void {
+    this.timelineCountLimitBreak.update((count) => !count);
+  }
+
+  /** The chip beside a name: "charges in 8", or "charged at the start" once nothing is left. */
+  public chargeTimelineChargesLabel(entry: SpecialChargeEntry): string {
+    return entry.maxLevelTurns === 0
+      ? this.i18n.translate('chargeTimeline.chargesAtStart', undefined, 'auto-team-builder')
+      : this.i18n.translate(
+          'chargeTimeline.charges',
+          { turns: entry.maxLevelTurns },
+          'auto-team-builder',
+        );
+  }
+
+  /** Who the event cut reaches while it is not given to the whole team. */
+  public chargeTimelineCutReachLabel(): string {
+    return this.i18n.translate(
+      'chargeTimeline.cutReach',
+      { count: this.boostedTeamMemberIds().length },
+      'auto-team-builder',
+    );
+  }
+
+  /**
+   * 869f63gm7. The row's own account of its cut - "Cooldown cut at the start: 11 - 10 from the
+   * event, 1 from the Captain." - so no number on the timeline is a black box. Empty when nothing
+   * was cut.
+   */
+  public chargeTimelineStartCutLabel(entry: SpecialChargeEntry): string {
+    if (!entry.startCut.length) {
+      return '';
+    }
+
+    const sources = entry.startCut.map((part) => this.startCutPartLabel(part)).join(', ');
+    const full = entry.startCut.some((part) => part.turns === null);
+
+    return this.i18n.translate(
+      full ? 'chargeTimeline.cutLineFull' : 'chargeTimeline.cutLine',
+      {
+        turns: entry.startCut.reduce((total, part) => total + (part.turns ?? 0), 0),
+        sources,
+      },
+      'auto-team-builder',
+    );
+  }
+
+  private startCutPartLabel(part: StartCutPart): string {
+    return this.i18n.translate(
+      `chargeTimeline.cutSources.${part.source}`,
+      { amount: part.turns ?? 'MAX', name: part.fromName ?? '' },
+      'auto-team-builder',
+    );
   }
 
   private async persistResultSnapshot(next: AutoBuildResult | null): Promise<void> {
@@ -7085,24 +7186,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       return;
     }
 
-    const objectUrl = URL.createObjectURL(
-      new Blob([JSON.stringify(catalog, null, 2)], {
-        type: 'application/json;charset=utf-8',
-      }),
-    );
-    const anchor = document.createElement('a');
-
-    anchor.href = objectUrl;
-    anchor.download = 'optc-auto-builder-abilities.json';
-    anchor.style.display = 'none';
-    document.body.append(anchor);
-
-    try {
-      anchor.click();
-    } finally {
-      anchor.remove();
-      URL.revokeObjectURL(objectUrl);
-    }
+    void givePlayerFile({
+      filename: 'optc-auto-builder-abilities.json',
+      contents: JSON.stringify(catalog, null, 2),
+      mimeType: JSON_EXPORT_MIME_TYPE,
+    });
   }
 
   public downloadTeamJson(): void {
