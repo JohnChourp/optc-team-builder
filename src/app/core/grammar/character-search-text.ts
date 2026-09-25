@@ -29,13 +29,13 @@
  * under `CHARACTER_SEARCH_TEXT_SQL_FUNCTION` on both of its paths (see
  * `services/dataset-database-loader.utils.ts`), and the repository's `LIKE` compares normalised text.
  *
- * Kept free of any dataset column on purpose: a later `search_aliases` column (community names -
- * a separate change) is meant to go through this same function, so an alias and a name can never
- * be searched by two different rules. That is also why it lives in `grammar/`: it keeps the three
- * constraints `captain-boost-grammar.ts` documents (import-free, erasable syntax only, the
- * `package.json` beside it), so a Node script loads this very file rather than a copy of it -
- * `scripts/benchmark-dataset.mjs` already does, to time the search the app really runs, and the
- * importer can when it writes that column.
+ * Kept free of any dataset column on purpose: the `search_aliases` column (community names,
+ * 869f63gkm) goes through this same function - every search reads it after the search text - so an
+ * alias and a name can never be searched by two different rules. That is also why it lives in
+ * `grammar/`: it keeps the three constraints `captain-boost-grammar.ts` documents (import-free,
+ * erasable syntax only, the `package.json` beside it), so a Node script loads this very file rather
+ * than a copy of it - `scripts/benchmark-dataset.mjs` does, to time the search the app really runs,
+ * and the importer does, to leave out an alias the unit's search text already contains.
  */
 
 /** `'`, `‘`, `’`, `ʼ`, `` ` `` and `´`: every apostrophe a keyboard or the dataset produces. */

@@ -78,15 +78,23 @@ const SHIP_THUMBNAIL_PACK_ID = 'ship-thumbnails';
 const SHIP_THUMBNAIL_PACK_KEY = 'shipThumbnails';
 
 /**
+ * 869f63gkm. What a character search reads: the search text and, after a space, the names players
+ * use for the unit (`search_aliases`, upstream's `aliases.js`). One text, so an alias and a name
+ * are always compared by the same rule - and in one function call per row, not two. The in-memory
+ * searches append `searchAliases` to what they read in the same way.
+ */
+const CHARACTER_SEARCHABLE_TEXT_SQL = "c.search_text || ' ' || c.search_aliases";
+
+/**
  * 869f63gkm. The search clause: words, not punctuation. `optc_search_text` is
  * `normalizeCharacterSearchText`, registered by the loader on both of its paths, and the parameter
  * is the term's normalised form - so this compares exactly what the in-memory path compares.
  * Exported so the specs' fake SQL recognises the clause the service really emits.
  */
-export const CHARACTER_SEARCH_TEXT_LIKE_CLAUSE = `${CHARACTER_SEARCH_TEXT_SQL_FUNCTION}(c.search_text) LIKE '%' || ? || '%'`;
+export const CHARACTER_SEARCH_TEXT_LIKE_CLAUSE = `${CHARACTER_SEARCH_TEXT_SQL_FUNCTION}(${CHARACTER_SEARCHABLE_TEXT_SQL}) LIKE '%' || ? || '%'`;
 
-/** The clause a query with no letter or digit (`&`) keeps, unchanged from before 869f63gkm. */
-export const CHARACTER_SEARCH_LITERAL_LIKE_CLAUSE = "c.search_text LIKE '%' || ? || '%'";
+/** The clause a query with no letter or digit (`&`) keeps: compared as typed, as before 869f63gkm. */
+export const CHARACTER_SEARCH_LITERAL_LIKE_CLAUSE = `(${CHARACTER_SEARCHABLE_TEXT_SQL}) LIKE '%' || ? || '%'`;
 /**
  * How many rows are decorated between two `await yieldToMainThread()` calls, so a
  * full-catalogue decoration does not hold the main thread for one long task.
@@ -945,7 +953,8 @@ export class OptcRepositoryService {
           region_release_json,
           families_json,
           assets_json,
-          search_text
+          search_text,
+          search_aliases
         FROM characters
         ORDER BY stars DESC, id DESC
       `,
@@ -1186,6 +1195,7 @@ export class OptcRepositoryService {
             c.families_json,
             c.assets_json,
             c.search_text,
+            c.search_aliases,
             d.detail_json
           FROM characters c
           LEFT JOIN character_details d ON d.character_id = c.id
@@ -1286,6 +1296,7 @@ export class OptcRepositoryService {
           c.families_json,
           c.assets_json,
           c.search_text,
+          c.search_aliases,
           d.detail_json
         FROM characters c
         LEFT JOIN character_details d ON d.character_id = c.id
@@ -1519,6 +1530,7 @@ export class OptcRepositoryService {
             c.families_json,
             c.assets_json,
             c.search_text,
+            c.search_aliases,
             d.detail_json
           FROM characters c
           LEFT JOIN character_details d ON d.character_id = c.id
@@ -1633,7 +1645,8 @@ export class OptcRepositoryService {
           region_release_json,
           families_json,
           assets_json,
-          search_text
+          search_text,
+          search_aliases
         FROM characters
         WHERE id IN (${placeholders})
       `,
@@ -1681,6 +1694,7 @@ export class OptcRepositoryService {
           c.families_json,
           c.assets_json,
           c.search_text,
+          c.search_aliases,
           d.detail_json
         FROM characters c
         LEFT JOIN character_details d ON d.character_id = c.id
@@ -1836,6 +1850,8 @@ export class OptcRepositoryService {
         id: Number(row['id']),
         name: String(row['name']),
         searchText: this.resolveSearchText(row),
+        // 869f63gkm. The names players use; every search reads them with the text, none shows them.
+        searchAliases: String(row['search_aliases'] ?? ''),
         isIncomplete: Number(row['is_incomplete']) === 1,
         type: String(row['type']),
         primaryClass: String(row['primary_class']),
@@ -2014,6 +2030,7 @@ export class OptcRepositoryService {
           c.families_json,
           c.assets_json,
           c.search_text,
+          c.search_aliases,
           d.detail_json
         FROM characters c
         LEFT JOIN character_details d ON d.character_id = c.id
@@ -2412,6 +2429,8 @@ export class OptcRepositoryService {
   private buildSearchableRecordText(record: CharacterRecord): string {
     return [
       record.searchText ?? '',
+      // 869f63gkm. The community names, as the SQL path reads them.
+      record.searchAliases ?? '',
       record.id,
       record.name,
       record.type,

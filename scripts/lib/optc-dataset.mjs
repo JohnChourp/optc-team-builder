@@ -198,7 +198,8 @@ export function createSqlSeed(characters, ships, manifest) {
         region_release_json TEXT NOT NULL,
         assets_json TEXT NOT NULL,
         search_text TEXT NOT NULL,
-        families_json TEXT NOT NULL
+        families_json TEXT NOT NULL,
+        search_aliases TEXT NOT NULL DEFAULT ''
       );
     `,
     `
@@ -275,7 +276,7 @@ export function createSqlSeed(characters, ships, manifest) {
         min_hp, min_atk, min_rcv, max_hp, max_atk, max_rcv, growth,
         captain_hp_boost, captain_atk_boost, captain_average_boost,
         max_sockets, special_cooldown_max, special_cooldown_min, region_json, region_release_json,
-        assets_json, search_text, families_json
+        assets_json, search_text, families_json, search_aliases
       ) VALUES (
         ${sqlValue(character.id)},
         ${sqlValue(character.name)},
@@ -305,7 +306,8 @@ export function createSqlSeed(characters, ships, manifest) {
         ${sqlValue(JSON.stringify(character.regionRelease ?? createEmptyRegionRelease()))},
         ${sqlValue(JSON.stringify(character.assets))},
         ${sqlValue(character.searchText)},
-        ${sqlValue(JSON.stringify(character.families ?? []))}
+        ${sqlValue(JSON.stringify(character.families ?? []))},
+        ${sqlValue(character.searchAliases ?? '')}
       );
     `);
 

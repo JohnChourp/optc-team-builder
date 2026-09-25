@@ -217,6 +217,13 @@ export interface CharacterRecord {
   id: number;
   name: string;
   searchText?: string;
+  /**
+   * 869f63gkm. The names players use for this unit - community nicknames and upstream's French
+   * names, Latin script only - from upstream's `common/data/aliases.js`, lower-cased and joined by
+   * spaces. Every character search matches it with `searchText`, through the same normaliser, and
+   * nothing displays it. Kept out of `searchText` so what the builders read there does not change.
+   */
+  searchAliases?: string;
   isIncomplete: boolean;
   type: string;
   classes: string[];

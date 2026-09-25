@@ -195,8 +195,9 @@ async function loadCurrentDataset(seedPath, manifestPath) {
   const hasDropsTable = tableExists(database, 'character_drops');
   /* 869f63grj. The same round trip, for upstream's families - an older seed has no such column. */
   const hasFamiliesColumn = tableHasColumn(database, 'characters', 'families_json');
-  /* 869f63gm1. And again for how a unit is obtained. */
+  /* 869f63gm1 / 869f63gkm. And again for how a unit is obtained, and for its community names. */
   const hasAcquisitionTable = tableExists(database, 'character_acquisition');
+  const hasSearchAliasesColumn = tableHasColumn(database, 'characters', 'search_aliases');
   const characters = selectAll(
     database,
     `
@@ -240,6 +241,7 @@ async function loadCurrentDataset(seedPath, manifestPath) {
         c.assets_json,
         c.search_text,
         ${hasFamiliesColumn ? 'c.families_json' : "'[]' AS families_json"},
+        ${hasSearchAliasesColumn ? 'c.search_aliases' : "'' AS search_aliases"},
         d.detail_json
       FROM characters c
       LEFT JOIN character_details d ON d.character_id = c.id
@@ -331,6 +333,7 @@ function hydrateCharacterRow(row) {
     regionRelease: parseJson(row.region_release_json, createEmptyRegionRelease()),
     assets: parseJson(row.assets_json, createEmptyAssets()),
     families: parseJson(row.families_json, []),
+    searchAliases: String(row.search_aliases ?? ''),
     detail: parseJson(row.detail_json, createEmptyManualDetail(characterId)),
   };
 }
