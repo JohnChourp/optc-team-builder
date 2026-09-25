@@ -142,7 +142,7 @@
     "test:dataset-consumers": "vitest run scripts/generate-dataset-consumers.spec.ts && node ./scripts/generate-dataset-consumers.mjs --check",
     "test:dataset-delivery": "vitest run scripts/build-dataset-binary.spec.ts scripts/check-dataset-delivery.spec.ts scripts/check-dataset-delivery-platform-provided.spec.ts scripts/lib/prefetch-payload.spec.ts && npm run build && npm run dataset-delivery:check",
     "test:dataset-digest": "vitest run scripts/dataset-change-digest.spec.ts scripts/dataset-change-digest-old-schema.spec.ts scripts/dataset-change-digest-changed-ids.spec.ts",
-    "test:dataset-measurements": "vitest run scripts/check-dataset-measurements.spec.ts && npm run dataset:measurements",
+    "test:dataset-measurements": "vitest run scripts/check-dataset-measurements.spec.ts scripts/check-dataset-measurements-write.spec.ts && npm run dataset:measurements",
     "test:dataset-provenance": "vitest run scripts/generate-dataset-provenance.spec.ts && node ./scripts/generate-dataset-provenance.mjs --check",
     "test:dataset-schema": "vitest run scripts/generate-dataset-schema.spec.ts && npm run dataset:schema -- --check",
     "test:dead-code": "npm run dead-code:check",

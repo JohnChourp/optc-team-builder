@@ -102,7 +102,7 @@ and when a `test:` script is not a lane.
 | `data:apply-manual` | documented · maintainer-validation-guide.md | a documented manual step |
 | `data:backtest-release` | workflow · check-optc-db-release.yml | the check-optc-db-release.yml workflow |
 | `data:check-release` | workflow · check-optc-db-release.yml | the check-optc-db-release.yml workflow |
-| `data:import:all` | script file · check-dataset-spec-pins.mjs, generate-whats-new-entry.mjs, release-contract.mjs | whatever check-dataset-spec-pins.mjs, generate-whats-new-entry.mjs, release-contract.mjs drives |
+| `data:import:all` | script file · check-dataset-measurements-write.spec.ts, check-dataset-spec-pins.mjs, generate-whats-new-entry.mjs, release-contract.mjs | whatever check-dataset-measurements-write.spec.ts, check-dataset-spec-pins.mjs, generate-whats-new-entry.mjs, release-contract.mjs drives |
 | `data:monitor-upstream` | workflow · check-optc-db-release.yml | the check-optc-db-release.yml workflow |
 | `data:overlay-register` | npm script · test:overlay-register | `test:overlay-register` |
 | `data:upsert-manual-character` | manual · — | Applies a hand-written character overlay. Run deliberately by a maintainer; automating it would let the dataset drift from upstream without a decision. |
