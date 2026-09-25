@@ -19,8 +19,8 @@ import { resolveTeamCoverageSummary } from './team-coverage-summary.utils';
  * The owner's rule (2026-09-08): a team does not require a Friend Captain, and an empty seat boosts
  * nothing. 869exmkr2 applied it to the status line, Captain Coverage's messages and Saved Teams. It
  * did not reach the team coverage panel, whose summary still counted to six - so Captain + four subs
- * got no panel at all, on every screen that shows it. That is the SECOND site of one defect class,
- * which is what earns this guard.
+ * got no panel at all on Captain Coverage, Manual Team Builder and Saved Teams. That is the SECOND
+ * site of one defect class, which is what earns this guard.
  *
  * "Every" was found, not assumed: across src/app the only functions that answer it are the two
  * below (`isComplete` on the status line and on the coverage summary), and the only seat-count

@@ -52,7 +52,9 @@ export interface TeamCoverageInput {
 /**
  * 869f6td4c. A team needs no Friend Captain (owner, 2026-09-08), so Captain + four subs is a
  * complete team - the way the status line already reads it through `optionalSlotIndexes: [1]`.
- * This counted to six instead, and hid the whole panel for that team on all four screens.
+ * This counted to six instead, and hid the whole panel for that team on Captain Coverage, Manual
+ * Team Builder and Saved Teams, and read its tier coverage as 0 in Compare. (An Auto Team Builder
+ * result always seats a Friend Captain.)
  */
 const TEAM_SEAT_COUNT = 6;
 const FRIEND_CAPTAIN_SEAT_INDEX = 1;
