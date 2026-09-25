@@ -2794,6 +2794,28 @@
                                     </section>
                                   }
 
+                                  @if (avoidPreferRulesLabel()) {
+                                    <section
+                                      class="preset-import-feedback preset-import-feedback--success"
+                                      data-testid="auto-build-avoid-prefer-rules"
+                                    >
+                                      <ion-icon [icon]="presetImportSuccessIcon"></ion-icon>
+                                      <div>
+                                        <strong>{{ t('report.rules.avoidPrefer.title') }}</strong>
+                                        <small>{{ avoidPreferRulesLabel() }}</small>
+                                      </div>
+                                      <ion-button
+                                        fill="clear"
+                                        size="small"
+                                        class="select-all-button"
+                                        [disabled]="controlsDisabled()"
+                                        (click)="clearAvoidPreferRules()"
+                                      >
+                                        {{ t('enemyPreset.clearAvoidPrefer') }}
+                                      </ion-button>
+                                    </section>
+                                  }
+
                                   <div class="build-submit-row">
                                     <ion-button
                                       #buildSubmitButton

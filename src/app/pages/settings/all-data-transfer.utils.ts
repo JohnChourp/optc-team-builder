@@ -186,6 +186,10 @@ function cloneSavedEnemiesPayload(
         ...enemy,
         selectedTypes: [...enemy.selectedTypes],
         selectedClasses: [...enemy.selectedClasses],
+        ...(enemy.avoidedTypes ? { avoidedTypes: [...enemy.avoidedTypes] } : {}),
+        ...(enemy.avoidedClasses ? { avoidedClasses: [...enemy.avoidedClasses] } : {}),
+        ...(enemy.preferredTypes ? { preferredTypes: [...enemy.preferredTypes] } : {}),
+        ...(enemy.preferredClasses ? { preferredClasses: [...enemy.preferredClasses] } : {}),
         requiredAbilities: enemy.requiredAbilities.map((requirement) => ({
           ...requirement,
           slotTokens: [...requirement.slotTokens],

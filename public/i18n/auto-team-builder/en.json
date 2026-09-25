@@ -726,6 +726,14 @@
         "passed": "Your Captain {{captain}} leads the team.",
         "relaxed": "{{from}} cannot boost this crew at every tier of their captain ability, so {{to}} leads the team instead.",
         "title": "Captain"
+      },
+      "avoidPrefer": {
+        "title": "Avoid and prefer rules",
+        "notApplicable": "No avoid or prefer rule was set.",
+        "avoidKept": "Kept out of every seat the search fills: {{values}}.",
+        "avoidRanked": "Ranked lower: {{values}}.",
+        "avoidRelaxed": "No team could be built without {{values}}, so the search let in: {{names}}.",
+        "preferRanked": "Ranked higher: {{values}}."
       }
     },
     "states": {
@@ -1198,7 +1206,8 @@
   },
   "enemyPreset": {
     "loadedDescription": "Loaded enemy preset: {{name}}.",
-    "loadedTitle": "Enemy preset ready."
+    "loadedTitle": "Enemy preset ready.",
+    "clearAvoidPrefer": "Clear these rules"
   },
   "requiredCharacters": {
     "title": "Required characters",

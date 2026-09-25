@@ -8,6 +8,7 @@ import {
   type AutoBuildRequiredCharacterGroup,
   type NormalizedBuilderAbility,
 } from './auto-team-builder-ability.models';
+import { type AutoBuildAvoidMode } from './auto-team-builder.models';
 
 interface CharacterStatsRange {
   hp: number | null;
@@ -550,6 +551,16 @@ export interface SavedEnemy {
   requireAllSelectedClassesPerCharacter: boolean;
   requireAllSelectedCharacterTagsInTeam?: boolean;
   requireAllSelectedCharacterNamesInTeam?: boolean;
+  /**
+   * 869f63gma. What this enemy punishes - it binds, debuffs or answers a class or type - and what
+   * it is weak to. Entered by the player: there is no upstream source. Each field is written only
+   * when it holds something, and `avoidMode` only beside an avoided value; an absent mode is `hard`.
+   */
+  avoidedTypes?: string[];
+  avoidedClasses?: string[];
+  avoidMode?: AutoBuildAvoidMode;
+  preferredTypes?: string[];
+  preferredClasses?: string[];
   associatedTeamIds?: string[];
   createdAt: string;
   updatedAt: string;

@@ -270,6 +270,18 @@
       "actions": {
         "clear": "Clear Support filters"
       }
+    },
+    "avoidPrefer": {
+      "title": "Avoid or prefer",
+      "avoidTypesLabel": "Avoid types",
+      "avoidClassesLabel": "Avoid classes",
+      "modeLabel": "How to avoid",
+      "modes": {
+        "hard": "Keep them out, unless no team fits",
+        "soft": "Rank them lower"
+      },
+      "preferTypesLabel": "Prefer types",
+      "preferClassesLabel": "Prefer classes"
     }
   },
   "empty": {
@@ -332,7 +344,9 @@
       "types": "Strict types"
     },
     "rules": "Rules",
-    "types": "Types"
+    "types": "Types",
+    "avoid": "Avoid {{value}}",
+    "prefer": "Prefer {{value}}"
   },
   "tools": {
     "delete": "Delete selected",
