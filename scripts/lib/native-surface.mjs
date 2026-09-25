@@ -13,6 +13,7 @@
  * drift. This record cites that guard instead of repeating it - which is the whole reason
  * the task asked for a record rather than another checker.
  */
+import { checkWebViewCapabilities } from './webview-capabilities.mjs';
 
 /** Parses `appId`, `appName`, `webDir` and the plugin block out of the Capacitor config. */
 export function parseCapacitorConfig(source) {
@@ -133,6 +134,9 @@ export function checkNativeSurface(surface) {
       `The distribution channel is recorded as ${surface.distribution.channel}. Store distribution removes REQUEST_INSTALL_PACKAGES and the self-updater, so the /supported copy and the owner's 2026-09-21 decision both need revisiting.`,
     );
   }
+
+  // 869f63gu1. The words about how the APK differs hold only while their derived facts do.
+  problems.push(...checkWebViewCapabilities(surface.webViewCapabilities ?? []));
 
   return problems;
 }

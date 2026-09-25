@@ -5,6 +5,11 @@
  */
 .character-facet-filter {
   display: grid;
+  /*
+   * A select sizes itself to its selected text, and an implicit `auto` column grows with it:
+   * five classes ran past a 375px screen and all ten reached 705px. This column may shrink.
+   */
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
   flex: 1 1 100%;
   min-width: 0;
