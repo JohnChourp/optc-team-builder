@@ -26,6 +26,11 @@ type CaptainCoverageChipKind = 'class' | 'tag' | 'type';
 interface CaptainCoverageChip {
   kind: CaptainCoverageChipKind;
   label: string;
+  /**
+   * 869f63gv6. On a class chip only: the forms of a dual or VS unit that hold the class, when the
+   * clause covers the unit only through them - its classes after a swap. Absent otherwise.
+   */
+  forms?: string[];
 }
 
 interface CaptainCoverageClauseResult {
@@ -543,6 +548,8 @@ function resolveCaptainCoverageTargetForBranch(
     classes: branchClasses,
     primaryClass: branchClasses[0] ?? target.primaryClass,
     secondaryClass: branchClasses[1] ?? null,
+    // 869f63gv6. This target IS the branch; its forms would add classes the branch does not have.
+    forms: [],
   } as CharacterListItem & { detail?: { characterTags?: string[] } };
 
   if (branchScope.allowedCharacterTags.length > 0) {
@@ -837,6 +844,16 @@ function resolveCaptainCoverageClause(
   const isDominantType = boostClauseHasDominantTypeScope(normalizedClause);
   const matchingTypes = resolveMatchingTypeScopes(normalizedClause, target);
   const matchingClasses = resolveMatchingClassScopes(normalizedClause, target);
+  /*
+   * 869f63gv6. A dual or VS unit's classes after a swap are its form's classes, so a class scope
+   * covers it when its own classes or one form's classes match - and a class only a form holds is
+   * named with the form, so the page can say "after swap" instead of claiming the unit as it is.
+   */
+  const ownMatchingClasses = new Set(
+    resolveMatchingClassScopes(normalizedClause, target, { withForms: false }).map(
+      (characterClass) => characterClass.toLowerCase(),
+    ),
+  );
   const matchingTags = resolveMatchingCharacterTagScopes(normalizedClause, target, options);
   const hasTypeScope = extractAllowedTypesFromBoostClause(normalizedClause).length > 0;
   const hasClassScope = extractAllowedClassesFromBoostClause(normalizedClause).length > 0;
@@ -853,6 +870,9 @@ function resolveCaptainCoverageClause(
     chips.push({
       kind: 'class',
       label: characterClass,
+      ...(ownMatchingClasses.has(characterClass.toLowerCase())
+        ? {}
+        : { forms: resolveFormsHoldingClass(target, characterClass) }),
     }),
   );
   matchingTags.forEach((tag) =>
@@ -887,19 +907,25 @@ function resolveCaptainCoverageClause(
   // tier filter's rule (`matchesTierCharacterConditionsInner`). A range-only clause is the range.
   const meetsRanges =
     captainValueInRange(target.cost, costRange) && captainValueInRange(target.stars, rarityRange);
-  const covered =
-    meetsRanges &&
-    (isUniversal ||
-      (isDominantType && resolveCharacterTypeTokens(target.type).length > 0) ||
-      typeMatches ||
-      classMatches ||
-      tagMatches ||
-      (hasRangeScope && !hasCategoryScope));
+  const coveredWithoutClasses =
+    isUniversal ||
+    (isDominantType && resolveCharacterTypeTokens(target.type).length > 0) ||
+    typeMatches ||
+    tagMatches ||
+    (hasRangeScope && !hasCategoryScope);
+  const covered = meetsRanges && (coveredWithoutClasses || classMatches);
+  // 869f63gv6. Only a clause that covers the unit BECAUSE of a form keeps the form on its chips.
+  const coveredOnlyThroughForms =
+    covered && !coveredWithoutClasses && ownMatchingClasses.size === 0;
 
   return {
     text: normalizedClause,
     status: covered ? 'covered' : 'uncovered',
-    chips: dedupeCoverageChips(chips),
+    chips: dedupeCoverageChips(
+      coveredOnlyThroughForms
+        ? chips
+        : chips.map(({ forms: _forms, ...chip }) => chip),
+    ),
   };
 }
 
@@ -1393,12 +1419,50 @@ function textMatchesTypeScope(clause: string, type: AutoTeamBuilderType): boolea
   return new RegExp(`(?:\\[${type}\\]|\\b${type}\\b)`, 'i').test(clause);
 }
 
-function resolveMatchingClassScopes(clause: string, target: CharacterListItem): string[] {
-  const targetClasses = target.classes.map((characterClass) => characterClass.toLowerCase());
+function resolveMatchingClassScopes(
+  clause: string,
+  target: CharacterListItem,
+  { withForms = true }: { withForms?: boolean } = {},
+): string[] {
+  // 869f63gv6. The unit's own classes, and - since a clause's classes are OR'd - every form's.
+  const targetClasses = [
+    ...target.classes,
+    ...(withForms ? (target.forms ?? []).flatMap((form) => form.classes) : []),
+  ].map((characterClass) => characterClass.toLowerCase());
 
   return extractAllowedClassesFromBoostClause(clause).filter((characterClass) =>
     targetClasses.includes(characterClass.toLowerCase()),
   );
+}
+
+function resolveFormsHoldingClass(target: CharacterListItem, characterClass: string): string[] {
+  const key = characterClass.toLowerCase();
+
+  return (target.forms ?? [])
+    .filter((form) => form.classes.some((formClass) => formClass.toLowerCase() === key))
+    .map((form) => form.name);
+}
+
+/**
+ * 869f63gv6. The "after swap" marker for a unit a Captain boosts only through its forms: the
+ * classes, and the forms that hold them, of every clause that covers it that way. `null` when the
+ * unit is covered as it is, or not at all.
+ */
+export function resolveCaptainCoverageFormOnlyClasses(
+  coverage: Pick<CaptainCoverageResult, 'chips'> | null | undefined,
+): { classes: string[]; forms: string[] } | null {
+  const formChips = (coverage?.chips ?? []).filter(
+    (chip) => chip.kind === 'class' && (chip.forms?.length ?? 0) > 0,
+  );
+
+  if (!formChips.length) {
+    return null;
+  }
+
+  return {
+    classes: [...new Set(formChips.map((chip) => chip.label))],
+    forms: [...new Set(formChips.flatMap((chip) => chip.forms ?? []))],
+  };
 }
 
 function extractAllowedClassesFromBoostClause(clause: string): string[] {
@@ -1546,18 +1610,24 @@ function mergeOrderedValues<T extends string>(
 }
 
 function dedupeCoverageChips(chips: CaptainCoverageChip[]): CaptainCoverageChip[] {
-  const seen = new Set<string>();
+  const byKey = new Map<string, CaptainCoverageChip>();
 
-  return chips.filter((chip) => {
+  for (const chip of chips) {
     const key = `${chip.kind}:${chip.label.toLowerCase()}`;
+    const kept = byKey.get(key);
 
-    if (seen.has(key)) {
-      return false;
+    if (!kept) {
+      byKey.set(key, chip);
+      continue;
     }
 
-    seen.add(key);
-    return true;
-  });
+    // 869f63gv6. One clause covering the unit only through a form is enough to say so.
+    if (chip.forms?.length) {
+      byKey.set(key, { ...kept, forms: [...new Set([...(kept.forms ?? []), ...chip.forms])] });
+    }
+  }
+
+  return [...byKey.values()];
 }
 
 function createEmptyCoverageResult(captainText: string): CaptainCoverageResult {

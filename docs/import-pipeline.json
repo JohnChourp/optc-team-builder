@@ -4,6 +4,7 @@
   "stages": [
     "applyExactLocalAssets",
     "applyShipThumbnailOverrides",
+    "assertFormRowsDropNothing",
     "buildCharacterAssetsMap",
     "buildDeterministicCharacterAssetsMap",
     "buildDeterministicThumbnailOverrides",

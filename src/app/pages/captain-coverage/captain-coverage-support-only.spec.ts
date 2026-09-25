@@ -79,6 +79,8 @@ function createPage(team: Array<CharacterListItem | null> = [null, null, null, n
     allCharactersById: () => new Map(records.map((record) => [record.id, record])),
     allCharacterDetailsById: () => new Map(records.map((record) => [record.id, record])),
     captainCoverageFilterState: () => createCaptainCoverageFilterState(),
+    // 869f63gv6. Hydration reads the class filter, to mark a match only a form of the unit makes.
+    classFacet: () => ({ values: [], matchMode: 'any' }),
     selectedAbilityRequirements: () => [],
     captainAbilityRequirements: () => [],
     selectedAbilityRequirementCount: () => 0,

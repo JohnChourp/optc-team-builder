@@ -47,6 +47,7 @@ import {
   type CaptainCoverageResult,
   combineLeaderCaptainCoverageBoosts,
   createCaptainBoostScopeCache,
+  resolveCaptainCoverageFormOnlyClasses,
 } from '../../core/services/captain-coverage.utils';
 import { CaptainCoverageFilterRunnerService } from '../../core/services/captain-coverage-filter-runner.service';
 import {
@@ -83,6 +84,9 @@ import {
 import {
   countCharacterFacetMatches,
   createEmptyCharacterFacetSelection,
+  type FormOnlyClassMatch,
+  mergeFormOnlyClassMatches,
+  resolveFormOnlyClassMatch,
 } from '../../core/services/character-facet-filter.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
@@ -133,6 +137,7 @@ import {
   type CharacterTagMatchIndex,
 } from '../../shared/character-tag-set-picker/character-tag-set-picker.component';
 import { CharacterFacetFilterComponent } from '../../shared/character-facet-filter/character-facet-filter.component';
+import { FormClassMarkerComponent } from '../../shared/character-facet-filter/form-class-marker.component';
 import { CaptainTeamConditionStatusComponent } from '../../shared/captain-team-condition-status/captain-team-condition-status.component';
 import { TeamCoverageSummaryComponent } from '../../shared/team-coverage-summary/team-coverage-summary.component';
 import {
@@ -225,6 +230,12 @@ interface CaptainCoverageCardView {
    * button is enabled.
    */
   subSlotBlockedReason: CaptainCoverageSubSlotBlockedReason | null;
+  /**
+   * 869f63gv6. The classes this card matches only after a swap into one of its forms - through
+   * the class filter or a leader's class-scoped boost - and the forms that hold them. Null when
+   * the unit matches as it is.
+   */
+  formClassMatch: FormOnlyClassMatch | null;
 }
 
 /**
@@ -258,6 +269,7 @@ interface CaptainCoverageAbilityTagSetSection extends AbilityTagSetPickerSection
     CaptainTeamConditionStatusComponent,
     CaptainCoverageStylePanelsComponent,
     CharacterFacetFilterComponent,
+    FormClassMarkerComponent,
     CharacterTagSetPickerComponent,
     IonButton,
     IonButtons,
@@ -1217,6 +1229,7 @@ export class CaptainCoveragePage implements OnInit {
     const allowedCaptainIdSet = this.allowedCaptainIdSet();
     const selectedConflictKeys = this.resolveSelectedTeamConflictKeys();
     const scopeCache = createCaptainBoostScopeCache();
+    const classFacet = this.classFacet();
     const cards: CaptainCoverageCardView[] = [];
 
     for (const id of ids) {
@@ -1294,6 +1307,10 @@ export class CaptainCoveragePage implements OnInit {
           ...this.buildMatchedAbilityBadges(captainAbilities, captainAbilityRequirements),
         ],
         detailLink: ['/characters', String(character.id)],
+        formClassMatch: mergeFormOnlyClassMatches(
+          resolveFormOnlyClassMatch(character, classFacet),
+          ...leaderCoverages.map((coverage) => resolveCaptainCoverageFormOnlyClasses(coverage)),
+        ),
       });
     }
 

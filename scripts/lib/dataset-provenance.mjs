@@ -21,6 +21,12 @@
  * column arriving with no recorded origin.
  */
 
+import {
+  FORM_DROPPED_FIELDS,
+  FORM_DROPPED_REASON,
+  FORM_TABLE,
+  FORM_UPSTREAM_SOURCES,
+} from './optc-upstream-forms.mjs';
 import { PROGRESSION_UPSTREAM_SOURCES } from './optc-upstream-progression.mjs';
 
 /**
@@ -67,7 +73,7 @@ export const DERIVED_COLUMNS = Object.freeze({
    * `units.js` once was. The live file is an object keyed by id: its keys have gaps below the
    * highest id, and a key with a suffix is a form of the unit before the hyphen, not a unit.
    */
-  id: 'The key of the upstream units.js entry, which is the unit id: units.js is an object keyed by id, with gaps below the highest id, so the id is never a position. A key with a suffix (1983-1, 1983-2) is a form of the unit before the hyphen and never becomes a character of its own. Only the legacy array format used the row index plus one.',
+  id: 'The key of the upstream units.js entry, which is the unit id: units.js is an object keyed by id, with gaps below the highest id, so the id is never a position. A key with a suffix (1983-1, 1983-2) is a form of the unit before the hyphen: it never becomes a character of its own and is stored in character_forms. Only the legacy array format used the row index plus one.',
   is_incomplete:
     'True when a MANUAL overlay character was added without full stats. Derived, never carried upstream, '
     + 'and set on no other path: the upstream importer always writes 0, so 0 of 4,622 shipped rows carry it '
@@ -261,7 +267,38 @@ export function buildProvenance({ importerSource, datasetSource, generatedAt }) 
     unknownColumns: fields.filter((field) => field.origin === 'unknown').map((field) => field.column),
     fields,
     droppedBeforeShipping,
+    forms: buildFormProvenance(columnsByTable),
   };
+}
+
+/**
+ * 869f63gv6. What a dual or VS unit's form rows keep and drop, from the declaration the importer
+ * runs on. A kept field whose column the seed does not write resolves to `null`, which the check
+ * refuses - the same rule as a shipped column with no origin, turned around.
+ */
+export function buildFormProvenance(columnsByTable) {
+  const formColumns = columnsByTable.get(FORM_TABLE) ?? [];
+
+  return {
+    table: FORM_TABLE,
+    source: 'units.js <id>-<n> keys, one per form of a dual or VS unit',
+    kept: Object.entries(FORM_UPSTREAM_SOURCES).map(([field, source]) => ({
+      importerField: field,
+      source: `units.js <id>-<n> .${source.upstream}`,
+      column: formColumns.includes(source.column) ? source.column : null,
+    })),
+    dropped: FORM_DROPPED_FIELDS.map((field) => ({
+      source: `units.js <id>-<n> .${field}`,
+      reason: FORM_DROPPED_REASON,
+    })),
+  };
+}
+
+/** Kept form fields the seed never writes - each one a field the declaration promises and loses. */
+export function findUnshippedFormFields(provenance) {
+  return (provenance.forms?.kept ?? [])
+    .filter((field) => field.column === null)
+    .map((field) => field.importerField);
 }
 
 export function formatProvenanceMarkdown(provenance) {
@@ -291,6 +328,26 @@ export function formatProvenanceMarkdown(provenance) {
 
     for (const dropped of provenance.droppedBeforeShipping) {
       lines.push(`| \`${dropped.importerField}\` | \`${dropped.source}\` |`);
+    }
+  }
+
+  if (provenance.forms) {
+    lines.push(
+      '',
+      `A dual or VS unit's forms are rows of \`${provenance.forms.table}\`, read from ${provenance.forms.source}. What each form row keeps:`,
+      '',
+      '| Form column | Upstream source |',
+      '| --- | --- |',
+    );
+
+    for (const field of provenance.forms.kept) {
+      lines.push(`| \`${field.column ?? '(not written)'}\` | \`${field.source}\` |`);
+    }
+
+    lines.push('', 'And what it drops:', '', '| Upstream field | Why it is dropped |', '| --- | --- |');
+
+    for (const field of provenance.forms.dropped) {
+      lines.push(`| \`${field.source}\` | ${field.reason} |`);
     }
   }
 

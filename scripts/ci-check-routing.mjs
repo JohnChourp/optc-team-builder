@@ -270,7 +270,7 @@ export const SCRIPT_SUITES = {
   'source-data': {
     label: 'Source data validation tests',
     command:
-      'npx vitest run scripts/lib/dataset-integrity.spec.ts scripts/lib/optc-dataset.spec.ts scripts/lib/manual-character-overlay.spec.ts scripts/lib/manual-character-apply.spec.ts scripts/lib/manual-character-prune.spec.ts scripts/lib/party-conflict-keys.spec.ts scripts/lib/rumble-data-normalizer.spec.ts scripts/lib/super-special-criteria.spec.ts scripts/upsert-manual-character.spec.ts scripts/check-dataset-spec-pins.spec.ts scripts/optc-upstream-progression.spec.ts scripts/import-optc-families.spec.ts scripts/import-optc-source-commit.spec.ts && npm run dataset:spec-pins',
+      'npx vitest run scripts/lib/dataset-integrity.spec.ts scripts/lib/optc-dataset.spec.ts scripts/lib/manual-character-overlay.spec.ts scripts/lib/manual-character-apply.spec.ts scripts/lib/manual-character-prune.spec.ts scripts/lib/party-conflict-keys.spec.ts scripts/lib/rumble-data-normalizer.spec.ts scripts/lib/super-special-criteria.spec.ts scripts/upsert-manual-character.spec.ts scripts/check-dataset-spec-pins.spec.ts scripts/optc-upstream-progression.spec.ts scripts/import-optc-families.spec.ts scripts/import-optc-source-commit.spec.ts scripts/import-optc-forms.spec.ts && npm run dataset:spec-pins',
   },
   'perf-budget': {
     label: 'Performance budget script tests',
@@ -1766,7 +1766,10 @@ function isSourceDataPath(filePath) {
     /* 869f63grj. The same kind of thing again: upstream's `families.js`, read into `families`. */
     filePath === 'scripts/import-optc-families.spec.ts' ||
     /* 869f63gtc. The commit every import reads at, and the source it refuses. */
-    filePath === 'scripts/import-optc-source-commit.spec.ts'
+    filePath === 'scripts/import-optc-source-commit.spec.ts' ||
+    /* 869f63gv6. A dual or VS unit's forms, and what each keeps and drops. */
+    filePath === 'scripts/lib/optc-upstream-forms.mjs' ||
+    filePath === 'scripts/import-optc-forms.spec.ts'
   );
 }
 

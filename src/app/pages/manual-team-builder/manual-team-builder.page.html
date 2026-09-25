@@ -679,6 +679,11 @@
                               {{ candidateCard.character.name }}
                             </a>
                             <span>{{ candidateCard.subtitle }}</span>
+                            <!-- 869f63gv6. A class this unit only has after a swap is said, never implied. -->
+                            <app-form-class-marker
+                              [record]="candidateCard.character"
+                              [selection]="classFacet()"
+                            />
                             @if (
                               candidateCard.isAssignedToAnotherSlot &&
                               !candidateCard.repeatsCrewMember

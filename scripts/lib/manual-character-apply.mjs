@@ -261,6 +261,36 @@ async function loadCurrentDataset(seedPath, manifestPath) {
       ORDER BY c.id ASC
     `,
   ).map((row) => hydrateCharacterRow(row));
+  /*
+   * 869f63gv6. The same round trip for a dual or VS unit's forms, which live in a table of their
+   * own - one row each, many per unit. An older seed has no such table, and its units have no forms.
+   */
+  if (tableExists(database, 'character_forms')) {
+    const formsById = new Map();
+
+    for (const row of selectAll(
+      database,
+      `
+        SELECT character_id, form_key, name, type, classes_json, combo,
+          min_hp, min_atk, min_rcv, max_hp, max_atk, max_rcv
+        FROM character_forms
+        ORDER BY character_id ASC, form_key ASC
+      `,
+    )) {
+      const characterId = Number(row.character_id);
+      const forms = formsById.get(characterId) ?? [];
+
+      forms.push(hydrateCharacterFormRow(row));
+      formsById.set(characterId, forms);
+    }
+
+    for (const character of characters) {
+      character.forms = (formsById.get(character.id) ?? []).sort((left, right) =>
+        left.key.localeCompare(right.key, 'en', { numeric: true }),
+      );
+    }
+  }
+
   const ships = selectAll(database, 'SELECT id, name, thumb, description FROM ships ORDER BY id ASC').map(
     (row) => ({
       id: Number(row.id),
@@ -343,6 +373,24 @@ function hydrateCharacterRow(row) {
     assets: parseJson(row.assets_json, createEmptyAssets()),
     families: parseJson(row.families_json, []),
     detail: parseJson(row.detail_json, createEmptyManualDetail(characterId)),
+  };
+}
+
+function hydrateCharacterFormRow(row) {
+  const classes = parseJson(row.classes_json, []);
+
+  return {
+    key: String(row.form_key ?? ''),
+    name: String(row.name ?? ''),
+    type: String(row.type ?? ''),
+    classes: Array.isArray(classes) ? classes.map((entry) => String(entry)) : [],
+    combo: Number(row.combo ?? 0),
+    minHp: parseNullableNumber(row.min_hp),
+    minAtk: parseNullableNumber(row.min_atk),
+    minRcv: parseNullableNumber(row.min_rcv),
+    maxHp: parseNullableNumber(row.max_hp),
+    maxAtk: parseNullableNumber(row.max_atk),
+    maxRcv: parseNullableNumber(row.max_rcv),
   };
 }
 

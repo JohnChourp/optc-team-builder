@@ -40,6 +40,11 @@ import {
   applyPartyConflictKeys,
   normalizePartyConflictOverrideMap,
 } from './lib/party-conflict-keys.mjs';
+import {
+  FORM_DROPPED_FIELDS,
+  FORM_UPSTREAM_SOURCES,
+  isEmptyUpstreamValue,
+} from './lib/optc-upstream-forms.mjs';
 import { normalizeRumbleUnits } from './lib/rumble-data-normalizer.mjs';
 import {
   attachProgressionData,
@@ -1574,6 +1579,95 @@ export function resolveCharacterFamilies(familyEntry) {
   ];
 }
 
+function listFormRows(units) {
+  if (!units || typeof units !== 'object' || Array.isArray(units)) {
+    return [];
+  }
+
+  return Object.entries(units).flatMap(([rawKey, entry]) => {
+    const parsedMapId = parseUnitMapId(rawKey);
+    const parsedEntryId = parseUnitMapId(entry?.id);
+    const baseCharacterId = parsedEntryId?.baseCharacterId ?? parsedMapId?.baseCharacterId;
+    const variantKey = parsedEntryId?.variantKey ?? parsedMapId?.variantKey;
+
+    return baseCharacterId && variantKey && entry && typeof entry === 'object'
+      ? [{ rawKey, baseCharacterId, variantKey, entry }]
+      : [];
+  });
+}
+
+/**
+ * 869f63gv6. The fields a form row drops (`FORM_DROPPED_FIELDS`) are dropped because every one of
+ * them is empty in every form row. The import checks that before it reads anything, and stops -
+ * naming each field, how many rows carry it and the first - rather than drop real data with no
+ * trace, which is what the type-only read did.
+ *
+ * Only the import runs this. The nightly release check normalizes the same units to find new ids,
+ * and its own fixtures require it to tolerate variant rows of shapes nobody has seen yet.
+ */
+export function assertFormRowsDropNothing(units) {
+  const carriedDroppedFields = new Map();
+
+  for (const { rawKey, entry } of listFormRows(units)) {
+    for (const field of FORM_DROPPED_FIELDS) {
+      if (!isEmptyUpstreamValue(entry[field])) {
+        carriedDroppedFields.set(field, [...(carriedDroppedFields.get(field) ?? []), rawKey]);
+      }
+    }
+  }
+
+  if (carriedDroppedFields.size > 0) {
+    const carried = [...carriedDroppedFields.entries()]
+      .map(([field, keys]) => `${field} in ${keys.length} (first ${keys[0]})`)
+      .join(', ');
+
+    throw new Error(
+      `units.js form rows carry values in fields the import drops as always empty: ${carried}. Keep the field in FORM_UPSTREAM_SOURCES and the character_forms table, or confirm upstream left it empty, before importing.`,
+    );
+  }
+}
+
+/**
+ * 869f63gv6. A dual or VS unit's forms, from the `<id>-<n>` keys of upstream's units.js - 414 keys
+ * for 207 units, two each, when this was written. They were read for their TYPE alone (merged into
+ * the unit's comma-joined `type`) and everything else was dropped without a record: #1983 Smoker &
+ * Tashigi is Striker/Slasher, its Smoker form INT Striker/Driven and its Tashigi form PSY
+ * Slasher/Cerebral, so a Driven filter never saw the Smoker form.
+ *
+ * Returns `characterId -> forms`, each form `{ key, ...FORM_UPSTREAM_SOURCES fields }`, in key
+ * order. Every other field of a form row is dropped - see `assertFormRowsDropNothing`, which the
+ * import runs first.
+ */
+export function normalizeCharacterForms(units) {
+  const formsById = new Map();
+
+  for (const { baseCharacterId, variantKey, entry } of listFormRows(units)) {
+    const read = (field) => entry[FORM_UPSTREAM_SOURCES[field].upstream];
+    const forms = formsById.get(baseCharacterId) ?? [];
+
+    forms.push({
+      key: variantKey,
+      name: normalizeCharacterName(read('name')),
+      type: normalizeUnitTypeTokens(read('type')).join(','),
+      classes: normalizeCharacterClasses(read('classes') ?? []),
+      combo: toFiniteNumber(read('combo')),
+      minHp: toFiniteNumber(read('minHp')),
+      minAtk: toFiniteNumber(read('minAtk')),
+      minRcv: toFiniteNumber(read('minRcv')),
+      maxHp: toFiniteNumber(read('maxHp')),
+      maxAtk: toFiniteNumber(read('maxAtk')),
+      maxRcv: toFiniteNumber(read('maxRcv')),
+    });
+    formsById.set(baseCharacterId, forms);
+  }
+
+  for (const forms of formsById.values()) {
+    forms.sort((left, right) => left.key.localeCompare(right.key, 'en', { numeric: true }));
+  }
+
+  return formsById;
+}
+
 export function normalizeCharacters(
   units,
   details,
@@ -1585,6 +1679,7 @@ export function normalizeCharacters(
 ) {
   const rumbleById = new Map(normalizeRumbleUnits(rumbleUnits).map((entry) => [entry.id, entry]));
   const normalizedUnitEntries = buildNormalizedUnitEntries(units);
+  const formsById = normalizeCharacterForms(units);
 
   return normalizedUnitEntries.map(
     ({
@@ -1648,6 +1743,7 @@ export function normalizeCharacters(
         },
         regionRelease: resolveRegionRelease(flagsById[characterId]),
         families: resolveCharacterFamilies(familiesById[characterId]),
+        forms: formsById.get(characterId) ?? [],
         assets,
         detail: normalizedDetail,
       };
@@ -1854,6 +1950,8 @@ async function main() {
   const exactOverridePackAssets = buildPackAssetOverridesFromExactOverrides(imageOverrides);
   mergeThumbnailOverrides(assetsById, thumbnailOverrides);
   mergeThumbnailOverrides(assetsById, exactOverridePackAssets);
+  /* 869f63gv6. Before anything is written: a form row may not carry a field the import drops. */
+  assertFormRowsDropNothing(unitsWindow.units);
   const manualExactLocalPaths = await materializeExactImageSources(
     selectedSource,
     imageOverrides,

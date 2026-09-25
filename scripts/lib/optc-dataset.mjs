@@ -190,6 +190,7 @@ export function createSqlSeed(characters, ships, manifest) {
     'DROP TABLE IF EXISTS character_details;',
     'DROP TABLE IF EXISTS character_evolutions;',
     'DROP TABLE IF EXISTS character_drops;',
+    'DROP TABLE IF EXISTS character_forms;',
     'DROP TABLE IF EXISTS ships;',
     'DROP TABLE IF EXISTS meta;',
     `
@@ -247,6 +248,29 @@ export function createSqlSeed(characters, ships, manifest) {
       CREATE TABLE character_drops (
         character_id INTEGER PRIMARY KEY,
         sources_json TEXT NOT NULL
+      );
+    `,
+    /*
+     * 869f63gv6. One row per form of a dual or VS unit, read from upstream's `<id>-<n>` keys. The
+     * unit's own row keeps its own classes; a form's classes apply after a swap, which is how the
+     * app counts and marks them. `scripts/lib/optc-upstream-forms.mjs` declares which upstream
+     * field fills each column and which fields a form drops.
+     */
+    `
+      CREATE TABLE character_forms (
+        character_id INTEGER NOT NULL,
+        form_key TEXT NOT NULL,
+        name TEXT NOT NULL,
+        type TEXT NOT NULL,
+        classes_json TEXT NOT NULL,
+        combo INTEGER NOT NULL,
+        min_hp INTEGER,
+        min_atk INTEGER,
+        min_rcv INTEGER,
+        max_hp INTEGER,
+        max_atk INTEGER,
+        max_rcv INTEGER,
+        PRIMARY KEY (character_id, form_key)
       );
     `,
     `
@@ -353,6 +377,28 @@ export function createSqlSeed(characters, ships, manifest) {
       statements.push(`
         INSERT INTO character_drops (character_id, sources_json)
         VALUES (${sqlValue(character.id)}, ${sqlValue(JSON.stringify(dropSources))});
+      `);
+    }
+
+    for (const form of character.forms ?? []) {
+      statements.push(`
+        INSERT INTO character_forms (
+          character_id, form_key, name, type, classes_json, combo,
+          min_hp, min_atk, min_rcv, max_hp, max_atk, max_rcv
+        ) VALUES (
+          ${sqlValue(character.id)},
+          ${sqlValue(form.key)},
+          ${sqlValue(form.name)},
+          ${sqlValue(form.type)},
+          ${sqlValue(JSON.stringify(form.classes ?? []))},
+          ${sqlValue(form.combo)},
+          ${sqlValue(form.minHp)},
+          ${sqlValue(form.minAtk)},
+          ${sqlValue(form.minRcv)},
+          ${sqlValue(form.maxHp)},
+          ${sqlValue(form.maxAtk)},
+          ${sqlValue(form.maxRcv)}
+        );
       `);
     }
   }

@@ -4223,6 +4223,8 @@
                           @for (chip of slot.reasonChips; track $index) {
                             <small class="reason-chip">{{ chip }}</small>
                           }
+                          <!-- 869f63gv6. Chosen for a class it holds only after a swap: said. -->
+                          <app-form-class-marker [match]="slot.formClassMatch" />
                         </div>
                         <div
                           class="slot-explanation"

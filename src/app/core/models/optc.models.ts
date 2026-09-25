@@ -240,6 +240,25 @@ export interface CharacterRecord {
    * unit upstream names no family for, and for a manually added one; the name decides those.
    */
   families?: string[];
+  /**
+   * 869f63gv6. The forms of a dual or VS unit (the `character_forms` table), each with its own
+   * type and classes. Absent on every other unit. `classes` stays the unit's own; a form's classes
+   * apply after a swap, and the class filters and Captain Coverage count them - marked, never
+   * silently.
+   */
+  forms?: readonly CharacterForm[];
+}
+
+/** 869f63gv6. One form of a dual or VS unit, read from upstream's `<id>-<n>` keys. */
+export interface CharacterForm {
+  /** `1`, `2`: the suffix of the upstream key, in upstream's order. */
+  key: string;
+  name: string;
+  type: string;
+  classes: string[];
+  combo: number;
+  /** A form shares its unit's growth; upstream leaves it empty in every form row. */
+  stats: Pick<CharacterStats, 'min' | 'max'>;
 }
 
 export interface CharacterDetail {

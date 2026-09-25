@@ -155,6 +155,18 @@ export function buildCharacterDetailViewModel(
       ...(character.secondaryClass
         ? [createRow('fields.secondaryClass', character.secondaryClass)]
         : []),
+      /*
+       * 869f63gv6. A dual or VS unit's forms, each with the type and classes it has after a swap -
+       * the classes the class filters and Captain Coverage now count for it, marked there.
+       */
+      ...(character.forms ?? []).map((form) =>
+        createRow(
+          'fields.form',
+          [form.name, formatCharacterType(form.type), form.classes.join(' / ')]
+            .filter((part) => part.length > 0)
+            .join(' · '),
+        ),
+      ),
       createRow('fields.stars', starsDisplay),
       createRow('fields.cost', formatNumber(character.cost)),
     ],

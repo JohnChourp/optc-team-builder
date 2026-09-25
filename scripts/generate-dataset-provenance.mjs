@@ -10,7 +10,11 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 
-import { buildProvenance, formatProvenanceMarkdown } from './lib/dataset-provenance.mjs';
+import {
+  buildProvenance,
+  findUnshippedFormFields,
+  formatProvenanceMarkdown,
+} from './lib/dataset-provenance.mjs';
 import { pathToFileURL } from 'node:url';
 
 export const IMPORTER_PATH = 'scripts/import-optc-data.mjs';
@@ -84,6 +88,16 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
     process.exit(1);
   }
 
+  /* 869f63gv6. A form field the importer keeps and the seed never writes is lost like a dropped one. */
+  const unshippedFormFields = findUnshippedFormFields(provenance);
+
+  if (unshippedFormFields.length > 0) {
+    console.error(
+      `[dataset:provenance] ${unshippedFormFields.length} kept form field(s) reach no column of ${provenance.forms.table}: ${unshippedFormFields.join(', ')}`,
+    );
+    process.exit(1);
+  }
+
   if (!check) {
     writeFileSync(jsonPath, `${JSON.stringify(provenance, null, 2)}\n`, 'utf8');
     writeFileSync(docPath, replaceGeneratedSection(readFileSync(docPath, 'utf8'), section), 'utf8');
@@ -118,6 +132,6 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   }
 
   console.log(
-    `[dataset:provenance] ${provenance.shippedColumns} shipped column(s) all resolve; ${provenance.droppedBeforeShipping.length} upstream field(s) read and dropped.`,
+    `[dataset:provenance] ${provenance.shippedColumns} shipped column(s) all resolve; ${provenance.droppedBeforeShipping.length} upstream field(s) read and dropped; forms keep ${provenance.forms.kept.length} field(s) and drop ${provenance.forms.dropped.length}.`,
   );
 }

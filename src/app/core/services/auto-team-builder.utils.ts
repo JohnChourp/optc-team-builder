@@ -228,6 +228,12 @@ interface PreparedAutoBuildRecord {
   sailorText: string;
   combinedText: string;
   classKeys: string[];
+  /**
+   * 869f63gv6. The class sets the unit can hold, one at a time: `classKeys`, then each form's of a
+   * dual or VS unit. Read by the selected-class filter alone - avoid/prefer and super criteria keep
+   * the unit's own classes.
+   */
+  classStateKeys: string[][];
   typeTokens: AutoTeamBuilderType[];
   characterTagKeys: string[];
   demandTagKeys: string[];
@@ -2632,6 +2638,9 @@ function prepareAutoBuildRecord(
     sailorText,
     combinedText,
     classKeys: record.classes.map((characterClass) => characterClass.toLowerCase()),
+    classStateKeys: [record.classes, ...(record.forms ?? []).map((form) => form.classes)].map(
+      (classes) => classes.map((characterClass) => characterClass.toLowerCase()),
+    ),
     typeTokens: resolveCharacterTypeTokens(record.type),
     characterTagKeys: characterTags.map((tag) => normalizeCaptainTagKey(tag)),
     demandTagKeys: characterTags.map((tag) => normalizeTagKeyForDemand(tag)),
@@ -2677,13 +2686,22 @@ function buildAutoBuildCandidateFromPreparedRecord(
   total = preparedRecord.total,
 ): AutoBuildCandidate {
   const { record, captainText, specialText, sailorText, combinedText } = preparedRecord;
-  const matchedSelectedClasses = resolveMatchedSelectedClasses(
+  /*
+   * 869f63gv6. The selected-class filter counts a dual or VS unit's forms - its classes after a
+   * swap - the way the class filters and Captain Coverage do: "any" across every state, "all" in
+   * one state, because no unit holds two forms' classes at once.
+   */
+  const matchedSelectedClasses = resolveMatchedSelectedClassesInAnyState(
     preparedRecord,
     input.selectedClasses,
   );
   const matchesAllSelectedClasses =
     input.selectedClasses.length === 0 ||
-    matchedSelectedClasses.length === input.selectedClasses.length;
+    preparedRecord.classStateKeys.some(
+      (classKeys) =>
+        resolveMatchedSelectedClasses({ classKeys }, input.selectedClasses).length ===
+        input.selectedClasses.length,
+    );
   const matchedSelectedTypes = resolveMatchedSelectedTypes(preparedRecord, input.types);
   const matchedSelectedCharacterTags = resolveMatchedSelectedCharacterTags(
     preparedRecord,
@@ -5134,6 +5152,16 @@ function resolveMatchedSelectedClasses(
 
   return selectedClasses.filter((selectedClass) =>
     record.classKeys.includes(selectedClass.toLowerCase()),
+  );
+}
+
+/** 869f63gv6. The selected classes the unit holds as itself or as any one of its forms. */
+function resolveMatchedSelectedClassesInAnyState(
+  record: Pick<PreparedAutoBuildRecord, 'classStateKeys'>,
+  selectedClasses: string[],
+): string[] {
+  return selectedClasses.filter((selectedClass) =>
+    record.classStateKeys.some((classKeys) => classKeys.includes(selectedClass.toLowerCase())),
   );
 }
 

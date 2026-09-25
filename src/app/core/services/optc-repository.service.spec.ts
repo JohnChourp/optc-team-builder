@@ -7,6 +7,7 @@ import { normalizeCharacterSearchText } from '../grammar/character-search-text';
 import { type DatasetManifest, type LocalCharacterOverride } from '../models/optc.models';
 import {
   CHARACTER_CLASS_LIKE_CLAUSE,
+  CHARACTER_FORM_CLASS_LIKE_CLAUSE,
   CHARACTER_TYPE_LIKE_CLAUSE,
   evaluateSqlLikePattern,
 } from './character-facet-filter.utils';
@@ -334,11 +335,12 @@ describe('OptcRepositoryService', () => {
     ]);
     await expect(service.getAvailableCharacterTags()).resolves.toEqual(['boosts orbs', 'Slasher']);
     await expect(service.getAvailableCharacterTags()).resolves.toEqual(['boosts orbs', 'Slasher']);
-    expect(selectAllMock).toHaveBeenCalledTimes(1);
+    // 869f63gv6. The forms of dual and VS units are read once per database, by their own query.
+    expect(countCharacterQueries(selectAllMock)).toBe(1);
 
     overrideRevision = 1;
     await expect(service.getDetailedCharacterCatalog()).resolves.toHaveLength(2);
-    expect(selectAllMock).toHaveBeenCalledTimes(2);
+    expect(countCharacterQueries(selectAllMock)).toBe(2);
   });
 
   it('memoizes the character tag match index per override revision', async () => {
@@ -1373,10 +1375,7 @@ describe('OptcRepositoryService character facet filtering', () => {
       offset: 0,
     });
 
-    const [emittedQuery, emittedParams] = selectAllMock.mock.calls.at(-1) as [
-      string,
-      Array<string | number>,
-    ];
+    const [emittedQuery, emittedParams] = lastCharacterQueryCall(selectAllMock);
 
     expect(emittedQuery).toContain(CHARACTER_CLASS_LIKE_CLAUSE);
     expect(emittedParams[0]).toBe('%"Fig\\%ter"%');
@@ -1395,7 +1394,7 @@ describe('OptcRepositoryService character facet filtering', () => {
       offset: 0,
     });
 
-    const [emittedQuery] = selectAllMock.mock.calls.at(-1) as [string, Array<string | number>];
+    const [emittedQuery] = lastCharacterQueryCall(selectAllMock);
 
     expect(emittedQuery).toContain(
       `${CHARACTER_TYPE_LIKE_CLAUSE} AND ${CHARACTER_TYPE_LIKE_CLAUSE}`,
@@ -1404,6 +1403,29 @@ describe('OptcRepositoryService character facet filtering', () => {
 });
 
 
+/**
+ * 869f63gv6. The one query that reads every form of the dual and VS units. A character query can
+ * name `character_forms` too, inside its class clause's EXISTS, so the table name alone is not it.
+ */
+function isFormsQuery(query: string): boolean {
+  return /^\s*SELECT\s+character_id,\s*form_key\b/u.test(query);
+}
+
+/** Calls that read characters, leaving out the one query that reads the forms of dual units. */
+function countCharacterQueries(selectAllMock: ReturnType<typeof vi.fn>): number {
+  return selectAllMock.mock.calls.filter(([query]) => !isFormsQuery(String(query))).length;
+}
+
+/** The last character query - the forms are read after it, while its rows are decorated. */
+function lastCharacterQueryCall(
+  selectAllMock: ReturnType<typeof vi.fn>,
+): [string, Array<string | number>] {
+  return selectAllMock.mock.calls.filter(([query]) => !isFormsQuery(String(query))).at(-1) as [
+    string,
+    Array<string | number>,
+  ];
+}
+
 function createRepositoryService(
   rows: TestSqlRow[],
   options: {
@@ -1411,12 +1433,26 @@ function createRepositoryService(
     overrides?: LocalCharacterOverride[];
     overrideRevision?: number | (() => number);
     shipRows?: TestSqlRow[];
+    formRows?: TestSqlRow[];
   } = {},
 ): OptcRepositoryService {
   const service = Object.create(OptcRepositoryService.prototype) as OptcRepositoryService;
   const overridesByCharacterId = new Map(
     (options.overrides ?? []).map((override) => [override.characterId, override] as const),
   );
+  // 869f63gv6. The fake SQL driver reads a character's forms off its own row, so the class
+  // clause's EXISTS half sees exactly the form rows the forms query returns.
+  const formRows = options.formRows ?? [];
+  const characterRows = formRows.length
+    ? rows.map((row) => ({
+        ...row,
+        forms_classes_json: JSON.stringify(
+          formRows
+            .filter((formRow) => Number(formRow['character_id']) === Number(row['id']))
+            .map((formRow) => String(formRow['classes_json'] ?? '[]')),
+        ),
+      }))
+    : rows;
 
   Object.assign(service, {
     /*
@@ -1442,7 +1478,9 @@ function createRepositoryService(
         Promise.resolve(
           query.includes('FROM ships')
             ? (options.shipRows ?? [])
-            : filterCharacterRowsForQuery(rows, query, params),
+            : isFormsQuery(query)
+              ? formRows
+              : filterCharacterRowsForQuery(characterRows, query, params),
         ),
       ),
   });
@@ -1751,22 +1789,35 @@ function filterCharacterRowsForQuery(
 
   const classToken = CHARACTER_CLASS_LIKE_CLAUSE;
   const classTokenCount = countOccurrences(query, classToken);
+  // 869f63gv6. The class clause binds every value again for the unit's forms (`f.classes_json`);
+  // a fake row carries those as `forms_classes_json`, a JSON list of each form's classes_json.
+  const formClassToken = CHARACTER_FORM_CLASS_LIKE_CLAUSE;
+  const formClassTokenCount = countOccurrences(query, formClassToken);
 
   if (classTokenCount > 0) {
     const classPatterns = params
       .slice(paramIndex, paramIndex + classTokenCount)
       .map((value) => String(value));
+    const formClassPatterns = params
+      .slice(paramIndex + classTokenCount, paramIndex + classTokenCount + formClassTokenCount)
+      .map((value) => String(value));
     const requiresAllClasses = query.includes(`${classToken} AND ${classToken}`);
-
-    filteredRows = filteredRows.filter((row) => {
-      const classesJson = String(row['classes_json'] ?? '');
-      const matches = classPatterns.map((pattern) =>
-        evaluateSqlLikePattern(classesJson, pattern),
-      );
+    const matchesClassesJson = (classesJson: string, patterns: readonly string[]) => {
+      const matches = patterns.map((pattern) => evaluateSqlLikePattern(classesJson, pattern));
 
       return requiresAllClasses ? matches.every(Boolean) : matches.some(Boolean);
+    };
+
+    filteredRows = filteredRows.filter((row) => {
+      const formClassesJson = JSON.parse(String(row['forms_classes_json'] ?? '[]')) as string[];
+
+      return (
+        matchesClassesJson(String(row['classes_json'] ?? ''), classPatterns) ||
+        (formClassPatterns.length > 0 &&
+          formClassesJson.some((classesJson) => matchesClassesJson(classesJson, formClassPatterns)))
+      );
     });
-    paramIndex += classTokenCount;
+    paramIndex += classTokenCount + formClassTokenCount;
   }
 
   const lockedClauseMatch = query.match(/OR c\.id IN \(([^)]+)\)/);

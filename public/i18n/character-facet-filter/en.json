@@ -33,5 +33,9 @@
   "a11y": {
     "applied": "Filter applied: {{count}} value(s), {{mode}}.",
     "cleared": "Filter cleared."
+  },
+  "formMarker": {
+    "afterSwap": "{{classes}} after swap",
+    "afterSwapAs": "{{classes}} after swap (as {{forms}})"
   }
 }

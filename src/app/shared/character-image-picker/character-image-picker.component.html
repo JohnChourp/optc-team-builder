@@ -234,12 +234,16 @@
             } @else {
               <div class="character-image-picker-grid">
                 @for (character of characters(); track character.id) {
+                  <!--
+                    869f63gv6. Named from its content - the portrait's alt text, then the "after
+                    swap" marker when a class filter matches the unit only through a form - so a
+                    screen reader hears the marker a sighted reader sees.
+                  -->
                   <button
                     type="button"
                     class="character-image-card"
                     [attr.data-testid]="'character-image-picker-card-' + character.id"
                     [class.character-image-card--selected]="selectedCharacterId() === character.id"
-                    [attr.aria-label]="character.name"
                     [attr.title]="character.name"
                     [disabled]="applyingSelection"
                     (click)="selectCharacter(character)"
@@ -247,6 +251,7 @@
                     <div class="character-image-card__image">
                       <img [src]="character.imageUrl" [alt]="character.name" loading="lazy" />
                     </div>
+                    <app-form-class-marker [record]="character" [selection]="classFacet()" />
                   </button>
                 }
               </div>

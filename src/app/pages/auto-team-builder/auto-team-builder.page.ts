@@ -136,9 +136,17 @@ import {
 } from '../../core/services/captain-team-condition-status.utils';
 import {
   isVsCaptainCoverageBranchCaptain,
+  resolveCaptainCoverage,
   resolveCaptainCoverageBranchDisplay,
   resolveCaptainCoverageBranchOptions,
+  resolveCaptainCoverageFormOnlyClasses,
 } from '../../core/services/captain-coverage.utils';
+import {
+  type FormOnlyClassMatch,
+  mergeFormOnlyClassMatches,
+  resolveFormOnlyClassMatch,
+} from '../../core/services/character-facet-filter.utils';
+import { FormClassMarkerComponent } from '../../shared/character-facet-filter/form-class-marker.component';
 import { resolveCharacterFacetMatches } from '../../core/services/auto-team-builder.utils';
 import {
   createEmptyAvoidPreferRules,
@@ -618,6 +626,11 @@ type TeamSlotViewModel = AutoBuildResult['slots'][number] & {
   hasStructuredExplanation: boolean;
   /** The character carries a local edit on this device, which changes what the builder sees. */
   hasLocalOverride: boolean;
+  /**
+   * 869f63gv6. A selected class, or a leader's class-scoped boost, this unit meets only after a
+   * swap into one of its forms - said on the slot, never implied.
+   */
+  formClassMatch: FormOnlyClassMatch | null;
 };
 
 interface AutoTeamDebugReportFeedback {
@@ -839,6 +852,7 @@ function resolveManualSlotRequiredAbilities(
     CharacterAbilityGroupsComponent,
     CharacterTagFilterComponent,
     CharacterTagSetPickerComponent,
+    FormClassMarkerComponent,
     AutoTeamBuilderActionsPanelComponent,
     AutoTeamBuilderCandidateCardPanelComponent,
     AutoTeamBuilderControlsPanelComponent,
@@ -3340,6 +3354,15 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly teamSlots = computed<TeamSlotViewModel[]>(() => {
     const currentResult = this.result();
     let subSlotIndex = 0;
+    const leaders = (currentResult?.slots ?? [])
+      .filter((slot) => slot.role === 'captain' || slot.role === 'friendCaptain')
+      .map((slot) => slot.character);
+    const selectedClassSelection = {
+      values: currentResult?.requestedInput?.selectedClasses ?? [],
+      matchMode: currentResult?.requestedInput?.requireAllSelectedClassesPerCharacter
+        ? ('all' as const)
+        : ('any' as const),
+    };
 
     return (
       currentResult?.slots.map((slot, index) => {
@@ -3369,6 +3392,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           rejectedCandidateGroups: explanationView.rejectedCandidateGroups,
           hasStructuredExplanation: explanationView.hasStructuredExplanation,
           hasLocalOverride: this.characterOverrides.overridesByCharacterId().has(slot.character.id),
+          formClassMatch: mergeFormOnlyClassMatches(
+            resolveFormOnlyClassMatch(slot.character, selectedClassSelection),
+            ...leaders.map((leader) =>
+              resolveCaptainCoverageFormOnlyClasses(resolveCaptainCoverage(leader, slot.character)),
+            ),
+          ),
         };
       }) ?? []
     );
