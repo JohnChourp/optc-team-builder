@@ -102,7 +102,7 @@
     },
     "allData": {
       "copy": "Export a full device backup bundle or import a smart backup that can contain all data, only one section, or even a single favorites, ships, character boxes, character overrides, saved teams, or saved enemies export.",
-      "driveHint": "Used Google Drive sync before? Your last backup is still in your Google Drive, in the OPTC Team Builder folder. Download optc-all-data.latest.json and import it here - it adds to what this device already has.",
+      "driveHint": "Used Google Drive sync before? Your last backup is still in your Google Drive, in the OPTC Team Builder folder. Download optc-all-data.latest.json and import it here: teams, boxes and your other lists are added to what this device already has, and only the boost list is replaced by the one in the backup.",
       "errors": {
         "generic": "All data import failed.",
         "invalidJson": "The selected backup file is not valid JSON.",

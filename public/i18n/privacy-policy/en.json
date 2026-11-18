@@ -62,7 +62,7 @@
       "items": {
         "consent": "Your local consent choice remains on your device until you change it or clear browser storage.",
         "localData": "Favorites, saved teams, saved enemies, character boxes, overrides, language, and similar settings remain stored locally until you delete them in the app or clear browser or app storage.",
-        "drive": "The app no longer offers Google sign-in or Google Drive sync (removed on 18 November 2026). A backup file an earlier version wrote to your Google Drive stays there, under your control, until you delete it; the app keeps no access to it.",
+        "drive": "The app no longer offers Google sign-in or Google Drive sync. A backup file an earlier version wrote to your Google Drive stays there, under your control, until you delete it; the app keeps no access to it.",
         "analytics": "If enabled, analytics data is retained in the Google Analytics property according to its configured retention settings, while cookie durations are described in the Cookie Policy."
       }
     },

@@ -102,7 +102,7 @@
     },
     "allData": {
       "copy": "Κάνε export ένα πλήρες backup bundle ή import ένα έξυπνο backup που μπορεί να έχει όλα τα δεδομένα, μόνο ένα section ή ακόμα και export από ένα μόνο favorites, ships, character boxes, character overrides, saved teams ή saved enemies backup.",
-      "driveHint": "Είχες συγχρονισμό Google Drive; Το τελευταίο σου backup είναι ακόμα στο Google Drive σου, στον φάκελο OPTC Team Builder. Κατέβασε το optc-all-data.latest.json και κάνε το εισαγωγή εδώ - προστίθεται σε ό,τι έχει ήδη αυτή η συσκευή.",
+      "driveHint": "Είχες συγχρονισμό Google Drive; Το τελευταίο σου backup είναι ακόμα στο Google Drive σου, στον φάκελο OPTC Team Builder. Κατέβασε το optc-all-data.latest.json και κάνε το εισαγωγή εδώ: ομάδες, boxes και οι άλλες λίστες σου προστίθενται σε ό,τι έχει ήδη αυτή η συσκευή, και μόνο η λίστα boost αντικαθίσταται από αυτή του backup.",
       "errors": {
         "generic": "Το import όλων των δεδομένων απέτυχε.",
         "invalidJson": "Το επιλεγμένο backup δεν είναι έγκυρο JSON.",

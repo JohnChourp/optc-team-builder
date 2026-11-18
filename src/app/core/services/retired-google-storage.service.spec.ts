@@ -4,6 +4,8 @@ import {
   DRIVE_SYNC_METADATA_KEY,
   GOOGLE_ACCOUNT_SESSION_KEY,
   RetiredGoogleStorageService,
+  SOCIAL_LOGIN_GOOGLE_STATE_KEY,
+  SOCIAL_LOGIN_OAUTH_RESULT_PREFIX,
   SOCIAL_LOGIN_OAUTH_STATE_KEY,
 } from './retired-google-storage.service';
 
@@ -13,6 +15,10 @@ function memoryStorage(initial: Record<string, string>) {
 
   return {
     store,
+    get length() {
+      return store.size;
+    },
+    key: (index: number) => [...store.keys()][index] ?? null,
     getItem: (key: string) => store.get(key) ?? null,
     setItem: (key: string, value: string) => void store.set(key, value),
     removeItem: vi.fn((key: string) => void store.delete(key)),
@@ -42,6 +48,22 @@ describe('RetiredGoogleStorageService (1amndjnq718)', () => {
     expect(storage.store.get('savedTeams'), 'the player data stays').toBe('[]');
   });
 
+  it("deletes the Google tokens and sign-in results the social-login plugin kept for itself", async () => {
+    const storage = memoryStorage({
+      [SOCIAL_LOGIN_GOOGLE_STATE_KEY]: '{"accessToken":"a","idToken":"b"}',
+      [`${SOCIAL_LOGIN_OAUTH_RESULT_PREFIX}nonce-1`]: '{}',
+      [`${SOCIAL_LOGIN_OAUTH_RESULT_PREFIX}nonce-2`]: '{}',
+      savedTeams: '[]',
+      'optc.unrelated': 'kept',
+    });
+
+    vi.stubGlobal('localStorage', storage);
+
+    await new RetiredGoogleStorageService({ remove: vi.fn(async () => undefined) } as never).init();
+
+    expect([...storage.store.keys()].sort()).toEqual(['optc.unrelated', 'savedTeams']);
+  });
+
   it('starts the app even when storage refuses', async () => {
     const storage = memoryStorage({});
     const preferences = { remove: vi.fn(async () => Promise.reject(new Error('blocked'))) };
@@ -65,10 +87,18 @@ describe('RetiredGoogleStorageService (1amndjnq718)', () => {
   });
 
   it('keeps the canonical spellings from the storage register', () => {
-    expect([DRIVE_SYNC_METADATA_KEY, GOOGLE_ACCOUNT_SESSION_KEY, SOCIAL_LOGIN_OAUTH_STATE_KEY]).toEqual([
+    expect([
+      DRIVE_SYNC_METADATA_KEY,
+      GOOGLE_ACCOUNT_SESSION_KEY,
+      SOCIAL_LOGIN_OAUTH_STATE_KEY,
+      SOCIAL_LOGIN_GOOGLE_STATE_KEY,
+      SOCIAL_LOGIN_OAUTH_RESULT_PREFIX,
+    ]).toEqual([
       'driveSyncMetadata',
       'optc_google_account_session',
       'social_login_oauth_pending',
+      'capgo_social_login_google_state',
+      'social_login_oauth_result_',
     ]);
   });
 });

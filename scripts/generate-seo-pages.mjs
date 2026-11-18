@@ -342,6 +342,17 @@ if (!characters.length) {
   throw new Error(`No character rows found in ${seedPath}.`);
 }
 
+/*
+ * 1amndjnq718. Pages that were public and are now gone. Google sign-in, Drive sync and the Account
+ * page were removed on 2026-11-18, and both URLs had a static page and a sitemap entry. Without a
+ * file here GitHub Pages answers them with 404, so a crawler or a bookmark meets an error; each
+ * gets a tiny noindex page that sends it to the route that replaced it. Not in the sitemap.
+ */
+const RETIRED_ROUTE_REDIRECTS = [
+  { path: 'tabs/account', to: 'tabs/settings' },
+  { path: 'tabs/drive-sync', to: 'tabs/settings' },
+];
+
 const relatedCharactersByConflictKey = buildRelatedCharactersByConflictKey(characters);
 const sitemapEntries = [];
 
@@ -361,6 +372,10 @@ for (const character of characters) {
   const routePath = `characters/${character.id}`;
   await writeRoutePage(routePath, buildCharacterPageSeo(character));
   sitemapEntries.push(routePath);
+}
+
+for (const redirect of RETIRED_ROUTE_REDIRECTS) {
+  await writeRedirectPage(redirect.path, redirect.to);
 }
 
 await writeSitemap(sitemapEntries);
@@ -383,6 +398,30 @@ async function writeRoutePage(routePath, seo) {
 
   await mkdir(path.dirname(targetPath), { recursive: true });
   await writeFile(targetPath, injectSeo(indexHtml, seo));
+}
+
+async function writeRedirectPage(routePath, targetRoutePath) {
+  const targetPath = path.join(outputDir, ...routePath.split('/'), 'index.html');
+  const targetUrl = escapeXml(buildAbsoluteUrl(targetRoutePath));
+
+  await mkdir(path.dirname(targetPath), { recursive: true });
+  await writeFile(
+    targetPath,
+    `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>OPTC Team Builder</title>
+  <meta name="robots" content="noindex">
+  <link rel="canonical" href="${targetUrl}">
+  <meta http-equiv="refresh" content="0; url=${targetUrl}">
+</head>
+<body>
+  <a href="${targetUrl}">This page moved to Settings.</a>
+</body>
+</html>
+`,
+  );
 }
 
 async function writeSitemap(routePaths) {

@@ -1286,9 +1286,6 @@ function createPage() {
     clearAllSavedTeams: vi.fn().mockImplementation(async () => {
       savedTeams.set([]);
     }),
-    clearAllSavedRumbleTeams: vi.fn().mockImplementation(async () => {
-      savedRumbleTeams.set([]);
-    }),
     clearAllSavedEnemies: vi.fn().mockImplementation(async () => {
       savedEnemies.set([]);
     }),
@@ -1297,12 +1294,10 @@ function createPage() {
     readyCrewForgeImageProfiles: vi.fn().mockResolvedValue(undefined),
     saveCrewForgeImageProfile: vi.fn().mockResolvedValue(null),
     setCrewForgeLastImageProfileId: vi.fn().mockResolvedValue(undefined),
-    clearAllCrewForgeImageProfiles: vi.fn().mockResolvedValue(undefined),
     savedRumbleOpponents: () => [],
     readySavedRumbleOpponents: vi.fn().mockResolvedValue(undefined),
     saveRumbleOpponent: vi.fn().mockResolvedValue(null),
     deleteRumbleOpponent: vi.fn().mockResolvedValue(undefined),
-    clearAllSavedRumbleOpponents: vi.fn().mockResolvedValue(undefined),
     mergeImportedRumbleOpponents: vi
       .fn()
       .mockResolvedValue({ addedCount: 0, updatedCount: 0, opponents: [] }),

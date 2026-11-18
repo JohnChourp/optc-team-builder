@@ -224,41 +224,6 @@ describe("every kind of the reader's data, read from one register (869f63gug)", 
     });
   });
 
-  it('counts every scope a backup carries, once each', async () => {
-    const { transfer } = createDevice();
-    const payload = await transfer.buildAllDataPayload(STAMP);
-    const summary = transfer.getSyncScopeSummaryFromPayload(payload);
-
-    expect(Object.keys(summary)).toHaveLength(ALL_DATA_TRANSFER_SCOPES.length);
-    expect(summary).toEqual({
-      favoriteCharacterCount: 1,
-      favoriteShipCount: 1,
-      savedTeamsCount: 1,
-      savedRumbleTeamsCount: 1,
-      savedEnemiesCount: 1,
-      characterBoxesCount: 1,
-      characterOverridesCount: 1,
-      crewForgeProfilesCount: 1,
-      savedRumbleOpponentsCount: 1,
-      boostedCharacterCount: 2,
-    });
-  });
-
-  it('clears every scope, the boost list included, before a restore imports', async () => {
-    const { preferences, transfer } = createDevice();
-
-    await transfer.clearSyncScopedData();
-
-    for (const key of durableKeys) {
-      expect(JSON.parse(preferences.store.get(key) ?? 'null'), `${key} is cleared`).toSatisfy(
-        (value: unknown) => value === null || (Array.isArray(value) && value.length === 0),
-      );
-    }
-    expect(Object.values(transfer.getSyncScopeSummary()).reduce((sum, count) => sum + count)).toBe(
-      BUILT_IN_CREW_FORGE_IMAGE_PROFILES.length,
-    );
-  });
-
   it.each(durableKeys)('writes %s through its owner', async (key) => {
     const device = createDevice();
 

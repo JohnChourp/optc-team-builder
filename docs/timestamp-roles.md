@@ -36,7 +36,7 @@ Concentrated, not scattered:
 
 | Producer | Role | Count |
 | --- | --- | --- |
-| `drive-backup.service.ts` `updatedAt` | payload | 30 of the 27 files' sites - by far the largest single consumer |
+| `drive-backup.service.ts` `updatedAt` | payload | 30 of the 27 files' sites - by far the largest single consumer (measured before 2026-11-18; the file was deleted with Drive sync by 1amndjnq718) |
 | `user-data-transfer.service.ts` `exportedAt` | payload | 1 |
 | saved-team / saved-enemy `createdAt` / `updatedAt` | payload | the model declares them at 6 sites in `optc.models.ts` |
 | `scripts/**` generation stamps | payload | 35 files |

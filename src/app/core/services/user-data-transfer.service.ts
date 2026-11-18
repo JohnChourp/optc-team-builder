@@ -67,13 +67,10 @@ import {
 } from '../../pages/settings/favorite-ships-transfer.utils';
 import { AppI18nService } from './app-i18n.service';
 
-export type DriveImportStrategy = 'merge' | 'restore';
-
 /**
  * 869f63gug. The count each scope reports under, declared once. `SyncScopeSummary` is derived from
  * it, so a scope without a count does not compile - the boost list had none, and was counted
- * nowhere. These keys are persisted in the Drive sync metadata (`remoteSummary`): changing one
- * orphans every summary already stored.
+ * nowhere.
  */
 const SYNC_SCOPE_SUMMARY_KEYS = {
   favorites: 'favoriteCharacterCount',
@@ -94,18 +91,14 @@ export type SyncScopeSummary = Record<
 >;
 
 /**
- * 869f63gug. What this service does with one scope, besides parse it - that is
- * `assertEveryScopeParses`.
+ * 869f63gug. What this service does with one scope. 1amndjnq718 removed `clear` and `countIn` with
+ * the Drive restore, their only reader.
  */
 interface SyncScopeHandler<Scope extends AllDataTransferScope> {
   /** This device's section of a full export. */
   build: () => AllDataTransferSections[Scope] | Promise<AllDataTransferSections[Scope]>;
-  /** Empties the scope on this device - what a restore does before it imports the backup. */
-  clear: () => Promise<void>;
   /** How many items this device holds. */
   count: () => number;
-  /** How many items a backup carries. */
-  countIn: (payload: AllDataTransferPayload) => number;
 }
 
 export interface FavoritesImportSummary {
@@ -182,19 +175,6 @@ export interface SavedRumbleTeamsImportSummary {
   updatedCount: number;
 }
 
-export interface AllDataApplySummary {
-  characterBoxes?: CharacterBoxesImportSummary;
-  characterOverrides?: CharacterOverridesImportSummary;
-  crewForgeProfiles?: CrewForgeProfilesImportSummary;
-  savedRumbleOpponents?: SavedRumbleOpponentsImportSummary;
-  boostedCharacterIds?: BoostedCharactersImportSummary;
-  favoriteShips?: FavoriteShipsImportSummary;
-  favorites?: FavoritesImportSummary;
-  savedEnemies?: SavedEnemiesImportSummary;
-  savedRumbleTeams?: SavedRumbleTeamsImportSummary;
-  savedTeams?: SavedTeamsImportSummary;
-}
-
 @Injectable({ providedIn: 'root' })
 export class UserDataTransferService {
   public constructor(
@@ -207,95 +187,6 @@ export class UserDataTransferService {
 
   public async ready(): Promise<void> {
     await Promise.all([this.userState.ready(), this.characterOverrides.ready()]);
-  }
-
-  public async applyAllDataPayload(
-    payload: AllDataTransferPayload,
-    strategy: DriveImportStrategy = 'merge',
-  ): Promise<AllDataApplySummary> {
-    await this.ready();
-
-    /*
-     * 869f63gpg. Every scope is parsed BEFORE anything is written. A restore clears the device
-     * first, and a scope whose parser threw after that left it empty - nothing restored, nothing
-     * uploaded. A backup that does not parse now fails here, with the device untouched.
-     */
-    this.assertEveryScopeParses(payload);
-
-    if (strategy === 'restore') {
-      await this.clearSyncScopedData();
-    }
-
-    const summary: AllDataApplySummary = {};
-
-    if (payload.favorites !== undefined) {
-      /*
-       * A player with no favourite characters is carried as `{ characters: [] }`, which is valid
-       * here. `importFavoritesPayload` still rejects it, correctly, for an empty FILE picked in
-       * Settings - so the empty case is answered in this path rather than by relaxing the parser.
-       */
-      summary.favorites = this.isEmptyFavoritesPayload(payload.favorites)
-        ? {
-            addedCount: 0,
-            alreadyFavoritedCount: 0,
-            duplicatesRemoved: 0,
-            matchedCount: 0,
-            unknownCharacterCount: 0,
-          }
-        : await this.importFavoritesPayload(payload.favorites as unknown);
-    }
-
-    if (payload.favoriteShips !== undefined) {
-      summary.favoriteShips = await this.importFavoriteShipsPayload(
-        payload.favoriteShips as unknown,
-      );
-    }
-
-    if (payload.savedTeams !== undefined) {
-      summary.savedTeams = await this.importSavedTeamsPayload(payload.savedTeams as unknown);
-    }
-
-    if (payload.characterBoxes !== undefined) {
-      summary.characterBoxes = await this.importCharacterBoxesPayload(
-        payload.characterBoxes as unknown,
-      );
-    }
-
-    if (payload.characterOverrides !== undefined) {
-      summary.characterOverrides = await this.importCharacterOverridesPayload(
-        payload.characterOverrides as unknown,
-      );
-    }
-
-    if (payload.savedEnemies !== undefined) {
-      summary.savedEnemies = await this.importSavedEnemiesPayload(payload.savedEnemies as unknown);
-    }
-
-    if (payload.savedRumbleTeams !== undefined) {
-      summary.savedRumbleTeams = await this.importSavedRumbleTeamsPayload(
-        payload.savedRumbleTeams as unknown,
-      );
-    }
-
-    if (payload.crewForgeProfiles !== undefined) {
-      summary.crewForgeProfiles = await this.importCrewForgeProfilesPayload(
-        payload.crewForgeProfiles as unknown,
-      );
-    }
-
-    if (payload.savedRumbleOpponents !== undefined) {
-      summary.savedRumbleOpponents = await this.importSavedRumbleOpponentsPayload(
-        payload.savedRumbleOpponents as unknown,
-      );
-    }
-
-    if (payload.boostedCharacterIds !== undefined) {
-      summary.boostedCharacterIds = await this.importBoostedCharactersPayload(
-        payload.boostedCharacterIds as unknown,
-      );
-    }
-
-    return summary;
   }
 
   /**
@@ -335,23 +226,10 @@ export class UserDataTransferService {
     return buildAllDataTransferPayload(sections, exportedAt);
   }
 
-  public async clearSyncScopedData(): Promise<void> {
-    await this.ready();
-    const handlers = this.syncScopeHandlers();
-
-    await Promise.all(ALL_DATA_TRANSFER_SCOPES.map((scope) => handlers[scope].clear()));
-  }
-
   public getSyncScopeSummary(): SyncScopeSummary {
     const handlers = this.syncScopeHandlers();
 
     return this.summarise((scope) => handlers[scope].count());
-  }
-
-  public getSyncScopeSummaryFromPayload(payload: AllDataTransferPayload): SyncScopeSummary {
-    const handlers = this.syncScopeHandlers();
-
-    return this.summarise((scope) => handlers[scope].countIn(payload));
   }
 
   public async importCharacterBoxesPayload(payload: unknown): Promise<CharacterBoxesImportSummary> {
@@ -637,46 +515,6 @@ export class UserDataTransferService {
     return nextFavoriteShipIds;
   }
 
-  /*
-   * 869f63gpg. Each entry is the parser its importer runs first; the sanitizers after them never
-   * throw, so these are the whole of what can reject a payload's shape. Typed over the declared scope
-   * list, so a scope added later without a parser here is a compile error rather than a restore that
-   * can clear the device and then fail - the same guard `SCOPE_CLONERS` gives the builder.
-   */
-  private assertEveryScopeParses(payload: AllDataTransferPayload): void {
-    const scopeParsers: Record<AllDataTransferScope, (value: unknown) => unknown> = {
-      favorites: (value) =>
-        this.isEmptyFavoritesPayload(value) ? null : this.optcbxImport.parseExportPayload(value),
-      favoriteShips: parseFavoriteShipsImportPayloadValue,
-      savedTeams: parseSavedTeamsImportPayloadValue,
-      savedRumbleTeams: parseSavedRumbleTeamsImportPayloadValue,
-      savedEnemies: parseSavedEnemiesImportPayloadValue,
-      characterBoxes: parseCharacterBoxesImportPayloadValue,
-      characterOverrides: parseCharacterOverridesImportPayloadValue,
-      crewForgeProfiles: parseCrewForgeProfilesImportPayloadValue,
-      savedRumbleOpponents: parseSavedRumbleOpponentsImportPayloadValue,
-      boostedCharacterIds: parseBoostedCharactersTransferPayload,
-    };
-
-    for (const scope of ALL_DATA_TRANSFER_SCOPES) {
-      const value = payload[scope];
-
-      if (value !== undefined) {
-        scopeParsers[scope](value);
-      }
-    }
-  }
-
-  /* The shape a backup gives a player with no favourite characters. */
-  private isEmptyFavoritesPayload(value: unknown): boolean {
-    return (
-      typeof value === 'object' &&
-      value !== null &&
-      Array.isArray((value as { characters?: unknown }).characters) &&
-      (value as { characters: unknown[] }).characters.length === 0
-    );
-  }
-
   private summarise(countOf: (scope: AllDataTransferScope) => number): SyncScopeSummary {
     const summary = {} as SyncScopeSummary;
 
@@ -688,7 +526,7 @@ export class UserDataTransferService {
   }
 
   /*
-   * 869f63gug. Every scope's export, clear and counts in ONE record, typed over the declared scope
+   * 869f63gug. Every scope's export and count in ONE record, typed over the declared scope
    * list - the guard SCOPE_CLONERS gives the builder. They were four hand-kept lists and they
    * disagreed: the export carried ten scopes while a restore cleared nine and the summaries counted
    * nine. A scope added later without an entry here does not compile.
@@ -697,45 +535,31 @@ export class UserDataTransferService {
     return {
       favorites: {
         build: () => this.buildFavoritesExportPayload(),
-        clear: () => this.userState.clearAllFavoriteCharacterIds(),
         count: () => this.userState.favoriteCharacterIds().length,
-        countIn: (payload) => payload.favorites?.characters.length ?? 0,
       },
       favoriteShips: {
         build: () => this.buildFavoriteShipsExportPayload(),
-        clear: () => this.userState.clearAllFavoriteShipIds(),
         count: () => this.userState.favoriteShipIds().length,
-        countIn: (payload) => payload.favoriteShips?.ships.length ?? 0,
       },
       savedTeams: {
         build: () => buildSavedTeamsTransferPayload(this.userState.savedTeams()),
-        clear: () => this.userState.clearAllSavedTeams(),
         count: () => this.userState.savedTeams().length,
-        countIn: (payload) => payload.savedTeams?.teams.length ?? 0,
       },
       savedRumbleTeams: {
         build: () => buildSavedRumbleTeamsTransferPayload(this.userState.savedRumbleTeams()),
-        clear: () => this.userState.clearAllSavedRumbleTeams(),
         count: () => this.userState.savedRumbleTeams().length,
-        countIn: (payload) => payload.savedRumbleTeams?.rumbleTeams.length ?? 0,
       },
       savedEnemies: {
         build: () => buildSavedEnemiesTransferPayload(this.userState.savedEnemies()),
-        clear: () => this.userState.clearAllSavedEnemies(),
         count: () => this.userState.savedEnemies().length,
-        countIn: (payload) => payload.savedEnemies?.enemies.length ?? 0,
       },
       characterBoxes: {
         build: () => this.buildCharacterBoxesExportPayload(),
-        clear: () => this.userState.clearAllCharacterBoxes(),
         count: () => this.userState.characterBoxes().length,
-        countIn: (payload) => payload.characterBoxes?.boxes.length ?? 0,
       },
       characterOverrides: {
         build: () => this.buildCharacterOverridesExportPayload(),
-        clear: () => this.characterOverrides.clearAllOverrides(),
         count: () => this.characterOverrides.overrides().length,
-        countIn: (payload) => payload.characterOverrides?.overrides.length ?? 0,
       },
       crewForgeProfiles: {
         build: () =>
@@ -743,26 +567,16 @@ export class UserDataTransferService {
             this.userState.crewForgeImageProfiles(),
             this.userState.crewForgeLastImageProfileId(),
           ),
-        clear: () => this.userState.clearAllCrewForgeImageProfiles(),
         count: () => this.userState.crewForgeImageProfiles().length,
-        countIn: (payload) => payload.crewForgeProfiles?.profiles.length ?? 0,
       },
       savedRumbleOpponents: {
         build: () =>
           buildSavedRumbleOpponentsTransferPayload(this.userState.savedRumbleOpponents()),
-        clear: () => this.userState.clearAllSavedRumbleOpponents(),
         count: () => this.userState.savedRumbleOpponents().length,
-        countIn: (payload) => payload.savedRumbleOpponents?.opponents.length ?? 0,
       },
-      /*
-       * Cleared by a restore like every other scope. It was the one a restore left in place, so a
-       * device kept its own boost list under a backup that carried none.
-       */
       boostedCharacterIds: {
         build: () => buildBoostedCharactersTransferPayload(this.userState.boostedCharacterIds()),
-        clear: () => this.userState.clearBoostedCharacterIds(),
         count: () => this.userState.boostedCharacterIds().length,
-        countIn: (payload) => payload.boostedCharacterIds?.characterIds.length ?? 0,
       },
     };
   }

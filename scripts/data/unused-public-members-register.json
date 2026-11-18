@@ -17,7 +17,7 @@
     "Baseline measured 2026-09-15 against v0.4.48: 64 findings, 32 spec-only and 32 orphan."
   ],
   "measuredOn": "2026-09-15",
-  "baselineCount": 63,
+  "baselineCount": 61,
   "entries": [
     {
       "file": "src/app/app.component.ts",
@@ -445,20 +445,6 @@
       "kind": "orphan",
       "reason": "No reader anywhere - no template binding, no other source file, and no spec. Nothing in the repository observes this member at all.",
       "removeWhen": "Delete this entry when the member gains any reader, or when the member is removed from the tree."
-    },
-    {
-      "file": "src/app/core/services/user-data-transfer.service.ts",
-      "member": "UserDataTransferService.applyAllDataPayload",
-      "kind": "spec-only",
-      "reason": "Its only app reader was DriveBackupService, deleted with Google Drive sync on 2026-11-18 (1amndjnq718). The restore and payload-summary paths stay tested because a cloud copy (Firebase audit 1amndjnq719) would read them again.",
-      "removeWhen": "Delete this entry when a cloud restore reads the member again, or delete the member with its specs if the owner decides against a cloud copy."
-    },
-    {
-      "file": "src/app/core/services/user-data-transfer.service.ts",
-      "member": "UserDataTransferService.getSyncScopeSummaryFromPayload",
-      "kind": "spec-only",
-      "reason": "Its only app reader was DriveBackupService, deleted with Google Drive sync on 2026-11-18 (1amndjnq718). The restore and payload-summary paths stay tested because a cloud copy (Firebase audit 1amndjnq719) would read them again.",
-      "removeWhen": "Delete this entry when a cloud restore reads the member again, or delete the member with its specs if the owner decides against a cloud copy."
     }
   ]
 }

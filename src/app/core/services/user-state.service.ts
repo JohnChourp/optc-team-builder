@@ -708,19 +708,6 @@ export class UserStateService {
     return normalizedProfile;
   }
 
-  /**
-   * 869f12x4p. Drive "restore" replaces local data with the backup's, scope by
-   * scope. Now that the payload carries Crew Forge profiles, leaving them out of
-   * the clear would make restore merge them instead - a device that does not
-   * match the backup it was just restored from.
-   */
-  public async clearAllCrewForgeImageProfiles(): Promise<void> {
-    await this.readyCrewForgeImageProfiles();
-    await this.replaceCrewForgeImageProfiles([]);
-    this.crewForgeLastImageProfileId.set(null);
-    await this.persistJson(CREW_FORGE_LAST_IMAGE_PROFILE_ID_KEY, null);
-  }
-
   public async deleteCrewForgeImageProfile(profileId: string): Promise<void> {
     await this.readyCrewForgeImageProfiles();
     const normalizedProfileId = this.normalizeEntityId(profileId);
@@ -1316,11 +1303,6 @@ export class UserStateService {
     await this.replaceSavedRumbleOpponents(next);
   }
 
-  public async clearAllSavedRumbleOpponents(): Promise<void> {
-    await this.readySavedRumbleOpponents();
-    await this.replaceSavedRumbleOpponents([]);
-  }
-
   public async mergeImportedRumbleOpponents(
     opponents: SavedRumbleOpponent[],
   ): Promise<{ addedCount: number; updatedCount: number; opponents: SavedRumbleOpponent[] }> {
@@ -1355,11 +1337,6 @@ export class UserStateService {
     await this.replaceSavedRumbleOpponents(next);
 
     return { addedCount, updatedCount, opponents: next };
-  }
-
-  public async clearAllSavedRumbleTeams(): Promise<void> {
-    await this.readySavedRumbleTeams();
-    await this.replaceSavedRumbleTeams([]);
   }
 
   public async mergeImportedRumbleTeams(

@@ -62,8 +62,13 @@ export const appConfig: ApplicationConfig = {
     provideAppInitializer(() => inject(ErrorLogService).init()),
     provideAppInitializer(() => inject(AppI18nService).ready()),
     provideAppInitializer(() => inject(AnalyticsConsentService).ready()),
-    // 1amndjnq718. Deletes what the removed Google sign-in and Drive sync left on the device.
-    provideAppInitializer(() => inject(RetiredGoogleStorageService).init()),
+    /*
+     * 1amndjnq718. Deletes what the removed Google sign-in and Drive sync left on the device.
+     * Started, not awaited: nothing at startup reads these keys, so the app never waits for it.
+     */
+    provideAppInitializer(() => {
+      void inject(RetiredGoogleStorageService).init();
+    }),
     provideAppInitializer(() => inject(AppUpdateService).init()),
     provideAppInitializer(() => inject(NativeUpdateService).init()),
     // 869f6tcyk. Back on Home leaves the app on Android instead of doing nothing.

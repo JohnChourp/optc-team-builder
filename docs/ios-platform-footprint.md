@@ -86,6 +86,10 @@ remove ios/.
 
 ## What is *not* part of the footprint
 
+> **Superseded on 2026-11-18 by 1amndjnq718.** Google sign-in and Drive sync were removed, and with
+> them `APP_GOOGLE_IOS_CLIENT_ID`: the writer, the config type and every workflow step stopped
+> naming it. What follows records why it was kept until then; `npx cap add ios` no longer needs it.
+
 `APP_GOOGLE_IOS_CLIENT_ID` looks like iOS-native scaffolding and is not: it is a
 key of the app's runtime config. `scripts/write-app-config.mjs` reads it, and four
 build steps in **three** workflows name it — the two that build the website

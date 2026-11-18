@@ -268,6 +268,15 @@ export const BROWSER_STORAGE_KEYS: readonly BrowserStorageKeyRecord[] = [
     note: 'RETIRED 2026-11-18 (1amndjnq718): Google sign-in was removed; only deleted at startup. It held the signed-in profile. Never exported, never synced, never written to a file.',
   },
   {
+    key: 'capgo_social_login_google_state',
+    constantName: 'SOCIAL_LOGIN_GOOGLE_STATE_KEY',
+    owner: 'src/app/core/services/retired-google-storage.service.ts',
+    backend: 'local',
+    classification: 'credential',
+    legacySpelling: true,
+    note: 'RETIRED 2026-11-18 (1amndjnq718): written by @capgo/capacitor-social-login itself, holding the Google access token and id token. Registered only so the startup cleanup can delete it; never exported.',
+  },
+  {
     key: 'social_login_oauth_pending',
     constantName: 'SOCIAL_LOGIN_OAUTH_STATE_KEY',
     owner: 'src/app/core/services/retired-google-storage.service.ts',

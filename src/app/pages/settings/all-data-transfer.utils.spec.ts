@@ -531,24 +531,6 @@ describe('every scope survives the round trip', () => {
       );
     }
   });
-
-  it('APPLIES every scope on the Drive sync path too', () => {
-    /*
-     * `applyAllDataPayload` is the Drive-sync twin of `importAllDataBundle`, with the same
-     * hand-written per-scope blocks and the same failure mode. A scope exported to Drive and never
-     * applied back is a backup that restores short, which is the defect this subtask started from.
-     */
-    const service = readFileSync(
-      resolve(process.cwd(), 'src/app/core/services/user-data-transfer.service.ts'),
-      'utf8',
-    );
-    const applier = service.slice(service.indexOf('public async applyAllDataPayload'));
-    const body = applier.slice(0, applier.indexOf('\n  public '));
-
-    for (const scope of ALL_DATA_TRANSFER_SCOPES) {
-      expect(body, `applyAllDataPayload restores ${scope}`).toContain(`payload.${scope} !== undefined`);
-    }
-  });
 });
 
 /**
