@@ -17,12 +17,13 @@ describe('HomePage', () => {
     expect(template).toContain("t('features.title')");
     expect(template).toContain("t('workflow.title')");
     expect(template).toContain('class="home-account glass-card"');
-    expect(template).toContain('googleAccountProfile(); as profile');
-    expect(template).toContain("t('account.signedOutTitle')");
-    expect(template).toContain('(click)="signInWithGoogle()"');
+    // 1amndjnq718. The account panel only points at Settings: there is no sign-in any more.
+    expect(template).toContain('data-test="home-account-data"');
+    expect(template).toContain("t('account.title')");
+    expect(template).not.toContain('signInWithGoogle');
     expect(template).toContain('[routerLink]="[action.route]"');
     expect(template).toContain('[routerLink]="[feature.route]"');
-    expect(template).toContain('[routerLink]="[accountRoute]"');
+    expect(template).not.toContain('accountRoute');
   });
 
   it('defines homepage actions, account access, and feature links for the main app pages', () => {
@@ -41,8 +42,8 @@ describe('HomePage', () => {
     expect(component).toContain("route: '/tabs/saved-teams'");
     expect(component).toContain("route: '/tabs/character-boxes'");
     expect(component).toContain("route: '/tabs/saved-enemies'");
-    expect(component).toContain("public readonly accountRoute = '/tabs/account'");
-    expect(component).toContain('this.googleAccount.signIn(false)');
+    expect(component).not.toContain('accountRoute');
+    expect(component).not.toContain('googleAccount');
     expect(component).not.toContain("route: '/tabs/drive-sync'");
     expect(component).not.toContain('features.driveSync.title');
     expect(component).toContain("route: '/tabs/settings'");

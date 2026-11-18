@@ -12,7 +12,7 @@ describe('suite environments - derived from the real config', () => {
   it('reads the projects out of vitest.config.mjs, not from a list here', async () => {
     const projects = await readVitestProjects();
 
-    expect(projects.map((p) => p.name).sort()).toEqual(['scripts', 'server', 'src']);
+    expect(projects.map((p) => p.name).sort()).toEqual(['scripts', 'src']);
     expect(projects.find((p) => p.name === 'src')?.environment).toBe('jsdom');
     expect(projects.find((p) => p.name === 'scripts')?.environment).toBe('node');
   });
@@ -22,7 +22,6 @@ describe('suite environments - derived from the real config', () => {
 
     expect(environmentForSpec('src/app/app.component.spec.ts', projects)).toBe('jsdom');
     expect(environmentForSpec('scripts/ci-check-routing.spec.ts', projects)).toBe('node');
-    expect(environmentForSpec('server/drive-sync-server.spec.mjs', projects)).toBe('node');
     // Playwright's are claimed by no vitest project, deliberately.
     expect(environmentForSpec('e2e/smoke.spec.ts', projects)).toBeNull();
   });

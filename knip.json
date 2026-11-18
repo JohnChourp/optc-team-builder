@@ -2,7 +2,6 @@
   "$schema": "https://unpkg.com/knip@latest/schema.json",
   "entry": [
     "src/test-setup.ts",
-    "src/test-mocks/social-login.ts",
     "src/types/*.d.ts",
     "src/app/core/services/auto-team-builder.worker.ts",
     "src/app/core/services/captain-coverage-filter.worker.ts",
@@ -13,7 +12,6 @@
   ],
   "project": [
     "src/**/*.ts",
-    "server/**/*.mjs",
     "scripts/**/*.mjs",
     "*.ts",
     "*.mjs"

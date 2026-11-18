@@ -1,7 +1,7 @@
 {
   "eyebrow": "Νομική ενημέρωση",
   "title": "Πολιτική Απορρήτου",
-  "summary": "Η παρούσα ενημέρωση εξηγεί πώς το optc-team-builder χειρίζεται τοπικά δεδομένα συσκευής, προαιρετικό Google sign-in και Google Drive backups, προαιρετικές μετρήσεις Google Analytics και δημόσια σημεία επικοινωνίας για αιτήματα απορρήτου.",
+  "summary": "Η παρούσα ενημέρωση εξηγεί πώς το optc-team-builder χειρίζεται τοπικά δεδομένα συσκευής, προαιρετικές μετρήσεις Google Analytics και δημόσια σημεία επικοινωνίας για αιτήματα απορρήτου.",
   "sections": {
     "controller": {
       "title": "Υπεύθυνος επεξεργασίας και επικοινωνία",
@@ -20,8 +20,7 @@
         "identifiers": "Τεχνικά αναγνωριστικά όπως πληροφορίες δικτύου που σχετίζονται με IP, metadata browser/device και page URLs που χρησιμοποιούνται για να φορτώσει το site.",
         "analytics": "Συγκεντρωτικά συμβάντα χρήσης και analytics identifiers που παράγει το Google Analytics, καθώς και μέτρηση χρήσης που παραδίδεται μέσω του container του Google Tag Manager, συμπεριλαμβανομένου του Microsoft Clarity - όλα μόνο αφού δοθεί consent. Το Cloudflare Web Analytics καταγράφει επιπλέον κίνηση σε επίπεδο σελίδας χωρίς cookies.",
         "preferences": "Local browser ή device storage για γλώσσα, cookie consent, worker preferences, favorites, saved teams, saved enemies, character boxes, character overrides και άλλες τοπικές ρυθμίσεις της συσκευής.",
-        "content": "Δεδομένα που δημιουργείς ρητά μέσα στο app, όπως saved teams, saved enemies, favorites, notes, manual character overrides και imported/exported backups.",
-        "googleDrive": "Αν επιλέξεις Google Drive sync, τα στοιχεία Google account που χρειάζονται για sign-in και το backup αρχείο της εφαρμογής που αποθηκεύεται στον Google Drive φάκελό σου."
+        "content": "Δεδομένα που δημιουργείς ρητά μέσα στο app, όπως saved teams, saved enemies, favorites, notes, manual character overrides και imported/exported backups."
       }
     },
     "purposes": {
@@ -30,7 +29,6 @@
       "items": {
         "service": "Για να φορτώνει, να αποδίδει και να λειτουργεί το web app και τα offline-first χαρακτηριστικά του.",
         "preferences": "Για να θυμάται ρυθμίσεις και να κρατά συνεπή την εμπειρία της εφαρμογής στη συσκευή σου μεταξύ επισκέψεων.",
-        "drive": "Για να μπορείς να κάνεις upload, update και restore του δικού σου app backup file μεταξύ συσκευών όταν συνδέεις το Google Drive.",
         "analytics": "Για να μετρά συγκεντρωτικά τη χρήση του site, να καταλαβαίνει ποιες οθόνες είναι χρήσιμες και να βελτιώνει την web εμπειρία αφού κάνεις opt in.",
         "security": "Για να διατηρεί τεχνική ακεραιότητα, να διαγιγνώσκει σφάλματα και να προστατεύει το site από κατάχρηση."
       }
@@ -48,7 +46,7 @@
       "copy": "Σχετικά δεδομένα μπορεί να γίνονται αντικείμενο χειρισμού από τις παρακάτω κατηγορίες αποδεκτών ή processors:",
       "items": {
         "hosting": "GitHub Pages και σχετική GitHub υποδομή που χρησιμοποιείται για τη δημοσίευση του static site.",
-        "google": "Η Google όταν χρησιμοποιείς προαιρετική σύνδεση με λογαριασμό Google, backups στο Google Drive, προαιρετικά cookies του Google Analytics, ή, αφού αποδεχτείς analytics, το container του Google Tag Manager που παραδίδει τα measurement tags του site.",
+        "google": "Η Google όταν χρησιμοποιείς προαιρετικά cookies του Google Analytics, ή, αφού αποδεχτείς analytics, το container του Google Tag Manager που παραδίδει τα measurement tags του site.",
         "microsoft": "Η Microsoft, ως πάροχος της μέτρησης χρήσης Clarity, η οποία παραδίδεται μέσω του container του Google Tag Manager και δεν φορτώνεται απευθείας από την εφαρμογή, και μόνο αφού αποδεχτείς analytics.",
         "cloudflare": "Η Cloudflare, ως το δίκτυο μπροστά από το site και πάροχος του Cloudflare Web Analytics, μιας μέτρησης σε επίπεδο σελίδας χωρίς cookies που προστίθεται στο edge και όχι από την εφαρμογή.",
         "processors": "Τεχνικούς παρόχους που είναι αναγκαίοι για hosting, ασφάλεια και παράδοση του site."
@@ -64,7 +62,7 @@
       "items": {
         "consent": "Η τοπική επιλογή consent παραμένει στη συσκευή σου μέχρι να την αλλάξεις ή να καθαρίσεις το browser storage.",
         "localData": "Favorites, saved teams, saved enemies, character boxes, overrides, γλώσσα και παρόμοιες ρυθμίσεις παραμένουν τοπικά αποθηκευμένα μέχρι να τα διαγράψεις μέσα στο app ή να καθαρίσεις το browser ή app storage.",
-        "drive": "Αν ενεργοποιήσεις Google Drive sync, το τελευταίο app backup μένει στο Google Drive μέχρι να το αντικαταστήσεις με νεότερο backup, να το διαγράψεις από το Drive ή να αφαιρέσεις τη σχετική πρόσβαση του Google account.",
+        "drive": "Η εφαρμογή δεν προσφέρει πια σύνδεση με Google ούτε Google Drive sync (αφαιρέθηκαν στις 18 Νοεμβρίου 2026). Ένα backup αρχείο που έγραψε παλαιότερη έκδοση στο Google Drive σου μένει εκεί, υπό τον έλεγχό σου, μέχρι να το διαγράψεις· η εφαρμογή δεν έχει πια πρόσβαση σε αυτό.",
         "analytics": "Αν ενεργοποιηθεί, τα analytics δεδομένα διατηρούνται στο Google Analytics property σύμφωνα με τα retention settings του, ενώ οι διάρκειες cookies περιγράφονται στην Πολιτική Cookies."
       }
     },

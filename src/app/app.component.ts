@@ -71,7 +71,7 @@ const appHomeTitle = 'OPTC Team Builder | One Piece Treasure Cruise Tools';
 const defaultSeo: RouteSeoData = {
   title: appHomeTitle,
   description:
-    'Plan OPTC crews with character search, Rumble rankings, captain coverage, auto team building, Crew Forge, saved teams, enemies, boxes, Drive sync, and offline tools.',
+    'Plan OPTC crews with character search, Rumble rankings, captain coverage, auto team building, Crew Forge, saved teams, enemies, boxes, backup files, and offline tools.',
   canonicalPath: '',
   indexable: false,
 };

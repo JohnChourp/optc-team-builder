@@ -66,7 +66,7 @@ export const PUBLIC_ROUTES: readonly PublicRouteRecord[] = [
     canonicalPath: '',
     title: 'OPTC Team Builder | One Piece Treasure Cruise Tools',
     description:
-      'Plan OPTC crews with character search, Rumble rankings, captain coverage, auto team building, Crew Forge, saved teams, enemies, boxes, Drive sync, and offline tools.',
+      'Plan OPTC crews with character search, Rumble rankings, captain coverage, auto team building, Crew Forge, saved teams, enemies, boxes, backup files, and offline tools.',
   },
   {
     routePath: 'tabs/characters',
@@ -116,14 +116,6 @@ export const PUBLIC_ROUTES: readonly PublicRouteRecord[] = [
     title: 'Crew Forge | OPTC Team Builder',
     description:
       'Import crew screenshots and match recognized slots against the OPTC character catalog.',
-  },
-  {
-    routePath: 'tabs/account',
-    canonicalPath: 'tabs/account',
-    title: 'Account | OPTC Team Builder',
-    description:
-      'Manage your optional Google account connection and Google Drive backup for OPTC Team Builder.',
-    aliases: ['tabs/drive-sync'],
   },
   {
     routePath: 'tools/optc-team-builder',

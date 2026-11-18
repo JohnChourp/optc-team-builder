@@ -132,18 +132,20 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./pages/settings/settings.page').then((module) => module.SettingsPage),
           },
+          /*
+           * 1amndjnq718. Google sign-in and Drive sync were removed on 2026-11-18. The old
+           * Account and Drive sync links land on Settings, where Export and Import all data
+           * move a player's data - including the backup a former Drive sync left in Drive.
+           */
           {
             path: 'account',
-            data: {
-              seo: publicRouteSeo('tabs/account'),
-            },
-            loadComponent: () =>
-              import('./pages/account/account.page').then((module) => module.AccountPage),
+            pathMatch: 'full',
+            redirectTo: 'settings',
           },
           {
             path: 'drive-sync',
             pathMatch: 'full',
-            redirectTo: 'account',
+            redirectTo: 'settings',
           },
           {
             path: 'faq',

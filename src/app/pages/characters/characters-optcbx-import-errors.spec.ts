@@ -195,8 +195,6 @@ function createSettings(language: Language) {
     optcbxImport,
     new InventoryCaptureImportService({} as never, optcbxImport, {} as never),
     {} as never,
-    {} as never,
-    {} as never,
     errorLog,
   );
 

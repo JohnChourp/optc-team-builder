@@ -5,15 +5,6 @@ const config: CapacitorConfig = {
   appName: "OPTC Team Builder",
   webDir: "dist/optc-team-builder/browser",
   plugins: {
-    SocialLogin: {
-      logLevel: 1,
-      providers: {
-        apple: false,
-        facebook: false,
-        google: true,
-        twitter: false,
-      },
-    },
     /*
      * 869f6tcz0. The app is dark-only, but with no style here Capacitor's SystemBars
      * applies DEFAULT, which follows the phone: dark icons on a light device. DARK means

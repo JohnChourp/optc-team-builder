@@ -61,6 +61,14 @@ export const ROUTE_SITEMAP_EXCLUSIONS = [
     reason: 'Bare redirect to tabs/characters, which is itself in the sitemap.',
   },
   {
+    route: 'tabs/account',
+    reason: 'Redirect to tabs/settings since 1amndjnq718 removed the Account page on 2026-11-18; kept so old links still land somewhere.',
+  },
+  {
+    route: 'tabs/drive-sync',
+    reason: 'Redirect to tabs/settings since 1amndjnq718 removed Drive sync on 2026-11-18; kept so old links still land somewhere.',
+  },
+  {
     route: 'tabs/settings',
     reason: 'Local device settings - nothing to index and nothing a search result could usefully open.',
   },

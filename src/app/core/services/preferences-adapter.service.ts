@@ -13,8 +13,8 @@ import { Preferences } from '@capacitor/preferences';
  * their own implementation of this class via Angular DI and the underlying `@capacitor/preferences`
  * import is only loaded once, by this file.
  *
- * API mirrors what we actually use from the Capacitor Preferences API (get + set). Add more
- * methods (remove, clear, keys, migrate) here if a consumer needs them.
+ * API mirrors what we actually use from the Capacitor Preferences API (get, set, remove). Add
+ * more methods (clear, keys, migrate) here if a consumer needs them.
  */
 @Injectable({ providedIn: 'root' })
 export class PreferencesAdapterService {
@@ -24,5 +24,9 @@ export class PreferencesAdapterService {
 
   public async set(options: { key: string; value: string }): Promise<void> {
     await Preferences.set(options);
+  }
+
+  public async remove(options: { key: string }): Promise<void> {
+    await Preferences.remove(options);
   }
 }

@@ -39,16 +39,6 @@ const config: CapacitorConfig = {
     ]);
   });
 
-  it('keeps the disabled providers, because "explicitly off" is the fact worth recording', () => {
-    // Three of the four SocialLogin providers are off ON PURPOSE. A record that listed
-    // only the enabled one would read as though the others were never considered.
-    const surface = buildNativeSurface();
-    const social = surface.capacitor.plugins.find((p) => p.name === 'SocialLogin');
-
-    expect(social?.providers.map((p) => p.provider).sort()).toEqual(['apple', 'facebook', 'google', 'twitter']);
-    expect(social?.providers.filter((p) => p.enabled).map((p) => p.provider)).toEqual(['google']);
-  });
-
   it('reads the Android identity and the SDK versions from their own files', () => {
     expect(parseAndroidIdentity('namespace = "a.b.c"\n applicationId "a.b.c"')).toMatchObject({
       namespace: 'a.b.c',

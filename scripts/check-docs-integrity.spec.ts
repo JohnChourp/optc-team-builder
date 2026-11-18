@@ -116,7 +116,7 @@ describe('check-docs-integrity', () => {
 
   it('accepts generated public route aliases', async () => {
     const result = await runWorkspace({
-      'optc-team-builder/README.md': '# App\n\n[Drive sync](/tabs/drive-sync/)\n',
+      'optc-team-builder/README.md': '# App\n\n[Privacy](/tabs/privacy/)\n',
     });
 
     expect(result.failures).toEqual([]);

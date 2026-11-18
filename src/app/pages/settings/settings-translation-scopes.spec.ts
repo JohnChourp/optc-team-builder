@@ -147,8 +147,6 @@ function createSettings(i18n: AppI18nService) {
     new OptcbxImportService(repository as never),
     {} as never,
     userDataTransfer as never,
-    {} as never,
-    {} as never,
     new ErrorLogService({ defaultView: null } as unknown as Document),
   );
 }

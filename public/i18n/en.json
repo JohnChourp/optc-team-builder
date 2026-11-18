@@ -92,9 +92,7 @@
     "title": "Home",
     "firstRunTransfer": {
       "title": "This install is empty",
-      "body": "Nothing is saved here yet. If you have used OPTC Team Builder somewhere else - in a browser, or in another install of the app - your teams and boxes are still there: they live in that browser's storage, and nothing can read it from here. Bring them across with Google Drive sync, or with a file you exported from Settings.",
-      "bodyFileOnly": "Nothing is saved here yet. If you have used OPTC Team Builder somewhere else - in a browser, or in another install of the app - your teams and boxes are still there: they live in that browser's storage, and nothing can read it from here. Bring them across with a file you exported from Settings.",
-      "drive": "Set up Drive sync",
+      "body": "Nothing is saved here yet. If you have used OPTC Team Builder somewhere else - in a browser, or in another install of the app - your teams and boxes are still there: they live in that browser's storage, and nothing can read it from here. Bring them across with a file you exported from Settings. Used Google Drive sync before? Your last backup is still in your Google Drive: import optc-all-data.latest.json from the OPTC Team Builder folder.",
       "import": "Import a file",
       "dismiss": "Start fresh"
     },
@@ -111,16 +109,11 @@
     },
     "account": {
       "actions": {
-        "openSettings": "Open Settings",
-        "signIn": "Sign in with Google"
+        "openSettings": "Open Settings"
       },
-      "avatarAlt": "{{ name }} Google profile image",
-      "signedInEyebrow": "Signed in",
-      "signedOutCopy": "Sign in to manage your profile and Google Drive backup from one place.",
-      "signedOutEyebrow": "Google account",
-      "signedOutTitle": "Log in for Drive sync",
-      "unavailableCopy": "Google sign-in is not available in this version of the Android app. To move your teams, boxes and everything else to another device, use Export all data and Import all data in Settings.",
-      "unavailableTitle": "Your data stays on this device"
+      "eyebrow": "Your data",
+      "title": "Your data stays on this device",
+      "copy": "To move your teams, boxes and everything else to another device, use Export all data and Import all data in Settings. Used Google Drive sync before? Import the backup file it left in your Google Drive."
     },
     "highlights": {
       "ariaLabel": "OPTC Team Builder highlights",
@@ -195,12 +188,9 @@
     "characterBoxes": "Character Boxes",
     "characters": "Characters",
     "crewForge": "Crew Forge",
-    "account": "Account",
     "home": "Home",
-    "driveSync": "Drive Sync",
     "supported": "What this app supports",
     "faq": "FAQ",
-    "login": "Log in",
     "groups": {
       "browse": "Browse",
       "build": "Build",

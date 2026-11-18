@@ -82,7 +82,6 @@
 /public/assets/offline-packs/ @JohnChourp
 /public/app-config.example.js @JohnChourp
 /scripts/write-app-config.mjs @JohnChourp
-/server/ @JohnChourp
 
 /src/ @JohnChourp
 /src/main.ts @JohnChourp

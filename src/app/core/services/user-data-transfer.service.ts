@@ -348,10 +348,6 @@ export class UserDataTransferService {
     return this.summarise((scope) => handlers[scope].count());
   }
 
-  public hasSyncScopedData(): boolean {
-    return Object.values(this.getSyncScopeSummary()).some((count) => count > 0);
-  }
-
   public getSyncScopeSummaryFromPayload(payload: AllDataTransferPayload): SyncScopeSummary {
     const handlers = this.syncScopeHandlers();
 

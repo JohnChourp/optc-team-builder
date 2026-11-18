@@ -165,25 +165,6 @@
       "notes": "Local data contract, backup, inventory capture, or transfer changes should update schema and fixture docs."
     },
     {
-      "id": "account-drive-sync",
-      "name": "Account and Google Drive sync",
-      "featurePaths": [
-        "src/app/pages/account/",
-        "src/app/pages/drive-sync/",
-        "src/app/core/services/google-account.service.ts",
-        "src/app/core/services/drive-backup.service.ts",
-        "src/app/core/services/drive-sync-state.service.ts",
-        "server/drive-sync-server.mjs"
-      ],
-      "docsPaths": [
-        "server/README.md",
-        "docs/feature-coverage-map.md",
-        "../optc-team-builder-brain/DRIVE_SYNC_PROFILE_NAVIGATION_CLARIFICATION.md"
-      ],
-      "owner": "Account, OAuth config, and Drive backup",
-      "notes": "Auth, backup, review, redirect, or server changes should keep Drive runbooks and server docs aligned."
-    },
-    {
       "id": "pirate-rumble",
       "name": "Pirate Rumble character ranking, auto builder, and saved Rumble teams",
       "featurePaths": [

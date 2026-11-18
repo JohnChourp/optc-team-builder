@@ -1185,33 +1185,6 @@ describe('SettingsPage', () => {
     expect(page.autoTeamBuilderAvailableWorkerCounts()).toEqual([1, 2, 3, 4, 5]);
   });
 
-  it('starts Google sign-in from the drive sync controls', async () => {
-    const { page, googleAccount } = createPage();
-
-    await page.signInWithGoogle();
-
-    expect(googleAccount.signIn).toHaveBeenCalledWith(false);
-  });
-
-  it('runs a manual Drive sync on demand', async () => {
-    const { page, driveBackup } = createPage();
-
-    await page.syncDriveNow();
-
-    expect(driveBackup.startManualSync).toHaveBeenCalledWith({
-      interactiveAuth: true,
-      reason: 'manual-sync',
-    });
-  });
-
-  it('resolves a manual Drive sync decision from settings', async () => {
-    const { page, driveBackup } = createPage();
-
-    await page.resolveDriveManualSyncPrompt('merge-and-upload');
-
-    expect(driveBackup.resolveManualSyncPrompt).toHaveBeenCalledWith('merge-and-upload');
-  });
-
   it('accepts analytics consent from settings', async () => {
     const { page, analyticsConsentService } = createPage();
 
@@ -1647,45 +1620,6 @@ function createPage() {
       analyticsConsent.set('rejected');
     }),
   };
-  const googleAccountProfile = signal<{
-    email: string;
-    familyName: string;
-    givenName: string;
-    id: string;
-    imageUrl: string | null;
-    name: string;
-  } | null>(null);
-  const googleAccountStatus = signal<
-    | 'initializing'
-    | 'reconnect-required'
-    | 'signed-in'
-    | 'signed-out'
-    | 'signing-in'
-    | 'unavailable'
-  >('signed-out');
-  const driveSyncMetadata = signal({
-    connectedAccountEmail: null,
-    connectedAccountId: null,
-    deviceId: 'device-1',
-    hasRemoteBackup: false,
-    knownBackupFileId: null,
-    knownFolderId: null,
-    lastCheckedAt: null,
-    lastDownloadedExportedAt: null,
-    lastSeenRemoteModifiedTime: null,
-    lastUploadedExportedAt: null,
-    pendingLocalChanges: false,
-    remoteExportedAt: null,
-    remoteModifiedTime: null,
-    remoteSummary: null,
-  });
-  const driveRemoteBackup = signal(null);
-  const driveManualSyncPrompt = signal(null);
-  const driveSyncStatus = signal({
-    phase: 'idle' as const,
-    detail: null,
-    updatedAt: null,
-  });
   const userDataTransfer = new UserDataTransferService(
     repository as never,
     i18n as never,
@@ -1697,44 +1631,6 @@ function createPage() {
     applyPreview: vi.fn(),
     buildPreviewFromOptcbxFile: vi.fn(),
     buildPreviewFromScreenshotFile: vi.fn(),
-  };
-  const googleAccount = {
-    isAvailable: signal(true),
-    isSignedIn: signal(false),
-    lastError: signal<string | null>(null),
-    profile: googleAccountProfile,
-    status: googleAccountStatus,
-    signIn: vi.fn().mockImplementation(async () => {
-      googleAccountProfile.set({
-        email: 'captain@example.com',
-        familyName: 'D.',
-        givenName: 'Monkey',
-        id: 'google-account-1',
-        imageUrl: null,
-        name: 'Monkey D. Luffy',
-      });
-      googleAccountStatus.set('signed-in');
-      googleAccount.isSignedIn.set(true);
-    }),
-    signOut: vi.fn().mockImplementation(async () => {
-      googleAccountProfile.set(null);
-      googleAccountStatus.set('signed-out');
-      googleAccount.isSignedIn.set(false);
-    }),
-  };
-  const driveBackup = {
-    handleSettingsEntered: vi.fn().mockResolvedValue(undefined),
-    startManualSync: vi.fn().mockResolvedValue(false),
-    flushPendingUploads: vi.fn().mockResolvedValue(true),
-    manualSyncPrompt: driveManualSyncPrompt,
-    metadata: driveSyncMetadata,
-    prepareRestorePrompt: vi.fn().mockResolvedValue(null),
-    refreshRemoteState: vi.fn().mockResolvedValue(null),
-    remoteBackup: driveRemoteBackup,
-    resolveManualSyncPrompt: vi.fn().mockResolvedValue(null),
-    resolveRestorePrompt: vi.fn().mockResolvedValue(null),
-    restorePrompt: driveManualSyncPrompt,
-    syncStatus: driveSyncStatus,
   };
   // 869f13d6y. The real service over a stub: it holds no dependency beyond a Document,
   // so a stub would only be a second implementation of the message-stripping rule - and
@@ -1749,8 +1645,6 @@ function createPage() {
     optcbxImport as never,
     inventoryCaptureImport as never,
     userDataTransfer as never,
-    googleAccount as never,
-    driveBackup as never,
     errorLog,
   );
 
@@ -1765,8 +1659,6 @@ function createPage() {
     analyticsConsentService,
     userDataTransfer,
     inventoryCaptureImport,
-    googleAccount,
-    driveBackup,
   };
 }
 

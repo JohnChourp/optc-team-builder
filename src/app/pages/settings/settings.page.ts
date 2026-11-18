@@ -31,11 +31,6 @@ import { AppI18nService } from '../../core/services/app-i18n.service';
 import { resolveBrowserStorageFailureDiagnostic } from '../../core/services/browser-storage-error.utils';
 import { CharacterOverridesService } from '../../core/services/character-overrides.service';
 import {
-  DriveBackupService,
-  type DriveManualSyncPromptAction,
-} from '../../core/services/drive-backup.service';
-import { GoogleAccountService } from '../../core/services/google-account.service';
-import {
   InventoryCaptureImportService,
   type InventoryCapturePreview,
 } from '../../core/services/inventory-capture-import.service';
@@ -203,8 +198,8 @@ export class SettingsPage implements OnInit {
    * 869f12x49. What this device is actually holding, and how close to full.
    *
    * The counts were already computed - `getSyncScopeSummary()` has always had
-   * them - they were just only rendered on the Account screen beside Drive
-   * sync. The quota is the genuinely new part: `browser-storage-error.utils.ts`
+   * them - they were just only rendered on the Account screen beside the old
+   * Drive sync. The quota is the genuinely new part: `browser-storage-error.utils.ts`
    * exists because a full store has already happened, which means a reader
    * currently meets that condition as a failure rather than as a warning.
    */
@@ -229,20 +224,7 @@ export class SettingsPage implements OnInit {
   /** 869f13c5m. False where analytics cannot run (no GA4 id, or native): no choice is offered. */
   public readonly analyticsAvailable: boolean;
   public readonly analyticsConsentStatusKey;
-  public readonly driveRemoteBackup;
-  public readonly driveManualSyncPrompt;
-  public readonly driveSyncMetadata;
-  public readonly driveSyncStatus;
-  public readonly drivePrimaryStateKey;
-  public readonly driveSecondaryMessage;
-  public readonly driveOpenUrl;
   public readonly localSyncScopeSummary;
-  public readonly googleAccountAvailable;
-  public readonly googleAccountLastError;
-  public readonly googleAccountProfile;
-  public readonly googleAccountSignedIn;
-  public readonly googleAccountStatus;
-  public readonly remoteSyncScopeSummary;
 
   public readonly canExportFavorites = computed(() => this.favoriteIds().length > 0);
   public readonly canDeleteAllFavorites = computed(() => this.favoriteIds().length > 0);
@@ -330,8 +312,6 @@ export class SettingsPage implements OnInit {
     private readonly optcbxImport: OptcbxImportService,
     private readonly inventoryCaptureImport: InventoryCaptureImportService,
     private readonly userDataTransfer: UserDataTransferService,
-    private readonly googleAccount: GoogleAccountService,
-    private readonly driveBackup: DriveBackupService,
     private readonly errorLog: ErrorLogService,
   ) {
     this.recentErrors = this.errorLog.entries;
@@ -358,75 +338,7 @@ export class SettingsPage implements OnInit {
     this.analyticsConsentStatusKey = computed(
       () => `analytics.status.${this.analyticsAvailable ? this.analyticsConsent() : 'unavailable'}`,
     );
-    this.driveRemoteBackup = this.driveBackup.remoteBackup;
-    this.driveManualSyncPrompt = this.driveBackup.manualSyncPrompt;
-    this.driveSyncMetadata = this.driveBackup.metadata;
-    this.driveSyncStatus = this.driveBackup.syncStatus;
     this.localSyncScopeSummary = computed(() => this.userDataTransfer.getSyncScopeSummary());
-    this.remoteSyncScopeSummary = computed(() => this.driveSyncMetadata().remoteSummary);
-    this.drivePrimaryStateKey = computed(() => {
-      if (!this.googleAccountAvailable()) {
-        return 'driveSync.overview.unavailable';
-      }
-
-      if (!this.googleAccountSignedIn()) {
-        return 'driveSync.overview.signedOut';
-      }
-
-      if (
-        this.googleAccountStatus() === 'reconnect-required' ||
-        this.driveSyncStatus().phase === 'error'
-      ) {
-        return 'driveSync.overview.error';
-      }
-
-      if (this.driveSyncStatus().phase === 'uploading') {
-        return 'driveSync.overview.uploading';
-      }
-
-      if (this.driveSyncStatus().phase === 'downloading') {
-        return 'driveSync.overview.restoring';
-      }
-
-      if (this.driveManualSyncPrompt()) {
-        return 'driveSync.overview.conflict';
-      }
-
-      if (this.driveSyncMetadata().pendingLocalChanges) {
-        return 'driveSync.overview.pending';
-      }
-
-      if (!this.driveSyncMetadata().lastCheckedAt) {
-        return 'driveSync.overview.connectedNotChecked';
-      }
-
-      if (this.driveSyncMetadata().hasRemoteBackup) {
-        return 'driveSync.overview.backupFound';
-      }
-
-      return 'driveSync.overview.noBackup';
-    });
-    this.driveSecondaryMessage = computed(
-      () => this.googleAccountLastError() ?? this.driveSyncStatus().detail,
-    );
-    this.driveOpenUrl = computed(() => {
-      const metadata = this.driveSyncMetadata();
-
-      if (metadata.knownFolderId) {
-        return `https://drive.google.com/drive/folders/${encodeURIComponent(metadata.knownFolderId)}`;
-      }
-
-      if (metadata.knownBackupFileId) {
-        return `https://drive.google.com/file/d/${encodeURIComponent(metadata.knownBackupFileId)}/view`;
-      }
-
-      return null;
-    });
-    this.googleAccountAvailable = this.googleAccount.isAvailable;
-    this.googleAccountLastError = this.googleAccount.lastError;
-    this.googleAccountProfile = this.googleAccount.profile;
-    this.googleAccountSignedIn = this.googleAccount.isSignedIn;
-    this.googleAccountStatus = this.googleAccount.status;
   }
 
   public readonly storedDataRows = computed(() => {
@@ -589,10 +501,6 @@ export class SettingsPage implements OnInit {
     this.offlinePacks.set(summarizeOfflinePacks({ packs, cachedUrls }));
   }
 
-  public ionViewDidEnter(): void {
-    void this.driveBackup.handleSettingsEntered();
-  }
-
   public async onGameRegionHideUnavailableChange(
     event: CustomEvent<{ checked?: boolean }>,
   ): Promise<void> {
@@ -643,54 +551,6 @@ export class SettingsPage implements OnInit {
 
   public async rejectAnalyticsConsent(): Promise<void> {
     await this.analyticsConsentService.reject();
-  }
-
-  public async reconnectGoogleDrive(): Promise<void> {
-    await this.signInWithGoogle(true);
-  }
-
-  public async resolveDriveManualSyncPrompt(action: DriveManualSyncPromptAction): Promise<void> {
-    await this.driveBackup.resolveManualSyncPrompt(action);
-  }
-
-  public async signInWithGoogle(forcePrompt = false): Promise<void> {
-    try {
-      await this.googleAccount.signIn(forcePrompt);
-    } catch {
-      return;
-    }
-  }
-
-  public async signOutGoogle(): Promise<void> {
-    await this.googleAccount.signOut();
-  }
-
-  public async syncDriveNow(): Promise<void> {
-    await this.driveBackup.startManualSync({
-      interactiveAuth: true,
-      reason: 'manual-sync',
-    });
-  }
-
-  public async refreshDriveInfo(): Promise<void> {
-    await this.driveBackup.refreshRemoteState({
-      interactiveAuth: true,
-      reason: 'manual-refresh',
-    });
-  }
-
-  public async showDriveRestorePrompt(): Promise<void> {
-    await this.driveBackup.prepareRestorePrompt();
-  }
-
-  public openDriveLocation(): void {
-    const url = this.driveOpenUrl();
-
-    if (!url || typeof globalThis.open !== 'function') {
-      return;
-    }
-
-    globalThis.open(url, '_blank', 'noopener');
   }
 
   public openFilePicker(input: HTMLInputElement): void {
@@ -1210,21 +1070,11 @@ export class SettingsPage implements OnInit {
     }
 
     /*
-     * 869f63gqt. The Drive hint only where Drive sync can run. A build without the Google
-     * client id - today the Android app - cannot sign in, so it points at the export instead.
+     * 1amndjnq718. Drive sync is gone, so the hint always points at the export, which moves
+     * an imported box to another device.
      */
     details.push(
-      this.googleAccountAvailable()
-        ? this.i18n.translate(
-            'management.inventoryCapture.feedback.driveHint',
-            undefined,
-            'settings',
-          )
-        : this.i18n.translate(
-            'management.inventoryCapture.feedback.exportHint',
-            undefined,
-            'settings',
-          ),
+      this.i18n.translate('management.inventoryCapture.feedback.exportHint', undefined, 'settings'),
     );
 
     return {
@@ -2703,76 +2553,6 @@ export class SettingsPage implements OnInit {
     }
 
     return this.i18n.translate('bulkImport.errors.invalidPayload', undefined, 'saved-enemies');
-  }
-
-  public formatTimestamp(value: string | null | undefined): string {
-    if (!value) {
-      return this.i18n.translate('driveSync.status.never', undefined, 'settings');
-    }
-
-    const parsedValue = new Date(value);
-
-    if (Number.isNaN(parsedValue.getTime())) {
-      return value;
-    }
-
-    return parsedValue.toLocaleString(formattingLanguage());
-  }
-
-  public getDriveLocationStatus(): string {
-    const metadata = this.driveSyncMetadata();
-
-    if (!metadata.lastCheckedAt) {
-      return this.i18n.translate('driveSync.location.notChecked', undefined, 'settings');
-    }
-
-    if (metadata.knownFolderId) {
-      return this.i18n.translate('driveSync.location.folderVisible', undefined, 'settings');
-    }
-
-    return this.i18n.translate('driveSync.location.folderAfterSync', undefined, 'settings');
-  }
-
-  public getDriveBackupFileStatus(): string {
-    const metadata = this.driveSyncMetadata();
-
-    if (!metadata.lastCheckedAt) {
-      return this.i18n.translate('driveSync.location.notChecked', undefined, 'settings');
-    }
-
-    if (metadata.hasRemoteBackup) {
-      return this.i18n.translate('driveSync.location.fileVisible', undefined, 'settings');
-    }
-
-    return this.i18n.translate('driveSync.location.fileMissing', undefined, 'settings');
-  }
-
-  public getRemoteSummaryState(): string {
-    const metadata = this.driveSyncMetadata();
-
-    if (!metadata.lastCheckedAt) {
-      return this.i18n.translate('driveSync.summary.notChecked', undefined, 'settings');
-    }
-
-    if (!metadata.hasRemoteBackup) {
-      return this.i18n.translate('driveSync.summary.noBackup', undefined, 'settings');
-    }
-
-    return this.i18n.translate('driveSync.summary.remoteReady', undefined, 'settings');
-  }
-
-  public getSummaryCountLabel(
-    key:
-      | 'characterBoxes'
-      | 'characterOverrides'
-      | 'boostedCharacterIds'
-      | 'favorites'
-      | 'favoriteShips'
-      | 'savedEnemies'
-      | 'savedTeams',
-    count: number,
-  ): string {
-    return this.i18n.translate(`management.counts.${key}`, { count }, 'settings');
   }
 
   private confirmAction(message: string): boolean {

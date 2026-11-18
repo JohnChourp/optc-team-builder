@@ -84,7 +84,8 @@ describe('parseCoverageRows', () => {
      * rule that ended the table at the first non-pipe line silently dropped the
      * eight rows after it - and still reported OK.
      */
-    expect(parseCoverageRows(MAP).length).toBe(33);
+    // 32 since 1amndjnq718 removed the Account and Google Drive sync row on 2026-11-18.
+    expect(parseCoverageRows(MAP).length).toBe(32);
   });
 });
 

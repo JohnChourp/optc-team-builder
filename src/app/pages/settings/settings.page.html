@@ -204,6 +204,11 @@
                 <span>{{ t('management.allData.subtitle') }}</span>
               </div>
               <p>{{ t('management.allData.copy') }}</p>
+              <!--
+                1amndjnq718. Google Drive sync was removed on 2026-11-18. Its last backup is the same
+                all-data file this card imports, so a former Drive user is told where to find it.
+              -->
+              <p data-test="all-data-drive-hint">{{ t('management.allData.driveHint') }}</p>
             </div>
 
             <input

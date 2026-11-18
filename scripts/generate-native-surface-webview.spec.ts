@@ -41,7 +41,6 @@ describe('native surface - how the APK differs, read from the code', () => {
       'clipboard',
       'back-button',
       'system-bars',
-      'google-sign-in',
     ]);
 
     for (const entry of real.webViewCapabilities as Record<string, unknown>[]) {
@@ -84,11 +83,6 @@ describe('native surface - how the APK differs, read from the code', () => {
       startedAtBoot: true,
     });
     expect(capability('system-bars').derived).toMatchObject({ style: 'DARK', matchesIonicBackground: true });
-    expect(capability('google-sign-in').derived).toEqual({
-      apkSuppliesWebClientId: false,
-      websiteSuppliesWebClientId: true,
-      gateSpecs: 3,
-    });
   });
 
   it('counts the same export sites the sites spec names', () => {
@@ -191,7 +185,6 @@ describe('native surface - the guard refuses words its facts no longer support',
     ['downloads', { capacitorBridgeRead: false }, 'would be true of nothing'],
     ['web-share', { nativeShareLinksNameTheSite: false }, 'opens nothing'],
     ['clipboard', { secureContext: false }, 'not a secure context'],
-    ['google-sign-in', { apkSuppliesWebClientId: true }, 'Prove sign-in on the emulator'],
   ])('%s: refuses %j', (id, patch, expected) => {
     const problems = checkWebViewCapabilities(withFacts(id, patch));
 

@@ -98,7 +98,8 @@ async function readCharacterPage(id: number) {
 
 describe('generated character pages, one per shape', () => {
   it('passes the audit build:pages runs, on all four shapes', () => {
-    expect(auditOutput).toContain('checked 24 sitemap URLs');
+    // 23 since 1amndjnq718 removed the Account page (tabs/account) on 2026-11-18.
+    expect(auditOutput).toContain('checked 23 sitemap URLs');
   });
 
   it.each([2, 3134])('#%i, with a Captain Ability, leads with Captain Coverage and itself as Captain', async (id) => {

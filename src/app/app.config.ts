@@ -20,8 +20,8 @@ import { AnalyticsConsentService } from './core/services/analytics-consent.servi
 import { AppI18nService } from './core/services/app-i18n.service';
 import { AppUpdateService } from './core/services/app-update.service';
 import { ErrorLogService, LoggingErrorHandler } from './core/services/error-log.service';
-import { GoogleAccountService } from './core/services/google-account.service';
 import { NativeUpdateService } from './core/services/native-update.service';
+import { RetiredGoogleStorageService } from './core/services/retired-google-storage.service';
 import { StoragePersistenceService } from './core/services/storage-persistence.service';
 
 export const appConfig: ApplicationConfig = {
@@ -62,7 +62,8 @@ export const appConfig: ApplicationConfig = {
     provideAppInitializer(() => inject(ErrorLogService).init()),
     provideAppInitializer(() => inject(AppI18nService).ready()),
     provideAppInitializer(() => inject(AnalyticsConsentService).ready()),
-    provideAppInitializer(() => inject(GoogleAccountService).ready()),
+    // 1amndjnq718. Deletes what the removed Google sign-in and Drive sync left on the device.
+    provideAppInitializer(() => inject(RetiredGoogleStorageService).init()),
     provideAppInitializer(() => inject(AppUpdateService).init()),
     provideAppInitializer(() => inject(NativeUpdateService).init()),
     // 869f6tcyk. Back on Home leaves the app on Android instead of doing nothing.

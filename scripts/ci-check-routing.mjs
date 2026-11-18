@@ -250,22 +250,8 @@ export const SCRIPT_SUITES = {
     command: 'npm run test:i18n-regression',
   },
   /*
-   * `drive-sync-server` WAS a lane here. The owner froze the Drive-sync backend on
-   * 2026-09-19 (869f13c92), so it is out of the default checks: not in
-   * SCRIPT_SUITE_ORDER, not in either `test.yml` list, and not in `verify:local`.
-   *
-   * FROZEN IS NOT DELETED. `server/` stays in the repository and
-   * `npm run test:drive-sync-server` still exists and still passes - run it by hand
-   * if you touch `server/`. What stopped is paying for it on every branch that
-   * touches nothing to do with it.
-   *
-   * The routing rule below keeps matching `server/` on purpose, so a change there is
-   * NAMED in the plan with the freeze as its reason rather than falling through to
-   * `full-risk` and quietly running the whole suite - which is the failure mode that
-   * would make the freeze cost more than the lane did.
-   *
-   * To thaw: put this entry back, re-add the suite to both `test.yml` lists and to
-   * the routing spec's full plan, and say why in the same commit.
+   * `drive-sync-server` WAS a lane here, then a frozen suite (869f13c92). The Drive-sync
+   * backend and `server/` were deleted with Google sign-in on 2026-11-18 (1amndjnq718).
    */
   'source-data': {
     label: 'Source data validation tests',
@@ -831,8 +817,7 @@ function touchesNativeSurfaceSources(filePath) {
     filePath === 'src/app/core/services/android-back-button.service.ts' ||
     filePath === 'src/app/core/data/app-site-url.data.ts' ||
     filePath === 'src/app/pages/saved-teams/saved-teams-export.utils.ts' ||
-    filePath === 'src/app/shared/clipboard/clipboard-copy.utils.ts' ||
-    filePath.endsWith('-google-sign-in-gate.spec.ts')
+    filePath === 'src/app/shared/clipboard/clipboard-copy.utils.ts'
   );
 }
 
@@ -1830,10 +1815,6 @@ function isRuntimePath(filePath) {
   );
 }
 
-function isDriveSyncPath(filePath) {
-  return filePath.startsWith('server/');
-}
-
 function buildScriptMatrix(scriptSuites) {
   return {
     include: scriptSuites.map((suite) => ({
@@ -2462,22 +2443,6 @@ export function buildCheckPlan(rawChangedFiles, options = {}) {
       categories.add('runtime');
       runAngular = true;
       runE2e = true;
-      continue;
-    }
-
-    if (isDriveSyncPath(filePath)) {
-      /*
-       * Frozen 2026-09-19 (869f13c92): the file is NAMED through the category and
-       * selects no suite, so it is accounted for without reaching the `full-risk`
-       * fallback below - which would otherwise run the entire suite for a backend
-       * nothing else depends on.
-       *
-       * The category is the only channel that carries here. `reasons` is discarded
-       * on every non-full plan (it is rebuilt as `[]` or `['no suites selected']`
-       * where the plan is returned), so a `reasons.add` on this path would read
-       * like an explanation and reach no output at all.
-       */
-      categories.add('drive-sync-server-frozen');
       continue;
     }
 

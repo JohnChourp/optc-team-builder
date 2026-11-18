@@ -48,18 +48,10 @@ function step(workflows: WorkflowFile[], file: string, job: string, name: string
 }
 
 describe('app-config targets - read from the writer, not listed', () => {
-  it('reads every key, the variable it comes from, and the two gates from the writer syntax', () => {
-    expect(writer.keys).toEqual([
-      { key: 'ga4MeasurementId', variable: 'APP_GA4_MEASUREMENT_ID' },
-      { key: 'googleDriveBackendUrl', variable: 'APP_GOOGLE_DRIVE_BACKEND_URL' },
-      { key: 'googleDriveFolderName', variable: 'APP_GOOGLE_DRIVE_FOLDER_NAME' },
-      { key: 'googleIosClientId', variable: 'APP_GOOGLE_IOS_CLIENT_ID' },
-      { key: 'googleWebClientId', variable: 'APP_GOOGLE_WEB_CLIENT_ID' },
-    ]);
-    expect(writer.gates).toEqual([
-      { key: 'googleIosClientId', flags: ['--require-google-ios-client-id'], variables: ['APP_REQUIRE_GOOGLE_IOS_CLIENT_ID'] },
-      { key: 'googleWebClientId', flags: ['--require-google-web-client-id'], variables: ['APP_REQUIRE_GOOGLE_WEB_CLIENT_ID'] },
-    ]);
+  it('reads every key, the variable it comes from, and no gate from the writer syntax', () => {
+    // 1amndjnq718. The four Google keys and both gates left with Google sign-in on 2026-11-18.
+    expect(writer.keys).toEqual([{ key: 'ga4MeasurementId', variable: 'APP_GA4_MEASUREMENT_ID' }]);
+    expect(writer.gates).toEqual([]);
   });
 
   it('does not read a variable out of a comment that quotes one', () => {
@@ -81,21 +73,12 @@ describe('app-config targets - read from the writer, not listed', () => {
     const measured = measureUnsupplied(process.cwd(), writer.variables);
     const after = existsSync(realConfig) ? readFileSync(realConfig, 'utf8') : null;
 
-    // Only the folder name has a default; that is why the APK carries it and nothing else.
-    expect(measured).toEqual({
-      ga4MeasurementId: 'empty',
-      googleDriveBackendUrl: 'empty',
-      googleDriveFolderName: 'default',
-      googleIosClientId: 'empty',
-      googleWebClientId: 'empty',
-    });
+    expect(measured).toEqual({ ga4MeasurementId: 'empty' });
     expect(after).toBe(before);
   });
 
   it('follows npm run to the call that writes the file, and the flags it passes', () => {
-    expect(resolveWriterRuns(packageScripts, 'build:pages')).toEqual([
-      { script: 'config:app:web-strict', flags: ['--require-google-web-client-id'] },
-    ]);
+    expect(resolveWriterRuns(packageScripts, 'build:pages')).toEqual([{ script: 'config:app', flags: [] }]);
     expect(resolveWriterRuns(packageScripts, 'build:ionic')).toEqual([{ script: 'config:app', flags: [] }]);
     expect(resolveWriterRuns({ 'build:x': 'ng build' }, 'build:x')).toEqual([]);
   });
@@ -118,45 +101,23 @@ describe('app-config targets - the table the real tree produces', () => {
     expect(record.targets.map((entry: { id: string }) => entry.id)).toEqual(APP_CONFIG_BUILD_TARGETS.map((entry) => entry.id));
   });
 
-  it('builds the APK with nothing supplied, so only the default survives and nothing is required', () => {
+  it('builds the APK with nothing supplied, and nothing is required', () => {
     expect(target('apk')).toMatchObject({
       reachesPlayers: true,
       requires: [],
-      keys: {
-        ga4MeasurementId: 'nothing - empty',
-        googleDriveBackendUrl: 'nothing - empty',
-        googleDriveFolderName: "nothing - the writer's default",
-        googleIosClientId: 'nothing - empty',
-        googleWebClientId: 'nothing - empty',
-      },
+      keys: { ga4MeasurementId: 'nothing - empty' },
     });
   });
 
-  it('builds the website from two steps that agree, and fails its build without the web client id', () => {
+  it('builds the website from two steps that agree, and requires nothing', () => {
     const website = target('website');
 
     expect(website.steps.map((entry: { workflow: string; environment: string }) => [entry.workflow, entry.environment])).toEqual([
       ['.github/workflows/deploy-pages.yml', 'github-pages'],
       ['.github/workflows/release-android.yml', 'github-pages'],
     ]);
-    expect(website.requires).toEqual([{ key: 'googleWebClientId', by: '--require-google-web-client-id' }]);
-    expect(website.keys).toMatchObject({
-      ga4MeasurementId: 'secret APP_GA4_MEASUREMENT_ID',
-      googleIosClientId: 'secret APP_GOOGLE_IOS_CLIENT_ID',
-      googleWebClientId: 'secret APP_GOOGLE_WEB_CLIENT_ID',
-    });
-  });
-
-  it('says a fallback exists without ever copying it', () => {
-    // The fallback is read out of the workflow here, at run time, so this file never holds it.
-    const raw = readFileSync('.github/workflows/guide-discoverability.yml', 'utf8');
-    const fallback = raw.match(/APP_GOOGLE_WEB_CLIENT_ID:.*\|\|\s*'([^']+)'/u)?.[1];
-
-    expect(fallback, 'the fallback this test guards must exist').toBeTruthy();
-    expect(target('guide-discoverability').keys.googleWebClientId).toBe(
-      'secret APP_GOOGLE_WEB_CLIENT_ID, else a fallback written in the workflow',
-    );
-    expect(JSON.stringify(record)).not.toContain(fallback);
+    expect(website.requires).toEqual([]);
+    expect(website.keys).toEqual({ ga4MeasurementId: 'secret APP_GA4_MEASUREMENT_ID' });
   });
 
   it('is what docs/release-contract.json and the register section carry', () => {
@@ -176,15 +137,15 @@ describe('app-config targets - the guard', () => {
   const releaseAndroid = '.github/workflows/release-android.yml';
 
   it('goes stale when a build step starts supplying a key', () => {
-    // The mutation the table exists for: the APK given the web client id, record not regenerated.
+    // The mutation the table exists for: the APK given the GA4 id, record not regenerated.
     const { record, problems } = world((workflows) => {
       const apk = step(workflows, releaseAndroid, 'release', 'Run Android release');
-      apk.env = { ...apk.env, APP_GOOGLE_WEB_CLIENT_ID: '${{ secrets.APP_GOOGLE_WEB_CLIENT_ID }}' };
+      apk.env = { ...apk.env, APP_GA4_MEASUREMENT_ID: '${{ secrets.APP_GA4_MEASUREMENT_ID }}' };
     });
 
     expect(problems).toEqual([]);
-    expect(record.targets.find((entry: { id: string }) => entry.id === 'apk').keys.googleWebClientId).toBe(
-      'secret APP_GOOGLE_WEB_CLIENT_ID',
+    expect(record.targets.find((entry: { id: string }) => entry.id === 'apk').keys.ga4MeasurementId).toBe(
+      'secret APP_GA4_MEASUREMENT_ID',
     );
     expect(record).not.toEqual(committed);
   });
@@ -218,14 +179,14 @@ describe('app-config targets - the guard', () => {
       'a run: that exports it to later steps',
       (workflows: WorkflowFile[]) => {
         const release = workflows.find((entry) => entry.file === releaseAndroid)!.workflow.jobs['release']!;
-        release.steps.push({ name: 'Export', run: 'echo "APP_GOOGLE_WEB_CLIENT_ID=x" >> "$GITHUB_ENV"' });
+        release.steps.push({ name: 'Export', run: 'echo "APP_GA4_MEASUREMENT_ID=x" >> "$GITHUB_ENV"' });
       },
     ],
     [
       'a value that inlines it into the build command',
       (workflows: WorkflowFile[]) => {
         const apk = step(workflows, releaseAndroid, 'release', 'Run Android release');
-        apk.env = { ...apk.env, BUILD_MOBILE_COMMAND: 'APP_GOOGLE_WEB_CLIENT_ID=x npm run build:ionic && npx cap sync android' };
+        apk.env = { ...apk.env, BUILD_MOBILE_COMMAND: 'APP_GA4_MEASUREMENT_ID=x npm run build:ionic && npx cap sync android' };
       },
     ],
   ])('fails when a workflow names a writer variable outside a declared step: %s', (_shape, mutate) => {
@@ -266,13 +227,13 @@ describe('app-config targets - the guard', () => {
   });
 
   it('names where a literal comes from, and never the literal', () => {
-    const literal = 'Fixture Folder Written Inline';
+    const literal = 'G-FIXTUREINLINE';
     const { record } = world((workflows) => {
       const apk = step(workflows, releaseAndroid, 'release', 'Run Android release');
-      apk.env = { ...apk.env, APP_GOOGLE_DRIVE_FOLDER_NAME: literal };
+      apk.env = { ...apk.env, APP_GA4_MEASUREMENT_ID: literal };
     });
 
-    expect(record.targets.find((entry: { id: string }) => entry.id === 'apk').keys.googleDriveFolderName).toBe(
+    expect(record.targets.find((entry: { id: string }) => entry.id === 'apk').keys.ga4MeasurementId).toBe(
       'a value written in the workflow',
     );
     expect(JSON.stringify(record)).not.toContain(literal);

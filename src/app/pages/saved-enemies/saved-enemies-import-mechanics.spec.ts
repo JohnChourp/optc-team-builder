@@ -4,7 +4,6 @@ import { describe, expect, it } from 'vitest';
 import { type SavedEnemy } from '../../core/models/optc.models';
 import { normalizeBattleRequirementsWithLegacyFallback } from '../../core/services/auto-team-builder-battle.utils';
 import { CharacterOverridesService } from '../../core/services/character-overrides.service';
-import { DriveSyncStateService } from '../../core/services/drive-sync-state.service';
 import { appendAbilityRequirementsFromEnemyMechanics } from '../../core/services/enemy-mechanic-draft.utils';
 import { OptcbxImportService } from '../../core/services/optcbx-import.service';
 import { expandRequiredAbilitiesToCharacterGroups } from '../../core/services/required-character-groups.utils';
@@ -59,13 +58,12 @@ function createDevice(stored: Record<string, unknown> = {}) {
     getShips: async () => [],
   };
   const i18n = { translate: (key: string) => key };
-  const driveSyncState = new DriveSyncStateService(preferences as never);
-  const userState = new UserStateService(i18n as never, preferences as never, driveSyncState);
+  const userState = new UserStateService(i18n as never, preferences as never);
   const transfer = new UserDataTransferService(
     repository as never,
     i18n as never,
     userState,
-    new CharacterOverridesService(preferences as never, driveSyncState),
+    new CharacterOverridesService(preferences as never),
     new OptcbxImportService(repository as never),
   );
 

@@ -55,7 +55,7 @@ describe('checkAppConfigSource', () => {
    * scanning alert #1 was.
    */
   it('refuses a secret smuggled inside an allowlisted key', () => {
-    const source = `window.__appConfig = { "ga4MeasurementId": "G-TEST123", "googleDriveFolderName": "${SECRET_FIXTURES['google-oauth-client-secret']()}" };`;
+    const source = `window.__appConfig = { "ga4MeasurementId": "${SECRET_FIXTURES['google-oauth-client-secret']()}" };`;
     const errors = checkAppConfigSource(source);
 
     expect(errors.join(' ')).toContain('google-oauth-client-secret');
@@ -73,7 +73,7 @@ describe('checkAppConfigSource', () => {
    */
   it.each(['google-api-key', 'github-token', 'aws-access-key-id'] as const)('refuses a %s', (patternId) => {
     const value = SECRET_FIXTURES[patternId]();
-    const source = `window.__appConfig = { "googleDriveFolderName": "${value}" };`;
+    const source = `window.__appConfig = { "ga4MeasurementId": "${value}" };`;
 
     expect(checkAppConfigSource(source).join(' ')).toContain(patternId);
   });

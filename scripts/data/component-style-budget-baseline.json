@@ -189,10 +189,6 @@
       "compiledBytes": 1390
     },
     {
-      "file": "src/app/pages/account/account-review-shell-panel.component.scss",
-      "compiledBytes": 1380
-    },
-    {
       "file": "src/app/shared/ship-picker/ship-picker-card-panel.component.scss",
       "compiledBytes": 1380
     },
@@ -295,10 +291,6 @@
     {
       "file": "src/app/shared/ability-requirement-picker/ability-requirement-picker-badge-tone-panel.component.scss",
       "compiledBytes": 1120
-    },
-    {
-      "file": "src/app/pages/account/account-review-rows-panel.component.scss",
-      "compiledBytes": 1110
     },
     {
       "file": "src/app/pages/auto-team-builder-rumble/auto-team-builder-rumble-roster-responsive-panel.component.scss",

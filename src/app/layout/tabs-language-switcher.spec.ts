@@ -6,7 +6,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { type SupportedLanguage } from '../core/i18n/app-i18n.types';
 import { AppI18nService } from '../core/services/app-i18n.service';
-import { GoogleAccountService } from '../core/services/google-account.service';
 import { TabsPage } from './tabs.page';
 
 // IonModal and the two button modules are for the What's New modal the menu imports.
@@ -43,15 +42,6 @@ function createMenu(active: SupportedLanguage) {
   const setLanguage = vi.fn().mockResolvedValue(undefined);
   const injector = Injector.create({
     providers: [
-      {
-        provide: GoogleAccountService,
-        useValue: {
-          isAvailable: signal(false),
-          isSignedIn: signal(false),
-          profile: signal(null),
-          status: signal('signed-out'),
-        },
-      },
       { provide: AppI18nService, useValue: { activeLanguage: signal(active), setLanguage } },
     ],
   });

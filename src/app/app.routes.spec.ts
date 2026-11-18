@@ -120,23 +120,17 @@ describe('app routes', () => {
     expect(savedEnemiesRoute?.loadComponent).toBeTypeOf('function');
   });
 
-  it('registers the account route inside tabs', () => {
+  /*
+   * 1amndjnq718. The Account page and Google sign-in were removed on 2026-11-18. Both old links
+   * still resolve, to Settings, where Export and Import all data move a player's data.
+   */
+  it.each(['account', 'drive-sync'])('redirects the retired %s route to settings', (path) => {
     const tabsRoute = findRouteByPath(routes, 'tabs');
-    const accountRoute = tabsRoute?.children?.find((route) => route.path === 'account');
-    const seo = accountRoute?.data?.['seo'] as Record<string, unknown> | undefined;
+    const retired = tabsRoute?.children?.find((route) => route.path === path);
 
-    expect(accountRoute).toBeDefined();
-    expect(accountRoute?.loadComponent).toBeTypeOf('function');
-    expect(seo?.['canonicalPath']).toBe('tabs/account');
-  });
-
-  it('redirects the legacy Drive sync route to account', () => {
-    const tabsRoute = findRouteByPath(routes, 'tabs');
-    const driveSyncRoute = tabsRoute?.children?.find((route) => route.path === 'drive-sync');
-
-    expect(driveSyncRoute?.redirectTo).toBe('account');
-    expect(driveSyncRoute?.pathMatch).toBe('full');
-    expect(driveSyncRoute?.loadComponent).toBeUndefined();
+    expect(retired?.redirectTo).toBe('settings');
+    expect(retired?.pathMatch).toBe('full');
+    expect(retired?.loadComponent).toBeUndefined();
   });
 
   it('redirects the legacy collection tab route to saved teams', () => {

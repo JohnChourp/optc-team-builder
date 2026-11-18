@@ -17,16 +17,6 @@
   "language": {
     "label": "Language"
   },
-  "account": {
-    "avatarAlt": "{{ name }} Google profile image",
-    "eyebrow": "Google account",
-    "openSettings": "Open Settings",
-    "signedOutCopy": "Sign in to connect your Google account and manage Drive sync from this profile page.",
-    "signedOutTitle": "Log in to your account",
-    "title": "Account",
-    "unavailableCopy": "This version of the Android app cannot sign in to Google, so Google Drive sync does not run here. Your data stays on this device. To move it to another device, use Export all data in Settings, then Import all data on the other one.",
-    "unavailableTitle": "Google sign-in is not available here"
-  },
   "analytics": {
     "title": "Analytics & cookies",
     "copy": "Google Analytics and Microsoft Clarity load only after you allow optional analytics for this browser. Declining changes nothing in the app.",
@@ -45,156 +35,6 @@
     "links": {
       "privacy": "Open Privacy Policy",
       "cookies": "Open Cookie Policy"
-    }
-  },
-  "driveSync": {
-    "title": "Google Drive sync",
-    "copy": "Connect a Google account to keep one visible Drive backup that you can restore on another device.",
-    "scope": "Google Drive sync uses the same all-data bundle as manual backups: favorites, favorite ships, character boxes, character overrides, saved teams, and saved enemies.",
-    "account": {
-      "label": "Connected account"
-    },
-    "actions": {
-      "openInDrive": "Open in Drive",
-      "refresh": "Refresh Drive",
-      "reconnect": "Reconnect Google",
-      "restore": "Restore from Drive",
-      "signIn": "Sign in with Google",
-      "signOut": "Sign out",
-      "syncNow": "Sync now"
-    },
-    "feedback": {
-      "title": "Drive sync status"
-    },
-    "location": {
-      "fileMissing": "No backup file found",
-      "fileVisible": "Visible in Drive",
-      "folderAfterSync": "No Drive folder found",
-      "folderVisible": "Visible in Drive",
-      "notChecked": "Not checked yet"
-    },
-    "overview": {
-      "backupFound": "Drive backup found",
-      "connectedNotChecked": "Connected, not checked",
-      "conflict": "Conflict needs review",
-      "error": "Error",
-      "noBackup": "Connected, no Drive backup yet",
-      "pending": "Local changes pending",
-      "restoring": "Restoring",
-      "signedOut": "Signed out",
-      "unavailable": "Unavailable",
-      "uploading": "Uploading"
-    },
-    "prompt": {
-      "conflictCopy": "This device and Google Drive both have data. The Drive backup was updated {{modifiedAt}}. Choose exactly what Sync now should do.",
-      "conflictTitle": "Choose sync direction",
-      "restoreCloudCopy": "No local data was found. Use the Drive backup from {{modifiedAt}} on this device?",
-      "restoreCloudTitle": "Use Drive backup",
-      "uploadLocalCopy": "No Drive backup was found. Upload this device data to Google Drive?",
-      "uploadLocalTitle": "Upload this device data",
-      "actions": {
-        "cancel": "Cancel",
-        "merge": "Merge",
-        "replaceCloud": "Replace Drive",
-        "replaceLocal": "Replace this device",
-        "uploadLocal": "Upload to Drive"
-      }
-    },
-    "summary": {
-      "localTitle": "This device",
-      "noBackup": "No Drive backup found yet.",
-      "notChecked": "Not checked yet.",
-      "remoteReady": "Drive backup details loaded.",
-      "remoteTitle": "Drive backup"
-    },
-    "status": {
-      "file": "Backup file",
-      "folder": "Drive folder",
-      "lastChecked": "Last check",
-      "label": "Current state",
-      "lastDownloaded": "Last restore",
-      "lastUploaded": "Last upload",
-      "never": "Never",
-      "remoteUpdated": "Latest Drive update",
-      "title": "Drive status",
-      "phase": {
-        "checking": "Checking Drive",
-        "disabled": "Disabled",
-        "downloading": "Restoring backup",
-        "error": "Sync failed",
-        "idle": "Ready",
-        "needs-auth": "Sign in required",
-        "uploading": "Uploading backup"
-      }
-    },
-    "review": {
-      "actions": {
-        "merge-and-upload": "Review merge",
-        "replace-cloud": "Review Drive replacement",
-        "replace-local": "Review device replacement"
-      },
-      "choiceLabel": "Result",
-      "choices": {
-        "device": "Keep device",
-        "drive": "Use Drive",
-        "remove": "Remove"
-      },
-      "close": "Close",
-      "confirm": "Apply reviewed sync",
-      "decision": {
-        "merge": "Combine both sides. Drive wins changed items unless you switch a row.",
-        "replaceCloud": "Drive starts as a copy of this device. You can keep Drive-only rows.",
-        "replaceLocal": "This device starts as a copy of Drive. You can keep device-only rows.",
-        "uploadLocal": "Create the first visible Drive backup from this device."
-      },
-      "emptySection": "No rows in this section.",
-      "emptyFilter": "No rows in this category.",
-      "eyebrow": "Reviewed backup control",
-      "processing": "Preparing Drive sync...",
-      "sectionCounts": "{{added}} added · {{changed}} changed · {{kept}} kept · {{removed}} removed",
-      "sections": {
-        "characterBoxes": "Character boxes",
-        "characterOverrides": "Character overrides",
-        "favoriteShips": "Favorite ships",
-        "favorites": "Favorite characters",
-        "savedEnemies": "Saved enemies",
-        "savedRumbleTeams": "Saved Rumble teams",
-        "savedTeams": "Saved teams"
-      },
-      "stats": {
-        "added": "{{count}} added",
-        "changed": "{{count}} changed",
-        "kept": "{{count}} kept",
-        "removed": "{{count}} removed"
-      },
-      "status": {
-        "added": "Added",
-        "changed": "Changed",
-        "kept": "Kept",
-        "removed": "Removed"
-      },
-      "summaryCopy": "{{count}} reviewed rows can be changed before anything is written.",
-      "summaryTitle": "Review the exact result",
-      "title": "Control exactly what Drive sync changes.",
-      "outcome": {
-        "summary": "{{kept}} kept from this device, {{taken}} taken from Drive.",
-        "lost": "{{count}} will be gone from this device. This cannot be undone.",
-        "replaceLocal": "Everything on this device is replaced by the Drive copy."
-      },
-      "rowLabels": {
-        "ship": "Ship #{{id}}",
-        "character": "Character #{{id}}",
-        "characterBox": "Character box",
-        "savedTeam": "Saved team",
-        "savedRumbleTeam": "Saved Rumble team",
-        "savedEnemy": "Saved enemy"
-      },
-      "rowDetails": {
-        "characters": "{{count}} characters",
-        "slots": "{{count}} slots",
-        "teams": "{{count}} teams",
-        "abilitiesAndMechanics": "{{abilities}} abilities, {{mechanics}} mechanics"
-      }
     }
   },
   "gameVersion": {
@@ -262,6 +102,7 @@
     },
     "allData": {
       "copy": "Export a full device backup bundle or import a smart backup that can contain all data, only one section, or even a single favorites, ships, character boxes, character overrides, saved teams, or saved enemies export.",
+      "driveHint": "Used Google Drive sync before? Your last backup is still in your Google Drive, in the OPTC Team Builder folder. Download optc-all-data.latest.json and import it here - it adds to what this device already has.",
       "errors": {
         "generic": "All data import failed.",
         "invalidJson": "The selected backup file is not valid JSON.",
@@ -407,7 +248,6 @@
         "committedTitle": "Inventory import completed",
         "errorTitle": "Inventory import failed",
         "previewReady": "Review ready from {{fileName}}.",
-        "driveHint": "You can now use Google Drive sync to back up this updated local inventory state.",
         "exportHint": "Use Export all data to keep a copy of this updated inventory that you can import on another device.",
         "stats": {
           "addedShips": "Added {{count}} ships to favorite ships.",

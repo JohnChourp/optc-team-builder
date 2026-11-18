@@ -2,14 +2,9 @@ import '@angular/compiler';
 import { describe, expect, it } from 'vitest';
 
 import { CharacterOverridesService } from './character-overrides.service';
-import { DriveSyncStateService } from './drive-sync-state.service';
 import { OptcbxImportService } from './optcbx-import.service';
 import { UserDataTransferService } from './user-data-transfer.service';
 import { UserStateService } from './user-state.service';
-import {
-  buildDriveSyncReviewDraft,
-  buildReviewedAllDataPayload,
-} from '../../pages/drive-sync/drive-sync-review.utils';
 import {
   buildAllDataTransferPayload,
   type AllDataTransferPayload,
@@ -23,12 +18,13 @@ import { type SavedRumbleOpponent } from '../models/saved-rumble-opponent.models
  * Saved Rumble opponents and the boost list travel in every backup, and both used to load only
  * when one of those two pages did. So in a fresh session "Export all data" wrote both as empty,
  * and a reviewed Drive Merge took the empty lists as the device's truth: it cleared the stored
- * ones and uploaded the empty ones, and the reader lost them on the device AND on Drive.
+ * ones and uploaded the empty ones, and the reader lost them on the device AND on Drive. (Drive
+ * sync was removed on 2026-11-18, 1amndjnq718; the export half of the defect is still guarded.)
  *
  * Its own file rather than the tail of `user-data-transfer.service.spec.ts`: that suite hands the
  * service a whole mocked UserStateService whose lists are already filled, which is exactly why it
  * never met the empty ones. This one runs the REAL UserStateService over an in-memory store, so
- * "never loaded" is observable, and replays the calls DriveBackupService makes for a reviewed sync.
+ * "never loaded" is observable.
  */
 
 const EXPORTED_AT = '2026-09-24T10:00:00.000Z';
@@ -96,44 +92,16 @@ function createColdDevice() {
     getShips: async () => [],
   };
   const i18n = { translate: (key: string) => key };
-  const driveSyncState = new DriveSyncStateService(preferences as never);
-  const userState = new UserStateService(i18n as never, preferences as never, driveSyncState);
+  const userState = new UserStateService(i18n as never, preferences as never);
   const transfer = new UserDataTransferService(
     repository as never,
     i18n as never,
     userState,
-    new CharacterOverridesService(preferences as never, driveSyncState),
+    new CharacterOverridesService(preferences as never),
     new OptcbxImportService(repository as never),
   );
 
   return { preferences, transfer, userState };
-}
-
-/** The reader's other device: one team, one opponent and a boost list this one does not have. */
-function drivePayload(): AllDataTransferPayload {
-  return buildAllDataTransferPayload(
-    {
-      savedTeams: {
-        exportedAt: EXPORTED_AT,
-        schemaVersion: 1,
-        source: 'saved-teams',
-        teams: [team('crew-drive-1', 'Drive crew', 3000)],
-      },
-      savedRumbleOpponents: {
-        exportedAt: EXPORTED_AT,
-        opponents: [opponent('opp-drive-1', 'Rival saved on the other phone')],
-        schemaVersion: 1,
-        source: 'saved-rumble-opponents',
-      },
-      boostedCharacterIds: {
-        characterIds: [1111],
-        exportedAt: EXPORTED_AT,
-        schemaVersion: 1,
-        source: 'boosted-characters',
-      },
-    },
-    EXPORTED_AT,
-  );
 }
 
 function opponentIds(payload: AllDataTransferPayload): string[] | undefined {
@@ -173,40 +141,5 @@ describe('a session that never opened Rumble or the Auto Team Builder (869f63gq1
     ]);
     expect(userState.boostedCharacterIds()).toEqual(DEVICE_BOOSTS);
     expect(transfer.getSyncScopeSummary().savedRumbleOpponentsCount).toBe(2);
-  });
-
-  it('keeps both through a reviewed Merge, on this device and in the upload', async () => {
-    const { preferences, transfer } = createColdDevice();
-
-    // What DriveBackupService runs: prepareReviewedManualSync, then
-    // commitReviewedManualSync('merge-and-upload'), which restores and then uploads.
-    const localPayload = await transfer.buildAllDataPayload();
-    const draft = buildDriveSyncReviewDraft(localPayload, drivePayload(), 'merge-and-upload');
-
-    await transfer.applyAllDataPayload(buildReviewedAllDataPayload(draft), 'restore');
-
-    const uploaded = await transfer.buildAllDataPayload();
-    const mergedOpponents = ['opp-local-1', 'opp-local-2', 'opp-drive-1'];
-
-    expect(
-      preferences.read<SavedRumbleOpponent[]>('savedRumbleOpponents').map((entry) => entry.id),
-    ).toEqual(mergedOpponents);
-    expect(opponentIds(uploaded)).toEqual(mergedOpponents);
-    // 869f1q90b. A boost list is never merged, so the device's stands on both sides.
-    expect(preferences.read<number[]>('boostedCharacterIds')).toEqual(DEVICE_BOOSTS);
-    expect(uploaded.boostedCharacterIds?.characterIds).toEqual(DEVICE_BOOSTS);
-  });
-
-  it('uploads both when the reader replaces Drive with this device', async () => {
-    const { transfer } = createColdDevice();
-
-    // commitReviewedManualSync('replace-cloud') uploads the reviewed payload as it is.
-    const localPayload = await transfer.buildAllDataPayload();
-    const uploaded = buildReviewedAllDataPayload(
-      buildDriveSyncReviewDraft(localPayload, drivePayload(), 'replace-cloud'),
-    );
-
-    expect(opponentIds(uploaded)).toEqual(['opp-local-1', 'opp-local-2']);
-    expect(uploaded.boostedCharacterIds?.characterIds).toEqual(DEVICE_BOOSTS);
   });
 });

@@ -17,16 +17,6 @@
   "language": {
     "label": "Γλώσσα"
   },
-  "account": {
-    "avatarAlt": "Εικόνα Google profile για {{ name }}",
-    "eyebrow": "Google account",
-    "openSettings": "Άνοιγμα Ρυθμίσεων",
-    "signedOutCopy": "Συνδέσου για να ενώσεις το Google account και να διαχειρίζεσαι το Drive sync από αυτή τη σελίδα profile.",
-    "signedOutTitle": "Σύνδεση στον λογαριασμό",
-    "title": "Λογαριασμός",
-    "unavailableCopy": "Αυτή η έκδοση της εφαρμογής Android δεν μπορεί να συνδεθεί στο Google, οπότε το Google Drive sync δεν λειτουργεί εδώ. Τα δεδομένα σου μένουν σε αυτή τη συσκευή. Για να τα μεταφέρεις σε άλλη συσκευή, χρησιμοποίησε την «Εξαγωγή όλων» στις Ρυθμίσεις και μετά την «Εισαγωγή όλων» στην άλλη.",
-    "unavailableTitle": "Η σύνδεση Google δεν είναι διαθέσιμη εδώ"
-  },
   "analytics": {
     "title": "Analytics και cookies",
     "copy": "Το Google Analytics και το Microsoft Clarity φορτώνουν μόνο αφού επιτρέψεις τα προαιρετικά analytics για αυτόν τον browser. Η απόρριψη δεν αλλάζει τίποτα στην εφαρμογή.",
@@ -45,156 +35,6 @@
     "links": {
       "privacy": "Άνοιγμα Πολιτικής Απορρήτου",
       "cookies": "Άνοιγμα Πολιτικής Cookies"
-    }
-  },
-  "driveSync": {
-    "title": "Sync με Google Drive",
-    "copy": "Σύνδεσε Google account για να κρατάς ένα ορατό Drive backup που μπορείς να επαναφέρεις και σε άλλη συσκευή.",
-    "scope": "Το Google Drive sync χρησιμοποιεί το ίδιο all-data bundle με τα manual backups: favorites, favorite ships, character boxes, character overrides, saved teams και saved enemies.",
-    "account": {
-      "label": "Συνδεδεμένος λογαριασμός"
-    },
-    "actions": {
-      "openInDrive": "Άνοιγμα στο Drive",
-      "refresh": "Έλεγχος Drive",
-      "reconnect": "Επανασύνδεση Google",
-      "restore": "Restore από Drive",
-      "signIn": "Sign in with Google",
-      "signOut": "Αποσύνδεση",
-      "syncNow": "Sync τώρα"
-    },
-    "feedback": {
-      "title": "Κατάσταση Drive sync"
-    },
-    "location": {
-      "fileMissing": "Δεν βρέθηκε backup αρχείο",
-      "fileVisible": "Ορατό στο Drive",
-      "folderAfterSync": "Δεν βρέθηκε Drive folder",
-      "folderVisible": "Ορατό στο Drive",
-      "notChecked": "Δεν έχει γίνει έλεγχος ακόμη"
-    },
-    "overview": {
-      "backupFound": "Βρέθηκε Drive backup",
-      "connectedNotChecked": "Συνδεδεμένο, χωρίς έλεγχο ακόμη",
-      "conflict": "Χρειάζεται επίλυση σύγκρουσης",
-      "error": "Σφάλμα",
-      "noBackup": "Συνδεδεμένο, χωρίς Drive backup ακόμη",
-      "pending": "Υπάρχουν τοπικές αλλαγές για sync",
-      "restoring": "Γίνεται restore",
-      "signedOut": "Δεν έχει γίνει σύνδεση",
-      "unavailable": "Μη διαθέσιμο",
-      "uploading": "Γίνεται upload"
-    },
-    "prompt": {
-      "conflictCopy": "Υπάρχουν δεδομένα και σε αυτή τη συσκευή και στο Google Drive. Το Drive backup ενημερώθηκε {{modifiedAt}}. Διάλεξε ακριβώς τι θα κάνει το Sync τώρα.",
-      "conflictTitle": "Διάλεξε κατεύθυνση sync",
-      "restoreCloudCopy": "Δεν βρέθηκαν τοπικά δεδομένα. Να χρησιμοποιηθεί σε αυτή τη συσκευή το Drive backup από {{modifiedAt}};",
-      "restoreCloudTitle": "Χρήση Drive backup",
-      "uploadLocalCopy": "Δεν βρέθηκε Drive backup. Να ανέβουν τα δεδομένα αυτής της συσκευής στο Google Drive;",
-      "uploadLocalTitle": "Upload δεδομένων συσκευής",
-      "actions": {
-        "cancel": "Άκυρο",
-        "merge": "Merge",
-        "replaceCloud": "Αντικατάσταση Drive",
-        "replaceLocal": "Αντικατάσταση συσκευής",
-        "uploadLocal": "Upload στο Drive"
-      }
-    },
-    "summary": {
-      "localTitle": "Αυτή η συσκευή",
-      "noBackup": "Δεν βρέθηκε ακόμη Drive backup.",
-      "notChecked": "Δεν έχει γίνει έλεγχος ακόμη.",
-      "remoteReady": "Φορτώθηκαν τα στοιχεία του Drive backup.",
-      "remoteTitle": "Drive backup"
-    },
-    "status": {
-      "file": "Backup αρχείο",
-      "folder": "Φάκελος Drive",
-      "lastChecked": "Τελευταίος έλεγχος",
-      "label": "Τρέχουσα κατάσταση",
-      "lastDownloaded": "Τελευταίο restore",
-      "lastUploaded": "Τελευταίο upload",
-      "never": "Ποτέ",
-      "remoteUpdated": "Τελευταία ενημέρωση Drive",
-      "title": "Κατάσταση Drive",
-      "phase": {
-        "checking": "Έλεγχος Drive",
-        "disabled": "Απενεργοποιημένο",
-        "downloading": "Γίνεται restore backup",
-        "error": "Το sync απέτυχε",
-        "idle": "Έτοιμο",
-        "needs-auth": "Απαιτείται sign in",
-        "uploading": "Γίνεται upload backup"
-      }
-    },
-    "review": {
-      "actions": {
-        "merge-and-upload": "Review merge",
-        "replace-cloud": "Review αντικατάστασης Drive",
-        "replace-local": "Review αντικατάστασης συσκευής"
-      },
-      "choiceLabel": "Αποτέλεσμα",
-      "choices": {
-        "device": "Κράτα συσκευή",
-        "drive": "Χρήση Drive",
-        "remove": "Αφαίρεση"
-      },
-      "close": "Κλείσιμο",
-      "confirm": "Εφαρμογή reviewed sync",
-      "decision": {
-        "merge": "Συνδυάζει και τις δύο πλευρές. Το Drive κερδίζει στα changed items εκτός αν αλλάξεις row.",
-        "replaceCloud": "Το Drive ξεκινά σαν αντίγραφο αυτής της συσκευής. Μπορείς να κρατήσεις Drive-only rows.",
-        "replaceLocal": "Η συσκευή ξεκινά σαν αντίγραφο του Drive. Μπορείς να κρατήσεις device-only rows.",
-        "uploadLocal": "Δημιουργεί το πρώτο ορατό Drive backup από αυτή τη συσκευή."
-      },
-      "emptySection": "Δεν υπάρχουν rows σε αυτό το section.",
-      "emptyFilter": "Δεν υπάρχουν rows σε αυτή την κατηγορία.",
-      "eyebrow": "Έλεγχος backup με review",
-      "processing": "Ετοιμάζεται το Drive sync...",
-      "sectionCounts": "{{added}} προσθήκες · {{changed}} αλλαγές · {{kept}} κρατημένα · {{removed}} αφαιρέσεις",
-      "sections": {
-        "characterBoxes": "Character boxes",
-        "characterOverrides": "Character overrides",
-        "favoriteShips": "Favorite ships",
-        "favorites": "Favorite characters",
-        "savedEnemies": "Saved enemies",
-        "savedRumbleTeams": "Saved Rumble teams",
-        "savedTeams": "Saved teams"
-      },
-      "stats": {
-        "added": "{{count}} προσθήκες",
-        "changed": "{{count}} αλλαγές",
-        "kept": "{{count}} κρατημένα",
-        "removed": "{{count}} αφαιρέσεις"
-      },
-      "status": {
-        "added": "Προσθήκη",
-        "changed": "Αλλαγή",
-        "kept": "Μένει",
-        "removed": "Αφαίρεση"
-      },
-      "summaryCopy": "{{count}} rows μπορούν να αλλάξουν πριν γραφτεί οτιδήποτε.",
-      "summaryTitle": "Έλεγξε το ακριβές αποτέλεσμα",
-      "title": "Έλεγξε ακριβώς τι αλλάζει το Drive sync.",
-      "outcome": {
-        "summary": "{{kept}} κρατιούνται από αυτή τη συσκευή, {{taken}} έρχονται από το Drive.",
-        "lost": "{{count}} θα χαθούν από αυτή τη συσκευή. Αυτό δεν αναιρείται.",
-        "replaceLocal": "Ό,τι υπάρχει σε αυτή τη συσκευή αντικαθίσταται από το αντίγραφο του Drive."
-      },
-      "rowLabels": {
-        "ship": "Καράβι #{{id}}",
-        "character": "Χαρακτήρας #{{id}}",
-        "characterBox": "Box χαρακτήρων",
-        "savedTeam": "Αποθηκευμένη ομάδα",
-        "savedRumbleTeam": "Αποθηκευμένη ομάδα Rumble",
-        "savedEnemy": "Αποθηκευμένος εχθρός"
-      },
-      "rowDetails": {
-        "characters": "{{count}} χαρακτήρες",
-        "slots": "{{count}} θέσεις",
-        "teams": "{{count}} ομάδες",
-        "abilitiesAndMechanics": "{{abilities}} abilities και {{mechanics}} mechanics"
-      }
     }
   },
   "gameVersion": {
@@ -262,6 +102,7 @@
     },
     "allData": {
       "copy": "Κάνε export ένα πλήρες backup bundle ή import ένα έξυπνο backup που μπορεί να έχει όλα τα δεδομένα, μόνο ένα section ή ακόμα και export από ένα μόνο favorites, ships, character boxes, character overrides, saved teams ή saved enemies backup.",
+      "driveHint": "Είχες συγχρονισμό Google Drive; Το τελευταίο σου backup είναι ακόμα στο Google Drive σου, στον φάκελο OPTC Team Builder. Κατέβασε το optc-all-data.latest.json και κάνε το εισαγωγή εδώ - προστίθεται σε ό,τι έχει ήδη αυτή η συσκευή.",
       "errors": {
         "generic": "Το import όλων των δεδομένων απέτυχε.",
         "invalidJson": "Το επιλεγμένο backup δεν είναι έγκυρο JSON.",
@@ -407,7 +248,6 @@
         "committedTitle": "Το inventory import ολοκληρώθηκε",
         "errorTitle": "Το inventory import απέτυχε",
         "previewReady": "Το preview είναι έτοιμο από το {{fileName}}.",
-        "driveHint": "Μπορείς τώρα να χρησιμοποιήσεις το Google Drive sync για backup αυτού του ενημερωμένου τοπικού inventory state.",
         "exportHint": "Με την «Εξαγωγή όλων» κρατάς ένα αντίγραφο αυτού του ενημερωμένου inventory, που μπορείς να εισαγάγεις σε άλλη συσκευή.",
         "stats": {
           "addedShips": "Προστέθηκαν {{count}} ships στα favorite ships.",

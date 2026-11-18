@@ -30,7 +30,6 @@ export const APP_DOCS = [
   'docs/local-artifact-lifecycles.md',
   'docs/player-settings-inventory.md',
   'e2e/README.md',
-  'server/README.md',
 ];
 
 /** Docs with shell fences that are deliberately outside the contract. */

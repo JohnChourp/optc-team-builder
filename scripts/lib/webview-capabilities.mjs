@@ -23,7 +23,6 @@ import path from 'node:path';
 
 import ts from 'typescript';
 
-import { readAppConfigTargets } from './app-config-targets.mjs';
 
 const FILE_HELPER = 'src/app/core/services/player-file-delivery.utils.ts';
 const EXPORT_SITES_OWNER = 'src/app/core/services/player-file-delivery.sites.spec.ts';
@@ -307,12 +306,6 @@ export function readWebViewFacts(root, { capacitor, capacitorSource, manifestSou
   const systemBars = capacitor.plugins.find((plugin) => plugin.name === 'SystemBars')?.settings?.style ?? null;
   const backButtonSource = read(BACK_BUTTON_SERVICE);
   const backButton = parseTs(backButtonSource, BACK_BUTTON_SERVICE);
-  const { record: appConfig } = readAppConfigTargets(root);
-  const suppliesWebClientId = (id) => {
-    const cell = appConfig.targets.find((target) => target.id === id)?.keys?.googleWebClientId;
-
-    return cell === undefined ? null : !cell.startsWith('nothing');
-  };
 
   return {
     downloads: {
@@ -376,11 +369,6 @@ export function readWebViewFacts(root, { capacitor, capacitorSource, manifestSou
         ionicBackgroundColor !== null &&
         windowBackgroundColor.toLowerCase() === ionicBackgroundColor.toLowerCase(),
     },
-    googleSignIn: {
-      apkSuppliesWebClientId: suppliesWebClientId('apk'),
-      websiteSuppliesWebClientId: suppliesWebClientId('website'),
-      gateSpecs: listFiles(root, 'src/app', (file) => file.endsWith('-google-sign-in-gate.spec.ts')).length,
-    },
   };
 }
 
@@ -390,7 +378,7 @@ const LIVE = 'optc-team-builder-brain/live-artifacts';
 
 /** The record: fixed words per capability, the facts they depend on, and where they were proven. */
 export function buildWebViewCapabilities(facts) {
-  const { downloads, origin, clipboard, backButton, systemBars, googleSignIn } = facts;
+  const { downloads, origin, clipboard, backButton, systemBars } = facts;
 
   return [
     {
@@ -440,20 +428,14 @@ export function buildWebViewCapabilities(facts) {
       derived: systemBars,
       evidence: `Before: 2026-09-24 on v0.6.5 the bars read rgb(250,250,250) on a light device and rgb(48,48,48) on a dark one. After: 2026-09-25 on a debug build of #606 (869f6tcz0) both read rgb(7,11,23) in both modes. ${LIVE}/869f6tcxz/`,
     },
-    {
-      id: 'google-sign-in',
-      capability: 'Google sign-in and Drive sync',
-      webView:
-        "The APK's app-config.js has no web client id: release-android.yml's Run Android release step supplies no APP_GOOGLE_WEB_CLIENT_ID - only the website's builds do - so GoogleAccountService.isAvailable is false in the APK.",
-      app: 'Every Google sign-in and Drive surface is gated on GoogleAccountService.isAvailable, so the APK offers Export all data and Import all data in Settings instead of a sign-in that cannot work. The gate specs pin each surface, and sign-in comes back by itself once an Android build carries the id.',
-      derived: googleSignIn,
-      configOwnedBy: 'docs/release-contract.json (appConfigByBuildTarget), readable in docs/release-secrets-register.md',
-      evidence: `Before: 2026-09-24 on v0.6.5 the side menu showed a disabled Log in row and Home offered SET UP DRIVE SYNC into a dead end. After: 2026-09-25 on a debug build of #613 (869f63gqt) there is no Log in row and Home's first action is IMPORT A FILE. ${LIVE}/869f63gp1/`,
-    },
   ];
 }
 
-const EXPECTED_IDS = ['downloads', 'web-share', 'clipboard', 'back-button', 'system-bars', 'google-sign-in'];
+/*
+ * 1amndjnq718. 'google-sign-in' was an entry until Google sign-in and Drive sync were removed on
+ * 2026-11-18: there is no sign-in left in any build for the WebView to differ on.
+ */
+const EXPECTED_IDS = ['downloads', 'web-share', 'clipboard', 'back-button', 'system-bars'];
 
 /**
  * Every place the record's words would now be untrue. The words are fixed, so a regression has
@@ -472,7 +454,6 @@ export function checkWebViewCapabilities(capabilities) {
   const clipboard = byId.get('clipboard') ?? {};
   const backButton = byId.get('back-button') ?? {};
   const systemBars = byId.get('system-bars') ?? {};
-  const googleSignIn = byId.get('google-sign-in') ?? {};
   const say = (id, fact, why) => problems.push(`${id}: ${fact} - ${why}`);
 
   if (!downloads.mainActivityRead || !downloads.capacitorBridgeRead) {
@@ -541,18 +522,6 @@ export function checkWebViewCapabilities(capabilities) {
       `the window behind the bars is ${systemBars.windowBackgroundColor ?? 'unset'} and the app is ${systemBars.ionicBackgroundColor ?? 'unknown'}`,
       'so the bars no longer match the app (869f6tcz0).',
     );
-  }
-
-  if (googleSignIn.apkSuppliesWebClientId !== false) {
-    say(
-      'google-sign-in',
-      "release-android.yml's APK build now supplies APP_GOOGLE_WEB_CLIENT_ID, or it could not be read",
-      'so "no sign-in in the APK" is no longer known to be true. Prove sign-in on the emulator, then rewrite this entry.',
-    );
-  }
-
-  if (!(googleSignIn.gateSpecs > 0)) {
-    say('google-sign-in', 'no *-google-sign-in-gate.spec.ts exists', 'nothing pins the gating this entry describes.');
   }
 
   return problems;

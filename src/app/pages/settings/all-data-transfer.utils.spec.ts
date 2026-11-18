@@ -266,6 +266,36 @@ describe('All data transfer helpers', () => {
     });
   });
 
+  /*
+   * 1amndjnq718. Google Drive sync was removed on 2026-11-18. The backup it left in a player's
+   * Drive, `optc-all-data.latest.json`, is this same bundle written the way DriveBackupService
+   * wrote it - pretty-printed with a trailing newline - so Import all data must take it as it is.
+   */
+  it('accepts the backup file the removed Drive sync left in Google Drive', () => {
+    const driveBackup =
+      JSON.stringify(
+        buildAllDataTransferPayload(
+          {
+            favorites: { characters: [{ number: 1001, name: 'Luffy' }] },
+            savedTeams: {
+              schemaVersion: 1,
+              source: 'saved-teams',
+              exportedAt: '2026-09-25T10:00:00.000Z',
+              teams: [],
+            },
+          },
+          '2026-09-25T10:00:00.000Z',
+        ),
+        null,
+        2,
+      ) + '\n';
+
+    expect(parseAllDataImportCandidate(driveBackup)).toMatchObject({
+      kind: 'all-data',
+      payload: expect.objectContaining({ source: 'all-data', exportedAt: '2026-09-25T10:00:00.000Z' }),
+    });
+  });
+
   it('detects a partial all-data bundle', () => {
     const result = parseAllDataImportCandidate(
       JSON.stringify({
