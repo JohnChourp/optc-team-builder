@@ -31,6 +31,12 @@ a key being regenerated "to be safe". A register is what stops that decision bei
 > its first step (see the correction below). `release-android.yml` now uses `github.token`, which is
 > enough: the `main` ruleset only forbids force pushes and deletion, and the workflow has
 > `contents: write`. Not yet proved by a real run - the next release is the proof.
+>
+> **2026-11-18, the same task: `APP_GOOGLE_WEB_CLIENT_ID` was deleted** on the owner's word, from
+> the repository and the `github-pages` environment. Nothing on `main` read it, only comments and
+> docs. `gh secret list` now shows five repository secrets (the four signing ones and
+> `APP_GA4_MEASUREMENT_ID`) and only `APP_GA4_MEASUREMENT_ID` in `github-pages`. Its OAuth client
+> in Google Cloud is still to be disabled - the owner's action.
 
 The subtask that opened this said five. There are **eight**. The register exists partly because
 the count itself was wrong in three places.
@@ -48,7 +54,7 @@ analytics secret `APP_GA`, a name no workflow reads.
 | `ANDROID_SIGNING_KEY_ALIAS` | `release-android.yml` | names the key inside it | tied to the keystore |
 | `ANDROID_SIGNING_KEY_PASSWORD` | `release-android.yml` | opens that key | tied to the keystore |
 | `RELEASE_PUSH_TOKEN` | **deleted 2026-11-18**; was `release-android.yml` and the sibling checkout of the manual `docs-integrity.yml` | pushed the release commit and tag to `main` | **expiry stopped every release from 2026-10-02** - see below |
-| `APP_GOOGLE_WEB_CLIENT_ID` | nothing since 2026-11-18 (was the website build) | was Google sign-in and Drive sync | none - unused |
+| `APP_GOOGLE_WEB_CLIENT_ID` | **deleted 2026-11-18**; was the website build | was Google sign-in and Drive sync | none - unused |
 | `APP_GOOGLE_IOS_CLIENT_ID` | nothing since 2026-11-18 | was the iOS OAuth client id | **does not exist** - see below |
 | `APP_GA4_MEASUREMENT_ID` | the builds in [the table below](#which-app-configjs-each-build-gets) - the website, not the APK | analytics id | analytics stops; nothing player-facing breaks |
 
