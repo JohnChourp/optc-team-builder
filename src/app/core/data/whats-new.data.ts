@@ -31,6 +31,40 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.8.0',
+    date: '2026-11-18',
+    userVisible: true,
+    headline: {
+      en: 'No more Google sign-in: your data moves with a file, and your old Drive backup imports in Settings',
+      el: 'Χωρίς σύνδεση με Google: τα δεδομένα σου μεταφέρονται με αρχείο, και το παλιό backup του Drive εισάγεται στις Ρυθμίσεις',
+    },
+    summaryEn:
+      'The app no longer signs in to Google and no longer syncs with Google Drive. Your teams, boxes and everything else stay on this device, and Export all data and Import all data in Settings move them to another one. If you used Drive sync, your last backup is still in your Google Drive, in the OPTC Team Builder folder: download it and import it with Import all data on the All Data card in Settings. Teams, boxes and your other lists are added to what the device already has; only the boost list is replaced by the one in the backup. The app also deletes the Google sign-in it kept on your device.',
+    summaryEl:
+      'Η εφαρμογή δεν συνδέεται πια με Google και δεν συγχρονίζεται πια με το Google Drive. Οι ομάδες, τα boxes και όλα τα υπόλοιπα μένουν σε αυτή τη συσκευή, και η Εξαγωγή όλων και η Εισαγωγή όλων στις Ρυθμίσεις τα μεταφέρουν σε άλλη. Αν είχες συγχρονισμό Drive, το τελευταίο σου backup είναι ακόμα στο Google Drive σου, στον φάκελο OPTC Team Builder: κατέβασέ το και κάνε το εισαγωγή με την Εισαγωγή όλων στην κάρτα All Data των Ρυθμίσεων. Ομάδες, boxes και οι άλλες λίστες σου προστίθενται σε ό,τι έχει ήδη η συσκευή· μόνο η λίστα boost αντικαθίσταται από αυτή του backup. Η εφαρμογή σβήνει επίσης τη σύνδεση Google που κρατούσε στη συσκευή σου.',
+    added: [
+      {
+        en: 'The **All Data** card in **Settings** tells you where your old **Google Drive** backup is and how to import it, and the data panel on **Home** says the same.',
+        el: 'Η κάρτα **All Data** στις **Ρυθμίσεις** σου λέει πού είναι το παλιό σου backup στο **Google Drive** και πώς το εισάγεις, και το ίδιο λέει και η κάρτα δεδομένων στην **Αρχική**.',
+      },
+    ],
+    improved: [
+      {
+        en: 'The **Log in** row is gone from the **side menu**, and the **Account** screen is gone with it. An old link to it opens **Settings** instead.',
+        el: 'Η γραμμή **Σύνδεση** έφυγε από το **πλαϊνό μενού**, και μαζί της η οθόνη **Λογαριασμός**. Ένας παλιός σύνδεσμος προς αυτή ανοίγει πλέον τις **Ρυθμίσεις**.',
+      },
+      {
+        en: 'The card **This install is empty** on **Home** now offers only **Import a file**, and says where a former Drive user finds their backup.',
+        el: 'Η κάρτα **Αυτή η εγκατάσταση είναι άδεια** στην **Αρχική** προσφέρει πλέον μόνο **Εισαγωγή αρχείου**, και λέει πού βρίσκει το backup του όποιος είχε συγχρονισμό Drive.',
+      },
+      {
+        en: 'The **Privacy Policy** no longer describes Google sign-in or Google Drive backups.',
+        el: 'Η **Πολιτική απορρήτου** δεν περιγράφει πια σύνδεση με Google ούτε backups στο Google Drive.',
+      },
+    ],
+    fixed: [],
+  },
+  {
     version: '0.7.0',
     date: '2026-09-25',
     userVisible: true,
