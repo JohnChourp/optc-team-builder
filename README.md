@@ -394,9 +394,9 @@ Required repository or environment secrets:
 - `ANDROID_SIGNING_KEY_ALIAS`
 - `ANDROID_SIGNING_KEY_PASSWORD`
 
-Optional secret when branch protection blocks `GITHUB_TOKEN` pushes:
-
-- `RELEASE_PUSH_TOKEN`
+`RELEASE_PUSH_TOKEN` was deleted on 2026-11-18: the release uses `github.token`, which the `main`
+ruleset allows. Add a token back only if `main` ever gains a rule that blocks `GITHUB_TOKEN` pushes -
+and renew it before it expires, because an expired token stops every release.
 
 Optional Pages secret for GA4 injection at build time:
 

@@ -25,6 +25,12 @@ a key being regenerated "to be safe". A register is what stops that decision bei
 > no build reads `APP_GOOGLE_WEB_CLIENT_ID` or `APP_GOOGLE_IOS_CLIENT_ID` any more. The web one can be
 > deleted from the repository and the `github-pages` environment, and its OAuth client disabled in
 > Google Cloud - both are the owner's actions. The rows below keep the history.
+>
+> **2026-11-18, the same task: `RELEASE_PUSH_TOKEN` was deleted** on the owner's word, so five
+> remain. It had expired, and every `Release Android` run from 2026-10-02 to 2026-11-18 stopped at
+> its first step (see the correction below). `release-android.yml` now uses `github.token`, which is
+> enough: the `main` ruleset only forbids force pushes and deletion, and the workflow has
+> `contents: write`. Not yet proved by a real run - the next release is the proof.
 
 The subtask that opened this said five. There are **eight**. The register exists partly because
 the count itself was wrong in three places.
@@ -41,7 +47,7 @@ analytics secret `APP_GA`, a name no workflow reads.
 | `ANDROID_SIGNING_STORE_PASSWORD` | `release-android.yml` | opens that keystore | tied to the keystore |
 | `ANDROID_SIGNING_KEY_ALIAS` | `release-android.yml` | names the key inside it | tied to the keystore |
 | `ANDROID_SIGNING_KEY_PASSWORD` | `release-android.yml` | opens that key | tied to the keystore |
-| `RELEASE_PUSH_TOKEN` | `release-android.yml` | pushes the release commit and tag to `main` | **expiry breaks the unattended nightly chain** - see below |
+| `RELEASE_PUSH_TOKEN` | **deleted 2026-11-18**; was `release-android.yml` and the sibling checkout of the manual `docs-integrity.yml` | pushed the release commit and tag to `main` | **expiry stopped every release from 2026-10-02** - see below |
 | `APP_GOOGLE_WEB_CLIENT_ID` | nothing since 2026-11-18 (was the website build) | was Google sign-in and Drive sync | none - unused |
 | `APP_GOOGLE_IOS_CLIENT_ID` | nothing since 2026-11-18 | was the iOS OAuth client id | **does not exist** - see below |
 | `APP_GA4_MEASUREMENT_ID` | the builds in [the table below](#which-app-configjs-each-build-gets) - the website, not the APK | analytics id | analytics stops; nothing player-facing breaks |
@@ -80,6 +86,19 @@ The four it does not validate fail later and differently:
   nightly chain dying unwatched - and it is worth knowing, because it also means **an expired
   token produces no signal at all.** If the fallback's own permissions are ever insufficient the
   failure appears at the push, at the end, after the APK is built.
+
+  **Corrected 2026-11-18 (1amndjnq718): an expired token did stop every release.** The fallback
+  runs only when the secret is *empty*. An expired but non-empty token is exported as `GH_TOKEN`,
+  `gh auth status` rejects it, and `release-and-tag.sh --require-gh-release` stops with
+  *"gh auth is unavailable"* before anything is built. Measured: every run from 2026-10-02 to
+  2026-11-18 failed that way, so no release - and none of the daily data chain - shipped after
+  v0.7.0 until v0.8.0 was released locally. The secret was then deleted, so the fallback is what
+  runs now.
+
+  The manual `docs-integrity.yml` read the private brain with the same secret. `github.token`
+  cannot read another private repository, so a manual dispatch of it now fails at its sibling
+  checkout - as it already did once the token expired. `npm run verify:local` runs the same check
+  locally and is unaffected.
 
 ## `APP_GOOGLE_IOS_CLIENT_ID` - inert, and deliberately kept
 
