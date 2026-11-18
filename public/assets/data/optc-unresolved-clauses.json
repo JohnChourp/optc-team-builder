@@ -1,21 +1,21 @@
 {
-  "generatedAt": "2026-09-25T13:19:59.505Z",
+  "generatedAt": "2026-11-18T06:57:18.426Z",
   "sourceVersion": "36",
-  "total": 587,
-  "distinctClauses": 108,
+  "total": 594,
+  "distinctClauses": 109,
   "totals": {
-    "triggerClauses": 858,
-    "teamConditions": 301,
-    "clauses": 1159
+    "triggerClauses": 875,
+    "teamConditions": 313,
+    "clauses": 1188
   },
   "unresolvedShare": {
-    "triggerClause": 0.6061,
-    "teamConditionRawOnly": 0.2226,
-    "overall": 0.5065
+    "triggerClause": 0.6011,
+    "teamConditionRawOnly": 0.2173,
+    "overall": 0.5
   },
   "byKind": {
-    "teamConditionRawOnly": 67,
-    "triggerClause": 520
+    "teamConditionRawOnly": 68,
+    "triggerClause": 526
   },
   "items": [
     {
@@ -45,7 +45,7 @@
     {
       "kind": "teamConditionRawOnly",
       "clause": "this character is your Captain",
-      "instances": 52,
+      "instances": 53,
       "characterIds": [
         4149,
         4150,
@@ -57,7 +57,7 @@
     {
       "kind": "triggerClause",
       "clause": "performs EXCELLENT with their Action Special",
-      "instances": 52,
+      "instances": 53,
       "characterIds": [
         4149,
         4150,
@@ -104,6 +104,18 @@
     },
     {
       "kind": "triggerClause",
+      "clause": "when they are rewinded",
+      "instances": 17,
+      "characterIds": [
+        2690,
+        3060,
+        3060,
+        3060,
+        3115
+      ]
+    },
+    {
+      "kind": "triggerClause",
       "clause": "if they have a [WANO] orb",
       "instances": 15,
       "characterIds": [
@@ -112,18 +124,6 @@
         3676,
         3879,
         3879
-      ]
-    },
-    {
-      "kind": "triggerClause",
-      "clause": "when they are rewinded",
-      "instances": 14,
-      "characterIds": [
-        2690,
-        3060,
-        3060,
-        3060,
-        3115
       ]
     },
     {
@@ -579,6 +579,15 @@
       "characterIds": [
         3994,
         3995
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "if they have a [QCK] [TND] or [RCV] orb",
+      "instances": 2,
+      "characterIds": [
+        4674,
+        4675
       ]
     },
     {
