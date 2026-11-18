@@ -57,7 +57,6 @@ drifts and when a component is reachable by neither a route nor a template.
 <!-- component-inventory:start -->
 | Component | Area | Reached by | Spec | Style panels |
 | --- | --- | --- | :--: | :--: |
-| `AccountPage` | page | route | yes | yes |
 | `AutoTeamBuilderPage` | page | route | yes | yes |
 | `AutoTeamBuilderRumblePage` | page | route | yes | yes |
 | `CaptainCoveragePage` | page | route | yes | yes |

@@ -18,7 +18,6 @@ import {
   cogOutline,
   flashOutline,
   gridOutline,
-  logInOutline,
   saveOutline,
   searchOutline,
   shieldCheckmarkOutline,
@@ -26,10 +25,6 @@ import {
   sparklesOutline,
   personCircleOutline,
 } from 'ionicons/icons';
-import {
-  GoogleAccountService,
-  type GoogleAccountProfile,
-} from '../../core/services/google-account.service';
 import { HomeStylePanelsComponent } from './home-style-panels.component';
 import { UserDataTransferService } from '../../core/services/user-data-transfer.service';
 import {
@@ -77,7 +72,6 @@ interface HomeHeroCharacter {
   styleUrl: './home.page.scss',
 })
 export class HomePage {
-  private readonly googleAccount = inject(GoogleAccountService);
   private readonly userDataTransfer = inject(UserDataTransferService);
 
   /**
@@ -93,7 +87,6 @@ export class HomePage {
     shouldShowFirstRunTransferNotice({
       summary: this.userDataTransfer.getSyncScopeSummary(),
       dismissed: this.transferNoticeDismissed(),
-      signedIn: this.googleAccountSignedIn(),
     }),
   );
 
@@ -117,12 +110,6 @@ export class HomePage {
   }
 
   public readonly accountIcon = personCircleOutline;
-  public readonly accountRoute = '/tabs/account';
-  public readonly googleAccountAvailable = this.googleAccount.isAvailable;
-  public readonly googleAccountProfile = this.googleAccount.profile;
-  public readonly googleAccountSignedIn = this.googleAccount.isSignedIn;
-  public readonly googleAccountStatus = this.googleAccount.status;
-  public readonly loginIcon = logInOutline;
   public readonly sparklesIcon = sparklesOutline;
   public readonly searchIcon = searchOutline;
   public readonly shieldIcon = shieldCheckmarkOutline;
@@ -245,32 +232,4 @@ export class HomePage {
     'workflow.steps.save',
   ];
   public readonly checkIcon = checkmarkCircleOutline;
-
-  public getProfileDisplayName(profile: GoogleAccountProfile): string {
-    return profile.name ?? profile.email ?? profile.id;
-  }
-
-  public getProfileInitials(profile: GoogleAccountProfile): string {
-    const source = this.getProfileDisplayName(profile);
-    const initials = source
-      .split(/[\s@._-]+/u)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0]?.toLocaleUpperCase())
-      .join('');
-
-    return initials || '?';
-  }
-
-  public async signInWithGoogle(): Promise<void> {
-    if (!this.googleAccountAvailable()) {
-      return;
-    }
-
-    try {
-      await this.googleAccount.signIn(false);
-    } catch {
-      return;
-    }
-  }
 }

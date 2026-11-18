@@ -2,10 +2,6 @@ declare global {
   interface Window {
     __appConfig?: {
       ga4MeasurementId?: string;
-      googleDriveFolderName?: string;
-      googleDriveBackendUrl?: string;
-      googleIosClientId?: string;
-      googleWebClientId?: string;
     };
     __googleAnalyticsBootstrap?: {
       initialized?: boolean;

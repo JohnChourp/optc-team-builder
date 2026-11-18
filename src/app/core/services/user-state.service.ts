@@ -1,6 +1,5 @@
-import { Injectable, Optional, computed, signal } from '@angular/core';
+import { Injectable, computed, signal } from '@angular/core';
 
-import { pendingFlagStorageKeys } from '../data/browser-storage-keys.data';
 import {
   BUILT_IN_CREW_FORGE_IMAGE_PROFILES,
   BUILT_IN_CREW_FORGE_IMAGE_PROFILE_IDS,
@@ -51,7 +50,6 @@ import {
 import { type SavedRumbleOpponent } from '../models/saved-rumble-opponent.models';
 import { AppI18nService } from './app-i18n.service';
 import { toBrowserStoragePersistenceError } from './browser-storage-error.utils';
-import { DriveSyncStateService } from './drive-sync-state.service';
 import { PreferencesAdapterService } from './preferences-adapter.service';
 import {
   appendAbilityRequirementsFromEnemyMechanics,
@@ -107,15 +105,6 @@ const AUTO_TEAM_BUILDER_DEFAULT_WORKER_PREFERENCE: AutoTeamBuilderWorkerPreferen
   mode: 'auto',
   manualCount: 7,
 };
-/**
- * 869f63gug. The keys whose write raises "Local changes pending", read from the storage-key
- * register instead of listed here. The hand-kept list named six keys, so saved Rumble opponents,
- * the boost list and Crew Forge profiles travelled in every backup and never raised the flag.
- */
-const LOCAL_CHANGE_PENDING_KEYS: ReadonlySet<string> = new Set(
-  pendingFlagStorageKeys().map((record) => record.key),
-);
-
 export type AutoTeamBuilderWorkerMode = 'auto' | 'manual';
 
 /** The two builders with a first-visit "How this page works" card (869exmkpw). */
@@ -241,7 +230,6 @@ export class UserStateService {
   public constructor(
     private readonly i18n: AppI18nService,
     private readonly preferences: PreferencesAdapterService,
-    @Optional() private readonly driveSyncState?: DriveSyncStateService,
   ) {}
 
   public async ready(): Promise<void> {
@@ -718,19 +706,6 @@ export class UserStateService {
     await this.persistJson(CREW_FORGE_LAST_IMAGE_PROFILE_ID_KEY, normalizedProfile.id);
 
     return normalizedProfile;
-  }
-
-  /**
-   * 869f12x4p. Drive "restore" replaces local data with the backup's, scope by
-   * scope. Now that the payload carries Crew Forge profiles, leaving them out of
-   * the clear would make restore merge them instead - a device that does not
-   * match the backup it was just restored from.
-   */
-  public async clearAllCrewForgeImageProfiles(): Promise<void> {
-    await this.readyCrewForgeImageProfiles();
-    await this.replaceCrewForgeImageProfiles([]);
-    this.crewForgeLastImageProfileId.set(null);
-    await this.persistJson(CREW_FORGE_LAST_IMAGE_PROFILE_ID_KEY, null);
   }
 
   public async deleteCrewForgeImageProfile(profileId: string): Promise<void> {
@@ -1328,11 +1303,6 @@ export class UserStateService {
     await this.replaceSavedRumbleOpponents(next);
   }
 
-  public async clearAllSavedRumbleOpponents(): Promise<void> {
-    await this.readySavedRumbleOpponents();
-    await this.replaceSavedRumbleOpponents([]);
-  }
-
   public async mergeImportedRumbleOpponents(
     opponents: SavedRumbleOpponent[],
   ): Promise<{ addedCount: number; updatedCount: number; opponents: SavedRumbleOpponent[] }> {
@@ -1367,11 +1337,6 @@ export class UserStateService {
     await this.replaceSavedRumbleOpponents(next);
 
     return { addedCount, updatedCount, opponents: next };
-  }
-
-  public async clearAllSavedRumbleTeams(): Promise<void> {
-    await this.readySavedRumbleTeams();
-    await this.replaceSavedRumbleTeams([]);
   }
 
   public async mergeImportedRumbleTeams(
@@ -1551,7 +1516,6 @@ export class UserStateService {
 
   private async persistJson(key: string, value: unknown): Promise<void> {
     await this.writeJsonToPreferences(key, value);
-    await this.markSyncScopedLocalChange(key);
   }
 
   private async writeJsonToPreferences(key: string, value: unknown): Promise<void> {
@@ -1566,18 +1530,9 @@ export class UserStateService {
     }
   }
 
-  private async markSyncScopedLocalChange(key: string): Promise<void> {
-    if (!this.driveSyncState || !LOCAL_CHANGE_PENDING_KEYS.has(key)) {
-      return;
-    }
-
-    await this.driveSyncState.markLocalChange();
-  }
-
   private async replaceSavedTeams(teams: SavedTeam[]): Promise<void> {
     await this.writeJsonToPreferences(SAVED_TEAMS_KEY, teams);
     this.savedTeams.set(teams);
-    await this.markSyncScopedLocalChange(SAVED_TEAMS_KEY);
   }
 
   private async mutateSavedTeams<Result>(

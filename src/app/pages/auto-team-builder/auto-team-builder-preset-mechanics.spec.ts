@@ -12,7 +12,6 @@ import {
   type AutoBuildEnemyMechanicRequirement,
 } from '../../core/models/auto-team-builder-ability.models';
 import { type SavedEnemy } from '../../core/models/optc.models';
-import { DriveSyncStateService } from '../../core/services/drive-sync-state.service';
 import {
   deriveAbilityRequirementsFromEnemyMechanics,
   mergeAbilityRequirements,
@@ -195,8 +194,7 @@ async function loaderBattles(enemy: EnemyRequirements): Promise<AutoBuildBattleR
     ],
   });
   const i18n = { translate: (key: string) => key };
-  const driveSyncState = new DriveSyncStateService(preferences as never);
-  const userState = new UserStateService(i18n as never, preferences as never, driveSyncState);
+  const userState = new UserStateService(i18n as never, preferences as never);
 
   await userState.readySavedEnemies();
 

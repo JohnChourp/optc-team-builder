@@ -161,40 +161,9 @@
         "key": "ga4MeasurementId",
         "variable": "APP_GA4_MEASUREMENT_ID",
         "whenNotSupplied": "empty"
-      },
-      {
-        "key": "googleDriveBackendUrl",
-        "variable": "APP_GOOGLE_DRIVE_BACKEND_URL",
-        "whenNotSupplied": "empty"
-      },
-      {
-        "key": "googleDriveFolderName",
-        "variable": "APP_GOOGLE_DRIVE_FOLDER_NAME",
-        "whenNotSupplied": "the writer's default, not empty"
-      },
-      {
-        "key": "googleIosClientId",
-        "variable": "APP_GOOGLE_IOS_CLIENT_ID",
-        "whenNotSupplied": "empty"
-      },
-      {
-        "key": "googleWebClientId",
-        "variable": "APP_GOOGLE_WEB_CLIENT_ID",
-        "whenNotSupplied": "empty"
       }
     ],
-    "gates": [
-      {
-        "key": "googleIosClientId",
-        "flag": "--require-google-ios-client-id",
-        "variable": "APP_REQUIRE_GOOGLE_IOS_CLIENT_ID"
-      },
-      {
-        "key": "googleWebClientId",
-        "flag": "--require-google-web-client-id",
-        "variable": "APP_REQUIRE_GOOGLE_WEB_CLIENT_ID"
-      }
-    ],
+    "gates": [],
     "targets": [
       {
         "id": "website",
@@ -203,7 +172,7 @@
         "reachesPlayers": true,
         "buildScript": "build:pages",
         "writerRunBy": [
-          "config:app:web-strict"
+          "config:app"
         ],
         "steps": [
           {
@@ -219,18 +188,9 @@
             "environment": "github-pages"
           }
         ],
-        "requires": [
-          {
-            "key": "googleWebClientId",
-            "by": "--require-google-web-client-id"
-          }
-        ],
+        "requires": [],
         "keys": {
-          "ga4MeasurementId": "secret APP_GA4_MEASUREMENT_ID",
-          "googleDriveBackendUrl": "nothing - empty",
-          "googleDriveFolderName": "nothing - the writer's default",
-          "googleIosClientId": "secret APP_GOOGLE_IOS_CLIENT_ID",
-          "googleWebClientId": "secret APP_GOOGLE_WEB_CLIENT_ID"
+          "ga4MeasurementId": "secret APP_GA4_MEASUREMENT_ID"
         }
       },
       {
@@ -252,11 +212,7 @@
         ],
         "requires": [],
         "keys": {
-          "ga4MeasurementId": "nothing - empty",
-          "googleDriveBackendUrl": "nothing - empty",
-          "googleDriveFolderName": "nothing - the writer's default",
-          "googleIosClientId": "nothing - empty",
-          "googleWebClientId": "nothing - empty"
+          "ga4MeasurementId": "nothing - empty"
         }
       },
       {
@@ -266,7 +222,7 @@
         "reachesPlayers": false,
         "buildScript": "build:pages",
         "writerRunBy": [
-          "config:app:web-strict"
+          "config:app"
         ],
         "steps": [
           {
@@ -276,18 +232,9 @@
             "environment": null
           }
         ],
-        "requires": [
-          {
-            "key": "googleWebClientId",
-            "by": "--require-google-web-client-id"
-          }
-        ],
+        "requires": [],
         "keys": {
-          "ga4MeasurementId": "secret APP_GA4_MEASUREMENT_ID",
-          "googleDriveBackendUrl": "nothing - empty",
-          "googleDriveFolderName": "nothing - the writer's default",
-          "googleIosClientId": "secret APP_GOOGLE_IOS_CLIENT_ID",
-          "googleWebClientId": "secret APP_GOOGLE_WEB_CLIENT_ID, else a fallback written in the workflow"
+          "ga4MeasurementId": "secret APP_GA4_MEASUREMENT_ID"
         }
       },
       {
@@ -297,7 +244,7 @@
         "reachesPlayers": false,
         "buildScript": "build:pages",
         "writerRunBy": [
-          "config:app:web-strict"
+          "config:app"
         ],
         "steps": [
           {
@@ -307,18 +254,9 @@
             "environment": "github-pages"
           }
         ],
-        "requires": [
-          {
-            "key": "googleWebClientId",
-            "by": "--require-google-web-client-id"
-          }
-        ],
+        "requires": [],
         "keys": {
-          "ga4MeasurementId": "secret APP_GA4_MEASUREMENT_ID",
-          "googleDriveBackendUrl": "nothing - empty",
-          "googleDriveFolderName": "nothing - the writer's default",
-          "googleIosClientId": "secret APP_GOOGLE_IOS_CLIENT_ID",
-          "googleWebClientId": "secret APP_GOOGLE_WEB_CLIENT_ID"
+          "ga4MeasurementId": "secret APP_GA4_MEASUREMENT_ID"
         }
       }
     ]

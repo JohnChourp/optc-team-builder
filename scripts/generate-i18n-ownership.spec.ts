@@ -65,7 +65,6 @@ describe('i18n namespace ownership', () => {
 
     expect(settings?.kind).toBe('shared');
     expect(settings?.consumers).toContain('src/app/pages/faq/faq.data.ts');
-    expect(settings?.consumers).toContain('src/app/pages/account/account.page.html');
   });
 
   it('goes red on a namespace nothing renders', () => {

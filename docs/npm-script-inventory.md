@@ -96,8 +96,7 @@ and when a `test:` script is not a lane.
 | `cap:copy` | documented · ios-platform-footprint.md | a documented manual step |
 | `cap:sync` | documented · ios-platform-footprint.md | a documented manual step |
 | `components:inventory` | npm script · test:component-inventory | `test:component-inventory` |
-| `config:app` | npm script · build, start, watch | `build`, `start`, `watch` |
-| `config:app:web-strict` | npm script · build:pages | `build:pages` |
+| `config:app` | npm script · build, build:pages, start, watch | `build`, `build:pages`, `start`, `watch` |
 | `content:ladder` | npm script · test:content-ladder | `test:content-ladder` |
 | `data:apply-manual` | documented · maintainer-validation-guide.md | a documented manual step |
 | `data:backtest-release` | workflow · check-optc-db-release.yml | the check-optc-db-release.yml workflow |
@@ -172,7 +171,6 @@ and when a `test:` script is not a lane.
 | `seo:indexnow` | workflow · deploy-pages.yml, release-android.yml | the deploy-pages.yml, release-android.yml workflow |
 | `seo:pages` | npm script · build:pages | `build:pages` |
 | `seo:public-assets` | npm script · test:public-asset-shadowing | `test:public-asset-shadowing` |
-| `server:drive-sync` | documented · README.md | a documented manual step |
 | `shared:component-map` | npm script · test:component-map | `test:component-map` |
 | `shared:picker-dismissal` | npm script · test:picker-dismissal | `test:picker-dismissal` |
 | `start` | script file · audit-i18n.mjs, auto-team-builder-ability-parser.mjs, benchmark-dataset.mjs, build-dataset-binary.mjs, check-app-config.mjs, check-component-inventory.mjs, check-docs-commands.spec.ts, check-docs-integrity.mjs, check-docs-integrity.spec.ts, check-github-ci-triggers.mjs, check-ionic-accessible-names.mjs, check-ionic-overlay-contrast.mjs, check-modal-dialog-labels.mjs, check-optc-upstream-monitor.mjs, check-secrets.mjs, check-style-panel-inventory.mjs, check-tag-picker-panel-scoping.spec.ts, generate-dataset-provenance.mjs, generate-dataset-provenance.spec.ts, generate-release-contract.mjs, generate-seo-pages.mjs, import-optc-data.spec.ts, app-config-targets.mjs, captain-ability-coverage.mjs, captain-ability-coverage.spec.ts, dataset-binary.mjs, dataset-provenance.mjs, enemy-mechanic-vocabulary.mjs, import-pipeline.mjs, suite-environments.mjs, webview-capabilities.mjs, perf-ability-filters.mjs, perf-budget-report.mjs, perf-explanation-compare.mjs, perf-memory-pressure.mjs, perf-mobile-pickers.mjs | whatever audit-i18n.mjs, auto-team-builder-ability-parser.mjs, benchmark-dataset.mjs, build-dataset-binary.mjs, check-app-config.mjs, check-component-inventory.mjs, check-docs-commands.spec.ts, check-docs-integrity.mjs, check-docs-integrity.spec.ts, check-github-ci-triggers.mjs, check-ionic-accessible-names.mjs, check-ionic-overlay-contrast.mjs, check-modal-dialog-labels.mjs, check-optc-upstream-monitor.mjs, check-secrets.mjs, check-style-panel-inventory.mjs, check-tag-picker-panel-scoping.spec.ts, generate-dataset-provenance.mjs, generate-dataset-provenance.spec.ts, generate-release-contract.mjs, generate-seo-pages.mjs, import-optc-data.spec.ts, app-config-targets.mjs, captain-ability-coverage.mjs, captain-ability-coverage.spec.ts, dataset-binary.mjs, dataset-provenance.mjs, enemy-mechanic-vocabulary.mjs, import-pipeline.mjs, suite-environments.mjs, webview-capabilities.mjs, perf-ability-filters.mjs, perf-budget-report.mjs, perf-explanation-compare.mjs, perf-memory-pressure.mjs, perf-mobile-pickers.mjs drives |
@@ -210,7 +208,6 @@ and when a `test:` script is not a lane.
 | `test:docs-commands` | lane · docs-commands | the `docs-commands` lane |
 | `test:docs-drift` | lane · docs-drift | the `docs-drift` lane |
 | `test:docs-integrity` | lane · docs-integrity | the `docs-integrity` lane |
-| `test:drive-sync-server` | script file · ci-check-routing.mjs | whatever ci-check-routing.mjs drives |
 | `test:e2e` | script file · playwright-e2e-runner.mjs, run-playwright-e2e.mjs | whatever playwright-e2e-runner.mjs, run-playwright-e2e.mjs drives |
 | `test:e2e-triage` | lane · e2e-triage | the `e2e-triage` lane |
 | `test:e2e:chromium` | npm script · test:post-merge-smoke | `test:post-merge-smoke` |

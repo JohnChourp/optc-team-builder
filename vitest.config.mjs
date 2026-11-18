@@ -64,22 +64,6 @@ export default {
       {
         plugins: [stripMjsShebang],
         test: {
-          /*
-           * The Drive-sync backend, FROZEN out of the default checks on 2026-09-20
-           * (869f13c92) with the code kept and its suite "still runnable by hand".
-           * It needs a project of its own for that to stay true: without one,
-           * `npm run test:drive-sync-server` matches no project and reports no test
-           * files, which is the silent shape this whole change exists to remove. No
-           * lane runs it; `test:drive-sync-server` does.
-           */
-          name: 'server',
-          environment: 'node',
-          include: ['server/**/*.spec.mjs'],
-        },
-      },
-      {
-        plugins: [stripMjsShebang],
-        test: {
           name: 'src',
           // The same environment and setup file `@angular/build:unit-test` gives the
           // `angular` lane, so a spec cannot tell which of the two started it.

@@ -6,23 +6,14 @@ const envFilePaths = [
   resolve(import.meta.dirname, "../.env.local"),
 ];
 const outputPath = resolve(import.meta.dirname, "../public/app-config.js");
-const requiredFlags = parseRequiredFlags(process.argv.slice(2));
 
 await loadEnvFiles(envFilePaths);
 
+/*
+ * 1amndjnq718. Google sign-in and Drive sync were removed on 2026-11-18, and with them the four
+ * Google keys this file used to write. The GA4 measurement id is the only key left.
+ */
 const ga4MeasurementId = normalizeGa4MeasurementId(process.env["APP_GA4_MEASUREMENT_ID"]);
-const googleDriveBackendUrl = normalizeOptionalUrl(process.env["APP_GOOGLE_DRIVE_BACKEND_URL"]);
-const googleDriveFolderName = normalizeDriveFolderName(process.env["APP_GOOGLE_DRIVE_FOLDER_NAME"]);
-const googleIosClientId = normalizeGoogleClientId(process.env["APP_GOOGLE_IOS_CLIENT_ID"]);
-const googleWebClientId = normalizeGoogleClientId(process.env["APP_GOOGLE_WEB_CLIENT_ID"]);
-
-reportMissingGoogleConfig({
-  googleDriveBackendUrl,
-  googleIosClientId,
-  googleWebClientId,
-  requireGoogleIosClientId: requiredFlags.requireGoogleIosClientId,
-  requireGoogleWebClientId: requiredFlags.requireGoogleWebClientId,
-});
 
 await mkdir(resolve(import.meta.dirname, "../public"), { recursive: true });
 await writeFile(
@@ -30,10 +21,6 @@ await writeFile(
   `window.__appConfig = ${JSON.stringify(
     {
       ga4MeasurementId,
-      googleDriveBackendUrl,
-      googleDriveFolderName,
-      googleIosClientId,
-      googleWebClientId,
     },
     null,
     2,
@@ -113,63 +100,6 @@ function parseDotenvValue(rawValue) {
   return rawValue;
 }
 
-function parseRequiredFlags(argv) {
-  return {
-    requireGoogleIosClientId:
-      argv.includes("--require-google-ios-client-id") ||
-      parseBooleanEnv(process.env["APP_REQUIRE_GOOGLE_IOS_CLIENT_ID"]),
-    requireGoogleWebClientId:
-      argv.includes("--require-google-web-client-id") ||
-      parseBooleanEnv(process.env["APP_REQUIRE_GOOGLE_WEB_CLIENT_ID"]),
-  };
-}
-
-function parseBooleanEnv(value) {
-  return /^(1|true|yes|on)$/iu.test(String(value ?? "").trim());
-}
-
-function reportMissingGoogleConfig({
-  googleDriveBackendUrl,
-  googleIosClientId,
-  googleWebClientId,
-  requireGoogleIosClientId,
-  requireGoogleWebClientId,
-}) {
-  const missingKeys = [];
-
-  if (googleWebClientId.length === 0 && googleDriveBackendUrl.length === 0) {
-    missingKeys.push("APP_GOOGLE_WEB_CLIENT_ID");
-  }
-
-  if (googleIosClientId.length === 0) {
-    missingKeys.push("APP_GOOGLE_IOS_CLIENT_ID");
-  }
-
-  if (missingKeys.length === 0) {
-    return;
-  }
-
-  const message =
-    `[config:app] Google sync client IDs missing: ${missingKeys.join(", ")}. ` +
-    `The Settings page will show Google Drive sync as unavailable on affected platforms. ` +
-    `Set the values in process env, .env, or .env.local.`;
-
-  console.warn(message);
-
-  if (
-    (requireGoogleWebClientId &&
-      googleWebClientId.length === 0 &&
-      googleDriveBackendUrl.length === 0) ||
-    (requireGoogleIosClientId && googleIosClientId.length === 0)
-  ) {
-    throw new Error(
-      "[config:app] Required Google sync client IDs are missing for this build. " +
-        "For GitHub Pages, provide APP_GOOGLE_WEB_CLIENT_ID as a repository or environment secret. " +
-        "For local development, copy .env.example to .env.local and fill in the Google OAuth client IDs.",
-    );
-  }
-}
-
 function normalizeGa4MeasurementId(value) {
   if (typeof value !== "string") {
     return "";
@@ -178,46 +108,4 @@ function normalizeGa4MeasurementId(value) {
   const normalizedValue = value.trim().toUpperCase();
 
   return /^G-[A-Z0-9]+$/i.test(normalizedValue) ? normalizedValue : "";
-}
-
-function normalizeGoogleClientId(value) {
-  if (typeof value !== "string") {
-    return "";
-  }
-
-  const normalizedValue = value.trim();
-
-  return /^[0-9]+[-a-z0-9_]*\.apps\.googleusercontent\.com$/i.test(normalizedValue)
-    ? normalizedValue
-    : "";
-}
-
-function normalizeDriveFolderName(value) {
-  if (typeof value !== "string") {
-    return "OPTC Team Builder";
-  }
-
-  const normalizedValue = value.trim();
-
-  return normalizedValue.length > 0 ? normalizedValue : "OPTC Team Builder";
-}
-
-function normalizeOptionalUrl(value) {
-  if (typeof value !== "string") {
-    return "";
-  }
-
-  const normalizedValue = value.trim();
-
-  if (normalizedValue.length === 0) {
-    return "";
-  }
-
-  try {
-    const url = new URL(normalizedValue);
-
-    return url.origin;
-  } catch {
-    return "";
-  }
 }

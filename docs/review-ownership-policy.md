@@ -31,7 +31,7 @@ through the available GitHub plan/API path.
 | Browser regression coverage | `e2e/`, Playwright runner/quarantine scripts | `@JohnChourp` | Flaky or missing browser coverage can hide regressions in guided build, transfer, and saved-team flows. |
 | Shared fixtures and data import | all `scripts/`, fixtures, parser/import/manual-character helpers, generated public data and image packs | `@JohnChourp` | Test fixtures, generated dataset rules, images, or manual overlays can diverge from app behavior. |
 | Major app runtime | all `src/`, all `public/`, Angular entrypoints, global styles, app routes, types, translations, PWA manifest, and brand assets | `@JohnChourp` | User-facing routing, bootstrap providers, state, copy, install metadata, and core builder behavior can change without the maintainer who owns validation context. |
-| Server and app config | `server/`, environment template, app config example, Node/runtime config files | `@JohnChourp` | Drive sync, config generation, or web build setup can break across environments. |
+| App config | environment template, app config example, Node/runtime config files | `@JohnChourp` | Config generation or web build setup can break across environments. |
 
 ## Cross-Repo Escalation
 

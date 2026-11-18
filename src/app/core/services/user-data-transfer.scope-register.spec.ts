@@ -2,7 +2,6 @@ import '@angular/compiler';
 import { describe, expect, it } from 'vitest';
 
 import { CharacterOverridesService } from './character-overrides.service';
-import { DriveSyncStateService } from './drive-sync-state.service';
 import { OptcbxImportService } from './optcbx-import.service';
 import { UserDataTransferService } from './user-data-transfer.service';
 import { UserStateService } from './user-state.service';
@@ -17,21 +16,19 @@ import {
  * 869f63gug. Which kinds of the reader's data each list covers, read from ONE register.
  *
  * Four hand-kept lists decided what happens to a player's data, and they disagreed: ready() loaded
- * 8 kinds, a restore cleared 9, the summaries counted 9 and "Local changes pending" knew 6 keys,
+ * 8 kinds, a restore cleared 9, the summaries counted 9 and the old Drive "Local changes pending" knew 6 keys,
  * while the export carried all 10. Two data-loss defects followed from the gaps (869f63gq1). The
  * lists are now a typed record per scope in UserDataTransferService, a typed record per hydration
- * domain in UserStateService, and a pending-flag key set read from `browser-storage-keys.data.ts`.
+ * domain in UserStateService. (The pending-flag key set left with Drive sync, 1amndjnq718.)
  *
  * The compiler guards the records' completeness; this spec guards what each entry DOES. It seeds
  * one stored value for every durable key the register names - a new durable key has to get one
  * here - and runs the REAL services over that store, so a loader, an export, a clear, a count or a
- * pending flag that silently does nothing turns a case red.
+ * write that silently does nothing turns a case red.
  */
 
 const STAMP = '2026-09-24T10:00:00.000Z';
 const USER_PROFILE_ID = 'crew-forge-user-profile-1';
-/* The one durable key whose write leaves the flag down. Pinned: a new exemption is a decision. */
-const PENDING_FLAG_EXEMPTIONS = ['crewForgeLastImageProfileId'];
 
 const STORED_DURABLE_VALUES: Record<string, unknown> = {
   favoriteCharacterIds: [1001],
@@ -167,9 +164,8 @@ function createDevice() {
     getShips: async () => [{ id: 9001, name: 'Going Merry' }],
   };
   const i18n = { translate: (key: string) => key };
-  const driveSyncState = new DriveSyncStateService(preferences as never);
-  const userState = new UserStateService(i18n as never, preferences as never, driveSyncState);
-  const characterOverrides = new CharacterOverridesService(preferences as never, driveSyncState);
+  const userState = new UserStateService(i18n as never, preferences as never);
+  const characterOverrides = new CharacterOverridesService(preferences as never);
   const transfer = new UserDataTransferService(
     repository as never,
     i18n as never,
@@ -178,7 +174,7 @@ function createDevice() {
     new OptcbxImportService(repository as never),
   );
 
-  return { characterOverrides, driveSyncState, preferences, transfer, userState };
+  return { characterOverrides, preferences, transfer, userState };
 }
 
 /** Every section carries its items in exactly one array; read it without the service's counters. */
@@ -188,17 +184,6 @@ function itemsIn(payload: AllDataTransferPayload, scope: string): number {
   const items = Object.values(section ?? {}).find((value) => Array.isArray(value));
 
   return Array.isArray(items) ? items.length : 0;
-}
-
-async function clearPendingFlag(device: Device): Promise<void> {
-  await device.driveSyncState.recordUpload({
-    account: null,
-    exportedAt: STAMP,
-    fileId: 'file-1',
-    folderId: 'folder-1',
-    remoteModifiedTime: STAMP,
-    remoteSummary: device.transfer.getSyncScopeSummary(),
-  });
 }
 
 const durableKeys = durableStorageKeys().map((record) => record.key);
@@ -239,77 +224,14 @@ describe("every kind of the reader's data, read from one register (869f63gug)", 
     });
   });
 
-  it('counts every scope a backup carries, once each', async () => {
-    const { transfer } = createDevice();
-    const payload = await transfer.buildAllDataPayload(STAMP);
-    const summary = transfer.getSyncScopeSummaryFromPayload(payload);
-
-    expect(Object.keys(summary)).toHaveLength(ALL_DATA_TRANSFER_SCOPES.length);
-    expect(summary).toEqual({
-      favoriteCharacterCount: 1,
-      favoriteShipCount: 1,
-      savedTeamsCount: 1,
-      savedRumbleTeamsCount: 1,
-      savedEnemiesCount: 1,
-      characterBoxesCount: 1,
-      characterOverridesCount: 1,
-      crewForgeProfilesCount: 1,
-      savedRumbleOpponentsCount: 1,
-      boostedCharacterCount: 2,
-    });
-  });
-
-  it('clears every scope, the boost list included, before a restore imports', async () => {
-    const { preferences, transfer } = createDevice();
-
-    await transfer.clearSyncScopedData();
-
-    for (const key of durableKeys) {
-      expect(JSON.parse(preferences.store.get(key) ?? 'null'), `${key} is cleared`).toSatisfy(
-        (value: unknown) => value === null || (Array.isArray(value) && value.length === 0),
-      );
-    }
-    expect(Object.values(transfer.getSyncScopeSummary()).reduce((sum, count) => sum + count)).toBe(
-      BUILT_IN_CREW_FORGE_IMAGE_PROFILES.length,
-    );
-  });
-
-  it('states a reason for every durable key that does not raise the pending flag', () => {
-    const exempt = durableStorageKeys().filter((record) => record.pendingFlagExemption);
-
-    expect(exempt.map((record) => record.key)).toEqual(PENDING_FLAG_EXEMPTIONS);
-
-    for (const record of exempt) {
-      expect(record.pendingFlagExemption?.length ?? 0, record.key).toBeGreaterThan(40);
-    }
-  });
-
-  it.each(durableKeys)(
-    'raises "Local changes pending" on a write to %s, bar an exemption',
-    async (key) => {
-      const device = createDevice();
-
-      await Promise.all([device.userState.ready(), device.characterOverrides.ready()]);
-      await clearPendingFlag(device);
-      device.preferences.writes.length = 0;
-
-      await WRITE_THROUGH_OWNER[key](device);
-
-      const raises = !PENDING_FLAG_EXEMPTIONS.includes(key);
-
-      expect(device.preferences.writes, `the writer for ${key} wrote it`).toContain(key);
-      expect(device.driveSyncState.pendingLocalChanges()).toBe(raises);
-    },
-  );
-
-  it('leaves the flag down for a device-only preference - the control', async () => {
+  it.each(durableKeys)('writes %s through its owner', async (key) => {
     const device = createDevice();
 
-    await device.userState.ready();
-    await clearPendingFlag(device);
-    await device.userState.setBuilderIntroDismissed('autoTeamBuilder', true);
+    await Promise.all([device.userState.ready(), device.characterOverrides.ready()]);
+    device.preferences.writes.length = 0;
 
-    expect(device.preferences.writes).toContain('builderIntroDismissed');
-    expect(device.driveSyncState.pendingLocalChanges()).toBe(false);
+    await WRITE_THROUGH_OWNER[key](device);
+
+    expect(device.preferences.writes, `the writer for ${key} wrote it`).toContain(key);
   });
 });

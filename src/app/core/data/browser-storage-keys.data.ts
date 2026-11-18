@@ -6,7 +6,7 @@
  * on which of them hold a reader's own data:
  *
  *   - Settings "export all data", which enumerated seven scopes by hand;
- *   - Google Drive sync, which carries the same payload;
+ *   - Google Drive sync, which carried the same payload (removed 2026-11-18, 1amndjnq718);
  *   - storage-quota handling, which must know what it may drop.
  *
  * Nothing connected them, and the cost was measured: `crewForgeImageProfiles`
@@ -65,13 +65,6 @@ export interface BrowserStorageKeyRecord {
    * what makes "durable means exported" a checkable claim rather than a hope.
    */
   readonly exportedAs?: string;
-  /**
-   * For `durable-user-data` only: why writing this key does NOT raise "Local changes pending" on
-   * the Drive sync card. Absent means it does - the rule, since 869f63gug derives the flag's key
-   * list from this file. It used to be a hand-kept list of six, and the opponents, the boost list
-   * and the Crew Forge profiles travelled in every backup without ever raising it.
-   */
-  readonly pendingFlagExemption?: string;
   /** True when the spelling predates the convention for its backend. */
   readonly legacySpelling?: true;
   readonly note: string;
@@ -175,8 +168,6 @@ export const BROWSER_STORAGE_KEYS: readonly BrowserStorageKeyRecord[] = [
     backend: 'preferences',
     classification: 'durable-user-data',
     exportedAs: 'crewForgeProfiles',
-    pendingFlagExemption:
-      'Rewritten on every screenshot the Crew Forge importer reads, to remember which profile matched. Saving or deleting a profile already raises the flag through crewForgeImageProfiles; raising it for the selection alone would call every import a change waiting for Drive.',
     note: 'Which of those profiles was selected. Carried inside the same scope, as lastProfileId.',
   },
   {
@@ -206,10 +197,10 @@ export const BROWSER_STORAGE_KEYS: readonly BrowserStorageKeyRecord[] = [
   {
     key: 'driveSyncMetadata',
     constantName: 'DRIVE_SYNC_METADATA_KEY',
-    owner: 'src/app/core/services/drive-sync-state.service.ts',
+    owner: 'src/app/core/services/retired-google-storage.service.ts',
     backend: 'preferences',
     classification: 'device-preference',
-    note: 'This device’s bookkeeping about its own last sync, and it carries connectedAccountEmail and connectedAccountId - the signed-in Google identity. Two reasons never to export it, and the identity is the one a reader would act on: exporting it would both describe a sync the importing device never did and hand that device somebody else’s account. Classified device-preference rather than credential because the key is backend: preferences and browser-storage-keys.data.spec.ts:66 binds those together; the value is not a token, it is who the token belonged to.',
+    note: 'RETIRED 2026-11-18 (1amndjnq718): Drive sync was removed; the key is only deleted at startup so a former user keeps no Google identity on the device. Before that: This device’s bookkeeping about its own last sync, and it carries connectedAccountEmail and connectedAccountId - the signed-in Google identity. Two reasons never to export it, and the identity is the one a reader would act on: exporting it would both describe a sync the importing device never did and hand that device somebody else’s account. Classified device-preference rather than credential because the key is backend: preferences and browser-storage-keys.data.spec.ts:66 binds those together; the value is not a token, it is who the token belonged to.',
   },
   {
     key: 'builderIntroDismissed',
@@ -270,20 +261,29 @@ export const BROWSER_STORAGE_KEYS: readonly BrowserStorageKeyRecord[] = [
   {
     key: 'optc_google_account_session',
     constantName: 'GOOGLE_ACCOUNT_SESSION_KEY',
-    owner: 'src/app/core/services/google-account.service.ts',
+    owner: 'src/app/core/services/retired-google-storage.service.ts',
     backend: 'local',
     classification: 'credential',
     legacySpelling: true,
-    note: 'The signed-in profile. Never exported, never synced, never written to a file.',
+    note: 'RETIRED 2026-11-18 (1amndjnq718): Google sign-in was removed; only deleted at startup. It held the signed-in profile. Never exported, never synced, never written to a file.',
+  },
+  {
+    key: 'capgo_social_login_google_state',
+    constantName: 'SOCIAL_LOGIN_GOOGLE_STATE_KEY',
+    owner: 'src/app/core/services/retired-google-storage.service.ts',
+    backend: 'local',
+    classification: 'credential',
+    legacySpelling: true,
+    note: 'RETIRED 2026-11-18 (1amndjnq718): written by @capgo/capacitor-social-login itself, holding the Google access token and id token. Registered only so the startup cleanup can delete it; never exported.',
   },
   {
     key: 'social_login_oauth_pending',
     constantName: 'SOCIAL_LOGIN_OAUTH_STATE_KEY',
-    owner: 'src/app/core/services/google-account.service.ts',
+    owner: 'src/app/core/services/retired-google-storage.service.ts',
     backend: 'local',
     classification: 'credential',
     legacySpelling: true,
-    note: 'The OAuth state parameter, alive only between redirect and return. It is the CSRF defence for that redirect, so it must not be copied anywhere.',
+    note: 'RETIRED 2026-11-18 (1amndjnq718): only deleted at startup. It was the OAuth state parameter, alive only between redirect and return. It is the CSRF defence for that redirect, so it must not be copied anywhere.',
   },
   {
     key: 'optc.captainCoverage.teamDraft',
@@ -373,14 +373,6 @@ export const NON_STORAGE_KEY_CONSTANTS: readonly { constantName: string; reason:
 /** Keys whose loss would cost the reader work they cannot redo. */
 export function durableStorageKeys(): readonly BrowserStorageKeyRecord[] {
   return BROWSER_STORAGE_KEYS.filter((record) => record.classification === 'durable-user-data');
-}
-
-/**
- * 869f63gug. Durable keys whose write raises "Local changes pending": every one, bar a stated
- * `pendingFlagExemption`.
- */
-export function pendingFlagStorageKeys(): readonly BrowserStorageKeyRecord[] {
-  return durableStorageKeys().filter((record) => record.pendingFlagExemption === undefined);
 }
 
 /** Keys that must never leave the device, in a file or over sync. */

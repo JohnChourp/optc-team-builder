@@ -46,7 +46,7 @@ describe('the empty-install notice', () => {
   });
 
   it('shows on an installation holding nothing', () => {
-    expect(shouldShowFirstRunTransferNotice({ summary: EMPTY, dismissed: false, signedIn: false })).toBe(true);
+    expect(shouldShowFirstRunTransferNotice({ summary: EMPTY, dismissed: false })).toBe(true);
   });
 
   it('counts the shipped Crew Forge profile as nothing of the reader\'s', () => {
@@ -70,20 +70,14 @@ describe('the empty-install notice', () => {
 
       expect(isEmptyInstallation(summary), key).toBe(false);
       expect(
-        shouldShowFirstRunTransferNotice({ summary, dismissed: false, signedIn: false }),
+        shouldShowFirstRunTransferNotice({ summary, dismissed: false }),
         key,
       ).toBe(false);
     }
   });
 
   it('stays away once the reader has answered', () => {
-    expect(shouldShowFirstRunTransferNotice({ summary: EMPTY, dismissed: true, signedIn: false })).toBe(false);
-  });
-
-  it('stays away when the reader is signed in, because Drive has already answered for them', () => {
-    // Telling somebody with a connected account to "set up Drive sync" is telling them to
-    // do a thing they have done.
-    expect(shouldShowFirstRunTransferNotice({ summary: EMPTY, dismissed: false, signedIn: true })).toBe(false);
+    expect(shouldShowFirstRunTransferNotice({ summary: EMPTY, dismissed: true })).toBe(false);
   });
 
   it('treats a missing count as zero rather than throwing', () => {
@@ -100,9 +94,9 @@ describe('the empty-install notice', () => {
    * reassuring one whose teams really are elsewhere.
    */
   it('decides from THIS installation alone, and nothing else', () => {
-    const input = { summary: EMPTY, dismissed: false, signedIn: false };
+    const input = { summary: EMPTY, dismissed: false };
 
-    expect(Object.keys(input).sort()).toEqual(['dismissed', 'signedIn', 'summary']);
+    expect(Object.keys(input).sort()).toEqual(['dismissed', 'summary']);
     expect(shouldShowFirstRunTransferNotice(input)).toBe(true);
   });
 });

@@ -485,11 +485,12 @@ describe('glass-card padding (869f6td0f)', () => {
   it('pads every glass card from a stylesheet its own component can see', () => {
     const cards = collectGlassCards();
 
-    // 152 when this was written; the floor stops a broken template walk passing as an empty loop.
+    // 152 when this was written, 148 after 1amndjnq718 deleted the Account page on 2026-11-18;
+    // the floor stops a broken template walk passing as an empty loop.
     expect(
       cards.length,
       'the template walk found fewer glass cards than exist',
-    ).toBeGreaterThanOrEqual(150);
+    ).toBeGreaterThanOrEqual(146);
 
     const unpadded = cards
       .filter((card) => card.padding === null)

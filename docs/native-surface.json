@@ -42,27 +42,6 @@
     "webDir": "dist/optc-team-builder/browser",
     "plugins": [
       {
-        "name": "SocialLogin",
-        "providers": [
-          {
-            "provider": "apple",
-            "enabled": false
-          },
-          {
-            "provider": "facebook",
-            "enabled": false
-          },
-          {
-            "provider": "google",
-            "enabled": true
-          },
-          {
-            "provider": "twitter",
-            "enabled": false
-          }
-        ]
-      },
-      {
         "name": "SystemBars",
         "providers": [],
         "settings": {
@@ -171,19 +150,6 @@
         "matchesIonicBackground": true
       },
       "evidence": "Before: 2026-09-24 on v0.6.5 the bars read rgb(250,250,250) on a light device and rgb(48,48,48) on a dark one. After: 2026-09-25 on a debug build of #606 (869f6tcz0) both read rgb(7,11,23) in both modes. optc-team-builder-brain/live-artifacts/869f6tcxz/"
-    },
-    {
-      "id": "google-sign-in",
-      "capability": "Google sign-in and Drive sync",
-      "webView": "The APK's app-config.js has no web client id: release-android.yml's Run Android release step supplies no APP_GOOGLE_WEB_CLIENT_ID - only the website's builds do - so GoogleAccountService.isAvailable is false in the APK.",
-      "app": "Every Google sign-in and Drive surface is gated on GoogleAccountService.isAvailable, so the APK offers Export all data and Import all data in Settings instead of a sign-in that cannot work. The gate specs pin each surface, and sign-in comes back by itself once an Android build carries the id.",
-      "derived": {
-        "apkSuppliesWebClientId": false,
-        "websiteSuppliesWebClientId": true,
-        "gateSpecs": 3
-      },
-      "configOwnedBy": "docs/release-contract.json (appConfigByBuildTarget), readable in docs/release-secrets-register.md",
-      "evidence": "Before: 2026-09-24 on v0.6.5 the side menu showed a disabled Log in row and Home offered SET UP DRIVE SYNC into a dead end. After: 2026-09-25 on a debug build of #613 (869f63gqt) there is no Log in row and Home's first action is IMPORT A FILE. optc-team-builder-brain/live-artifacts/869f63gp1/"
     }
   ],
   "distribution": {

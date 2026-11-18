@@ -5,12 +5,7 @@ import { resolve } from 'node:path';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { type SavedEnemy, type SavedTeam } from '../../core/models/optc.models';
-import { DriveSyncStateService } from '../../core/services/drive-sync-state.service';
 import { UserStateService } from '../../core/services/user-state.service';
-import {
-  buildDriveSyncReviewDraft,
-  buildReviewedAllDataPayload,
-} from '../drive-sync/drive-sync-review.utils';
 import {
   buildAllDataTransferPayload,
   type AllDataTransferPayload,
@@ -98,11 +93,7 @@ function enemy(overrides: Partial<SavedEnemy> = {}): SavedEnemy {
 function userStateOver(preferences: MemoryPreferences): UserStateService {
   const i18n = { translate: (key: string) => key };
 
-  return new UserStateService(
-    i18n as never,
-    preferences as never,
-    new DriveSyncStateService(preferences as never),
-  );
+  return new UserStateService(i18n as never, preferences as never);
 }
 
 async function loadStored(stored: SavedEnemy): Promise<SavedEnemy> {
@@ -232,38 +223,6 @@ describe('the rules survive every file an enemy travels in (869f63gma)', () => {
     expect(backedUp).toMatchObject({ avoidedClasses: ['Driven'], preferredClasses: ['Slasher'] });
     expect(backedUp.avoidedClasses).not.toBe(exported.enemies[0]!.avoidedClasses);
     expect(backedUp.preferredClasses).not.toBe(exported.enemies[0]!.preferredClasses);
-  });
-
-  it('carries the rules through a reviewed Drive sync, and an enemy without them stays unchanged', async () => {
-    // What this device holds now, and a backup of the same enemy written before the rules existed:
-    // the stored shape with none of the five keys.
-    const oldEnemy = await loadStored(enemy({ id: 'enemy-old', name: 'Old boss' }));
-    const backedUpBeforeTheRules = JSON.parse(JSON.stringify(oldEnemy)) as Record<string, unknown>;
-
-    for (const key of RULE_KEYS) {
-      delete backedUpBeforeTheRules[key];
-    }
-
-    const device = buildAllDataTransferPayload(
-      { savedEnemies: buildSavedEnemiesTransferPayload([oldEnemy, withRules], AT) },
-      AT,
-    );
-    const drive: AllDataTransferPayload = {
-      schemaVersion: 1,
-      source: 'all-data',
-      exportedAt: AT,
-      savedEnemies: buildSavedEnemiesTransferPayload([backedUpBeforeTheRules as never], AT),
-    };
-    const draft = buildDriveSyncReviewDraft(device, drive, 'merge-and-upload');
-    const rows = draft.sections.find((section) => section.key === 'savedEnemies')!.rows;
-
-    expect(rows.find((row) => row.key === 'enemy-old')?.status).toBe('kept');
-
-    const reviewed = buildReviewedAllDataPayload(draft, AT);
-
-    expect(
-      reviewed.savedEnemies?.enemies.find((stored) => stored.id === withRules.id),
-    ).toMatchObject({ avoidedClasses: ['Driven'], avoidMode: 'hard', preferredClasses: ['Slasher'] });
   });
 });
 

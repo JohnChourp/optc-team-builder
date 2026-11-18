@@ -86,14 +86,6 @@
       "setupFiles": []
     },
     {
-      "name": "server",
-      "environment": "node",
-      "include": [
-        "server/**/*.spec.mjs"
-      ],
-      "setupFiles": []
-    },
-    {
       "name": "src",
       "environment": "jsdom",
       "include": [
@@ -192,7 +184,7 @@
       "environments": [
         "node"
       ],
-      "specCount": 2
+      "specCount": 1
     },
     {
       "id": "ci-triggers",

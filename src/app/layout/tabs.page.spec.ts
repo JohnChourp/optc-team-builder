@@ -14,10 +14,9 @@ describe('TabsPage', () => {
     expect(template).toContain('[multiple]="false"');
     expect(template).toContain('value="browse"');
     expect(template).toContain('[routerLink]="[item.route]"');
-    expect(template).toContain('class="tabs-menu__account-entry"');
-    expect(template).toContain('[routerLink]="[accountRoute]"');
-    expect(template).toContain('(click)="signInWithGoogle()"');
-    expect(template).toContain("'tabs.login' | transloco");
+    // 1amndjnq718. No account entry and no Google sign-in since 2026-11-18.
+    expect(template).not.toContain('tabs-menu__account-entry');
+    expect(template).not.toContain('signInWithGoogle');
     expect(template).toContain('[routerLink]="[settingsNavItem.route]"');
     expect(template).toContain("'tabs.menuTitle' | transloco");
     expect(template).toContain("'tabs.navigationAriaLabel' | transloco");
@@ -55,9 +54,8 @@ describe('TabsPage', () => {
     const component = readFileSync(resolve(process.cwd(), 'src/app/layout/tabs.page.ts'), 'utf8');
 
     expect(component).toContain('public readonly navigationGroups');
-    expect(component).toContain("public readonly accountRoute = '/tabs/account'");
-    expect(component).toContain('public readonly accountDisplayName');
-    expect(component).toContain('this.googleAccount.signIn(false)');
+    expect(component).not.toContain('accountRoute');
+    expect(component).not.toContain('googleAccount');
     expect(component).toContain("id: 'browse'");
     expect(component).toContain("'tabs.groups.browse'");
     expect(component).toContain("id: 'build'");

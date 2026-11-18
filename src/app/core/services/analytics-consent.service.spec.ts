@@ -78,6 +78,7 @@ function createService(storedConsent: string | null) {
   const preferences = {
     get: vi.fn().mockResolvedValue({ value: storedConsent }),
     set: vi.fn().mockResolvedValue(undefined),
+    remove: vi.fn().mockResolvedValue(undefined),
   } satisfies PreferencesAdapterService;
 
   const service = new AnalyticsConsentService(

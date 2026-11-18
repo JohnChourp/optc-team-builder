@@ -68,7 +68,7 @@ Because two other things depend on the list, and both have already been wrong on
   `crewForgeImageProfiles` and `crewForgeLastImageProfileId` came to be missing from the payload
   (869f12x4p) - real configuration a player had tuned, silently left behind on a device move, with
   nothing on screen to say so.
-- **Drive sync**, which carries the same payload and must agree with it.
+- **Drive sync**, which carried the same payload until it was removed on 2026-11-18 (1amndjnq718).
 
 ## What is not done here
 

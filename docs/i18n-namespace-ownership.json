@@ -294,13 +294,10 @@
       "kind": "shared",
       "owner": null,
       "hosts": [
-        "src/app/pages/account/",
         "src/app/pages/faq/",
         "src/app/pages/settings/"
       ],
       "consumers": [
-        "src/app/pages/account/account.page.html",
-        "src/app/pages/account/account.page.ts",
         "src/app/pages/faq/faq.data.ts",
         "src/app/pages/settings/settings.page.html",
         "src/app/pages/settings/settings.page.ts"

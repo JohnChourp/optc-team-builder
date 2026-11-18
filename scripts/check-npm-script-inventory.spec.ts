@@ -230,7 +230,7 @@ describe('npm script inventory', () => {
       expect(errors.some((error) => error.includes('never runs in verify:local'))).toBe(false);
     });
 
-    it('keeps the allowlist to the nine measured exemptions', () => {
+    it('keeps the allowlist to the eight measured exemptions', () => {
       /*
        * The allowlist is check D's escape hatch, so a row added to silence a
        * failure IS the failure. Pinning the size makes adding one a deliberate
@@ -241,8 +241,11 @@ describe('npm script inventory', () => {
        * That is the allowlist used for what it is for - the suite still exists and
        * still passes, it simply is not a lane any more - and the row says how to
        * thaw it. The count moves again only for another decision of that kind.
+       *
+       * Back to eight on 2026-11-18 (1amndjnq718): the backend and its suite were deleted
+       * with Google sign-in, so there is nothing left to thaw.
        */
-      expect(NON_LANE_TEST_SCRIPTS.size).toBe(9);
+      expect(NON_LANE_TEST_SCRIPTS.size).toBe(8);
 
       for (const reason of NON_LANE_TEST_SCRIPTS.values()) {
         expect(reason.length).toBeGreaterThan(30);

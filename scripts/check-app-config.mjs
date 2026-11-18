@@ -49,10 +49,10 @@ const ROOT_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
  */
 export const ALLOWED_APP_CONFIG_KEYS = Object.freeze({
   ga4MeasurementId: 'Google Analytics 4 measurement id, public by design.',
-  googleDriveBackendUrl: 'Origin of the optional Drive sync backend. Empty when undeployed.',
-  googleDriveFolderName: 'Display name of the Drive folder backups are written to.',
-  googleIosClientId: 'Google OAuth client id for iOS. A client id, never a secret.',
-  googleWebClientId: 'Google OAuth client id for the web. A client id, never a secret.',
+  /*
+   * 1amndjnq718. The four Google sign-in and Drive sync keys were removed with the feature on
+   * 2026-11-18. A file that still carries one is refused like any other undeclared key.
+   */
 });
 
 /**
@@ -60,7 +60,7 @@ export const ALLOWED_APP_CONFIG_KEYS = Object.freeze({
  *
  * The allowlist alone would already refuse an unknown key; these catch the worse case of a secret
  * arriving inside an ALLOWED key - someone pasting a service-account JSON into
- * `googleDriveFolderName` because it was the only free-text field.
+ * the one remaining value because it was the only field there was.
  */
 const SECRET_PATTERNS = [
   { id: 'google-oauth-client-secret', pattern: /GOCSPX-[A-Za-z0-9_-]{10,}/u },

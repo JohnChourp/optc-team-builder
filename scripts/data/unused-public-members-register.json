@@ -17,7 +17,7 @@
     "Baseline measured 2026-09-15 against v0.4.48: 64 findings, 32 spec-only and 32 orphan."
   ],
   "measuredOn": "2026-09-15",
-  "baselineCount": 65,
+  "baselineCount": 61,
   "entries": [
     {
       "file": "src/app/app.component.ts",
@@ -73,34 +73,6 @@
       "member": "CrewForgeImageImportService.createEmptyProfileInput",
       "kind": "spec-only",
       "reason": "Only src/app/core/services/crew-forge-image-import.service.spec.ts reads it. This is the regionAvailability shape: the member is asserted by its own spec and reaches no template, no service and no other file, so the spec proves the member works and nothing proves the member is wanted.",
-      "removeWhen": "Delete this entry when the member gains a reader outside a .spec.ts, or when the member and its assertions are removed together."
-    },
-    {
-      "file": "src/app/core/services/drive-backup.service.ts",
-      "member": "DriveBackupService.flushPendingUploads",
-      "kind": "spec-only",
-      "reason": "Only src/app/pages/settings/settings.page.spec.ts reads it. This is the regionAvailability shape: the member is asserted by its own spec and reaches no template, no service and no other file, so the spec proves the member works and nothing proves the member is wanted.",
-      "removeWhen": "Delete this entry when the member gains a reader outside a .spec.ts, or when the member and its assertions are removed together."
-    },
-    {
-      "file": "src/app/core/services/drive-backup.service.ts",
-      "member": "DriveBackupService.noteLocalChange",
-      "kind": "orphan",
-      "reason": "No reader anywhere - no template binding, no other source file, and no spec. Nothing in the repository observes this member at all.",
-      "removeWhen": "Delete this entry when the member gains any reader, or when the member is removed from the tree."
-    },
-    {
-      "file": "src/app/core/services/drive-sync-state.service.ts",
-      "member": "DriveSyncStateService.markRemoteSeen",
-      "kind": "spec-only",
-      "reason": "Only src/app/core/services/drive-backup.service.spec.ts reads it. This is the regionAvailability shape: the member is asserted by its own spec and reaches no template, no service and no other file, so the spec proves the member works and nothing proves the member is wanted.",
-      "removeWhen": "Delete this entry when the member gains a reader outside a .spec.ts, or when the member and its assertions are removed together."
-    },
-    {
-      "file": "src/app/core/services/google-account.service.ts",
-      "member": "GoogleAccountService.needsReconnect",
-      "kind": "spec-only",
-      "reason": "Only src/app/core/services/google-account.service.spec.ts reads it. This is the regionAvailability shape: the member is asserted by its own spec and reaches no template, no service and no other file, so the spec proves the member works and nothing proves the member is wanted.",
       "removeWhen": "Delete this entry when the member gains a reader outside a .spec.ts, or when the member and its assertions are removed together."
     },
     {

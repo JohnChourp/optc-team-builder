@@ -10,11 +10,6 @@ import {
   Filesystem as capacitorFilesystem,
   Share as capacitorShare,
 } from './test-mocks/capacitor-files';
-import { socialLogin } from './test-mocks/social-login';
-
-vi.mock('@capgo/capacitor-social-login', () => ({
-  SocialLogin: socialLogin,
-}));
 
 // Mock `@capacitor/app` ONCE for the whole suite so every spec file and the
 // services under test share a single `App` object (see ./test-mocks/capacitor-app).

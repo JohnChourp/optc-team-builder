@@ -96,9 +96,30 @@ async function readCharacterPage(id: number) {
   return { html, links };
 }
 
+/*
+ * 1amndjnq718. The Account page and Drive sync were public URLs until 2026-11-18. Each now gets a
+ * static noindex page that sends it to Settings, so GitHub Pages never answers them with 404, and
+ * neither is listed in the sitemap.
+ */
+describe('retired public pages', () => {
+  it.each(['tabs/account', 'tabs/drive-sync'])('sends %s to Settings instead of a 404', async (route) => {
+    const html = await readFile(path.join(outputDir, ...route.split('/'), 'index.html'), 'utf8');
+    const target = `${siteBaseUrl}/tabs/settings/`;
+
+    expect(html).toContain(`<meta http-equiv="refresh" content="0; url=${target}">`);
+    expect(html).toContain(`<link rel="canonical" href="${target}">`);
+    expect(html).toContain('<meta name="robots" content="noindex">');
+
+    const sitemap = await readFile(path.join(outputDir, 'sitemap.xml'), 'utf8');
+
+    expect(sitemap).not.toContain(`${siteBaseUrl}/${route}/`);
+  });
+});
+
 describe('generated character pages, one per shape', () => {
   it('passes the audit build:pages runs, on all four shapes', () => {
-    expect(auditOutput).toContain('checked 24 sitemap URLs');
+    // 23 since 1amndjnq718 removed the Account page (tabs/account) on 2026-11-18.
+    expect(auditOutput).toContain('checked 23 sitemap URLs');
   });
 
   it.each([2, 3134])('#%i, with a Captain Ability, leads with Captain Coverage and itself as Captain', async (id) => {

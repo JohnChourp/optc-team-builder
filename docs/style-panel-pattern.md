@@ -124,11 +124,10 @@ declaration in one of these files lacks `ViewEncapsulation.None` and a `styleUrl
 | `ability-tag-set-picker` | 9 | 8 | 2 |
 | `character-detail` | 9 | 8 | 1 |
 | `home` | 9 | 8 | 1 |
-| `account` | 8 | 7 | 1 |
 | `character-boxes` | 8 | 7 | 1 |
 | `rumble-characters` | 7 | 6 | 1 |
 | `ship-picker` | 7 | 6 | 1 |
 | `character-facet-filter` | 3 | 2 | 1 |
 | `character-tag-filter` | 3 | 2 | 1 |
-| **Total** | **263** | | |
+| **Total** | **255** | | |
 <!-- style-panel-inventory:end -->

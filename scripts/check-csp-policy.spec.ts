@@ -95,7 +95,13 @@ describe('the shipped policy', () => {
 
     // Proven against a served build by `npm run security:csp`; pinned here so a hand edit that
     // removes one is caught without a browser.
-    expect(directives.get('connect-src')).toContain('https://www.googleapis.com');
+    // 1amndjnq718. Google sign-in and Drive sync were removed on 2026-11-18, so nothing reaches
+    // the Google account or Drive API origins any more and the policy no longer allows them.
+    for (const origin of ['https://www.googleapis.com', 'https://accounts.google.com', 'https://*.googleusercontent.com']) {
+      for (const directive of ['connect-src', 'frame-src', 'img-src']) {
+        expect(directives.get(directive) ?? '', `${directive} still allows ${origin}`).not.toContain(origin);
+      }
+    }
     expect(directives.get('script-src')).toContain('https://www.googletagmanager.com');
     // Microsoft Clarity is injected by the GTM container and appears nowhere else in this repo.
     expect(directives.get('script-src')).toContain('https://www.clarity.ms');

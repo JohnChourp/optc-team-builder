@@ -5,13 +5,13 @@ import { type SyncScopeSummary } from '../../core/services/user-data-transfer.se
  * Whether a fresh installation should say, plainly, that it is empty.
  *
  * 869f13d6j. A reader can hold the website, the installed PWA and the APK at once - three
- * installations of one product, each with its own browser storage, and the bridges between
- * them are Google Drive sync and an exported file. Saved teams, boxes, enemies, overrides and
- * favourites all live in that storage.
+ * installations of one product, each with its own browser storage, and the bridge between
+ * them is an exported file. Saved teams, boxes, enemies, overrides and favourites all live in
+ * that storage.
  *
- * 869f63gqt. Drive sync needs Google sign-in, which a build without the Google client id -
- * today the Android app - does not have. There the file is the only bridge, and the notice
- * says so rather than offering a route that ends at a disabled button.
+ * 1amndjnq718. Google sign-in and Drive sync were removed on 2026-11-18. The file is the only
+ * bridge on every build, so the notice names it alone; a player who used Drive sync imports the
+ * backup file it left in their Drive.
  *
  * So the most likely silent data loss in this product happens at the moment somebody
  * commits to the app: they install it, find nothing, and have no way to know whether their
@@ -82,22 +82,18 @@ export const FIRST_RUN_TRANSFER_DISMISSED_KEY = 'firstRunTransferNoticeDismissed
 export interface FirstRunTransferInput {
   readonly summary: SyncScopeSummary;
   readonly dismissed: boolean;
-  /** True once the reader has connected an account - Drive has already answered for them. */
-  readonly signedIn: boolean;
 }
 
 /**
  * Whether to show the notice.
  *
- * Three ways to be silent, and each matters:
+ * Two ways to be silent, and each matters:
  *
  *   - the installation has data, so the premise is false;
- *   - the reader dismissed it, so they have answered;
- *   - the reader is signed in, so Drive sync is already available to them and the notice
- *     would be telling them to do something they have done.
+ *   - the reader dismissed it, so they have answered.
  */
 export function shouldShowFirstRunTransferNotice(input: FirstRunTransferInput): boolean {
-  if (input.dismissed || input.signedIn) {
+  if (input.dismissed) {
     return false;
   }
 
