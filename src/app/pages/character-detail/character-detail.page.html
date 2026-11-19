@@ -197,7 +197,11 @@
               </div>
             </section>
 
-            @if (view.captainAbilitySummary || current.detail.builderAbilities.length) {
+            @if (
+              view.captainAbilitySummary ||
+              current.detail.builderAbilities.length ||
+              current.detail.conditionalBuilderAbilities?.length
+            ) {
               <section class="ability-summary-section glass-card">
                 <div class="group-section__head">
                   <div class="section-label">{{ t('sections.abilitySummary') }}</div>

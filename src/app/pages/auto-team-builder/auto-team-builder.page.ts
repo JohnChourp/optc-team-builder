@@ -113,6 +113,7 @@ import {
   isAutoTeamBuildSearchTooLargeError,
   type AutoTeamBuildExecutionOptions,
 } from '../../core/services/auto-team-builder.service';
+import { resolveAutoBuildSlotAbilities } from '../../core/services/captain-condition-abilities.utils';
 import { AppI18nService } from '../../core/services/app-i18n.service';
 import { CharacterOverridesService } from '../../core/services/character-overrides.service';
 import { matchesAnyAbilityRequirement } from '../../core/services/auto-team-builder-ability-match.utils';
@@ -621,6 +622,11 @@ type TeamSlotViewModel = AutoBuildResult['slots'][number] & {
   captainBranchLabel: string | null;
   explanationSummaryLabel: string;
   explanationDetailLabels: string[];
+  /**
+   * 869fhvfva. The slot's abilities in this crew: a special effect that needs a captain is
+   * included when the result's Captain or Friend Captain meets it, as the mechanic checklist counts.
+   */
+  crewAbilities: NormalizedBuilderAbility[];
   rejectedCandidateLabels: RejectedCandidateExplanationView[];
   rejectedCandidateGroups: RejectedCandidateGroupView[];
   hasStructuredExplanation: boolean;
@@ -3364,6 +3370,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         : ('any' as const),
     };
 
+    const crewAbilities = resolveAutoBuildSlotAbilities(currentResult?.slots ?? []);
+
     return (
       currentResult?.slots.map((slot, index) => {
         const manualSlotRole = this.resolveManualSlotRoleForResultSlot(slot.role, subSlotIndex);
@@ -3388,6 +3396,9 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           captainBranchLabel: slot.captainBranchSelection?.displayName ?? null,
           explanationSummaryLabel: explanationView.summaryLabel,
           explanationDetailLabels: explanationView.detailLabels,
+          crewAbilities: (crewAbilities[index] ?? []).filter(
+            (ability) => ability.source !== 'captainAbility',
+          ),
           rejectedCandidateLabels: explanationView.rejectedCandidateLabels,
           rejectedCandidateGroups: explanationView.rejectedCandidateGroups,
           hasStructuredExplanation: explanationView.hasStructuredExplanation,
@@ -9363,12 +9374,6 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
         formatEffectTargetScope: (scope) =>
           this.t(`abilities.requirement.effectTargetScopes.${scope}`),
       },
-    );
-  }
-
-  public displayBuilderAbilities(character: CharacterDetailRecord): NormalizedBuilderAbility[] {
-    return character.detail.builderAbilities.filter(
-      (ability) => ability.source !== 'captainAbility',
     );
   }
 
