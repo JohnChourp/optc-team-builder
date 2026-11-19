@@ -31,6 +31,22 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.8.1',
+    date: '2026-11-19',
+    userVisible: false,
+    headline: {
+      en: 'Housekeeping only - nothing changed on any screen',
+      el: 'Μόνο συντήρηση - τίποτα δεν άλλαξε σε καμία οθόνη',
+    },
+    summaryEn:
+      'Nothing in this release changes anything you can see or do in the app. The project\u2019s own notes were updated after the Google sign-in was removed in 0.8.0.',
+    summaryEl:
+      'Τίποτα σε αυτή την έκδοση δεν αλλάζει κάτι που βλέπεις ή κάνεις στην εφαρμογή. Ενημερώθηκαν οι εσωτερικές σημειώσεις του project μετά την αφαίρεση της σύνδεσης με Google στην 0.8.0.',
+    added: [],
+    improved: [],
+    fixed: [],
+  },
+  {
     version: '0.8.0',
     date: '2026-11-18',
     userVisible: true,
