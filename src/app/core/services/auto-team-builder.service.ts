@@ -46,6 +46,7 @@ import {
   normalizeAvoidPreferRules,
   toSparseAvoidPreferFields,
 } from './auto-team-builder-avoid-prefer.utils';
+import { resolveAutoBuildSlotAbilities } from './captain-condition-abilities.utils';
 import { cloneCharacterTagSetSelection } from './character-tag-set.utils';
 import {
   AutoTeamBuildCancelledError,
@@ -1244,7 +1245,10 @@ export class AutoTeamBuilderService {
         }
 
         const characters = result.slots.map((slot) => slot.character);
-        const abilityBreakdown = buildAutoBuildAbilityCoverageBreakdown(characters);
+        const abilityBreakdown = buildAutoBuildAbilityCoverageBreakdown(
+          characters,
+          resolveAutoBuildSlotAbilities(result.slots),
+        );
         const recencyScore = characters.reduce((total, character) => {
           const index = orderById.get(character.id) ?? 0;
           const nextScore = records.length <= 1 ? 1 : 1 - index / (records.length - 1);

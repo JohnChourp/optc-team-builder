@@ -516,13 +516,19 @@ function cloneAbilityRequirement(
   return nextRequirement;
 }
 
+/**
+ * `crewAbilities`, one list per character in the same order, are the abilities each has in this
+ * crew (869fhvfva: a captain-conditional effect the crew meets included); without it, a
+ * character's own `builderAbilities`.
+ */
 export function buildAutoBuildAbilityCoverageBreakdown(
   characters: CharacterDetailRecord[],
+  crewAbilities?: readonly (readonly NormalizedBuilderAbility[])[],
 ): AutoBuildAbilityCoverageBreakdown {
   const abilityMap = new Map<string, AutoBuildAbilityCoverageBreakdownItem>();
 
-  characters.forEach((character) => {
-    character.detail.builderAbilities
+  characters.forEach((character, characterIndex) => {
+    (crewAbilities?.[characterIndex] ?? character.detail.builderAbilities)
       .filter((ability) => ability.source !== 'captainAbility')
       .forEach((ability) => {
         const existing = abilityMap.get(ability.key);

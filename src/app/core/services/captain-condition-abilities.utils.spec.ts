@@ -6,6 +6,7 @@ import {
 } from '../models/auto-team-builder-ability.models';
 import { type CharacterDetailRecord } from '../models/optc.models';
 import { type AutoBuildSlot } from '../models/auto-team-builder.models';
+import { buildAutoBuildAbilityCoverageBreakdown } from './auto-team-builder.utils';
 import {
   isCaptainConditionMet,
   resolveAutoBuildSlotAbilities,
@@ -160,5 +161,30 @@ describe('captain conditions met by a crew (869fhvfva)', () => {
     const plain = unit(5);
 
     expect(resolveCrewSeatAbilities([corazon, null, plain], 2)).toBe(plain.detail.builderAbilities);
+  });
+
+  it('lets the ranked-team ability breakdown count what the crew unlocks', () => {
+    const slot = (role: AutoBuildSlot['role'], character: CharacterDetailRecord) =>
+      ({ role, character, reasonChips: [] }) as AutoBuildSlot;
+    const conditionalOnly = unit(3000, {
+      conditional: [
+        {
+          ...despair(20, CORAZON_CONDITION),
+          key: 'remove_bind',
+          label: 'Remove Bind',
+        } as ConditionalBuilderAbility,
+      ],
+    });
+    const slots = [slot('captain', corazon), slot('sub', conditionalOnly)];
+    const characters = slots.map((entry) => entry.character);
+    const keys = (breakdown: ReturnType<typeof buildAutoBuildAbilityCoverageBreakdown>) =>
+      breakdown.allAbilities.map((item) => item.key).sort();
+
+    expect(keys(buildAutoBuildAbilityCoverageBreakdown(characters))).toEqual(['remove_despair']);
+    expect(
+      keys(
+        buildAutoBuildAbilityCoverageBreakdown(characters, resolveAutoBuildSlotAbilities(slots)),
+      ),
+    ).toEqual(['remove_bind', 'remove_despair']);
   });
 });
