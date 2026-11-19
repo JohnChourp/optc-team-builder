@@ -339,6 +339,13 @@ matcher keyed on a wording OPTC-DB never uses — and hardened two more:
   other key found them. **Nullify Damage** (`nullify_damage`) stops at another effect verb, so a
   70% cut followed by "reduces the defense of all enemies by 100%" is no longer read as a nullifier.
 
+**Effects that need a given captain** (869fhvfva). A special sentence that starts "If <X> is your
+Captain …" no longer counts as given: what it grants beyond the rest of the text moves to
+`conditionalBuilderAbilities` with its condition (see `docs/data-schemas.md`), and its "otherwise"
+part stays given. Cora #2195 is a 3-turn Despair cure everywhere, not 20; 53 characters move
+entries, and the regression cases are in
+`src/app/core/services/auto-team-builder-ability-parser-captain-condition.spec.ts`.
+
 `apply_set_target` (26 → 28) and `class_change` (10 → 19) additionally gained **superSpecialText**
 sourcing via the per-key allowlist, for units that carry the effect only in their super special.
 Seven further keys were verified correct with no change, and four (`apply_unique_effect`,
