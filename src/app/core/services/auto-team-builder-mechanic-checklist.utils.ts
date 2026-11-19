@@ -2,10 +2,12 @@ import {
   type AutoBuildAbilityRequirement,
   type AutoBuildBattleRequirement,
   type AutoBuildEnemyMechanicRequirement,
+  type NormalizedBuilderAbility,
 } from '../models/auto-team-builder-ability.models';
 import { type AutoBuildSlot } from '../models/auto-team-builder.models';
 import { matchesAbilityRequirement } from './auto-team-builder-ability-match.utils';
 import { flattenBattleRequiredCharacterGroups } from './auto-team-builder-battle.utils';
+import { resolveAutoBuildSlotAbilities } from './captain-condition-abilities.utils';
 import { getEnemyMechanicCatalogItems } from './enemy-mechanic-draft.utils';
 
 /**
@@ -81,10 +83,11 @@ function toRequirement(
   } as AutoBuildAbilityRequirement;
 }
 
-function slotAnswers(slot: AutoBuildSlot, requirement: AutoBuildAbilityRequirement): boolean {
-  return (slot.character.detail.builderAbilities ?? []).some((ability) =>
-    matchesAbilityRequirement(ability, requirement),
-  );
+function slotAnswers(
+  slotAbilities: readonly NormalizedBuilderAbility[],
+  requirement: AutoBuildAbilityRequirement,
+): boolean {
+  return slotAbilities.some((ability) => matchesAbilityRequirement(ability, requirement));
 }
 
 /**
@@ -195,6 +198,8 @@ export function buildMechanicChecklist(
   requiredAbilities: readonly AutoBuildAbilityRequirement[] = [],
 ): MechanicChecklistSummary {
   const inferred = inferMechanicsFromAbilityRequirements(requiredAbilities, mechanics);
+  // 869fhvfva: each slot's abilities in this crew, a captain-conditional effect included when met.
+  const crewAbilities = resolveAutoBuildSlotAbilities(slots);
   const inferredKeys = new Set(inferred.map((mechanic) => mechanic.mechanicKey));
   /*
    * Ticked first, inferred after. The reader's own list stays where they put it, and everything
@@ -222,7 +227,7 @@ export function buildMechanicChecklist(
     const coveringCharacterNames: string[] = [];
 
     slots.forEach((slot, index) => {
-      if (slotAnswers(slot, requirement)) {
+      if (slotAnswers(crewAbilities[index] ?? [], requirement)) {
         coveringSlots.push(index + 1);
         coveringCharacterNames.push(slot.character.name);
       }

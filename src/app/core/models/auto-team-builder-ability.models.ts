@@ -40,6 +40,27 @@ export interface NormalizedBuilderAbility {
   effectTargetScope?: AutoBuildAbilityEffectTargetScope;
 }
 
+/**
+ * 869fhvfva. The captain a special effect needs, as the importer reads it from "If <X> is your
+ * Captain …" and "If your Captain is a <type, class or tag> character …" (docs/data-schemas.md).
+ */
+export interface CaptainCondition {
+  text: string;
+  captain: 'self' | 'named' | 'type' | 'other';
+  names: string[];
+  friendCaptain: boolean;
+  captainTypes: string[];
+  captainTags: string[];
+  captainClasses: string[];
+  captainTypeAndClass: boolean;
+  hasOtherRequirements: boolean;
+}
+
+/** A special effect that holds only with a given captain: kept out of `builderAbilities`. */
+export interface ConditionalBuilderAbility extends NormalizedBuilderAbility {
+  captainCondition: CaptainCondition;
+}
+
 export interface AutoBuildAbilityEffectMatch {
   characterId: number;
   minEffectValue?: number | null;

@@ -33,6 +33,8 @@ describe('character detail: English game text is marked English', () => {
     expect(datasetParagraphs.map((paragraph) => paragraph.body)).toEqual([
       '{{ entry.text }}',
       '{{ captainSummary.captainNotes }}',
+      // 869fhvfva: the special's own "If Corazon is your Captain …" sentence.
+      '{{ group.condition }}',
       '{{ text.value }}',
       '{{ text.value }}',
     ]);

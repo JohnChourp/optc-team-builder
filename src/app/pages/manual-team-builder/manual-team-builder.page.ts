@@ -33,6 +33,7 @@ import {
   type AutoBuildAbilityCatalog,
   type AutoBuildAbilityCatalogItem,
   type AutoBuildAbilityRequirement,
+  type NormalizedBuilderAbility,
 } from '../../core/models/auto-team-builder-ability.models';
 import { type AutoBuildCaptainBranchMode } from '../../core/models/auto-team-builder.models';
 import {
@@ -112,6 +113,7 @@ import {
   CharacterTagSetPickerComponent,
   type CharacterTagMatchIndex,
 } from '../../shared/character-tag-set-picker/character-tag-set-picker.component';
+import { resolveCrewSeatAbilities } from '../../core/services/captain-condition-abilities.utils';
 import { TeamCoverageSummaryComponent } from '../../shared/team-coverage-summary/team-coverage-summary.component';
 import { CharacterAbilityGroupsComponent } from '../../shared/character-ability-groups/character-ability-groups.component';
 import { ShipPickerComponent } from '../../shared/ship-picker/ship-picker.component';
@@ -250,6 +252,14 @@ function createEmptyManualTeamSlots(): Array<CharacterDetailRecord | null> {
 export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
   public readonly loading = signal(true);
   public readonly slots = signal<Array<CharacterDetailRecord | null>>(createEmptyManualTeamSlots());
+  /**
+   * Each seat's abilities in this crew (869fhvfva): its own, plus a special effect that needs a
+   * captain when the Captain or Friend Captain seat meets it - Cora's 20-turn Despair cure under a
+   * Corazon captain.
+   */
+  public readonly slotAbilities = computed(() =>
+    this.slots().map((_slot, index) => resolveCrewSeatAbilities(this.slots(), index)),
+  );
   public readonly selectedSlotIndex = signal(0);
   public readonly searchTerm = signal('');
   public readonly candidates = signal<CharacterDetailRecord[]>([]);
@@ -1373,8 +1383,9 @@ export class ManualTeamBuilderPage implements OnInit, ViewWillEnter {
 
   public highlightedRequirementsForCharacter(
     character: CharacterDetailRecord,
+    abilities: readonly NormalizedBuilderAbility[] = character.detail.builderAbilities,
   ): AutoBuildAbilityRequirement[] {
-    return character.detail.builderAbilities.map((ability) => ({
+    return abilities.map((ability) => ({
       abilityKey: ability.key,
       minTurns: ability.minTurns,
       requiredCharacterCount: 1,

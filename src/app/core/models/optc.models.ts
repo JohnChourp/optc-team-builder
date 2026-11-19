@@ -6,6 +6,7 @@ import {
   type AutoBuildBattleRequirement,
   type AutoBuildEnemyMechanicRequirement,
   type AutoBuildRequiredCharacterGroup,
+  type ConditionalBuilderAbility,
   type NormalizedBuilderAbility,
 } from './auto-team-builder-ability.models';
 import { type AutoBuildAvoidMode } from './auto-team-builder.models';
@@ -288,6 +289,8 @@ export interface CharacterDetail {
   partyConflictKeys: string[];
   characterTags?: string[];
   builderAbilities: NormalizedBuilderAbility[];
+  /** 869fhvfva. Effects that hold only with a given captain; absent when a unit has none. */
+  conditionalBuilderAbilities?: ConditionalBuilderAbility[];
   sailorAbilities: string[];
   sailorNotes: string | null;
   potentialAbilities: Array<{ Name?: string; description?: string[] }>;

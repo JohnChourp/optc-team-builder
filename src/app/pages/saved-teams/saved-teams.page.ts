@@ -61,6 +61,7 @@ import {
   publishedTeamCharacterIds,
   type PublishedTeamCard,
 } from './published-teams.utils';
+import { resolveCrewSeatAbilities } from '../../core/services/captain-condition-abilities.utils';
 import { AppI18nService } from '../../core/services/app-i18n.service';
 import { resolveBrowserStorageFailureDiagnostic } from '../../core/services/browser-storage-error.utils';
 import {
@@ -1538,8 +1539,9 @@ export class SavedTeamsPage implements OnInit {
     slots: Array<CharacterDetailRecord | null>,
     origin: SavedTeamAbilityOrigin,
   ): NormalizedBuilderAbility[] {
-    return this.resolveOriginSlotIndexes(origin).flatMap(
-      (slotIndex) => slots[slotIndex]?.detail.builderAbilities ?? [],
+    // 869fhvfva: a special effect that needs a captain counts when this crew's captain meets it.
+    return this.resolveOriginSlotIndexes(origin).flatMap((slotIndex) =>
+      resolveCrewSeatAbilities(slots, slotIndex),
     );
   }
 

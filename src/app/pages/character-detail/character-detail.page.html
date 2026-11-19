@@ -376,6 +376,27 @@
                     displayMode="full"
                   ></app-character-ability-groups>
                 }
+
+                @if (captainConditionalAbilityGroups(current); as conditionalGroups) {
+                  @if (conditionalGroups.length) {
+                    <div class="ability-summary-block" data-testid="character-conditional-abilities">
+                      <span class="detail-list-block__label">{{
+                        t('conditionalAbilities.label')
+                      }}</span>
+                      <p class="ability-summary-block__hint">{{ t('conditionalAbilities.hint') }}</p>
+                      @for (group of conditionalGroups; track group.condition) {
+                        <div class="captain-ability-summary__variant">
+                          <p lang="en">{{ group.condition }}</p>
+                          <app-character-ability-groups
+                            [abilities]="group.abilities"
+                            [catalogItems]="abilityCatalog()?.abilities ?? []"
+                            displayMode="full"
+                          ></app-character-ability-groups>
+                        </div>
+                      }
+                    </div>
+                  }
+                }
               </section>
             }
 
