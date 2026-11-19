@@ -47,7 +47,8 @@ Character rows are normalized from upstream unit/detail data plus manual overlay
   `superSpecialText`. They are kept out of `builderAbilities`, so no filter, catalogue list or
   builder counts them as given, and each carries a `captainCondition`: the sentence's own `text`,
   `captain` (`self` for "this character", `named` with `names`, or `other`), the `captainTypes` of an
-  "or your Captain is a [STR] or [DEX] character" alternative, and `hasOtherRequirements` when the
+  "or your Captain is a [STR] or [DEX] character" alternative, `friendCaptain` when the Friend
+  Captain seat also counts, and `hasOtherRequirements` when the
   condition asks for more than a captain seat ("… and field has Territory …"). The sentence's
   "otherwise" part holds without the captain and stays in `builderAbilities`. Cora #2195 reads
   Remove Despair 3 turns there and 20 turns here, behind Corazon; before, a "Despair ≥ 9" filter

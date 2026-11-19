@@ -13,6 +13,7 @@ interface CaptainCondition {
   names: string[];
   captainTypes: string[];
   hasOtherRequirements: boolean;
+  friendCaptain: boolean;
 }
 
 interface ParsedAbility {
@@ -35,7 +36,7 @@ interface ParserCharacter {
 let analyzeBuilderAbilityText: (value: unknown, source: AbilitySource) => ParsedAbility[];
 let enrichCharactersWithBuilderAbilities: (
   characters: ParserCharacter[],
-  options?: { logger?: null },
+  options?: { logger?: null; abilityCorrections?: Map<number, Record<string, unknown>> },
 ) => Promise<
   Array<{
     key: string;
@@ -83,6 +84,7 @@ describe('a special sentence that holds only with a given captain', () => {
       names: ['Corazon'],
       captainTypes: [],
       hasOtherRequirements: false,
+      friendCaptain: true,
     });
   });
 
@@ -205,6 +207,63 @@ describe('a special sentence that holds only with a given captain', () => {
 
     expect(unconditional(text, 'remove_despair')).toEqual([5]);
     expect(conditional(text, 'remove_despair')).toEqual([]);
+  });
+
+  it('repeats only the clause that holds the last "by" in an elliptical else', () => {
+    const text =
+      'If this character is your Captain, reduces Bind duration by 3 turns and boosts ATK of ' +
+      'Slasher characters by 2x for 2 turns, by 1.5x for 1 turn otherwise.';
+
+    expect(unconditional(text, 'remove_bind')).toEqual([]);
+    expect(conditional(text, 'remove_bind').map((ability) => ability.minTurns)).toEqual([3]);
+    expect(unconditional(text, 'boost_atk')).toEqual([1]);
+  });
+
+  it('keeps a condition with a non-captain alternative after "Captain" given', () => {
+    const text =
+      'If this character is your Captain or your crew has 3+ Slasher characters, reduces ' +
+      'Despair duration by 5 turns.';
+
+    expect(unconditional(text, 'remove_despair')).toEqual([5]);
+    expect(conditional(text, 'remove_despair')).toEqual([]);
+  });
+
+  it('does not reach across another condition to a later captain clause', () => {
+    const text =
+      'If your HP is above 50%, boosts ATK of all characters by 2x for 1 turn; if this ' +
+      'character is your Captain, reduces Bind duration by 3 turns.';
+
+    expect(unconditional(text, 'boost_atk')).toEqual([1]);
+    expect(unconditional(text, 'remove_bind')).toEqual([3]);
+  });
+
+  it('says whether the Friend Captain seat counts, and that two names need both seats', () => {
+    const [captainOnly] = conditional(
+      'If this character is your Captain, reduces Despair duration by 5 turns.',
+      'remove_despair',
+    );
+    const [both] = conditional(
+      'If Luffy and Zoro are your Captain, reduces Despair duration by 5 turns.',
+      'remove_despair',
+    );
+
+    expect(captainOnly.captainCondition?.friendCaptain).toBe(false);
+    expect(both.captainCondition).toEqual(
+      expect.objectContaining({ names: ['Luffy', 'Zoro'], hasOtherRequirements: true }),
+    );
+  });
+
+  it('removes a corrected key from the conditional entries too', async () => {
+    const characters: ParserCharacter[] = [
+      { id: 2195, detail: { specialText: CORA, captainAbility: null, builderAbilities: [] } },
+    ];
+
+    await enrichCharactersWithBuilderAbilities(characters, {
+      logger: null,
+      abilityCorrections: new Map([[2195, { removeAbilityKeys: ['remove_despair'] }]]),
+    });
+
+    expect(characters[0].detail.conditionalBuilderAbilities).toBeUndefined();
   });
 
   it('leaves text without such a sentence exactly as before', () => {

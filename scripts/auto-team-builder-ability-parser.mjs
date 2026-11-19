@@ -2437,9 +2437,13 @@ const CAPTAIN_CONDITION_SOURCES = new Set(['specialText', 'superSpecialText']);
 // The tail after "Captain" runs to the first comma that is not inside a bracketed type
 // list ("or your Captain is a [STR], [DEX] or [QCK] character").
 const CAPTAIN_CONDITION_SENTENCE_PATTERN =
-  /^if\s+(.+?)\s+(?:is|are)\s+(?:your\s+|the\s+)?captain\b((?:[^,]|,\s*(?=\[))*),\s+(.+)$/i;
+  /^if\s+([^,;]+?)\s+(?:is|are)\s+(?:your\s+|the\s+)?captain\b((?:[^,]|,\s*(?=\[))*),\s+(.+)$/i;
 const CAPTAIN_CONDITION_ELSE_LEAD_PATTERN =
   /^(?:(?:boosts?|reduces?|removes?|changes?|makes?|locks?|recovers?|deals?|inflicts?|adds?|increases?|sets?|applies|swaps?|delays?|cuts?|heals?|grants?|launches|activates|randomizes?|consumes?|switches|transforms?)\b)/i;
+const CAPTAIN_CONDITION_CLAUSE_START_PATTERN = new RegExp(
+  `(?:[;,]\\s+|\\s+and\\s+)(?=${CAPTAIN_CONDITION_ELSE_LEAD_PATTERN.source.slice(1)})`,
+  'gi',
+);
 const CAPTAIN_CONDITION_TYPE_ALTERNATIVE_PATTERN =
   /^\s*or\s+your\s+captain\s+is\s+an?\s+((?:\[[a-z]+\](?:\s*,\s*|\s+or\s+)?)+)\s+character\s*$/i;
 
@@ -2464,9 +2468,20 @@ function splitCaptainConditionElse(thenAndElse) {
     const elseRaw = body.slice(elliptical.index + elliptical[0].length).trim();
     const lastBy = [...thenText.matchAll(/\sby\s/gi)].at(-1)?.index ?? -1;
 
-    return lastBy > 0
-      ? { thenText, elseText: `${thenText.slice(0, lastBy)} ${elseRaw}` }
-      : { thenText: body, elseText: null };
+    if (lastBy <= 0) {
+      return { thenText: body, elseText: null };
+    }
+
+    // Only the clause that holds that "by" is repeated, not the clauses before it.
+    const clauseStart =
+      [...thenText.slice(0, lastBy).matchAll(CAPTAIN_CONDITION_CLAUSE_START_PATTERN)].at(-1)
+        ?.index ?? 0;
+    const clause = thenText
+      .slice(clauseStart, lastBy)
+      .replace(/^(?:[;,]\s*|\s*and\s+)/i, '')
+      .trim();
+
+    return { thenText, elseText: `${clause} ${elseRaw}` };
   }
 
   // A ';' separates the else from the condition's own clauses more reliably than a
@@ -2484,13 +2499,27 @@ function splitCaptainConditionElse(thenAndElse) {
   return { thenText: body, elseText: null };
 }
 
-function hasNonCaptainAlternative(subject) {
-  const alternatives = subject.trim().split(/\s+or\s+/i);
+// A captain name is capitalised word by word ("Big Mom", "Monkey D. Luffy"), unlike
+// a condition phrase ("Your crew has Paralysis").
+const CAPTAIN_NAME_PATTERN = /^[A-Z][A-Za-z.'-]*(?:\s+[A-Z][A-Za-z.'-]*)*$/;
 
-  return (
+function hasNonCaptainAlternative(subject, captainTail) {
+  const alternatives = subject.trim().split(/\s+or\s+/i);
+  const subjectHasOther =
     alternatives.length > 1 &&
-    !alternatives.every((part) => /^(?:this character|[A-Z][A-Za-z.'\- ]*)$/.test(part.trim()))
-  );
+    !alternatives.every(
+      (part) => /^this character$/i.test(part.trim()) || CAPTAIN_NAME_PATTERN.test(part.trim()),
+    );
+  // What is left of the tail once the seats, a captain-type alternative and the
+  // activation timing are taken out: an "or" there is a way to meet the condition
+  // with no captain ("… is your Captain or your crew has 3+ Slasher characters").
+  const tailWithoutSeats = captainTail
+    .replace(/\s+when\s+the\s+special\s+is\s+activated/gi, '')
+    .replace(/\s+or\s+your\s+captain\s+is\s+an?\s+.*?\bcharacters?\b/gi, '')
+    .replace(/(?:\s+or|\s*,|\s*\/)\s*(?:the\s+)?(?:friend|guest)(?:\/guest)?\s+captain\b/gi, '')
+    .replace(/\s+or\s+was\s+captain\b.*$/i, '');
+
+  return subjectHasOther || /\bor\b/i.test(tailWithoutSeats);
 }
 
 function resolveCaptainCondition(text, subject, captainTail) {
@@ -2509,14 +2538,16 @@ function resolveCaptainCondition(text, subject, captainTail) {
   // "Luffy or Zoro" names either captain; "Luffy and Zoro" needs both, which a single
   // captain seat cannot meet, so it counts as another requirement.
   const nameParts = isSelf ? [] : normalizedSubject.split(/\s*,\s*|\s+(?:or|and)\s+/i);
-  const subjectIsName =
-    !isSelf && nameParts.every((part) => /^[A-Z][A-Za-z.'\- ]*$/.test(part));
+  const subjectIsName = !isSelf && nameParts.every((part) => CAPTAIN_NAME_PATTERN.test(part));
   const needsSeveralNames = subjectIsName && /\s+and\s+/i.test(normalizedSubject);
 
   return {
     text,
     captain: isSelf ? 'self' : subjectIsName ? 'named' : 'other',
     names: subjectIsName ? nameParts : [],
+    // "your Captain or Friend/Guest Captain" also holds from the Friend Captain seat;
+    // "your Captain" alone does not.
+    friendCaptain: /\b(?:friend|guest)\b/i.test(captainTail),
     captainTypes,
     // Anything the fields above do not capture ("… and field has Territory …",
     // "… or was Captain at start of adventure …") makes the condition stricter or
@@ -2543,7 +2574,7 @@ function splitCaptainConditionalAbilityText(value) {
 
     // "If enemies have 10+ status effects or this character is your Captain, …" also
     // holds with no captain at all, like any other condition the parser reads as given.
-    if (!match || hasNonCaptainAlternative(match[1])) {
+    if (!match) {
       baseSentences.push(sentence);
       return;
     }
@@ -2557,6 +2588,11 @@ function splitCaptainConditionalAbilityText(value) {
       const nextComma = rest.indexOf(', ');
       captainTail = `${captainTail}, ${rest.slice(0, nextComma)}`;
       rest = rest.slice(nextComma + 2).trim();
+    }
+
+    if (hasNonCaptainAlternative(match[1], captainTail)) {
+      baseSentences.push(sentence);
+      return;
     }
 
     const { thenText, elseText } = splitCaptainConditionElse(rest);
@@ -2595,20 +2631,24 @@ export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true
 
   split.branches.forEach(({ condition, text }) => {
     analyzeUnconditionalBuilderAbilityText(text, source, false).forEach((ability) => {
-      const identity = buildAbilityIdentity(ability);
-      // Two captains granting the same effect are two entries, one per condition.
-      const conditionalIdentity = `${identity}|${condition.text}`;
+      const conditionalAbility = { ...ability, captainCondition: condition };
+      const conditionalIdentity = buildConditionalAbilityIdentity(conditionalAbility);
 
-      if (baseIdentities.has(identity) || seen.has(conditionalIdentity)) {
+      if (baseIdentities.has(buildAbilityIdentity(ability)) || seen.has(conditionalIdentity)) {
         return;
       }
 
       seen.add(conditionalIdentity);
-      abilities.push({ ...ability, captainCondition: condition });
+      abilities.push(conditionalAbility);
     });
   });
 
   return abilities;
+}
+
+// Two captains granting the same effect are two entries, one per condition.
+function buildConditionalAbilityIdentity(ability) {
+  return `${buildAbilityIdentity(ability)}|${ability.captainCondition?.text ?? ''}`;
 }
 
 function analyzeUnconditionalBuilderAbilityText(value, source, foldMaxLevelTier = true) {
@@ -4083,7 +4123,7 @@ export async function enrichCharactersWithBuilderAbilities(
       derivedAbilities
         .filter((ability) => ability.captainCondition)
         .forEach((ability) => {
-          const identity = `${buildAbilityIdentity(ability)}|${ability.captainCondition.text}`;
+          const identity = buildConditionalAbilityIdentity(ability);
 
           if (!conditionalSeen.has(identity)) {
             conditionalSeen.add(identity);
@@ -4097,15 +4137,18 @@ export async function enrichCharactersWithBuilderAbilities(
         conditionalBuilderAbilities,
       );
 
-      if (conditionalBuilderAbilities.length) {
-        character.detail.conditionalBuilderAbilities = conditionalBuilderAbilities;
+      const correction = resolveBuilderAbilityCorrection(character.id, abilityCorrections);
+      const correctedConditionalAbilities = applyCorrectionToConditionalAbilities(
+        conditionalBuilderAbilities,
+        correction,
+      );
+
+      if (correctedConditionalAbilities.length) {
+        character.detail.conditionalBuilderAbilities = correctedConditionalAbilities;
       } else {
         delete character.detail.conditionalBuilderAbilities;
       }
-      const correctedBuilderAbilities = applyBuilderAbilityCorrection(
-        builderAbilities,
-        resolveBuilderAbilityCorrection(character.id, abilityCorrections),
-      );
+      const correctedBuilderAbilities = applyBuilderAbilityCorrection(builderAbilities, correction);
       character.detail.builderAbilities = correctedBuilderAbilities;
 
       correctedBuilderAbilities.forEach((ability) => {
@@ -4409,6 +4452,27 @@ export function applyBuilderAbilityCorrection(abilities, correction) {
   }
 
   return nextAbilities;
+}
+
+// A correction removes a wrong key from the conditional entries too, and a replacement
+// for a source is authoritative for it; a correction never adds a conditional entry.
+function applyCorrectionToConditionalAbilities(abilities, correction) {
+  const normalizedCorrection = normalizeBuilderAbilityCorrection(correction);
+
+  if (!normalizedCorrection) {
+    return abilities;
+  }
+
+  return abilities.filter((ability) => {
+    if (!correctionSourceMatches(ability, normalizedCorrection.sourceScopes)) {
+      return true;
+    }
+
+    return (
+      normalizedCorrection.replaceAbilities === null &&
+      !normalizedCorrection.removeAbilityKeys.includes(ability.key)
+    );
+  });
 }
 
 function mergeBuilderAbilities(existingAbilities, derivedAbilities, conditionalAbilities = []) {
