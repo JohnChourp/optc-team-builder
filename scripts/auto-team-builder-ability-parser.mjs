@@ -2285,8 +2285,12 @@ function canonicalizeOrbTokens(text) {
   );
 }
 
-export function extractPrimaryAbilityBranchText(value) {
-  const normalizedText = canonicalizeOrbTokens(normalizeLegacyAbilityText(value));
+// `preNormalized` is for text this module already normalised (869fhvfva): a second
+// HTML pass would read a decoded "<30% HP>" as a tag and drop it.
+export function extractPrimaryAbilityBranchText(value, preNormalized = false) {
+  const normalizedText = preNormalized
+    ? String(value ?? '')
+    : canonicalizeOrbTokens(normalizeLegacyAbilityText(value));
 
   if (!normalizedText.length) {
     return '';
@@ -2327,8 +2331,10 @@ export function extractPrimaryAbilityBranchText(value) {
 // #4061 reduces enemies' Threshold Damage Reduction only from its max tier — were
 // invisible. Returns the whole text unchanged when there is no later independent
 // tier (so callers can cheaply detect "single tier" via strict inequality).
-export function extractMaxLevelAbilityBranchText(value) {
-  const normalizedText = canonicalizeOrbTokens(normalizeLegacyAbilityText(value));
+export function extractMaxLevelAbilityBranchText(value, preNormalized = false) {
+  const normalizedText = preNormalized
+    ? String(value ?? '')
+    : canonicalizeOrbTokens(normalizeLegacyAbilityText(value));
 
   if (!normalizedText.length) {
     return '';
@@ -2434,10 +2440,13 @@ function resolveMaxDurationTurnCountFromText(value) {
 // its "otherwise" part, which holds when the condition does not, stays with the
 // rest. Text without such a sentence is parsed exactly as before.
 const CAPTAIN_CONDITION_SOURCES = new Set(['specialText', 'superSpecialText']);
-// The tail after "Captain" runs to the first comma that is not inside a bracketed type
-// list ("or your Captain is a [STR], [DEX] or [QCK] character").
+// The subject crosses a comma only inside a list of names ("If Luffy, Zoro or Sanji
+// is your Captain"), never into another clause. The tail after "Captain" runs to the
+// first comma that is not inside a bracketed type list ("or your Captain is a [STR],
+// [DEX] or [QCK] character").
 const CAPTAIN_CONDITION_SENTENCE_PATTERN =
-  /^if\s+([^,;]+?)\s+(?:is|are)\s+(?:your\s+|the\s+)?captain\b((?:[^,]|,\s*(?=\[))*),\s+(.+)$/i;
+  // Case-sensitive on purpose, so only a capitalised name opens a comma in the subject.
+  /^[Ii]f\s+((?:[^,;]|,\s+(?=[A-Z][A-Za-z.'-]*(?:\s+[A-Z][A-Za-z.'-]*)*(?:,|\s+(?:or|and)\s+)))+?)\s+(?:is|are)\s+(?:[Yy]our\s+|[Tt]he\s+)?[Cc]aptain\b((?:[^,]|,\s*(?=\[))*),\s+(.+)$/;
 const CAPTAIN_CONDITION_ELSE_LEAD_PATTERN =
   /^(?:(?:boosts?|reduces?|removes?|changes?|makes?|locks?|recovers?|deals?|inflicts?|adds?|increases?|sets?|applies|swaps?|delays?|cuts?|heals?|grants?|launches|activates|randomizes?|consumes?|switches|transforms?)\b)/i;
 const CAPTAIN_CONDITION_CLAUSE_START_PATTERN = new RegExp(
@@ -2504,7 +2513,7 @@ function splitCaptainConditionElse(thenAndElse) {
 const CAPTAIN_NAME_PATTERN = /^[A-Z][A-Za-z.'-]*(?:\s+[A-Z][A-Za-z.'-]*)*$/;
 
 function hasNonCaptainAlternative(subject, captainTail) {
-  const alternatives = subject.trim().split(/\s+or\s+/i);
+  const alternatives = subject.trim().split(/\s*,\s*|\s+or\s+/i);
   const subjectHasOther =
     alternatives.length > 1 &&
     !alternatives.every(
@@ -2613,7 +2622,18 @@ function splitCaptainConditionalAbilityText(value) {
     return null;
   }
 
-  return { baseText: baseSentences.join('. '), branches };
+  // A multi-tier special restates the same captain sentence per tier. Like the
+  // unconditional path, keep the first tier and the max tier, not those between.
+  const keptBranches = branches.filter((branch, index) => {
+    const sameCondition = branches
+      .map((candidate, candidateIndex) => ({ candidate, candidateIndex }))
+      .filter(({ candidate }) => candidate.condition.text === branch.condition.text)
+      .map(({ candidateIndex }) => candidateIndex);
+
+    return index === sameCondition[0] || index === sameCondition.at(-1);
+  });
+
+  return { baseText: baseSentences.join('. '), branches: keptBranches };
 }
 
 export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true) {
@@ -2625,12 +2645,17 @@ export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true
     return analyzeUnconditionalBuilderAbilityText(value, source, foldMaxLevelTier);
   }
 
-  const abilities = analyzeUnconditionalBuilderAbilityText(split.baseText, source, foldMaxLevelTier);
+  const abilities = analyzeUnconditionalBuilderAbilityText(
+    split.baseText,
+    source,
+    foldMaxLevelTier,
+    true,
+  );
   const baseIdentities = new Set(abilities.map(buildAbilityIdentity));
   const seen = new Set();
 
   split.branches.forEach(({ condition, text }) => {
-    analyzeUnconditionalBuilderAbilityText(text, source, false).forEach((ability) => {
+    analyzeUnconditionalBuilderAbilityText(text, source, false, true).forEach((ability) => {
       const conditionalAbility = { ...ability, captainCondition: condition };
       const conditionalIdentity = buildConditionalAbilityIdentity(conditionalAbility);
 
@@ -2651,8 +2676,13 @@ function buildConditionalAbilityIdentity(ability) {
   return `${buildAbilityIdentity(ability)}|${ability.captainCondition?.text ?? ''}`;
 }
 
-function analyzeUnconditionalBuilderAbilityText(value, source, foldMaxLevelTier = true) {
-  const normalizedText = extractPrimaryAbilityBranchText(value);
+function analyzeUnconditionalBuilderAbilityText(
+  value,
+  source,
+  foldMaxLevelTier = true,
+  preNormalized = false,
+) {
+  const normalizedText = extractPrimaryAbilityBranchText(value, preNormalized);
 
   if (!normalizedText.length) {
     return [];
@@ -2919,7 +2949,7 @@ function analyzeUnconditionalBuilderAbilityText(value, source, foldMaxLevelTier 
   // disables re-folding, so this cannot recurse more than one level even when the
   // extracted max-level text itself still contains nested tier restatements.
   if (foldMaxLevelTier && (source === 'specialText' || source === 'sailorAbilities')) {
-    const maxLevelText = extractMaxLevelAbilityBranchText(value);
+    const maxLevelText = extractMaxLevelAbilityBranchText(value, preNormalized);
 
     if (maxLevelText && maxLevelText !== normalizedText) {
       const identity = (ability) =>
@@ -4120,8 +4150,13 @@ export async function enrichCharactersWithBuilderAbilities(
       const conditionalBuilderAbilities = [];
       const conditionalSeen = new Set();
 
+      // A swap text labelled specialText can grant the same effect unconditionally;
+      // then the conditional copy says nothing new.
+      const unconditionalIdentities = new Set(derivedBuilderAbilities.map(buildAbilityIdentity));
+
       derivedAbilities
         .filter((ability) => ability.captainCondition)
+        .filter((ability) => !unconditionalIdentities.has(buildAbilityIdentity(ability)))
         .forEach((ability) => {
           const identity = buildConditionalAbilityIdentity(ability);
 

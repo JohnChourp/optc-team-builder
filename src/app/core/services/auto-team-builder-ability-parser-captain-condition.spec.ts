@@ -266,6 +266,44 @@ describe('a special sentence that holds only with a given captain', () => {
     expect(characters[0].detail.conditionalBuilderAbilities).toBeUndefined();
   });
 
+  it('reads a comma-separated list of captain names', () => {
+    const [ability] = conditional(
+      'If Luffy, Zoro or Sanji is your Captain, reduces Despair duration by 20 turns.',
+      'remove_despair',
+    );
+
+    expect(ability.captainCondition?.names).toEqual(['Luffy', 'Zoro', 'Sanji']);
+    expect(
+      unconditional(
+        'If Luffy, Zoro or Sanji is your Captain, reduces Despair duration by 20 turns.',
+        'remove_despair',
+      ),
+    ).toEqual([]);
+  });
+
+  it('keeps the first and the max tier of a restated captain sentence, not those between', () => {
+    const tier = (turns: number) =>
+      `Reduces Bind duration by ${turns} turns. If this character is your Captain, reduces ` +
+      `Despair duration by ${turns} turns.`;
+    const text = `${tier(5)}. ${tier(10)}. ${tier(15)}`;
+
+    expect(
+      conditional(text, 'remove_despair')
+        .map((ability) => ability.minTurns)
+        .sort((left, right) => (left ?? 0) - (right ?? 0)),
+    ).toEqual([5, 15]);
+  });
+
+  it('does not normalise the split text twice', () => {
+    // "&lt;" decodes to "<" on the first pass; a second pass would read the clause as a tag.
+    const plain =
+      'Reduces Bind duration by 3 turns and &lt;reduces Paralysis duration by 2 turns&gt;.';
+    const text = `${plain} If this character is your Captain, reduces Despair duration by 5 turns.`;
+
+    expect(unconditional(plain, 'remove_paralysis')).toEqual([2]);
+    expect(unconditional(text, 'remove_paralysis')).toEqual([2]);
+  });
+
   it('leaves text without such a sentence exactly as before', () => {
     const text =
       'Reduces Despair duration by 3 turns. If your crew has 3+ Slasher characters, boosts ATK ' +
