@@ -9,9 +9,10 @@ type AbilitySource = 'specialText' | 'superSpecialText' | 'captainAbility' | 'sa
 
 interface CaptainCondition {
   text: string;
-  captain: 'self' | 'named' | 'other';
+  captain: 'self' | 'named' | 'type' | 'other';
   names: string[];
   captainTypes: string[];
+  captainClasses: string[];
   hasOtherRequirements: boolean;
   friendCaptain: boolean;
 }
@@ -83,6 +84,7 @@ describe('a special sentence that holds only with a given captain', () => {
       captain: 'named',
       names: ['Corazon'],
       captainTypes: [],
+      captainClasses: [],
       hasOtherRequirements: false,
       friendCaptain: true,
     });
@@ -302,6 +304,67 @@ describe('a special sentence that holds only with a given captain', () => {
 
     expect(unconditional(plain, 'remove_paralysis')).toEqual([2]);
     expect(unconditional(text, 'remove_paralysis')).toEqual([2]);
+  });
+
+  it('keeps an effect behind a captain type or class apart (#4314)', () => {
+    const text =
+      'Boosts ATK of all characters by 2x for 1 turn. If your Captain is a Driven character, ' +
+      'reduces Pain duration by 5 turns.';
+    const [pain] = conditional(text, 'remove_pain');
+
+    expect(unconditional(text, 'remove_pain')).toEqual([]);
+    expect(unconditional(text, 'boost_atk')).toEqual([1]);
+    expect(pain.captainCondition).toEqual({
+      text: 'If your Captain is a Driven character',
+      captain: 'type',
+      names: [],
+      friendCaptain: false,
+      captainTypes: [],
+      captainClasses: ['Driven'],
+      hasOtherRequirements: false,
+    });
+  });
+
+  it('reads types and classes together, the otherwise part and the activation timing', () => {
+    const text =
+      'If your Captain is a [STR] or Free Spirit character when the special is activated, ' +
+      'reduces Despair duration by 5 turns; reduces Despair duration by 2 turns otherwise.';
+    const [despair] = conditional(text, 'remove_despair');
+
+    expect(unconditional(text, 'remove_despair')).toEqual([2]);
+    expect(despair.captainCondition).toEqual(
+      expect.objectContaining({
+        captainTypes: ['STR'],
+        captainClasses: ['Free Spirit'],
+        hasOtherRequirements: false,
+      }),
+    );
+  });
+
+  it('marks a captain-type condition that asks for more, and keeps an "or" one given', () => {
+    const [more] = conditional(
+      'If your Captain is a Cerebral character and your crew has ATK UP when the special is ' +
+        'activated, reduces Bind duration by 4 turns.',
+      'remove_bind',
+    );
+    const either =
+      'If your Captain is a Cerebral character or your crew has 3+ Slasher characters, reduces ' +
+      'Bind duration by 4 turns.';
+
+    expect(more.captainCondition?.hasOtherRequirements).toBe(true);
+    expect(unconditional(either, 'remove_bind')).toEqual([4]);
+  });
+
+  it('reads a class alternative after a self condition', () => {
+    const [ability] = conditional(
+      'If this character is your Captain or your Captain is a Slasher character, reduces Bind ' +
+        'duration by 4 turns.',
+      'remove_bind',
+    );
+
+    expect(ability.captainCondition).toEqual(
+      expect.objectContaining({ captainClasses: ['Slasher'], hasOtherRequirements: false }),
+    );
   });
 
   it('leaves text without such a sentence exactly as before', () => {

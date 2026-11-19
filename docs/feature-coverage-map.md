@@ -342,8 +342,9 @@ matcher keyed on a wording OPTC-DB never uses — and hardened two more:
 **Effects that need a given captain** (869fhvfva). A special sentence that starts "If <X> is your
 Captain …" no longer counts as given: what it grants beyond the rest of the text moves to
 `conditionalBuilderAbilities` with its condition (see `docs/data-schemas.md`), and its "otherwise"
-part stays given. Cora #2195 is a 3-turn Despair cure everywhere, not 20; 53 characters move
-entries, and the regression cases are in
+part stays given. Cora #2195 is a 3-turn Despair cure everywhere, not 20. "If your Captain is a
+Driven character, …" (a captain type or class) is kept apart the same way: #4314's 5-turn Pain cure
+needs a Driven captain. 395 characters move entries, and the regression cases are in
 `src/app/core/services/auto-team-builder-ability-parser-captain-condition.spec.ts`.
 
 `apply_set_target` (26 → 28) and `class_change` (10 → 19) additionally gained **superSpecialText**
