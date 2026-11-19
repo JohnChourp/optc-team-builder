@@ -51,7 +51,7 @@ Character rows are normalized from upstream unit/detail data plus manual overlay
   condition asks for more than a captain seat ("… and field has Territory …"). The sentence's
   "otherwise" part holds without the captain and stays in `builderAbilities`. Cora #2195 reads
   Remove Despair 3 turns there and 20 turns here, behind Corazon; before, a "Despair ≥ 9" filter
-  offered her for any crew. 54 characters carry the field when this was written (2026-11-19); a
+  offered her for any crew. 53 characters carry the field when this was written (2026-11-19); a
   character without such a sentence has no field at all. Nothing in the app reads it yet - counting
   it when the captain is on the team is the follow-up
 - a **Support-only** character (869f6td4p) has `supportData` and no Captain Ability (no

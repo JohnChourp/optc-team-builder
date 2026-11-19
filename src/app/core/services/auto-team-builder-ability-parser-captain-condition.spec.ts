@@ -37,7 +37,11 @@ let enrichCharactersWithBuilderAbilities: (
   characters: ParserCharacter[],
   options?: { logger?: null },
 ) => Promise<
-  Array<{ key: string; matchingCharacterIds: number[]; turnMatchingCharacterIds: unknown }>
+  Array<{
+    key: string;
+    matchingCharacterIds: number[];
+    turnMatchingCharacterIds: Array<{ minTurns: number; characterIds: number[] }>;
+  }>
 >;
 
 beforeAll(async () => {
@@ -147,6 +151,62 @@ describe('a special sentence that holds only with a given captain', () => {
     expect(timingOnly[0].captainCondition?.hasOtherRequirements).toBe(false);
   });
 
+  it('keeps every clause of a multi-clause else after a semicolon unconditional', () => {
+    const text =
+      'If this character is your Captain, boosts ATK of all characters by 3x for 2 turns; ' +
+      'reduces Bind duration by 2 turns, boosts ATK of all characters by 2x for 1 turn otherwise.';
+
+    expect(unconditional(text, 'remove_bind')).toEqual([2]);
+    expect(unconditional(text, 'boost_atk')).toEqual([1]);
+    expect(conditional(text, 'boost_atk').map((ability) => ability.minTurns)).toEqual([2]);
+  });
+
+  it('keeps one entry per captain when two captains grant the same effect', () => {
+    const abilities = conditional(
+      'Reduces Bind duration by 1 turn. If Luffy is your Captain, reduces Despair duration by 5 ' +
+        'turns. If Zoro is your Captain, reduces Despair duration by 5 turns.',
+      'remove_despair',
+    );
+
+    expect(abilities.map((ability) => ability.captainCondition?.names)).toEqual([
+      ['Luffy'],
+      ['Zoro'],
+    ]);
+  });
+
+  it('reads a list of names and a comma-separated type alternative', () => {
+    const [either] = conditional(
+      'If Luffy or Zoro is your Captain or Friend/Guest Captain, reduces Despair duration by 5 turns.',
+      'remove_despair',
+    );
+    const [both] = conditional(
+      'If Luffy and Zoro are your Captain and Friend Captain, reduces Despair duration by 5 turns.',
+      'remove_despair',
+    );
+    const [types] = conditional(
+      'If this character is your Captain or your Captain is a [STR], [DEX] or [QCK] character, ' +
+        'reduces Despair duration by 5 turns.',
+      'remove_despair',
+    );
+
+    expect(either.captainCondition).toEqual(
+      expect.objectContaining({ names: ['Luffy', 'Zoro'], hasOtherRequirements: false }),
+    );
+    expect(both.captainCondition?.hasOtherRequirements).toBe(true);
+    expect(types.captainCondition).toEqual(
+      expect.objectContaining({ captainTypes: ['STR', 'DEX', 'QCK'], hasOtherRequirements: false }),
+    );
+  });
+
+  it('keeps a condition that also holds with no captain unconditional (#4280)', () => {
+    const text =
+      'If enemies have 10+ status effects or this character is your Captain, reduces Despair ' +
+      'duration by 5 turns.';
+
+    expect(unconditional(text, 'remove_despair')).toEqual([5]);
+    expect(conditional(text, 'remove_despair')).toEqual([]);
+  });
+
   it('leaves text without such a sentence exactly as before', () => {
     const text =
       'Reduces Despair duration by 3 turns. If your crew has 3+ Slasher characters, boosts ATK ' +
@@ -193,6 +253,6 @@ describe('a special sentence that holds only with a given captain', () => {
         .map((ability) => ability['minTurns']),
     ).toEqual([3]);
     expect(detail.conditionalBuilderAbilities?.map((ability) => ability.minTurns)).toEqual([20]);
-    expect(JSON.stringify(despair?.turnMatchingCharacterIds)).not.toContain('20');
+    expect(despair?.turnMatchingCharacterIds).toEqual([{ minTurns: 3, characterIds: [2195] }]);
   });
 });

@@ -2434,10 +2434,12 @@ function resolveMaxDurationTurnCountFromText(value) {
 // its "otherwise" part, which holds when the condition does not, stays with the
 // rest. Text without such a sentence is parsed exactly as before.
 const CAPTAIN_CONDITION_SOURCES = new Set(['specialText', 'superSpecialText']);
+// The tail after "Captain" runs to the first comma that is not inside a bracketed type
+// list ("or your Captain is a [STR], [DEX] or [QCK] character").
 const CAPTAIN_CONDITION_SENTENCE_PATTERN =
-  /^if\s+(.+?)\s+(?:is|are)\s+(?:your\s+|the\s+)?captain\b([^,]*),\s+(.+)$/i;
+  /^if\s+(.+?)\s+(?:is|are)\s+(?:your\s+|the\s+)?captain\b((?:[^,]|,\s*(?=\[))*),\s+(.+)$/i;
 const CAPTAIN_CONDITION_ELSE_LEAD_PATTERN =
-  /^(?:by\b|(?:boosts?|reduces?|removes?|changes?|makes?|locks?|recovers?|deals?|inflicts?|adds?|increases?|sets?|applies|swaps?|delays?|cuts?|heals?|grants?|launches|activates)\b)/i;
+  /^(?:(?:boosts?|reduces?|removes?|changes?|makes?|locks?|recovers?|deals?|inflicts?|adds?|increases?|sets?|applies|swaps?|delays?|cuts?|heals?|grants?|launches|activates|randomizes?|consumes?|switches|transforms?)\b)/i;
 const CAPTAIN_CONDITION_TYPE_ALTERNATIVE_PATTERN =
   /^\s*or\s+your\s+captain\s+is\s+an?\s+((?:\[[a-z]+\](?:\s*,\s*|\s+or\s+)?)+)\s+character\s*$/i;
 
@@ -2453,32 +2455,42 @@ function splitCaptainConditionElse(thenAndElse) {
   }
 
   const body = thenAndElse.replace(/\s+otherwise$/i, '');
-  const separators = [...body.matchAll(/[;,]\s+/g)].reverse();
+  // Elliptical: "boosts ATK … by 3x for 2 turns, by 2.75x for 1 turn otherwise"
+  // repeats the effect of the condition's own clause with other numbers.
+  const elliptical = [...body.matchAll(/[;,]\s+(?=by\b)/gi)].at(-1);
 
-  for (const separator of separators) {
-    const thenText = body.slice(0, separator.index).trim();
-    const elseRaw = body.slice(separator.index + separator[0].length).trim();
+  if (elliptical && !/[;,]\s/.test(body.slice(elliptical.index + elliptical[0].length))) {
+    const thenText = body.slice(0, elliptical.index).trim();
+    const elseRaw = body.slice(elliptical.index + elliptical[0].length).trim();
+    const lastBy = [...thenText.matchAll(/\sby\s/gi)].at(-1)?.index ?? -1;
 
-    if (!CAPTAIN_CONDITION_ELSE_LEAD_PATTERN.test(elseRaw)) {
-      continue;
-    }
+    return lastBy > 0
+      ? { thenText, elseText: `${thenText.slice(0, lastBy)} ${elseRaw}` }
+      : { thenText: body, elseText: null };
+  }
 
-    if (/^by\b/i.test(elseRaw)) {
-      // Elliptical: "boosts ATK … by 3x for 2 turns, by 2.75x for 1 turn otherwise"
-      // repeats the effect of the condition's own clause with other numbers.
-      const lastBy = thenText.toLowerCase().lastIndexOf(' by ');
+  // A ';' separates the else from the condition's own clauses more reliably than a
+  // comma, which also separates clauses inside the else itself.
+  for (const separatorPattern of [/;\s+/g, /,\s+/g]) {
+    for (const separator of [...body.matchAll(separatorPattern)].reverse()) {
+      const elseText = body.slice(separator.index + separator[0].length).trim();
 
-      if (lastBy <= 0) {
-        return { thenText: body, elseText: null };
+      if (CAPTAIN_CONDITION_ELSE_LEAD_PATTERN.test(elseText)) {
+        return { thenText: body.slice(0, separator.index).trim(), elseText };
       }
-
-      return { thenText, elseText: `${thenText.slice(0, lastBy)} ${elseRaw}` };
     }
-
-    return { thenText, elseText: elseRaw };
   }
 
   return { thenText: body, elseText: null };
+}
+
+function hasNonCaptainAlternative(subject) {
+  const alternatives = subject.trim().split(/\s+or\s+/i);
+
+  return (
+    alternatives.length > 1 &&
+    !alternatives.every((part) => /^(?:this character|[A-Z][A-Za-z.'\- ]*)$/.test(part.trim()))
+  );
 }
 
 function resolveCaptainCondition(text, subject, captainTail) {
@@ -2494,24 +2506,31 @@ function resolveCaptainCondition(text, subject, captainTail) {
     ? [...typeAlternative[1].matchAll(/\[([a-z]+)\]/gi)].map((match) => match[1].toUpperCase())
     : [];
   const remainingTail = typeAlternative ? '' : friendTail;
-  const subjectIsName = !isSelf && /^[A-Z][A-Za-z.'\- ]*$/.test(normalizedSubject);
+  // "Luffy or Zoro" names either captain; "Luffy and Zoro" needs both, which a single
+  // captain seat cannot meet, so it counts as another requirement.
+  const nameParts = isSelf ? [] : normalizedSubject.split(/\s*,\s*|\s+(?:or|and)\s+/i);
+  const subjectIsName =
+    !isSelf && nameParts.every((part) => /^[A-Z][A-Za-z.'\- ]*$/.test(part));
+  const needsSeveralNames = subjectIsName && /\s+and\s+/i.test(normalizedSubject);
 
   return {
     text,
     captain: isSelf ? 'self' : subjectIsName ? 'named' : 'other',
-    names: isSelf || !subjectIsName ? [] : [normalizedSubject],
+    names: subjectIsName ? nameParts : [],
     captainTypes,
     // Anything the fields above do not capture ("… and field has Territory …",
-    // "enemies have 10+ status effects or …", "when the special is activated")
-    // makes the condition stricter or looser than "this captain": never treat it as met.
-    hasOtherRequirements: (!isSelf && !subjectIsName) || remainingTail.trim().length > 0,
+    // "… or was Captain at start of adventure …") makes the condition stricter or
+    // looser than a captain seat: never treat it as met. "when the special is
+    // activated" only says when the seat is checked and is not such a requirement.
+    hasOtherRequirements:
+      (!isSelf && !subjectIsName) || needsSeveralNames || remainingTail.trim().length > 0,
   };
 }
 
-export function splitCaptainConditionalAbilityText(value) {
+function splitCaptainConditionalAbilityText(value) {
   const normalizedText = canonicalizeOrbTokens(normalizeLegacyAbilityText(value));
 
-  if (!normalizedText.length) {
+  if (!/\bcaptain\b/i.test(normalizedText)) {
     return null;
   }
 
@@ -2522,7 +2541,9 @@ export function splitCaptainConditionalAbilityText(value) {
   sentences.forEach((sentence) => {
     const match = sentence.match(CAPTAIN_CONDITION_SENTENCE_PATTERN);
 
-    if (!match) {
+    // "If enemies have 10+ status effects or this character is your Captain, …" also
+    // holds with no captain at all, like any other condition the parser reads as given.
+    if (!match || hasNonCaptainAlternative(match[1])) {
       baseSentences.push(sentence);
       return;
     }
@@ -2575,12 +2596,14 @@ export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true
   split.branches.forEach(({ condition, text }) => {
     analyzeUnconditionalBuilderAbilityText(text, source, false).forEach((ability) => {
       const identity = buildAbilityIdentity(ability);
+      // Two captains granting the same effect are two entries, one per condition.
+      const conditionalIdentity = `${identity}|${condition.text}`;
 
-      if (baseIdentities.has(identity) || seen.has(identity)) {
+      if (baseIdentities.has(identity) || seen.has(conditionalIdentity)) {
         return;
       }
 
-      seen.add(identity);
+      seen.add(conditionalIdentity);
       abilities.push({ ...ability, captainCondition: condition });
     });
   });
@@ -4059,7 +4082,14 @@ export async function enrichCharactersWithBuilderAbilities(
 
       derivedAbilities
         .filter((ability) => ability.captainCondition)
-        .forEach((ability) => addAbility(conditionalBuilderAbilities, conditionalSeen, ability));
+        .forEach((ability) => {
+          const identity = `${buildAbilityIdentity(ability)}|${ability.captainCondition.text}`;
+
+          if (!conditionalSeen.has(identity)) {
+            conditionalSeen.add(identity);
+            conditionalBuilderAbilities.push(ability);
+          }
+        });
 
       const builderAbilities = mergeBuilderAbilities(
         character.detail?.builderAbilities ?? [],
