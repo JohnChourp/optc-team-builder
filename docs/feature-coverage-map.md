@@ -350,7 +350,8 @@ and the Auto Team Builder's compare view and mechanic checklist count such an en
 captain meets it (Cora's 20 turns with a Corazon Captain or Friend Captain), and the Character
 screen lists them under *Only with a given captain*; the rule and its cases are
 `src/app/core/services/captain-condition-abilities.utils.ts` and its spec. The Auto Team Builder's
-search does not count them yet.
+search counts them once its Captain and Friend Captain are chosen
+(`auto-team-builder-captain-condition-search.spec.ts`).
 
 `apply_set_target` (26 → 28) and `class_change` (10 → 19) additionally gained **superSpecialText**
 sourcing via the per-key allowlist, for units that carry the effect only in their super special.
