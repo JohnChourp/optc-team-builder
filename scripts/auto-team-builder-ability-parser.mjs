@@ -2425,7 +2425,170 @@ function resolveMaxDurationTurnCountFromText(value) {
   return minTurns.length > 0 ? Math.max(...minTurns) : null;
 }
 
+// A special sentence that starts "If <someone> is your Captain …" grants its effects
+// only with that captain (869fhvfva). Cora #2195 "reduces Despair … by 3 turns. If
+// Corazon is your Captain or Friend/Guest Captain, reduces Despair duration by 20
+// turns" was read as a plain 20-turn cure, so a "Despair ≥ 9" filter offered her
+// for crews where she clears 3. Such a sentence is parsed on its own: what it
+// grants beyond the rest of the text is returned with a `captainCondition`, and
+// its "otherwise" part, which holds when the condition does not, stays with the
+// rest. Text without such a sentence is parsed exactly as before.
+const CAPTAIN_CONDITION_SOURCES = new Set(['specialText', 'superSpecialText']);
+const CAPTAIN_CONDITION_SENTENCE_PATTERN =
+  /^if\s+(.+?)\s+(?:is|are)\s+(?:your\s+|the\s+)?captain\b([^,]*),\s+(.+)$/i;
+const CAPTAIN_CONDITION_ELSE_LEAD_PATTERN =
+  /^(?:by\b|(?:boosts?|reduces?|removes?|changes?|makes?|locks?|recovers?|deals?|inflicts?|adds?|increases?|sets?|applies|swaps?|delays?|cuts?|heals?|grants?|launches|activates)\b)/i;
+const CAPTAIN_CONDITION_TYPE_ALTERNATIVE_PATTERN =
+  /^\s*or\s+your\s+captain\s+is\s+an?\s+((?:\[[a-z]+\](?:\s*,\s*|\s+or\s+)?)+)\s+character\s*$/i;
+
+function splitCaptainConditionElse(thenAndElse) {
+  const otherwiseComma = thenAndElse.match(/^(.+?),\s+otherwise,\s+(.+)$/i);
+
+  if (otherwiseComma) {
+    return { thenText: otherwiseComma[1], elseText: otherwiseComma[2] };
+  }
+
+  if (!/\s+otherwise$/i.test(thenAndElse)) {
+    return { thenText: thenAndElse, elseText: null };
+  }
+
+  const body = thenAndElse.replace(/\s+otherwise$/i, '');
+  const separators = [...body.matchAll(/[;,]\s+/g)].reverse();
+
+  for (const separator of separators) {
+    const thenText = body.slice(0, separator.index).trim();
+    const elseRaw = body.slice(separator.index + separator[0].length).trim();
+
+    if (!CAPTAIN_CONDITION_ELSE_LEAD_PATTERN.test(elseRaw)) {
+      continue;
+    }
+
+    if (/^by\b/i.test(elseRaw)) {
+      // Elliptical: "boosts ATK … by 3x for 2 turns, by 2.75x for 1 turn otherwise"
+      // repeats the effect of the condition's own clause with other numbers.
+      const lastBy = thenText.toLowerCase().lastIndexOf(' by ');
+
+      if (lastBy <= 0) {
+        return { thenText: body, elseText: null };
+      }
+
+      return { thenText, elseText: `${thenText.slice(0, lastBy)} ${elseRaw}` };
+    }
+
+    return { thenText, elseText: elseRaw };
+  }
+
+  return { thenText: body, elseText: null };
+}
+
+function resolveCaptainCondition(text, subject, captainTail) {
+  const normalizedSubject = subject.trim();
+  const isSelf = /^this character$/i.test(normalizedSubject);
+  // "when the special is activated" only says when the seat is checked.
+  const friendTail = captainTail
+    .replace(/\s+when\s+the\s+special\s+is\s+activated\s*$/i, '')
+    .replace(/^\s+or\s+(?:the\s+)?friend(?:\/guest)?\s+captain\b/i, '')
+    .replace(/^\s*\/\s*friend\s+captain\b/i, '');
+  const typeAlternative = friendTail.match(CAPTAIN_CONDITION_TYPE_ALTERNATIVE_PATTERN);
+  const captainTypes = typeAlternative
+    ? [...typeAlternative[1].matchAll(/\[([a-z]+)\]/gi)].map((match) => match[1].toUpperCase())
+    : [];
+  const remainingTail = typeAlternative ? '' : friendTail;
+  const subjectIsName = !isSelf && /^[A-Z][A-Za-z.'\- ]*$/.test(normalizedSubject);
+
+  return {
+    text,
+    captain: isSelf ? 'self' : subjectIsName ? 'named' : 'other',
+    names: isSelf || !subjectIsName ? [] : [normalizedSubject],
+    captainTypes,
+    // Anything the fields above do not capture ("… and field has Territory …",
+    // "enemies have 10+ status effects or …", "when the special is activated")
+    // makes the condition stricter or looser than "this captain": never treat it as met.
+    hasOtherRequirements: (!isSelf && !subjectIsName) || remainingTail.trim().length > 0,
+  };
+}
+
+export function splitCaptainConditionalAbilityText(value) {
+  const normalizedText = canonicalizeOrbTokens(normalizeLegacyAbilityText(value));
+
+  if (!normalizedText.length) {
+    return null;
+  }
+
+  const sentences = splitAbilityTextIntoSentences(normalizedText);
+  const baseSentences = [];
+  const branches = [];
+
+  sentences.forEach((sentence) => {
+    const match = sentence.match(CAPTAIN_CONDITION_SENTENCE_PATTERN);
+
+    if (!match) {
+      baseSentences.push(sentence);
+      return;
+    }
+
+    let captainTail = match[2];
+    let rest = match[3].trim();
+
+    // "If this character is your Captain, Friend/Guest Captain or was Captain at
+    // start of adventure …, <effect>": the list of seats continues past a comma.
+    while (/^(?:friend|guest|or|and|was)\b/i.test(rest) && rest.includes(', ')) {
+      const nextComma = rest.indexOf(', ');
+      captainTail = `${captainTail}, ${rest.slice(0, nextComma)}`;
+      rest = rest.slice(nextComma + 2).trim();
+    }
+
+    const { thenText, elseText } = splitCaptainConditionElse(rest);
+
+    if (elseText) {
+      baseSentences.push(elseText);
+    }
+
+    const conditionText = sentence.slice(0, sentence.length - rest.length).replace(/,\s*$/, '');
+
+    branches.push({
+      condition: resolveCaptainCondition(conditionText, match[1], captainTail),
+      text: thenText,
+    });
+  });
+
+  if (!branches.length) {
+    return null;
+  }
+
+  return { baseText: baseSentences.join('. '), branches };
+}
+
 export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true) {
+  const split = CAPTAIN_CONDITION_SOURCES.has(source)
+    ? splitCaptainConditionalAbilityText(value)
+    : null;
+
+  if (!split) {
+    return analyzeUnconditionalBuilderAbilityText(value, source, foldMaxLevelTier);
+  }
+
+  const abilities = analyzeUnconditionalBuilderAbilityText(split.baseText, source, foldMaxLevelTier);
+  const baseIdentities = new Set(abilities.map(buildAbilityIdentity));
+  const seen = new Set();
+
+  split.branches.forEach(({ condition, text }) => {
+    analyzeUnconditionalBuilderAbilityText(text, source, false).forEach((ability) => {
+      const identity = buildAbilityIdentity(ability);
+
+      if (baseIdentities.has(identity) || seen.has(identity)) {
+        return;
+      }
+
+      seen.add(identity);
+      abilities.push({ ...ability, captainCondition: condition });
+    });
+  });
+
+  return abilities;
+}
+
+function analyzeUnconditionalBuilderAbilityText(value, source, foldMaxLevelTier = true) {
   const normalizedText = extractPrimaryAbilityBranchText(value);
 
   if (!normalizedText.length) {
@@ -2700,7 +2863,7 @@ export function analyzeBuilderAbilityText(value, source, foldMaxLevelTier = true
         `${ability.key}|${ability.source}|${ability.minTurns}|${ability.effectTargetScope ?? ''}`;
       const existingKeySources = new Set(abilities.map(identity));
 
-      for (const ability of analyzeBuilderAbilityText(maxLevelText, source, false)) {
+      for (const ability of analyzeUnconditionalBuilderAbilityText(maxLevelText, source, false)) {
         const keySource = identity(ability);
 
         if (!existingKeySources.has(keySource)) {
@@ -3860,7 +4023,7 @@ export async function enrichCharactersWithBuilderAbilities(
     batch.forEach((character) => {
       const captainAbilityTexts = resolveCaptainAbilityTexts(character);
       const sailorAbilityText = resolveSailorAbilityText(character);
-      const derivedBuilderAbilities = [
+      const derivedAbilities = [
         ...analyzeBuilderAbilityText(character.detail?.specialText ?? null, 'specialText'),
         ...analyzeBuilderAbilityText(
           character.detail?.superSpecialText ?? null,
@@ -3885,10 +4048,30 @@ export async function enrichCharactersWithBuilderAbilities(
         ...extractPotentialBuilderAbilities(character),
         ...extractSupportBuilderAbilities(character),
       ];
+      // Effects a special grants only with a given captain (869fhvfva) stay out of
+      // builderAbilities, so no filter, catalogue list or builder counts them as
+      // given; they are kept beside it with their condition.
+      const derivedBuilderAbilities = derivedAbilities.filter(
+        (ability) => !ability.captainCondition,
+      );
+      const conditionalBuilderAbilities = [];
+      const conditionalSeen = new Set();
+
+      derivedAbilities
+        .filter((ability) => ability.captainCondition)
+        .forEach((ability) => addAbility(conditionalBuilderAbilities, conditionalSeen, ability));
+
       const builderAbilities = mergeBuilderAbilities(
         character.detail?.builderAbilities ?? [],
         derivedBuilderAbilities,
+        conditionalBuilderAbilities,
       );
+
+      if (conditionalBuilderAbilities.length) {
+        character.detail.conditionalBuilderAbilities = conditionalBuilderAbilities;
+      } else {
+        delete character.detail.conditionalBuilderAbilities;
+      }
       const correctedBuilderAbilities = applyBuilderAbilityCorrection(
         builderAbilities,
         resolveBuilderAbilityCorrection(character.id, abilityCorrections),
@@ -4198,7 +4381,7 @@ export function applyBuilderAbilityCorrection(abilities, correction) {
   return nextAbilities;
 }
 
-function mergeBuilderAbilities(existingAbilities, derivedAbilities) {
+function mergeBuilderAbilities(existingAbilities, derivedAbilities, conditionalAbilities = []) {
   const mergedAbilities = [];
   const seen = new Set();
   // The effect-target scope is part of an ability's dedupe identity, so a stored
@@ -4212,9 +4395,22 @@ function mergeBuilderAbilities(existingAbilities, derivedAbilities) {
   // Dropping the stored copy in that case is symmetric — it self-heals a scope
   // being added, changed, or removed — so no one-off seed migration is needed
   // per parser change.
+  //
+  // A stored entry that is now derived only under a captain condition (869fhvfva)
+  // is dropped the same way, so a seed written before the condition was read heals
+  // on the next offline regeneration instead of keeping the unconditional copy.
   const derivedScopeBlindIdentities = new Set(derivedAbilities.map(buildScopeBlindAbilityIdentity));
+  const conditionalScopeBlindIdentities = new Set(
+    conditionalAbilities.map(buildScopeBlindAbilityIdentity),
+  );
   const retainedExistingAbilities = normalizeExistingBuilderAbilities(existingAbilities).filter(
-    (ability) => !derivedScopeBlindIdentities.has(buildScopeBlindAbilityIdentity(ability)),
+    (ability) => {
+      const identity = buildScopeBlindAbilityIdentity(ability);
+
+      return (
+        !derivedScopeBlindIdentities.has(identity) && !conditionalScopeBlindIdentities.has(identity)
+      );
+    },
   );
 
   [...retainedExistingAbilities, ...derivedAbilities].forEach((ability) => {

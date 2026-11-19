@@ -42,6 +42,18 @@ Character rows are normalized from upstream unit/detail data plus manual overlay
 - `partyConflictKeys` are keys derived from the card name. They decide "same character" only for a unit with no `families`; super-criteria and name matching in the Auto Team Builder, and the SEO pages' related characters, read them
 - `characterTags` drive tag filters and captain coverage requirements
 - `builderAbilities` are canonical ability entries used by Auto Team Builder and Captain Coverage filters
+- `conditionalBuilderAbilities` (869fhvfva) are the entries a special grants **only with a given
+  captain**: a sentence that starts "If <X> is your Captain …" in `specialText` or
+  `superSpecialText`. They are kept out of `builderAbilities`, so no filter, catalogue list or
+  builder counts them as given, and each carries a `captainCondition`: the sentence's own `text`,
+  `captain` (`self` for "this character", `named` with `names`, or `other`), the `captainTypes` of an
+  "or your Captain is a [STR] or [DEX] character" alternative, and `hasOtherRequirements` when the
+  condition asks for more than a captain seat ("… and field has Territory …"). The sentence's
+  "otherwise" part holds without the captain and stays in `builderAbilities`. Cora #2195 reads
+  Remove Despair 3 turns there and 20 turns here, behind Corazon; before, a "Despair ≥ 9" filter
+  offered her for any crew. 54 characters carry the field when this was written (2026-11-19); a
+  character without such a sentence has no field at all. Nothing in the app reads it yet - counting
+  it when the captain is on the team is the follow-up
 - a **Support-only** character (869f6td4p) has `supportData` and no Captain Ability (no
   `captainAbility` text and no `captainAbilityVariants` text) and no `specialText`. The official
   Global letter of 2026-04-16 says such characters "do not have any Specials, Captain Abilities,
