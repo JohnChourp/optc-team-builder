@@ -251,4 +251,56 @@ describe('buildMechanicChecklist with ability requirements', () => {
     expect(summary.entries).toHaveLength(1);
     expect(summary.entries[0]?.source).toBe('ticked');
   });
+
+  it('counts a despair cure that needs the Captain only when the Captain meets it (869fhvfva)', () => {
+    const cora = {
+      role: 'sub',
+      reasonChips: [],
+      character: {
+        id: 2195,
+        name: 'Cora',
+        type: 'DEX',
+        classes: ['Free Spirit'],
+        families: ['Corazon'],
+        detail: {
+          builderAbilities: [],
+          conditionalBuilderAbilities: [
+            {
+              key: 'remove_despair',
+              label: 'Remove Despair',
+              minTurns: 20,
+              isCompleteRemoval: false,
+              slotTokens: [],
+              source: 'specialText',
+              captainCondition: {
+                text: 'If Corazon is your Captain or Friend/Guest Captain',
+                captain: 'named',
+                names: ['Corazon'],
+                friendCaptain: true,
+                captainTypes: [],
+                captainTags: [],
+                captainClasses: [],
+                captainTypeAndClass: false,
+                hasOtherRequirements: false,
+              },
+            },
+          ],
+        },
+      },
+    } as unknown as AutoBuildSlot;
+    const captain = (families: string[]) =>
+      ({
+        ...slot('Captain', []),
+        role: 'captain',
+        character: { ...slot('Captain', []).character, type: 'STR', classes: [], families },
+      }) as AutoBuildSlot;
+    const despairNine = mechanic({ minTurns: 9 });
+
+    expect(
+      buildMechanicChecklist([despairNine], [captain(['Corazon']), cora]).entries[0]?.state,
+    ).toBe('covered');
+    expect(
+      buildMechanicChecklist([despairNine], [captain(['Monkey D. Luffy']), cora]).entries[0]?.state,
+    ).toBe('notCovered');
+  });
 });

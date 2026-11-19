@@ -13,6 +13,7 @@ import {
   type SavedTeam,
   type ShipRecord,
 } from '../../core/models/optc.models';
+import { resolveCrewSeatAbilities } from '../../core/services/captain-condition-abilities.utils';
 import { resolveTeamCoverageSummary } from '../../core/services/team-coverage-summary.utils';
 import {
   SAVED_TEAM_SHARE_SOURCE,
@@ -512,7 +513,14 @@ function buildMetrics(
     categoryCounts.set(category, new Set());
   }
 
-  for (const character of characters) {
+  // 869fhvfva: the seats in order, so a captain-conditional effect counts when this crew meets it.
+  const seats = slots.map((slot) => slot.character);
+
+  seats.forEach((character, seatIndex) => {
+    if (!character) {
+      return;
+    }
+
     character.type
       .split(',')
       .map((type) => type.trim())
@@ -520,7 +528,7 @@ function buildMetrics(
       .forEach((type) => typeSet.add(type));
     character.classes.filter(Boolean).forEach((characterClass) => classSet.add(characterClass));
 
-    for (const ability of resolveDisplayAbilities(character)) {
+    for (const ability of resolveDisplayAbilities(seats, seatIndex)) {
       const abilityKey = ability.key.trim();
 
       if (!abilityKey.length) {
@@ -534,7 +542,7 @@ function buildMetrics(
         categoryCounts.get(category)?.add(abilityKey);
       }
     }
-  }
+  });
 
   return [
     metric('filledSlots', characters.length),
@@ -569,8 +577,13 @@ function resolveCatalogMap(
   return catalogMap;
 }
 
-function resolveDisplayAbilities(character: CharacterDetailRecord): NormalizedBuilderAbility[] {
-  return character.detail.builderAbilities.filter((ability) => ability.source !== 'captainAbility');
+function resolveDisplayAbilities(
+  seats: ReadonlyArray<CharacterDetailRecord | null>,
+  seatIndex: number,
+): NormalizedBuilderAbility[] {
+  return resolveCrewSeatAbilities(seats, seatIndex).filter(
+    (ability) => ability.source !== 'captainAbility',
+  );
 }
 
 function metric(key: AutoTeamCompareMetricKey, value: number): AutoTeamCompareMetricSnapshot {

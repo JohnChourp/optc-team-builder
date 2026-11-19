@@ -180,5 +180,9 @@
     "action": "Something here looks wrong",
     "copied": "Report copied. Paste it wherever you contact us, and add what you expected.",
     "copyFailed": "Could not copy the report. Your browser blocked the clipboard - select the page text and copy it by hand."
+  },
+  "conditionalAbilities": {
+    "label": "Only with a given captain",
+    "hint": "These effects count only when the captain the special names leads the crew. The Team Builders count them for that crew; filters and searches do not."
   }
 }

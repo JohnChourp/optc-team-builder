@@ -345,7 +345,12 @@ Captain …" no longer counts as given: what it grants beyond the rest of the te
 part stays given. Cora #2195 is a 3-turn Despair cure everywhere, not 20. "If your Captain is a
 Driven character, …" (a captain type or class) is kept apart the same way: #4314's 5-turn Pain cure
 needs a Driven captain. 398 characters move entries, and the regression cases are in
-`src/app/core/services/auto-team-builder-ability-parser-captain-condition.spec.ts`.
+`src/app/core/services/auto-team-builder-ability-parser-captain-condition.spec.ts`. The Manual Team Builder, Saved Teams
+and the Auto Team Builder's compare view and mechanic checklist count such an entry when the crew's
+captain meets it (Cora's 20 turns with a Corazon Captain or Friend Captain), and the Character
+screen lists them under *Only with a given captain*; the rule and its cases are
+`src/app/core/services/captain-condition-abilities.utils.ts` and its spec. The Auto Team Builder's
+search does not count them yet.
 
 `apply_set_target` (26 → 28) and `class_change` (10 → 19) additionally gained **superSpecialText**
 sourcing via the per-key allowlist, for units that carry the effect only in their super special.

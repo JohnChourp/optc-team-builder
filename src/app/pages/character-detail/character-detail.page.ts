@@ -269,6 +269,23 @@ export class CharacterDetailPage implements OnInit {
     );
   }
 
+  /**
+   * 869fhvfva. Effects the special grants only with a given captain, grouped by the sentence
+   * that sets the condition, as the special words it.
+   */
+  public captainConditionalAbilityGroups(
+    character: CharacterDetailRecord,
+  ): Array<{ condition: string; abilities: NormalizedBuilderAbility[] }> {
+    const groups = new Map<string, NormalizedBuilderAbility[]>();
+
+    for (const { captainCondition, ...ability } of character.detail.conditionalBuilderAbilities ??
+      []) {
+      groups.set(captainCondition.text, [...(groups.get(captainCondition.text) ?? []), ability]);
+    }
+
+    return [...groups].map(([condition, abilities]) => ({ condition, abilities }));
+  }
+
   public exportCharacterOverride(character: CharacterDetailRecord): void {
     const override =
       this.characterOverrides.getOverrideByCharacterId(character.id) ??

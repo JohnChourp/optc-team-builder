@@ -276,9 +276,11 @@
                           }
 
                           <app-character-ability-groups
-                            [abilities]="slot.detail.builderAbilities"
+                            [abilities]="slotAbilities()[index] ?? []"
                             [catalogItems]="abilityCatalog()?.abilities ?? []"
-                            [highlightedRequirements]="highlightedRequirementsForCharacter(slot)"
+                            [highlightedRequirements]="
+                              highlightedRequirementsForCharacter(slot, slotAbilities()[index] ?? [])
+                            "
                             displayMode="collapsed"
                           ></app-character-ability-groups>
                         </div>

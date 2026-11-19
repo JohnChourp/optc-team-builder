@@ -56,8 +56,13 @@ Character rows are normalized from upstream unit/detail data plus manual overlay
   "otherwise" part holds without the captain and stays in `builderAbilities`. Cora #2195 reads
   Remove Despair 3 turns there and 20 turns here, behind Corazon; before, a "Despair ≥ 9" filter
   offered her for any crew. 398 characters carry the field when this was written (2026-11-19), 345 of them for a captain type, class or tag; a
-  character without such a sentence has no field at all. Nothing in the app reads it yet - counting
-  it when the captain is on the team is the follow-up
+  character without such a sentence has no field at all. Where the whole crew is known - Manual
+  Team Builder, Saved Teams, the Auto Team Builder's compare view and mechanic checklist - an entry
+  counts when its seat's crew meets the condition (`src/app/core/services/captain-condition-abilities.utils.ts`:
+  the Captain seat, the Friend Captain seat when `friendCaptain`, a named captain by its families, a
+  captain type, class or tag); `hasOtherRequirements` is never met. Filters, catalogue lists and
+  the Auto Team Builder's search do not count it. The Character screen lists the entries under
+  *Only with a given captain*, grouped by the special's own sentence
 - a **Support-only** character (869f6td4p) has `supportData` and no Captain Ability (no
   `captainAbility` text and no `captainAbilityVariants` text) and no `specialText`. The official
   Global letter of 2026-04-16 says such characters "do not have any Specials, Captain Abilities,

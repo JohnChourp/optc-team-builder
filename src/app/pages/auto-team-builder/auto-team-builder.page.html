@@ -4320,7 +4320,7 @@
                           }
                         </div>
                         <app-character-ability-groups
-                          [abilities]="displayBuilderAbilities(slot.character)"
+                          [abilities]="slot.crewAbilities"
                           [catalogItems]="abilityCatalog()?.abilities ?? []"
                           [highlightedRequirements]="current.coverage.abilityRequirements.matched"
                           displayMode="full"
