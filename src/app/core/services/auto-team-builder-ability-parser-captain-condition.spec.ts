@@ -12,6 +12,7 @@ interface CaptainCondition {
   captain: 'self' | 'named' | 'type' | 'other';
   names: string[];
   captainTypes: string[];
+  captainTags: string[];
   captainClasses: string[];
   captainTypeAndClass: boolean;
   hasOtherRequirements: boolean;
@@ -85,6 +86,7 @@ describe('a special sentence that holds only with a given captain', () => {
       captain: 'named',
       names: ['Corazon'],
       captainTypes: [],
+      captainTags: [],
       captainClasses: [],
       captainTypeAndClass: false,
       hasOtherRequirements: false,
@@ -322,6 +324,7 @@ describe('a special sentence that holds only with a given captain', () => {
       names: [],
       friendCaptain: false,
       captainTypes: [],
+      captainTags: [],
       captainClasses: ['Driven'],
       captainTypeAndClass: false,
       hasOtherRequirements: false,
@@ -384,6 +387,34 @@ describe('a special sentence that holds only with a given captain', () => {
 
     expect(unconditional(text, 'remove_bind')).toEqual([]);
     expect(conditional(text, 'remove_bind')[0].captainCondition?.hasOtherRequirements).toBe(true);
+  });
+
+  it('reads a crew-tag captain and a multi-type side of an "or" (#4442)', () => {
+    const [tag] = conditional(
+      'If your Captain is a [Five Elders] character and a [PSY] character is supporting this ' +
+        'character, applies Territory: Driven to the field for 3 turns.',
+      'territory',
+    );
+    const either =
+      'If your Captain is a [STR] or [DEX] character or this character is your Captain, ' +
+      'reduces Bind duration by 4 turns.';
+    const [typeAndClass] = conditional(
+      'If this character is your Captain or your Captain is a [DEX] Slasher character, reduces ' +
+        'Bind duration by 4 turns.',
+      'remove_bind',
+    );
+
+    expect(tag.captainCondition).toEqual(
+      expect.objectContaining({ captainTags: ['Five Elders'], hasOtherRequirements: true }),
+    );
+    expect(unconditional(either, 'remove_bind')).toEqual([]);
+    expect(typeAndClass.captainCondition).toEqual(
+      expect.objectContaining({
+        captainTypes: ['DEX'],
+        captainClasses: ['Slasher'],
+        captainTypeAndClass: true,
+      }),
+    );
   });
 
   it('reads a class alternative after a self condition', () => {

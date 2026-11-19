@@ -47,7 +47,7 @@ Character rows are normalized from upstream unit/detail data plus manual overlay
   `superSpecialText`. They are kept out of `builderAbilities`, so no filter, catalogue list or
   builder counts them as given, and each carries a `captainCondition`: the sentence's own `text`,
   `captain` (`self` for "this character", `named` with `names`, `type` for "If your Captain is a
-  [STR] or Slasher character …", or `other`), the `captainTypes` and `captainClasses` that captain
+  [STR] or Slasher character …", or `other`), the `captainTypes`, `captainClasses` and crew `captainTags` that captain
   must have (for `self`/`named`, of an "or your Captain is a [STR] or [DEX] character" alternative),
   `captainTypeAndClass` when the captain needs one type **and** one class ("[DEX] or [QCK] Fighter
   or Slasher"), `friendCaptain` when the Friend
@@ -55,7 +55,7 @@ Character rows are normalized from upstream unit/detail data plus manual overlay
   condition asks for more than a captain seat ("… and field has Territory …"). The sentence's
   "otherwise" part holds without the captain and stays in `builderAbilities`. Cora #2195 reads
   Remove Despair 3 turns there and 20 turns here, behind Corazon; before, a "Despair ≥ 9" filter
-  offered her for any crew. 396 characters carry the field when this was written (2026-11-19), 343 of them for a captain type or class; a
+  offered her for any crew. 398 characters carry the field when this was written (2026-11-19), 345 of them for a captain type, class or tag; a
   character without such a sentence has no field at all. Nothing in the app reads it yet - counting
   it when the captain is on the team is the follow-up
 - a **Support-only** character (869f6td4p) has `supportData` and no Captain Ability (no
