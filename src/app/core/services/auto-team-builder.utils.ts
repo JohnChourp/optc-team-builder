@@ -44,6 +44,7 @@ import {
   type AutoBuildAbilityRequirement,
   type AutoBuildBattleRequirement,
   type AutoBuildRequiredCharacterGroup,
+  type NormalizedBuilderAbility,
 } from '../models/auto-team-builder-ability.models';
 import {
   type CharacterDetailRecord,
@@ -57,6 +58,7 @@ import {
   resolveCharacterSameCharacterKeys,
 } from './character-party-conflict-keys.utils';
 import { matchesAbilityRequirement } from './auto-team-builder-ability-match.utils';
+import { isCaptainConditionMet } from './captain-condition-abilities.utils';
 import {
   captainTagBranchesSatisfied,
   countCaptainTagBranchMatches,
@@ -427,16 +429,43 @@ export function resolveAutoBuildTeamPowerPreferenceScore(
   );
 }
 
+/**
+ * `crew` is the Captain and the Friend Captain, in that order, when the team is known (869fhvfva):
+ * then a special effect that needs a captain also counts when that crew meets it - Cora's 20-turn
+ * Despair cure under a Corazon captain. Without a crew only `builderAbilities` count, as before.
+ */
 function candidateMatchesAbilityRequirement(
   candidate: AutoBuildCandidate,
   requirement: AutoBuildAbilityRequirement,
+  crew?: readonly AutoBuildCandidate[],
 ): boolean {
   const sourceScope = normalizeAbilityRequirementSourceScope(requirement.sourceScope);
-
-  return candidate.character.detail.builderAbilities.some((ability) =>
+  const matches = (ability: NormalizedBuilderAbility) =>
     !sourceScope && ability.source === 'captainAbility'
       ? false
-      : matchesAbilityRequirement(ability, requirement),
+      : matchesAbilityRequirement(ability, requirement);
+
+  if (candidate.character.detail.builderAbilities.some(matches)) {
+    return true;
+  }
+
+  const conditional = candidate.character.detail.conditionalBuilderAbilities;
+
+  if (!conditional?.length || !crew?.length) {
+    return false;
+  }
+
+  const seats = [crew[0]?.character, crew[1]?.character];
+  const leaderSeat = seats.findIndex((seat) => seat?.id === candidate.character.id);
+  const seatIndex = leaderSeat >= 0 ? leaderSeat : 2;
+
+  if (seatIndex === 2) {
+    seats.push(candidate.character);
+  }
+
+  return conditional.some(
+    (ability) =>
+      matches(ability) && isCaptainConditionMet(ability.captainCondition, seats, seatIndex),
   );
 }
 
@@ -1102,7 +1131,7 @@ function candidateCanSatisfyAbilityRequirementInSlot(
   requirement: AutoBuildAbilityRequirement,
   leaderCandidates: AutoBuildCandidate[],
 ): boolean {
-  if (!candidateMatchesAbilityRequirement(candidate, requirement)) {
+  if (!candidateMatchesAbilityRequirement(candidate, requirement, leaderCandidates)) {
     return false;
   }
 
@@ -1201,8 +1230,9 @@ function resolveLeaderScopedAbilityRequirements(
 function leaderSatisfiesAbilityRequirement(
   leader: AutoBuildCandidate,
   requirement: AutoBuildAbilityRequirement,
+  crew?: readonly AutoBuildCandidate[],
 ): boolean {
-  return candidateMatchesAbilityRequirement(leader, requirement);
+  return candidateMatchesAbilityRequirement(leader, requirement, crew);
 }
 
 function leadersSatisfyAbilityRequirement(
@@ -1211,7 +1241,7 @@ function leadersSatisfyAbilityRequirement(
 ): boolean {
   return (
     leaders.length > 0 &&
-    leaders.some((leader) => leaderSatisfiesAbilityRequirement(leader, requirement))
+    leaders.some((leader) => leaderSatisfiesAbilityRequirement(leader, requirement, leaders))
   );
 }
 
@@ -1251,6 +1281,7 @@ function compareAbilityRequirementDemandStrictness(
 function resolveMatchedAbilityDemandIndexes(
   demands: AbilityRequirementDemand[],
   candidates: AutoBuildCandidate[],
+  crew?: readonly AutoBuildCandidate[],
 ): Set<number> {
   const orderedDemands = [...demands].sort(compareAbilityRequirementDemandStrictness);
   const candidateAssignment = new Map<number, number>();
@@ -1272,7 +1303,7 @@ function resolveMatchedAbilityDemandIndexes(
 
       const candidate = candidates[candidateIndex];
 
-      if (!candidate || !candidateMatchesAbilityRequirement(candidate, demand.requirement)) {
+      if (!candidate || !candidateMatchesAbilityRequirement(candidate, demand.requirement, crew)) {
         continue;
       }
 
@@ -1342,7 +1373,11 @@ function resolveMatchedTeamAbilityRequirementIndexes(
       firstDemand.requirement,
       leaderCandidates,
     );
-    const matchedDemandIndexes = resolveMatchedAbilityDemandIndexes(demands, candidatePool);
+    const matchedDemandIndexes = resolveMatchedAbilityDemandIndexes(
+      demands,
+      candidatePool,
+      leaderCandidates,
+    );
     const matchedCountsByRequirement = new Map<number, number>();
 
     for (const demand of demands) {
@@ -4163,7 +4198,13 @@ function resolveSubAbilityDemandScore(
   demandContext: SubAbilityDemandContext,
 ): number {
   const requirementScore = demandContext.requirements.reduce((score, demand) => {
-    if (!candidateMatchesAbilityRequirement(candidate, demand)) {
+    if (
+      !candidateMatchesAbilityRequirement(
+        candidate,
+        demand,
+        demandContext.leaderTagConditionPrefix.slice(0, 2),
+      )
+    ) {
       return score;
     }
 
@@ -4533,6 +4574,7 @@ function pushRequirementReasons(
     candidate,
     options.input,
     options.role,
+    options.leaderSlots,
   );
 
   if (matchedAbilityKeys.length) {
@@ -4566,6 +4608,7 @@ function collectMatchedRequiredAbilityKeys(
   candidate: AutoBuildCandidate,
   input: AutoBuildInput,
   role: AutoBuildSlot['role'],
+  crew?: readonly AutoBuildCandidate[],
 ): string[] {
   const abilityKeys = [
     ...filterIgnoredCaptainAbilityRequirements(input.requiredAbilities),
@@ -4578,7 +4621,7 @@ function collectMatchedRequiredAbilityKeys(
         ? !isLeaderScopedAbilityRequirement(requirement)
         : normalizeAbilityRequirementSlotScope(requirement.slotScope) !== 'sub',
     )
-    .filter((requirement) => candidateMatchesAbilityRequirement(candidate, requirement))
+    .filter((requirement) => candidateMatchesAbilityRequirement(candidate, requirement, crew))
     .map((requirement) => requirement.abilityKey);
 
   return [...new Set(abilityKeys)].sort((left, right) => left.localeCompare(right));

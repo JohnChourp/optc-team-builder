@@ -60,8 +60,10 @@ Character rows are normalized from upstream unit/detail data plus manual overlay
   Team Builder, Saved Teams, the Auto Team Builder's compare view and mechanic checklist - an entry
   counts when its seat's crew meets the condition (`src/app/core/services/captain-condition-abilities.utils.ts`:
   the Captain seat, the Friend Captain seat when `friendCaptain`, a named captain by its families, a
-  captain type, class or tag); `hasOtherRequirements` is never met. Filters, catalogue lists and
-  the Auto Team Builder's search do not count it. The Character screen lists the entries under
+  captain type, class or tag); `hasOtherRequirements` is never met. The Auto Team Builder's search
+  counts it too wherever its Captain and Friend Captain are known - sub ranking, the slot checks,
+  the "Why picked?" reasons and the requirement report - and its proofs that no team exists treat
+  such an entry as possible. Filters and catalogue lists do not count it. The Character screen lists the entries under
   *Only with a given captain*, grouped by the special's own sentence
 - a **Support-only** character (869f6td4p) has `supportData` and no Captain Ability (no
   `captainAbility` text and no `captainAbilityVariants` text) and no `specialText`. The official

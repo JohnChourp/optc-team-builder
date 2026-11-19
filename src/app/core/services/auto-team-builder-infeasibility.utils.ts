@@ -132,7 +132,14 @@ function recordSatisfiesGroup(
   record: CharacterDetailRecord,
   abilities: AutoBuildAbilityRequirement[],
 ): boolean {
-  const recordAbilities = record.detail?.builderAbilities ?? [];
+  // 869fhvfva: a special effect that needs a captain is possible as long as some crew can meet it,
+  // so a proof of impossibility must not leave it out.
+  const recordAbilities = [
+    ...(record.detail?.builderAbilities ?? []),
+    ...(record.detail?.conditionalBuilderAbilities ?? []).filter(
+      (ability) => !ability.captainCondition.hasOtherRequirements,
+    ),
+  ];
 
   return abilities.every((requirement) =>
     recordAbilities.some((ability) => matchesAbilityRequirement(ability, requirement)),
