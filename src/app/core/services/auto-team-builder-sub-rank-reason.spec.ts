@@ -163,6 +163,7 @@ function createContext(
             { operator: 'all', conditions: [] },
           ] as unknown as SubAbilityDemandContext['leaderTagConditionSets'])
         : [],
+    crew: [],
     leaderTagConditionPrefix: [],
     battleAssignmentMode: strict ? 'strict' : 'flexible',
   };

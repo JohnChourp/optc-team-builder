@@ -190,6 +190,8 @@ type AutoBuildLeaderPairProgress = Pick<
 
 export interface SubAbilityDemandContext {
   requirements: AutoBuildAbilityRequirement[];
+  /** The Captain and the Friend Captain, for effects a sub gets only with them (869fhvfva). */
+  crew: AutoBuildCandidate[];
   battleRequirements: AutoBuildBattleRequirement[];
   leaderTagConditionSets: ActiveLeaderCriteria['tagConditionSets'];
   leaderTagConditionPrefix: AutoBuildCandidate[];
@@ -2317,7 +2319,8 @@ function resolveLeaderRequirementPriorityScore(
 ): number {
   return resolveLeaderScopedAbilityRequirements(input.requiredAbilities).reduce(
     (score, requirement) =>
-      leaderSatisfiesAbilityRequirement(candidate, requirement)
+      // Ranked as the Captain it would be, so an effect it gets by leading counts (869fhvfva).
+      leaderSatisfiesAbilityRequirement(candidate, requirement, [candidate])
         ? score + Math.max(1, requirement.requiredCharacterCount)
         : score,
     0,
@@ -3068,6 +3071,7 @@ function selectSubs(
     battleRequirementAssignmentMode,
     leaderCriteria,
     [...leaderSlots, ...selected],
+    leaderSlots,
   );
   const permanentExclusionCounts = createProgressExclusionCounts();
   const rankedPool = candidates
@@ -4165,6 +4169,7 @@ function collectSubAbilityDemandContext(
   battleAssignmentMode: BattleRequirementAssignmentMode,
   leaderCriteria: ActiveLeaderCriteria,
   leaderTagConditionPrefix: AutoBuildCandidate[],
+  crew: AutoBuildCandidate[],
 ): SubAbilityDemandContext {
   const requirements = [
     ...filterIgnoredCaptainAbilityRequirements(input.requiredAbilities),
@@ -4187,6 +4192,7 @@ function collectSubAbilityDemandContext(
             ),
           ]),
     battleRequirements,
+    crew,
     leaderTagConditionSets: leaderCriteria.tagConditionSets,
     leaderTagConditionPrefix,
     battleAssignmentMode,
@@ -4199,11 +4205,7 @@ function resolveSubAbilityDemandScore(
 ): number {
   const requirementScore = demandContext.requirements.reduce((score, demand) => {
     if (
-      !candidateMatchesAbilityRequirement(
-        candidate,
-        demand,
-        demandContext.leaderTagConditionPrefix.slice(0, 2),
-      )
+      !candidateMatchesAbilityRequirement(candidate, demand, demandContext.crew)
     ) {
       return score;
     }
@@ -4697,6 +4699,7 @@ function pushRankingReasons(
       options.input,
       options.battleRequirementAssignmentMode,
       options.leaderCriteria,
+      options.leaderSlots,
       options.leaderSlots,
     );
     const rank = resolveAutoFillSubCandidateRank(

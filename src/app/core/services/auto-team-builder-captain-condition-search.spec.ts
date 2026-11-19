@@ -31,11 +31,18 @@ function character(
   id: number,
   type: string,
   classes: string[],
-  options: { captainAbility?: string; removesBind?: boolean; bindUnderCaptainClass?: string } = {},
+  options: {
+    captainAbility?: string;
+    removesBind?: boolean;
+    bindUnderCaptainClass?: string;
+    bindCondition?: Record<string, unknown>;
+    families?: string[];
+  } = {},
 ): CharacterDetailRecord {
   return {
     id,
     name: `Unit ${id}`,
+    families: options.families ?? [],
     isIncomplete: false,
     type,
     classes,
@@ -83,7 +90,7 @@ function character(
             },
           ]
         : [],
-      ...(options.bindUnderCaptainClass
+      ...(options.bindUnderCaptainClass || options.bindCondition
         ? {
             conditionalBuilderAbilities: [
               {
@@ -93,7 +100,7 @@ function character(
                 isCompleteRemoval: true,
                 slotTokens: [],
                 source: 'specialText',
-                captainCondition: {
+                captainCondition: options.bindCondition ?? {
                   text: `If your Captain is a ${options.bindUnderCaptainClass} character`,
                   captain: 'type',
                   names: [],
@@ -193,6 +200,24 @@ async function build(
 const subIds = (result: AutoBuildResult) =>
   result.slots.filter((slot) => slot.role === 'sub').map((slot) => slot.character.id);
 
+function condition(overrides: Record<string, unknown>): Record<string, unknown> {
+  return {
+    text: 'If X is your Captain',
+    captain: 'self',
+    names: [],
+    friendCaptain: false,
+    captainTypes: [],
+    captainTags: [],
+    captainClasses: [],
+    captainTypeAndClass: false,
+    hasOtherRequirements: false,
+    ...overrides,
+  };
+}
+
+const SELF_CAPTAIN_BINDER = 102;
+const CAPTAIN_ABILITY = 'Boosts ATK of all characters by 3x and their HP by 1.2x.';
+
 describe('the search counts an effect that needs its captain (869fhvfva)', () => {
   it('leads with the Fighter, uses the unit and reports Bind covered', async () => {
     const result = await build({ requiredAbilities: [REMOVE_BIND] }, pool('Fighter'));
@@ -208,5 +233,50 @@ describe('the search counts an effect that needs its captain (869fhvfva)', () =>
 
     // No team removes Bind: the search either stops or reports it missing, never covered.
     expect(result?.coverage.abilityRequirements.matched ?? []).toEqual([]);
+  });
+
+  it('picks and reports a leader by the effect it gets as Captain, for a leader-scoped requirement', async () => {
+    const binder = character(SELF_CAPTAIN_BINDER, 'INT', ['Cerebral'], {
+      captainAbility: CAPTAIN_ABILITY,
+      bindCondition: condition({ text: 'If this character is your Captain', captain: 'self' }),
+    });
+    const result = await build({ requiredAbilities: [{ ...REMOVE_BIND, slotScope: 'leader' }] }, [
+      ...pool('Cerebral'),
+      binder,
+    ]);
+
+    expect(result, 'the search found a team').not.toBeNull();
+    expect(result!.slots.find((slot) => slot.role === 'captain')?.character.id).toBe(
+      SELF_CAPTAIN_BINDER,
+    );
+    expect(result!.coverage.abilityRequirements.missing).toEqual([]);
+  });
+
+  it('counts a named condition met from the Friend Captain seat', async () => {
+    const records = pool('Cerebral').map((record) =>
+      record.id === BIND_REMOVER
+        ? character(BIND_REMOVER, 'QCK', ['Driven'], {
+            bindCondition: condition({
+              text: 'If Corazon is your Captain or Friend/Guest Captain',
+              captain: 'named',
+              names: ['Corazon'],
+              friendCaptain: true,
+            }),
+          })
+        : record.id === FRIEND_CAPTAIN
+          ? character(FRIEND_CAPTAIN, 'DEX', ['Slasher'], {
+              captainAbility: CAPTAIN_ABILITY,
+              families: ['Corazon'],
+            })
+          : record,
+    );
+    const result = await build({ requiredAbilities: [REMOVE_BIND] }, records);
+
+    expect(result, 'the search found a team').not.toBeNull();
+    expect(
+      result!.slots.some((slot) => slot.role !== 'sub' && slot.character.id === FRIEND_CAPTAIN),
+    ).toBe(true);
+    expect(subIds(result!)).toContain(BIND_REMOVER);
+    expect(result!.coverage.abilityRequirements.missing).toEqual([]);
   });
 });
