@@ -2453,8 +2453,57 @@ const CAPTAIN_CONDITION_CLAUSE_START_PATTERN = new RegExp(
   `(?:[;,]\\s+|\\s+and\\s+)(?=${CAPTAIN_CONDITION_ELSE_LEAD_PATTERN.source.slice(1)})`,
   'gi',
 );
-const CAPTAIN_CONDITION_TYPE_ALTERNATIVE_PATTERN =
-  /^\s*or\s+your\s+captain\s+is\s+an?\s+((?:\[[a-z]+\](?:\s*,\s*|\s+or\s+)?)+)\s+character\s*$/i;
+// A captain's type, class or crew tag, as the condition names it ("[STR]", "Free
+// Spirit", "[Five Elders]").
+const CAPTAIN_TYPE_CLASS_TOKEN =
+  '\\[(?:STR|DEX|QCK|PSY|INT)\\]|Fighter|Slasher|Striker|Shooter|Free\\s+Spirit|Cerebral|Powerhouse|Driven|Booster|Evolver|\\[[A-Z][^\\]]*\\]';
+const CAPTAIN_LIST_SEPARATOR = '(?:\\s*,\\s*|\\s+or\\s+|\\s*\\/\\s*)';
+const CAPTAIN_TYPE_TOKEN = '\\[(?:STR|DEX|QCK|PSY|INT)\\]';
+const CAPTAIN_CLASS_TOKEN =
+  'Fighter|Slasher|Striker|Shooter|Free\\s+Spirit|Cerebral|Powerhouse|Driven|Booster|Evolver';
+const CAPTAIN_TYPE_CLASS_LIST = `(?:${CAPTAIN_TYPE_CLASS_TOKEN})(?:${CAPTAIN_LIST_SEPARATOR}(?:${CAPTAIN_TYPE_CLASS_TOKEN}))*`;
+// "[DEX] or [QCK] Fighter or Slasher": a type AND a class, one list of each.
+const CAPTAIN_TYPE_AND_CLASS_LIST = `(?:${CAPTAIN_TYPE_TOKEN})(?:${CAPTAIN_LIST_SEPARATOR}(?:${CAPTAIN_TYPE_TOKEN}))*\\s+(?:${CAPTAIN_CLASS_TOKEN})(?:${CAPTAIN_LIST_SEPARATOR}(?:${CAPTAIN_CLASS_TOKEN}))*`;
+const CAPTAIN_CONDITION_TYPE_ALTERNATIVE_PATTERN = new RegExp(
+  `^\\s*or\\s+your\\s+captain\\s+is\\s+an?\\s+(${CAPTAIN_TYPE_AND_CLASS_LIST}|${CAPTAIN_TYPE_CLASS_LIST})\\s+characters?\\s*$`,
+  'i',
+);
+// "If your Captain is a [STR] or Slasher character, <effect>" (869fhvfva, second PR):
+// the effect holds only under a captain of that type, class or tag. 345 characters
+// move entries for it when this was written (2026-11-19), every sentence about the
+// Captain seat alone.
+const CAPTAIN_TYPE_SENTENCE_PATTERN = new RegExp(
+  `^if\\s+your\\s+captain\\s+(?:is|are)\\s+(?:an?\\s+)?(${CAPTAIN_TYPE_AND_CLASS_LIST}|${CAPTAIN_TYPE_CLASS_LIST})(?:\\s+characters?)?([^,]*),\\s+(.+)$`,
+  'i',
+);
+const CAPTAIN_TYPE_AND_CLASS_PATTERN = new RegExp(`^${CAPTAIN_TYPE_AND_CLASS_LIST}$`, 'i');
+// "your Captain is a Driven character" as one side of an "or" in a subject.
+const CAPTAIN_TYPE_SUBJECT_SEGMENT = `your\\s+captain\\s+(?:is|are)\\s+(?:an?\\s+)?(?:${CAPTAIN_TYPE_AND_CLASS_LIST}|${CAPTAIN_TYPE_CLASS_LIST})(?:\\s+characters?)?`;
+const CAPTAIN_TYPE_SUBJECT_PATTERN = new RegExp(`^${CAPTAIN_TYPE_SUBJECT_SEGMENT}$`, 'i');
+const CAPTAIN_TYPE_SUBJECT_SEGMENT_PATTERN = new RegExp(CAPTAIN_TYPE_SUBJECT_SEGMENT, 'gi');
+
+function resolveCaptainTypesAndClasses(list) {
+  const tokens = [...list.matchAll(new RegExp(CAPTAIN_TYPE_CLASS_TOKEN, 'gi'))].map(
+    (match) => match[0],
+  );
+
+  const isType = (token) => /^\[(?:STR|DEX|QCK|PSY|INT)\]$/i.test(token);
+
+  return {
+    captainTypes: tokens.filter(isType).map((token) => token.slice(1, -1).toUpperCase()),
+    captainTags: tokens
+      .filter((token) => token.startsWith('[') && !isType(token))
+      .map((token) => token.slice(1, -1)),
+    captainClasses: tokens
+      .filter((token) => !token.startsWith('['))
+      .map((token) =>
+        token
+          .replace(/\s+/g, ' ')
+          .toLowerCase()
+          .replace(/(^|\s)\S/g, (letter) => letter.toUpperCase()),
+      ),
+  };
+}
 
 function splitCaptainConditionElse(thenAndElse) {
   const otherwiseComma = thenAndElse.match(/^(.+?),\s+otherwise,\s+(.+)$/i);
@@ -2513,12 +2562,25 @@ function splitCaptainConditionElse(thenAndElse) {
 const CAPTAIN_NAME_PATTERN = /^[A-Z][A-Za-z.'-]*(?:\s+[A-Z][A-Za-z.'-]*)*$/;
 
 function hasNonCaptainAlternative(subject, captainTail) {
-  const alternatives = subject.trim().split(/\s*,\s*|\s+or\s+/i);
+  // A "your Captain is a [STR] or [DEX] character" side holds its own "or": take it
+  // out whole before splitting the subject into its alternatives.
+  const alternatives = subject
+    .trim()
+    .replace(CAPTAIN_TYPE_SUBJECT_SEGMENT_PATTERN, 'this character')
+    .split(/\s*,\s*|\s+or\s+/i);
   const subjectHasOther =
     alternatives.length > 1 &&
     !alternatives.every(
-      (part) => /^this character$/i.test(part.trim()) || CAPTAIN_NAME_PATTERN.test(part.trim()),
+      (part) =>
+        /^this character$/i.test(part.trim()) ||
+        CAPTAIN_NAME_PATTERN.test(part.trim()) ||
+        CAPTAIN_TYPE_SUBJECT_PATTERN.test(part.trim()),
     );
+
+  return subjectHasOther || tailHasNonCaptainAlternative(captainTail);
+}
+
+function tailHasNonCaptainAlternative(captainTail) {
   // What is left of the tail once the seats, a captain-type alternative and the
   // activation timing are taken out: an "or" there is a way to meet the condition
   // with no captain ("… is your Captain or your crew has 3+ Slasher characters").
@@ -2528,7 +2590,7 @@ function hasNonCaptainAlternative(subject, captainTail) {
     .replace(/(?:\s+or|\s*,|\s*\/)\s*(?:the\s+)?(?:friend|guest)(?:\/guest)?\s+captain\b/gi, '')
     .replace(/\s+or\s+was\s+captain\b.*$/i, '');
 
-  return subjectHasOther || /\bor\b/i.test(tailWithoutSeats);
+  return /\bor\b/i.test(tailWithoutSeats);
 }
 
 function resolveCaptainCondition(text, subject, captainTail) {
@@ -2540,9 +2602,9 @@ function resolveCaptainCondition(text, subject, captainTail) {
     .replace(/^\s+or\s+(?:the\s+)?friend(?:\/guest)?\s+captain\b/i, '')
     .replace(/^\s*\/\s*friend\s+captain\b/i, '');
   const typeAlternative = friendTail.match(CAPTAIN_CONDITION_TYPE_ALTERNATIVE_PATTERN);
-  const captainTypes = typeAlternative
-    ? [...typeAlternative[1].matchAll(/\[([a-z]+)\]/gi)].map((match) => match[1].toUpperCase())
-    : [];
+  const { captainTypes, captainTags, captainClasses } = resolveCaptainTypesAndClasses(
+    typeAlternative ? typeAlternative[1] : '',
+  );
   const remainingTail = typeAlternative ? '' : friendTail;
   // "Luffy or Zoro" names either captain; "Luffy and Zoro" needs both, which a single
   // captain seat cannot meet, so it counts as another requirement.
@@ -2558,12 +2620,35 @@ function resolveCaptainCondition(text, subject, captainTail) {
     // "your Captain" alone does not.
     friendCaptain: /\b(?:friend|guest)\b/i.test(captainTail),
     captainTypes,
+    captainTags,
+    captainClasses,
+    captainTypeAndClass: Boolean(
+      typeAlternative && CAPTAIN_TYPE_AND_CLASS_PATTERN.test(typeAlternative[1].trim()),
+    ),
     // Anything the fields above do not capture ("… and field has Territory …",
     // "… or was Captain at start of adventure …") makes the condition stricter or
     // looser than a captain seat: never treat it as met. "when the special is
     // activated" only says when the seat is checked and is not such a requirement.
     hasOtherRequirements:
       (!isSelf && !subjectIsName) || needsSeveralNames || remainingTail.trim().length > 0,
+  };
+}
+
+// "If your Captain is a Driven character when the special is activated" holds under any
+// Driven captain; anything else left in the tail ("and your crew has ATK UP") is a
+// requirement a captain seat alone does not meet.
+function resolveCaptainTypeCondition(text, list, captainTail) {
+  return {
+    text,
+    captain: 'type',
+    names: [],
+    friendCaptain: false,
+    ...resolveCaptainTypesAndClasses(list),
+    // true: the captain needs one of the types AND one of the classes; false: any one.
+    captainTypeAndClass: CAPTAIN_TYPE_AND_CLASS_PATTERN.test(list.trim()),
+    hasOtherRequirements:
+      captainTail.replace(/\s+when\s+(?:the\s+)?special\s+is\s+activated\s*$/i, '').trim().length >
+      0,
   };
 }
 
@@ -2580,6 +2665,33 @@ function splitCaptainConditionalAbilityText(value) {
 
   sentences.forEach((sentence) => {
     const match = sentence.match(CAPTAIN_CONDITION_SENTENCE_PATTERN);
+    const typeMatch = match ? null : sentence.match(CAPTAIN_TYPE_SENTENCE_PATTERN);
+
+    if (typeMatch) {
+      const [, list, typeTail, typeRest] = typeMatch;
+      const rest = typeRest.trim();
+
+      if (tailHasNonCaptainAlternative(typeTail)) {
+        baseSentences.push(sentence);
+        return;
+      }
+
+      const { thenText, elseText } = splitCaptainConditionElse(rest);
+
+      if (elseText) {
+        baseSentences.push(elseText);
+      }
+
+      branches.push({
+        condition: resolveCaptainTypeCondition(
+          sentence.slice(0, sentence.length - rest.length).replace(/,\s*$/, ''),
+          list,
+          typeTail,
+        ),
+        text: thenText,
+      });
+      return;
+    }
 
     // "If enemies have 10+ status effects or this character is your Captain, …" also
     // holds with no captain at all, like any other condition the parser reads as given.
