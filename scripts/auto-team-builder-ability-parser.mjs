@@ -2456,7 +2456,13 @@ const CAPTAIN_CONDITION_CLAUSE_START_PATTERN = new RegExp(
 // A captain's type or class, as the condition names it ("[STR]", "Free Spirit").
 const CAPTAIN_TYPE_CLASS_TOKEN =
   '\\[(?:STR|DEX|QCK|PSY|INT)\\]|Fighter|Slasher|Striker|Shooter|Free\\s+Spirit|Cerebral|Powerhouse|Driven|Booster|Evolver';
-const CAPTAIN_TYPE_CLASS_LIST = `(?:${CAPTAIN_TYPE_CLASS_TOKEN})(?:(?:\\s*,\\s*|\\s+or\\s+|\\s*\\/\\s*)(?:${CAPTAIN_TYPE_CLASS_TOKEN}))*`;
+const CAPTAIN_LIST_SEPARATOR = '(?:\\s*,\\s*|\\s+or\\s+|\\s*\\/\\s*)';
+const CAPTAIN_TYPE_TOKEN = '\\[(?:STR|DEX|QCK|PSY|INT)\\]';
+const CAPTAIN_CLASS_TOKEN =
+  'Fighter|Slasher|Striker|Shooter|Free\\s+Spirit|Cerebral|Powerhouse|Driven|Booster|Evolver';
+const CAPTAIN_TYPE_CLASS_LIST = `(?:${CAPTAIN_TYPE_CLASS_TOKEN})(?:${CAPTAIN_LIST_SEPARATOR}(?:${CAPTAIN_TYPE_CLASS_TOKEN}))*`;
+// "[DEX] or [QCK] Fighter or Slasher": a type AND a class, one list of each.
+const CAPTAIN_TYPE_AND_CLASS_LIST = `(?:${CAPTAIN_TYPE_TOKEN})(?:${CAPTAIN_LIST_SEPARATOR}(?:${CAPTAIN_TYPE_TOKEN}))*\\s+(?:${CAPTAIN_CLASS_TOKEN})(?:${CAPTAIN_LIST_SEPARATOR}(?:${CAPTAIN_CLASS_TOKEN}))*`;
 const CAPTAIN_CONDITION_TYPE_ALTERNATIVE_PATTERN = new RegExp(
   `^\\s*or\\s+your\\s+captain\\s+is\\s+an?\\s+(${CAPTAIN_TYPE_CLASS_LIST})\\s+characters?\\s*$`,
   'i',
@@ -2465,7 +2471,13 @@ const CAPTAIN_CONDITION_TYPE_ALTERNATIVE_PATTERN = new RegExp(
 // the effect holds only under a captain of that type or class. 386 characters carry
 // it when this was written (2026-11-19), every one about the Captain seat alone.
 const CAPTAIN_TYPE_SENTENCE_PATTERN = new RegExp(
-  `^if\\s+your\\s+captain\\s+(?:is|are)\\s+(?:an?\\s+)?(${CAPTAIN_TYPE_CLASS_LIST})(?:\\s+characters?)?([^,]*),\\s+(.+)$`,
+  `^if\\s+your\\s+captain\\s+(?:is|are)\\s+(?:an?\\s+)?(${CAPTAIN_TYPE_AND_CLASS_LIST}|${CAPTAIN_TYPE_CLASS_LIST})(?:\\s+characters?)?([^,]*),\\s+(.+)$`,
+  'i',
+);
+const CAPTAIN_TYPE_AND_CLASS_PATTERN = new RegExp(`^${CAPTAIN_TYPE_AND_CLASS_LIST}$`, 'i');
+// "your Captain is a Driven character" as one side of an "or" in a subject.
+const CAPTAIN_TYPE_SUBJECT_PATTERN = new RegExp(
+  `^your\\s+captain\\s+(?:is|are)\\s+(?:an?\\s+)?(?:${CAPTAIN_TYPE_AND_CLASS_LIST}|${CAPTAIN_TYPE_CLASS_LIST})(?:\\s+characters?)?$`,
   'i',
 );
 
@@ -2550,7 +2562,10 @@ function hasNonCaptainAlternative(subject, captainTail) {
   const subjectHasOther =
     alternatives.length > 1 &&
     !alternatives.every(
-      (part) => /^this character$/i.test(part.trim()) || CAPTAIN_NAME_PATTERN.test(part.trim()),
+      (part) =>
+        /^this character$/i.test(part.trim()) ||
+        CAPTAIN_NAME_PATTERN.test(part.trim()) ||
+        CAPTAIN_TYPE_SUBJECT_PATTERN.test(part.trim()),
     );
 
   return subjectHasOther || tailHasNonCaptainAlternative(captainTail);
@@ -2597,6 +2612,7 @@ function resolveCaptainCondition(text, subject, captainTail) {
     friendCaptain: /\b(?:friend|guest)\b/i.test(captainTail),
     captainTypes,
     captainClasses,
+    captainTypeAndClass: false,
     // Anything the fields above do not capture ("… and field has Territory …",
     // "… or was Captain at start of adventure …") makes the condition stricter or
     // looser than a captain seat: never treat it as met. "when the special is
@@ -2616,6 +2632,8 @@ function resolveCaptainTypeCondition(text, list, captainTail) {
     names: [],
     friendCaptain: false,
     ...resolveCaptainTypesAndClasses(list),
+    // true: the captain needs one of the types AND one of the classes; false: any one.
+    captainTypeAndClass: CAPTAIN_TYPE_AND_CLASS_PATTERN.test(list.trim()),
     hasOtherRequirements:
       captainTail.replace(/\s+when\s+(?:the\s+)?special\s+is\s+activated\s*$/i, '').trim().length >
       0,

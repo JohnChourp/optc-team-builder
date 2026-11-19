@@ -13,6 +13,7 @@ interface CaptainCondition {
   names: string[];
   captainTypes: string[];
   captainClasses: string[];
+  captainTypeAndClass: boolean;
   hasOtherRequirements: boolean;
   friendCaptain: boolean;
 }
@@ -85,6 +86,7 @@ describe('a special sentence that holds only with a given captain', () => {
       names: ['Corazon'],
       captainTypes: [],
       captainClasses: [],
+      captainTypeAndClass: false,
       hasOtherRequirements: false,
       friendCaptain: true,
     });
@@ -321,6 +323,7 @@ describe('a special sentence that holds only with a given captain', () => {
       friendCaptain: false,
       captainTypes: [],
       captainClasses: ['Driven'],
+      captainTypeAndClass: false,
       hasOtherRequirements: false,
     });
   });
@@ -353,6 +356,34 @@ describe('a special sentence that holds only with a given captain', () => {
 
     expect(more.captainCondition?.hasOtherRequirements).toBe(true);
     expect(unconditional(either, 'remove_bind')).toEqual([4]);
+  });
+
+  it('reads a type-and-class captain list (#4322)', () => {
+    const text =
+      'Reduces Special Bind duration by 7 turns. If your Captain is a [DEX] or [QCK] Shooter or ' +
+      'Free Spirit character, inflicts all enemies with Set Target, increasing damage taken from ' +
+      'all characters by 1.75x for 1 turn.';
+    const [setTarget] = conditional(text, 'apply_set_target');
+
+    expect(unconditional(text, 'apply_set_target')).toEqual([]);
+    expect(setTarget.captainCondition).toEqual(
+      expect.objectContaining({
+        captain: 'type',
+        captainTypes: ['DEX', 'QCK'],
+        captainClasses: ['Shooter', 'Free Spirit'],
+        captainTypeAndClass: true,
+        hasOtherRequirements: false,
+      }),
+    );
+  });
+
+  it('treats "your Captain is a Driven character or this character" as a captain condition', () => {
+    const text =
+      'If your Captain is a Driven character or this character is your Captain, reduces Bind ' +
+      'duration by 4 turns.';
+
+    expect(unconditional(text, 'remove_bind')).toEqual([]);
+    expect(conditional(text, 'remove_bind')[0].captainCondition?.hasOtherRequirements).toBe(true);
   });
 
   it('reads a class alternative after a self condition', () => {
