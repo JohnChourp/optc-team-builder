@@ -64,6 +64,7 @@ drifts and when a component is reachable by neither a route nor a template.
 | `CharacterDetailPage` | page | route | yes | yes |
 | `CharacterEditPage` | page | route | yes | - |
 | `CharactersPage` | page | route | yes | yes |
+| `CharacterSupportFinderComponent` | page | 1 template | yes | yes |
 | `CookiePolicyPage` | page | route | yes | - |
 | `CrewForgePage` | page | route | yes | yes |
 | `FaqPage` | page | route | yes | - |

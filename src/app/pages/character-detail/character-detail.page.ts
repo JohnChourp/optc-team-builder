@@ -3,7 +3,14 @@ import {
   buildFailureLines,
   resolveFailureFamily,
 } from '../../core/services/failure-message.utils';
-import { Component, type OnInit, computed, signal } from '@angular/core';
+import {
+  Component,
+  type OnDestroy,
+  type OnInit,
+  ViewChild,
+  computed,
+  signal,
+} from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
 import { IonButton } from '@ionic/angular/ion-button';
@@ -14,6 +21,7 @@ import { IonTitle } from '@ionic/angular/ion-title';
 import { IonToolbar } from '@ionic/angular/ion-toolbar';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 import { heart, heartOutline } from 'ionicons/icons';
+import { type Subscription } from 'rxjs';
 
 import {
   type AutoBuildAbilityCatalog,
@@ -52,6 +60,7 @@ import {
 import { CharacterAbilityGroupsComponent } from '../../shared/character-ability-groups/character-ability-groups.component';
 import { ToolbarBackButtonComponent } from '../../shared/toolbar-back-button/toolbar-back-button.component';
 import { CharacterDetailStylePanelsComponent } from './character-detail-style-panels.component';
+import { CharacterSupportFinderComponent } from './character-support-finder.component';
 import { resolveCharacterBridge } from './character-detail-bridge.utils';
 import { countSavedTeamsWithCharacter } from './character-detail-saved-teams.utils';
 
@@ -86,6 +95,7 @@ class CharacterOverrideTransferError extends Error {
     RouterLink,
     CharacterAbilityGroupsComponent,
     CharacterDetailStylePanelsComponent,
+    CharacterSupportFinderComponent,
     ToolbarBackButtonComponent,
     TranslocoDirective,
     TranslocoPipe,
@@ -93,8 +103,12 @@ class CharacterOverrideTransferError extends Error {
   templateUrl: './character-detail.page.html',
   styleUrl: './character-detail.page.scss',
 })
-export class CharacterDetailPage implements OnInit {
+export class CharacterDetailPage implements OnInit, OnDestroy {
   public readonly character = signal<CharacterDetailRecord | null>(null);
+  @ViewChild(IonContent) private readonly content?: IonContent;
+  private routeSubscription?: Subscription;
+  /** 869f63gy0. Counts the addresses opened, so a slow earlier load never overwrites a later one. */
+  private openRequest = 0;
   /**
    * 869f1327j. The out-of-region label, or null when there is nothing honest to say - see the
    * identical rule on the catalogue card. Null when the reader has named no version, and null when
@@ -225,12 +239,34 @@ export class CharacterDetailPage implements OnInit {
     return this.i18n.translate(key, undefined, 'character-detail');
   }
 
-  public async ngOnInit(): Promise<void> {
-    const characterId = Number(this.route.snapshot.paramMap.get('id'));
+  /**
+   * 869f63gy0. The page follows the id in the address, not only the first one: the support finder
+   * links one character to another, and the router keeps this page for /characters/1 ->
+   * /characters/2, so reading the id once left the previous character on screen.
+   */
+  public ngOnInit(): void {
+    this.routeSubscription = this.route.paramMap.subscribe((params) => {
+      void this.openCharacter(Number(params.get('id')));
+    });
+  }
+
+  public ngOnDestroy(): void {
+    this.routeSubscription?.unsubscribe();
+  }
+
+  private async openCharacter(characterId: number): Promise<void> {
+    const request = ++this.openRequest;
 
     if (!Number.isFinite(characterId)) {
+      this.character.set(null);
+      this.progressionCards.set([]);
       this.loading.set(false);
       return;
+    }
+
+    if (request > 1) {
+      this.loading.set(true);
+      void this.content?.scrollToTop(0);
     }
 
     // Not awaited: the saved-team count is a footnote, so the character never waits for it, and a
@@ -243,8 +279,12 @@ export class CharacterDetailPage implements OnInit {
     const [abilityCatalog, datasetManifest] = await Promise.all([
       this.repository.getAutoBuilderAbilityCatalog().catch(() => null),
       this.repository.getDatasetManifest().catch(() => null),
-      this.loadCharacter(characterId, true),
+      this.loadCharacter(characterId, true, request),
     ]);
+
+    if (this.isStale(request)) {
+      return;
+    }
 
     this.abilityCatalog.set(abilityCatalog);
     this.datasetManifest.set(datasetManifest);
@@ -367,13 +407,25 @@ export class CharacterDetailPage implements OnInit {
     });
   }
 
-  private async loadCharacter(characterId: number, markRecent: boolean): Promise<void> {
+  private async loadCharacter(
+    characterId: number,
+    markRecent: boolean,
+    request?: number,
+  ): Promise<void> {
     this.transferFeedback.set(null);
     const character = await this.repository.getCharacterById(characterId);
 
+    if (this.isStale(request)) {
+      return;
+    }
+
     this.character.set(character);
-    await this.loadRumbleReferenceName(character);
-    await this.loadProgression(character);
+    await this.loadRumbleReferenceName(character, request);
+    await this.loadProgression(character, request);
+
+    if (this.isStale(request)) {
+      return;
+    }
 
     if (markRecent) {
       await this.userState.markRecent(characterId);
@@ -388,7 +440,15 @@ export class CharacterDetailPage implements OnInit {
    * 869f63gn4. The same one query now brings their details too, so an earlier form that keeps the
    * identical Captain Ability at a lower cost can say so - still one round trip, not two.
    */
-  private async loadProgression(character: CharacterDetailRecord | null): Promise<void> {
+  /** 869f63gy0. A later address has taken over: its character is the one to show. */
+  private isStale(request: number | undefined): boolean {
+    return request !== undefined && request !== this.openRequest;
+  }
+
+  private async loadProgression(
+    character: CharacterDetailRecord | null,
+    request?: number,
+  ): Promise<void> {
     this.progressionCards.set([]);
 
     if (!character) {
@@ -408,6 +468,10 @@ export class CharacterDetailPage implements OnInit {
     const namesById = new Map(related.map((entry) => [entry.id, entry.name]));
     const earlierForms = new Set(progression.evolvesFrom);
 
+    if (this.isStale(request)) {
+      return;
+    }
+
     this.progressionCards.set(
       buildProgressionCards(
         progression,
@@ -420,7 +484,10 @@ export class CharacterDetailPage implements OnInit {
     );
   }
 
-  private async loadRumbleReferenceName(character: CharacterDetailRecord | null): Promise<void> {
+  private async loadRumbleReferenceName(
+    character: CharacterDetailRecord | null,
+    request?: number,
+  ): Promise<void> {
     this.rumbleBasedOnName.set(null);
 
     const basedOnId = resolveRumbleBasedOnId(character?.detail.rumbleData ?? null);
@@ -430,6 +497,11 @@ export class CharacterDetailPage implements OnInit {
     }
 
     const basedOnCharacter = await this.repository.getCharacterById(basedOnId);
+
+    if (this.isStale(request)) {
+      return;
+    }
+
     this.rumbleBasedOnName.set(basedOnCharacter?.name ?? null);
   }
 

@@ -1,0 +1,54 @@
+:host {
+  display: block;
+}
+
+.support-finder__copy,
+.support-finder__sentence,
+.support-finder__note {
+  margin: 0;
+}
+
+.support-finder__sentence {
+  font-style: italic;
+}
+
+.support-finder__note {
+  font-size: 0.82rem;
+  opacity: 0.8;
+}
+
+.support-finder__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.support-finder__list a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: inherit;
+}
+
+.support-finder__box {
+  display: grid;
+  gap: 4px;
+  font-size: 0.85rem;
+}
+
+.support-finder__box select {
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  color: inherit;
+  font: inherit;
+}
+
+.support-finder__box option {
+  color: #111111;
+}

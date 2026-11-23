@@ -184,5 +184,26 @@
   "conditionalAbilities": {
     "label": "Only with a given captain",
     "hint": "These effects count only when the captain the special names leads the crew. The Team Builders count them for that crew; filters and searches do not."
+  },
+  "supportFinder": {
+    "title": "Support finder",
+    "intro": "Who can support this character, and who its supports fit - read from each support's \"Supported characters\" sentence. Eligibility only: it does not say which support is better.",
+    "open": "Find supports",
+    "loading": "Loading",
+    "failed": "The characters could not be loaded.",
+    "retry": "Try again",
+    "box": "Characters",
+    "allCharacters": "All characters",
+    "receives": {
+      "title": "Can be supported by"
+    },
+    "gives": {
+      "title": "Support {{number}} can support"
+    },
+    "yes": "Fits ({{count}})",
+    "undetermined": "Cannot tell ({{count}})",
+    "more": "Show {{count}} more",
+    "none": "No character fits.",
+    "note": "\"Cannot tell\": the data does not say - a crew tag not every character carries, a name the dataset does not know, or a form of a dual unit."
   }
 }
