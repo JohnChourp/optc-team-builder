@@ -91,7 +91,8 @@
       "hosts": [],
       "consumers": [
         "src/app/pages/character-detail/character-detail.page.html",
-        "src/app/pages/character-detail/character-detail.page.ts"
+        "src/app/pages/character-detail/character-detail.page.ts",
+        "src/app/pages/character-detail/character-support-finder.component.html"
       ]
     },
     {

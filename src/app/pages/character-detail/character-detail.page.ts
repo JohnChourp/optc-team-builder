@@ -52,6 +52,7 @@ import {
 import { CharacterAbilityGroupsComponent } from '../../shared/character-ability-groups/character-ability-groups.component';
 import { ToolbarBackButtonComponent } from '../../shared/toolbar-back-button/toolbar-back-button.component';
 import { CharacterDetailStylePanelsComponent } from './character-detail-style-panels.component';
+import { CharacterSupportFinderComponent } from './character-support-finder.component';
 import { resolveCharacterBridge } from './character-detail-bridge.utils';
 import { countSavedTeamsWithCharacter } from './character-detail-saved-teams.utils';
 
@@ -86,6 +87,7 @@ class CharacterOverrideTransferError extends Error {
     RouterLink,
     CharacterAbilityGroupsComponent,
     CharacterDetailStylePanelsComponent,
+    CharacterSupportFinderComponent,
     ToolbarBackButtonComponent,
     TranslocoDirective,
     TranslocoPipe,
