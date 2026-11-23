@@ -1,8 +1,8 @@
 import {
+  combine,
   matchSupportTarget,
   normalizeSupportName,
   parseSupportTarget,
-  type SupportEligibility,
   type SupportTarget,
 } from '../../core/grammar/support-target';
 import { type CharacterDetailRecord } from '../../core/models/optc.models';
@@ -72,7 +72,8 @@ export function buildSupportFinder(
       continue;
     }
 
-    const result = best(
+    // A unit with several supports fits when any one of them does.
+    const result = combine(
       (support.detail.supportData ?? []).map((entry) =>
         matchSupportTarget(read(entry.supportedCharactersText), onScreen, knownFamilies),
       ),
@@ -108,15 +109,6 @@ export function buildSupportFinder(
   });
 
   return { receives, gives };
-}
-
-/** A unit with several support entries fits when any one of them does. */
-function best(results: readonly SupportEligibility[]): SupportEligibility {
-  if (results.includes('yes')) {
-    return 'yes';
-  }
-
-  return results.includes('undetermined') ? 'undetermined' : 'no';
 }
 
 /**

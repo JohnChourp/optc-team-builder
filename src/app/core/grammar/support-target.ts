@@ -48,6 +48,8 @@ export type SupportTarget =
 
 /** The fields the rule reads. A `CharacterDetailRecord` fits. */
 export interface SupportTargetCandidate {
+  /** The card name, "Monkey D. Luffy - Gear 2"; it narrows a name the families do not know. */
+  name?: string;
   type: string;
   classes: readonly string[];
   cost: number;
@@ -160,8 +162,12 @@ export function matchSupportTarget(
   }
 }
 
+/** Lower case, single spaces, no accents: "Senor Pink" in a sentence is the family "Señor Pink". */
 export function normalizeSupportName(value: string): string {
-  return normalizeSpaces(value).toLowerCase();
+  return normalizeSpaces(value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
 }
 
 function readGroup(body: string): SupportTargetAlternative[] | null {
@@ -268,7 +274,11 @@ function tokenizePrefix(body: string): { tokens: GroupToken[]; rest: string } {
   return { tokens, rest };
 }
 
-/** "A, B and C", "Heat or Wire"; a comma inside brackets ("Baron Tamago (Viscount Hiyoko, Count Niwatori)") is no separator. */
+/**
+ * "A, B and C", "Heat or Wire"; a comma inside brackets ("Baron Tamago (Viscount Hiyoko, Count
+ * Niwatori)") is no separator. Brackets that do not balance give no names, so the sentence reads
+ * as unreadable rather than as the wrong names.
+ */
 function splitNames(text: string): string[] {
   const names: string[] = [];
   let depth = 0;
@@ -276,6 +286,10 @@ function splitNames(text: string): string[] {
 
   for (const char of text) {
     depth += char === '(' ? 1 : char === ')' ? -1 : 0;
+
+    if (depth < 0) {
+      return [];
+    }
 
     if (char === ',' && depth === 0) {
       names.push(current);
@@ -285,14 +299,14 @@ function splitNames(text: string): string[] {
     }
   }
 
+  if (depth !== 0) {
+    return [];
+  }
+
   names.push(current);
 
   return names
-    .flatMap((part) =>
-      depth === 0 && !/[()]/.test(part)
-        ? part.split(/\s+(?:and|or)\s+/i)
-        : splitOutsideBrackets(part),
-    )
+    .flatMap(splitOutsideBrackets)
     .map((name) => name.trim().replace(/^(?:and|or)\s+/i, ''))
     .filter(Boolean);
 }
@@ -407,6 +421,13 @@ function matchTags(wanted: readonly string[], tags: readonly string[]): SupportE
     : 'undetermined';
 }
 
+/**
+ * A family hit is a yes. Otherwise it is "cannot tell" when the card's own name is a listed name
+ * (upstream's family for the card disagrees with it: cards named "Tank Lepanto - ..." carry the
+ * family "Princess Scarlet"), when the unit has no family, or when a listed name is no family in
+ * the dataset and shares a word with the unit's name or families ("Pacifista PX-1" and the
+ * Pacifista cards). Every other unit is a no.
+ */
 function matchNames(
   names: readonly string[],
   candidate: SupportTargetCandidate,
@@ -419,14 +440,34 @@ function matchNames(
     return 'yes';
   }
 
-  if (
-    families.size === 0 ||
-    keysByName.some((keys) => !keys.some((key) => knownFamilies.has(key)))
-  ) {
+  const cardName = normalizeSupportName((candidate.name ?? '').split(' - ')[0] ?? '');
+
+  if (families.size === 0 || (cardName && keysByName.some((keys) => keys.includes(cardName)))) {
     return 'undetermined';
   }
 
-  return 'no';
+  const unknown = keysByName.filter((keys) => !keys.some((key) => knownFamilies.has(key)));
+
+  if (unknown.length === 0) {
+    return 'no';
+  }
+
+  // Without the card name there is nothing to narrow an unknown name with.
+  if (candidate.name === undefined) {
+    return 'undetermined';
+  }
+
+  const ownWords = new Set([cardName, ...families].flatMap(significantWords));
+
+  return unknown.some((keys) => keys.flatMap(significantWords).some((word) => ownWords.has(word)))
+    ? 'undetermined'
+    : 'no';
+}
+
+const NAME_STOP_WORDS = new Set(['and', 'the', 'of', 'mr', 'mrs', 'miss', 'dr', 'st']);
+
+function significantWords(value: string): string[] {
+  return value.split(/[^a-z0-9]+/).filter((word) => word.length >= 3 && !NAME_STOP_WORDS.has(word));
 }
 
 /** Both must hold. */
@@ -438,7 +479,8 @@ function both(left: SupportEligibility, right: SupportEligibility): SupportEligi
   return left === 'yes' && right === 'yes' ? 'yes' : 'undetermined';
 }
 
-function combine(results: readonly SupportEligibility[]): SupportEligibility {
+/** Any one must hold: a yes wins, then "cannot tell". */
+export function combine(results: readonly SupportEligibility[]): SupportEligibility {
   if (results.includes('yes')) {
     return 'yes';
   }

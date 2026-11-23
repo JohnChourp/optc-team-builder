@@ -27,8 +27,9 @@
 }
 
 .support-finder__list a {
-  display: inline-block;
-  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   color: inherit;
 }
 

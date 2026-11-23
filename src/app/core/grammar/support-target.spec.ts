@@ -174,3 +174,41 @@ describe('support target: who it fits', () => {
     expect(match('[DEX] of the following: Nami')).toBe('no');
   });
 });
+
+describe('support target: names the families do not settle', () => {
+  it('folds accents, so "Senor Pink" is the family "Señor Pink"', () => {
+    expect(normalizeSupportName('Señor  Pink')).toBe('senor pink');
+    expect(match('Senor Pink', unit({ families: ['Señor Pink'] }))).toBe('yes');
+  });
+
+  it('says cannot tell, never no, when the card name is listed but its family disagrees', () => {
+    const card = unit({ name: 'Tank Lepanto - Tontatta Hero', families: ['Princess Scarlet'] });
+    const families = new Set([...FAMILIES, 'tank lepanto', 'princess scarlet']);
+
+    expect(matchSupportTarget(parseSupportTarget('Tank Lepanto'), card, families)).toBe(
+      'undetermined',
+    );
+  });
+
+  it('narrows an unknown name to the units that share a word with it', () => {
+    const target = parseSupportTarget('Monkey D. Luffy and Pacifista PX-1');
+
+    expect(
+      matchSupportTarget(
+        target,
+        unit({ name: 'Pacifista - Mk. III', families: ['Pacifista'] }),
+        FAMILIES,
+      ),
+    ).toBe('undetermined');
+    expect(
+      matchSupportTarget(target, unit({ name: 'Nami - Thief', families: ['Nami'] }), FAMILIES),
+    ).toBe('no');
+    // Without a card name there is nothing to narrow with.
+    expect(matchSupportTarget(target, unit({ families: ['Nami'] }), FAMILIES)).toBe('undetermined');
+  });
+
+  it('reads brackets that do not balance as unreadable, not as the wrong names', () => {
+    expect(parseSupportTarget('Mr. 3), Nami and Usopp')).toEqual({ kind: 'unreadable' });
+    expect(parseSupportTarget('Galdino (Mr. 3, Nami')).toEqual({ kind: 'unreadable' });
+  });
+});

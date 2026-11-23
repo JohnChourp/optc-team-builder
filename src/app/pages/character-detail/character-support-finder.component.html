@@ -42,7 +42,11 @@
           <ng-container
             *ngTemplateOutlet="
               matches;
-              context: { yes: finder.receives.yes, undetermined: finder.receives.undetermined }
+              context: {
+                key: 'receives',
+                yes: finder.receives.yes,
+                undetermined: finder.receives.undetermined,
+              }
             "
           ></ng-container>
         </section>
@@ -54,7 +58,11 @@
             <ng-container
               *ngTemplateOutlet="
                 matches;
-                context: { yes: given.yes, undetermined: given.undetermined }
+                context: {
+                  key: 'gives-' + given.index,
+                  yes: given.yes,
+                  undetermined: given.undetermined,
+                }
               "
             ></ng-container>
           </section>
@@ -62,7 +70,7 @@
 
         <p class="support-finder__note">{{ t('supportFinder.note') }}</p>
 
-        <ng-template #matches let-yes="yes" let-undetermined="undetermined">
+        <ng-template #matches let-key="key" let-yes="yes" let-undetermined="undetermined">
           @if (!yes.length && !undetermined.length) {
             <p class="support-finder__copy">{{ t('supportFinder.none') }}</p>
           }
@@ -72,14 +80,20 @@
                 {{ t('supportFinder.yes', { count: yes.length }) }}
               </span>
               <ul class="support-finder__list">
-                @for (unit of shown(yes); track unit.id) {
+                @for (unit of shown(key + '-yes', yes); track unit.id) {
                   <li>
                     <a [routerLink]="['/characters', unit.id]">#{{ unit.id }} {{ unit.name }}</a>
                   </li>
                 }
               </ul>
-              @if (hiddenCount(yes) > 0) {
-                <small>{{ t('supportFinder.more', { count: hiddenCount(yes) }) }}</small>
+              @if (hiddenCount(key + '-yes', yes) > 0) {
+                <button
+                  type="button"
+                  class="section-details-toggle"
+                  (click)="showAll(key + '-yes')"
+                >
+                  {{ t('supportFinder.more', { count: hiddenCount(key + '-yes', yes) }) }}
+                </button>
               }
             </div>
           }
@@ -89,14 +103,24 @@
                 {{ t('supportFinder.undetermined', { count: undetermined.length }) }}
               </span>
               <ul class="support-finder__list">
-                @for (unit of shown(undetermined); track unit.id) {
+                @for (unit of shown(key + '-undetermined', undetermined); track unit.id) {
                   <li>
                     <a [routerLink]="['/characters', unit.id]">#{{ unit.id }} {{ unit.name }}</a>
                   </li>
                 }
               </ul>
-              @if (hiddenCount(undetermined) > 0) {
-                <small>{{ t('supportFinder.more', { count: hiddenCount(undetermined) }) }}</small>
+              @if (hiddenCount(key + '-undetermined', undetermined) > 0) {
+                <button
+                  type="button"
+                  class="section-details-toggle"
+                  (click)="showAll(key + '-undetermined')"
+                >
+                  {{
+                    t('supportFinder.more', {
+                      count: hiddenCount(key + '-undetermined', undetermined),
+                    })
+                  }}
+                </button>
               }
             </div>
           }

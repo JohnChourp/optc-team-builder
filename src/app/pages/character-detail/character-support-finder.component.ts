@@ -1,5 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, computed, input, signal } from '@angular/core';
+import { Component, Input, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { IonButton } from '@ionic/angular/ion-button';
 import { IonSpinner } from '@ionic/angular/ion-spinner';
@@ -26,22 +26,26 @@ export const SUPPORT_FINDER_LIST_LIMIT = 30;
   styleUrl: './character-support-finder.component.scss',
 })
 export class CharacterSupportFinderComponent {
-  public readonly character = input.required<CharacterDetailRecord>();
+  /** The character on screen. */
+  public readonly current = signal<CharacterDetailRecord | null>(null);
   public readonly opened = signal(false);
   public readonly loading = signal(false);
   public readonly failed = signal(false);
   public readonly catalog = signal<CharacterDetailRecord[] | null>(null);
   public readonly selectedBoxId = signal<string | null>(null);
+  /** The lists the reader asked to see whole, by `listKey`. */
+  public readonly expanded = signal<ReadonlySet<string>>(new Set());
   public readonly boxes;
   public readonly selectedBox = computed(
     () => this.boxes().find((box) => box.id === this.selectedBoxId()) ?? null,
   );
   public readonly result = computed(() => {
     const catalog = this.catalog();
+    const character = this.current();
     const box = this.selectedBox();
 
-    return catalog
-      ? buildSupportFinder(this.character(), catalog, box ? new Set(box.characterIds) : null)
+    return catalog && character
+      ? buildSupportFinder(character, catalog, box ? new Set(box.characterIds) : null)
       : null;
   });
 
@@ -50,6 +54,10 @@ export class CharacterSupportFinderComponent {
     private readonly userState: UserStateService,
   ) {
     this.boxes = this.userState.characterBoxes;
+  }
+
+  @Input({ required: true }) public set character(value: CharacterDetailRecord) {
+    this.current.set(value);
   }
 
   public async open(): Promise<void> {
@@ -83,11 +91,18 @@ export class CharacterSupportFinderComponent {
     this.selectedBoxId.set(value !== 'all' ? value : null);
   }
 
-  public shown(list: readonly SupportFinderCharacter[]): readonly SupportFinderCharacter[] {
-    return list.slice(0, SUPPORT_FINDER_LIST_LIMIT);
+  public shown(
+    key: string,
+    list: readonly SupportFinderCharacter[],
+  ): readonly SupportFinderCharacter[] {
+    return this.expanded().has(key) ? list : list.slice(0, SUPPORT_FINDER_LIST_LIMIT);
   }
 
-  public hiddenCount(list: readonly SupportFinderCharacter[]): number {
-    return Math.max(0, list.length - SUPPORT_FINDER_LIST_LIMIT);
+  public hiddenCount(key: string, list: readonly SupportFinderCharacter[]): number {
+    return this.expanded().has(key) ? 0 : Math.max(0, list.length - SUPPORT_FINDER_LIST_LIMIT);
+  }
+
+  public showAll(key: string): void {
+    this.expanded.update((keys) => new Set([...keys, key]));
   }
 }

@@ -202,7 +202,7 @@
     },
     "yes": "Fits ({{count}})",
     "undetermined": "Cannot tell ({{count}})",
-    "more": "and {{count}} more",
+    "more": "Show {{count}} more",
     "none": "No character fits.",
     "note": "\"Cannot tell\": the data does not say - a crew tag not every character carries, a name the dataset does not know, or a form of a dual unit."
   }
