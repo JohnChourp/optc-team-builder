@@ -1,4 +1,4 @@
-import { Component, Input, computed, signal } from '@angular/core';
+import { Component, EventEmitter, Input, Output, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { IonButton } from '@ionic/angular/ion-button';
 import { IonSpinner } from '@ionic/angular/ion-spinner';
@@ -61,6 +61,8 @@ export class SavedTeamsEvolutionMaterialsComponent {
   public readonly teamCharacterIds = signal<readonly number[]>([]);
   public readonly loading = signal(false);
   public readonly failed = signal(false);
+  /** The boxes could not be read: told apart from the evolutions failing. */
+  public readonly boxesFailed = signal(false);
   public readonly catalog = signal<EvolutionMaterialsCatalog | null>(null);
   public readonly selectedBoxId = signal<string | null>(null);
   public readonly boxes;
@@ -132,6 +134,16 @@ export class SavedTeamsEvolutionMaterialsComponent {
   }
 
   /** The units of the selected teams, by id. Repeats are counted once. */
+  /**
+   * The box the reader picked, kept by the page so it survives the card closing; `null` means the
+   * first box.
+   */
+  @Input() public set boxId(value: string | null) {
+    this.selectedBoxId.set(value);
+  }
+
+  @Output() public readonly boxIdChange = new EventEmitter<string | null>();
+
   @Input({ required: true }) public set characterIds(value: readonly number[]) {
     const ids = [...new Set(value)].sort((left, right) => left - right);
     const current = this.teamCharacterIds();
@@ -150,12 +162,21 @@ export class SavedTeamsEvolutionMaterialsComponent {
 
     this.loading.set(true);
     this.failed.set(false);
+    this.boxesFailed.set(false);
 
     try {
-      const [catalog] = await Promise.all([
+      // The boxes fail on their own, so the card can say which of the two could not be read.
+      const [catalog, boxesRead] = await Promise.all([
         this.loadCatalog(ids),
-        this.userState.readyCharacterBoxes(),
+        this.userState.readyCharacterBoxes().then(
+          () => true,
+          () => false,
+        ),
       ]);
+
+      if (request === this.loadRequest) {
+        this.boxesFailed.set(!boxesRead);
+      }
 
       if (request === this.loadRequest) {
         this.catalog.set(catalog);
@@ -172,7 +193,10 @@ export class SavedTeamsEvolutionMaterialsComponent {
   }
 
   public onBoxChange(event: Event): void {
-    this.selectedBoxId.set((event.target as HTMLSelectElement | null)?.value || null);
+    const boxId = (event.target as HTMLSelectElement | null)?.value || null;
+
+    this.selectedBoxId.set(boxId);
+    this.boxIdChange.emit(boxId);
   }
 
   private async loadCatalog(ids: readonly number[]): Promise<EvolutionMaterialsCatalog> {

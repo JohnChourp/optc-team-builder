@@ -261,6 +261,7 @@
     "copy": "For the selected teams, from one of your boxes: every evolution from the form you have to the form in the team, with its materials summed. Each unit counts once, even when two teams share it.",
     "loading": "Reading the evolutions...",
     "failed": "The evolutions could not be read.",
+    "boxesFailed": "Your boxes could not be read.",
     "retry": "Try again",
     "noBox": "This needs a character box to start from.",
     "openBoxes": "Open Character Boxes",
@@ -271,7 +272,7 @@
     "skullOf": "Skull of {{name}}",
     "dropsFrom": "Drops from: {{stages}}",
     "evolveTitle": "Units to evolve",
-    "evolveFrom": "from {{name}}, {{steps}} step(s)",
+    "evolveFrom": "from {{name}} · steps: {{steps}}",
     "notInBoxTitle": "Not in the box",
     "notInBoxNote": "Neither this unit nor an earlier form of it is in the box, so it adds no materials here."
   }

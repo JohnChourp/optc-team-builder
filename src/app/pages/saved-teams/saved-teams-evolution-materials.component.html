@@ -11,10 +11,17 @@
     <ion-button fill="outline" size="small" (click)="load()">
       {{ t('evolutionMaterials.retry') }}
     </ion-button>
+  } @else if (boxesFailed()) {
+    <p class="evolution-materials__copy" data-testid="evolution-materials-boxes-failed">
+      {{ t('evolutionMaterials.boxesFailed') }}
+    </p>
+    <ion-button fill="outline" size="small" (click)="load()">
+      {{ t('evolutionMaterials.retry') }}
+    </ion-button>
   } @else if (!boxes().length) {
     <p class="evolution-materials__copy" data-testid="evolution-materials-no-box">
       {{ t('evolutionMaterials.noBox') }}
-      <a routerLink="/character-boxes">{{ t('evolutionMaterials.openBoxes') }}</a>
+      <a routerLink="/tabs/character-boxes">{{ t('evolutionMaterials.openBoxes') }}</a>
     </p>
   } @else if (result(); as plan) {
     <label class="evolution-materials__box">

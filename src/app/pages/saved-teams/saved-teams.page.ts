@@ -407,6 +407,8 @@ export class SavedTeamsPage implements OnInit {
   private readonly treasureMapAmbushTeamId = signal<string | null>(null);
   /** 869f63gzu. Whether the evolution materials card is open. Page-local, never persisted. */
   private readonly evolutionMaterialsOpen = signal(false);
+  /** 869f63gzu. The box the card reads from, kept here so it survives the card closing. */
+  public readonly evolutionMaterialsBoxId = signal<string | null>(null);
   /**
    * 869f63gzu. The units of the selected teams, while the evolution materials card is open; `null`
    * while it is closed or nothing is selected. It follows the selection live, like the plan check.
@@ -792,6 +794,7 @@ export class SavedTeamsPage implements OnInit {
     this.treasureMapCheckOpen.set(false);
     this.treasureMapAmbushTeamId.set(null);
     this.evolutionMaterialsOpen.set(false);
+    this.evolutionMaterialsBoxId.set(null);
     this.clearAllAbilityFilters();
     this.closeAbilityTagSetPicker();
     this.editModalOpen.set(false);

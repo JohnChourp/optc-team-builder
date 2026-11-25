@@ -453,7 +453,11 @@
                 data-testid="saved-teams-evolution-materials"
                 aria-labelledby="saved-teams-evolution-materials-title"
               >
-                <app-saved-teams-evolution-materials [characterIds]="characterIds" />
+                <app-saved-teams-evolution-materials
+                  [characterIds]="characterIds"
+                  [boxId]="evolutionMaterialsBoxId()"
+                  (boxIdChange)="evolutionMaterialsBoxId.set($event)"
+                />
               </section>
             }
             @if (!filteredSavedTeamCards().length) {
