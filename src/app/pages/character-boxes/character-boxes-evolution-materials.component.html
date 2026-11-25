@@ -10,23 +10,36 @@
       {{ t('evolutionMaterials.retry') }}
     </ion-button>
   } @else if (result(); as plan) {
-    <p
-      class="evolution-materials__status"
-      role="status"
-      data-testid="box-evolution-materials-status"
-    >
-      {{
-        t('evolutionMaterials.summary', {
-          evolve: plan.evolve.length,
-          final: plan.finalCount,
-          later: plan.laterOwnedCount,
-          choice: plan.choice.length,
-        })
-      }}
-      @if (loading()) {
-        <ion-spinner name="dots" [attr.aria-label]="t('evolutionMaterials.loading')"></ion-spinner>
-      }
-    </p>
+    @if (plan.boxSize === 0) {
+      <p
+        class="evolution-materials__status"
+        role="status"
+        data-testid="box-evolution-materials-empty"
+      >
+        {{ t('evolutionMaterials.empty') }}
+      </p>
+    } @else {
+      <p
+        class="evolution-materials__status"
+        role="status"
+        data-testid="box-evolution-materials-status"
+      >
+        {{
+          t('evolutionMaterials.summary', {
+            evolve: plan.evolve.length,
+            final: plan.finalCount,
+            later: plan.laterOwnedCount,
+            choice: plan.choice.length,
+          })
+        }}
+        @if (loading()) {
+          <ion-spinner
+            name="dots"
+            [attr.aria-label]="t('evolutionMaterials.loading')"
+          ></ion-spinner>
+        }
+      </p>
+    }
 
     @if (plan.materials.length) {
       <h4>{{ t('evolutionMaterials.materialsTitle') }}</h4>

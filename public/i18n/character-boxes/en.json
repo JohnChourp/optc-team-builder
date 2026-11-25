@@ -42,6 +42,7 @@
     "loading": "Reading the evolutions...",
     "failed": "The evolutions could not be read.",
     "retry": "Try again",
+    "empty": "This box is empty: add characters to see what their evolutions need.",
     "summary": "To evolve: {{evolve}} · Already final: {{final}} · Later form in the box: {{later}} · Has a choice: {{choice}}",
     "materialsTitle": "Materials",
     "totalsNote": "What the evolutions ask for in total. Boxes do not record how many copies you hold, so nothing is subtracted.",

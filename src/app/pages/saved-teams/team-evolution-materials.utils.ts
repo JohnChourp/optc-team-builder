@@ -4,7 +4,9 @@ import {
 } from '../../core/models/optc.models';
 
 /**
- * 869f63gzu. The evolution materials the selected saved teams still need, measured from one box.
+ * 869f63gzu. The evolution materials the selected saved teams still need, measured from one box,
+ * and (further down, `planBoxEvolutionMaterials`) what a whole box needs to reach its final forms.
+ * Both the Saved Teams card and the Character Boxes card read this file.
  *
  * For each unit of the teams, once:
  *
@@ -52,8 +54,9 @@ export interface TeamEvolutionMaterials {
 }
 
 /**
- * How far back the search walks. The longest chain upstream has today is 4 steps; this is a guard
- * against a cycle in bad data, not a limit any real chain reaches.
+ * How far the searches walk, back to earlier forms (teams) or on to later ones (boxes). The longest
+ * chain upstream has today is 4 steps; this is a guard against a cycle in bad data, not a limit
+ * any real chain reaches.
  */
 export const EVOLUTION_SEARCH_MAX_STEPS = 12;
 

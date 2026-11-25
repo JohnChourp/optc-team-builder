@@ -28,6 +28,7 @@ export interface BoxChoiceRow {
 }
 
 export interface BoxEvolutionMaterialsView {
+  boxSize: number;
   materials: EvolutionMaterialRow[];
   evolve: BoxEvolveRow[];
   choice: BoxChoiceRow[];
@@ -54,17 +55,25 @@ export class CharacterBoxesEvolutionMaterialsComponent {
   public readonly boxCharacterIds = signal<readonly number[]>([]);
   public readonly loading = signal(false);
   public readonly failed = signal(false);
-  public readonly catalog = signal<EvolutionMaterialsCatalog | null>(null);
+  /** The last catalog read, with the box units it was read for. */
+  public readonly loaded = signal<{
+    ids: readonly number[];
+    catalog: EvolutionMaterialsCatalog;
+  } | null>(null);
   public readonly result = computed<BoxEvolutionMaterialsView | null>(() => {
-    const catalog = this.catalog();
+    const loaded = this.loaded();
 
-    if (!catalog) {
+    if (!loaded) {
       return null;
     }
 
-    const plan = planBoxEvolutionMaterials(this.boxCharacterIds(), catalog.links);
+    // Planned for the units the catalog was read for, never the newer ones it lacks links for:
+    // while a changed box is read, the last totals stay as they were.
+    const { ids, catalog } = loaded;
+    const plan = planBoxEvolutionMaterials(ids, catalog.links);
     const nameOf = (characterId: number): string => evolutionCatalogName(catalog, characterId);
     const view: BoxEvolutionMaterialsView = {
+      boxSize: ids.length,
       materials: toEvolutionMaterialRows(plan.materials, catalog),
       evolve: [],
       choice: [],
@@ -125,7 +134,7 @@ export class CharacterBoxesEvolutionMaterialsComponent {
       const catalog = await loadEvolutionMaterialsCatalog(this.repository, ids, 'later');
 
       if (request === this.loadRequest) {
-        this.catalog.set(catalog);
+        this.loaded.set({ ids, catalog });
       }
     } catch {
       if (request === this.loadRequest) {

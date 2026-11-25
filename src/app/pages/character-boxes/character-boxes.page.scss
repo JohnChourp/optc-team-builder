@@ -94,3 +94,27 @@
 .ladder-list__provisional {
   font-style: italic;
 }
+
+/* 869f63gzu. The evolution materials disclosure, native so aria-expanded stays current. */
+.evolution-toggle {
+  justify-self: start;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 10px;
+  background: transparent;
+  color: #f8fbff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.evolution-toggle:hover,
+.evolution-toggle:focus-visible {
+  border-color: rgba(255, 255, 255, 0.78);
+  outline: none;
+}
+
+.evolution-toggle:focus-visible {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.24);
+}

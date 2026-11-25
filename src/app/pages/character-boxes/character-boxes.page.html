@@ -190,17 +190,22 @@
                 <!-- 869f63gzu. The evolution materials this box needs, read when asked. -->
                 @if (selectedBox(); as box) {
                   <section class="ladder-card" data-testid="box-evolution-materials">
-                    <ion-button
-                      fill="outline"
-                      color="light"
+                    <!-- A native disclosure button: an ion-button copies aria-* once, at load. -->
+                    <button
+                      type="button"
+                      class="evolution-toggle"
                       data-testid="box-evolution-materials-toggle"
-                      [attr.aria-expanded]="evolutionMaterialsOpen()"
+                      aria-controls="box-evolution-materials-card"
+                      [attr.aria-expanded]="evolutionMaterialsOpen() ? 'true' : 'false'"
                       (click)="toggleEvolutionMaterials()"
                     >
                       {{ t('evolutionMaterials.open') }}
-                    </ion-button>
+                    </button>
                     @if (evolutionMaterialsOpen()) {
-                      <app-character-boxes-evolution-materials [characterIds]="box.characterIds" />
+                      <app-character-boxes-evolution-materials
+                        id="box-evolution-materials-card"
+                        [characterIds]="box.characterIds"
+                      />
                     }
                   </section>
                 }

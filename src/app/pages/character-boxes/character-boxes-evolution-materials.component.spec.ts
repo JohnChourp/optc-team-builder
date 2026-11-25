@@ -75,6 +75,7 @@ describe('box evolution materials card', () => {
     ]);
     // 1 is skipped: its later form 3 is in the box. 3 is final. 10 has a choice.
     expect(component.result()).toEqual({
+      boxSize: 3,
       materials: [],
       evolve: [],
       choice: [{ characterId: 10, name: 'Unit 10', finalNames: ['Unit 11', 'Unit 12'] }],
@@ -86,6 +87,7 @@ describe('box evolution materials card', () => {
     await settled(component);
 
     expect(component.result()).toEqual({
+      boxSize: 1,
       materials: [
         {
           key: 'c:80',
@@ -109,6 +111,43 @@ describe('box evolution materials card', () => {
       finalCount: 0,
       laterOwnedCount: 0,
     });
+  });
+
+  it('keeps the last totals while a changed box is read', async () => {
+    const { component, repository } = create();
+    let release!: () => void;
+    const held = new Promise<void>((done) => (release = done));
+
+    component.characterIds = [1];
+    await settled(component);
+    repository.getCharacterEvolutionsByIds.mockImplementationOnce(async (ids: number[]) => {
+      await held;
+
+      return LINKS.filter((entry) => ids.includes(entry.characterId));
+    });
+    component.characterIds = [1, 10];
+
+    // 10 has no links yet: it must not show up as an already final unit meanwhile.
+    expect(component.loading()).toBe(true);
+    expect(component.result()).toMatchObject({ boxSize: 1, finalCount: 0, choice: [] });
+
+    release();
+    await settled(component);
+
+    expect(component.result()).toMatchObject({ boxSize: 2, finalCount: 0 });
+    expect(component.result()?.choice).toHaveLength(1);
+  });
+
+  it('says an empty box is empty', async () => {
+    const { component, repository } = create();
+
+    component.characterIds = [5];
+    await settled(component);
+    component.characterIds = [];
+    await settled(component);
+
+    expect(component.result()?.boxSize).toBe(0);
+    expect(repository.getCharacterEvolutionsByIds).toHaveBeenCalledTimes(1);
   });
 
   it('does not read again when the box holds the same units', async () => {
