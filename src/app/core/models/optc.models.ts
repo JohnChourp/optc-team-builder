@@ -73,7 +73,10 @@ interface CharacterCaptainAbilityCoverageEntry {
 export type CharacterCaptainAbilityScope = 'crew-wide' | 'captain-only' | 'subset' | 'none';
 
 export type CaptainCoverageTierKind =
-  'baseline' | 'unconditional-top' | 'conditional' | 'baseline-and-conditional';
+  | 'baseline'
+  | 'unconditional-top'
+  | 'conditional'
+  | 'baseline-and-conditional';
 
 interface CaptainCoverageTargetScope {
   universal: boolean;
@@ -339,7 +342,7 @@ export interface CharacterEvolutionBranch {
   materials: CharacterEvolutionMaterial[];
 }
 
-/** 869f63gzu. One character's evolution links in both directions, without the rest of its progression. */
+/** 869f63gzu. One character's evolution links in both directions, without its other progression. */
 export interface CharacterEvolutionLinks {
   characterId: number;
   evolvesTo: CharacterEvolutionBranch[];
@@ -489,7 +492,11 @@ export interface CrewForgeImageRecognitionCandidate {
 }
 
 type CrewForgeImageRecognitionSlotStatus =
-  'matched' | 'ambiguous' | 'empty' | 'no_profile' | 'manual';
+  | 'matched'
+  | 'ambiguous'
+  | 'empty'
+  | 'no_profile'
+  | 'manual';
 
 export interface CrewForgeImageRecognitionSlotResult {
   slotKey: string;

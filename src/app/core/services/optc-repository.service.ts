@@ -324,7 +324,10 @@ export function normalizeCaptainAbilityCoverage(
 }
 
 function normalizeCaptainAbilityScope(value: unknown): CharacterCaptainAbilityScope {
-  return value === 'crew-wide' || value === 'captain-only' || value === 'subset' || value === 'none'
+  return value === 'crew-wide' ||
+    value === 'captain-only' ||
+    value === 'subset' ||
+    value === 'none'
     ? value
     : 'none';
 }
@@ -354,9 +357,7 @@ function normalizeCaptainCoverageTiers(
           ? (kindRaw as CaptainCoverageTierKind)
           : 'baseline';
       const scope = normalizeCaptainAbilityScope(record['scope']);
-      const characterConditions = normalizeCaptainCoverageTargetScope(
-        record['characterConditions'],
-      );
+      const characterConditions = normalizeCaptainCoverageTargetScope(record['characterConditions']);
       const teamConditions = normalizeCaptainCoverageTeamConditions(record['teamConditions']);
       const fieldConditions = normalizeCaptainCoverageFieldConditions(record['fieldConditions']);
       const triggerConditions = normalizeCaptainCoverageTriggerConditions(
@@ -398,15 +399,15 @@ function normalizeCaptainCoverageTargetScope(
   CharacterDetail['captainAbilityCoverage']
 >['entries'][number]['tiers'][number]['characterConditions'] {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return {
-      universal: false,
-      fallbackOther: false,
-      selfOnly: false,
-      dominantType: false,
-      types: [],
-      classes: [],
-      characterTags: [],
-    };
+      return {
+        universal: false,
+        fallbackOther: false,
+        selfOnly: false,
+        dominantType: false,
+        types: [],
+        classes: [],
+        characterTags: [],
+      };
   }
   const record = value as Record<string, unknown>;
   const costRange = normalizeNumericRange(record['costRange']);
@@ -969,7 +970,10 @@ export class OptcRepositoryService {
     await this.characterOverrides.ready();
     const overrideRevision = this.characterOverrides.revision();
 
-    if (this.detailedCatalogPromise && this.detailedCatalogOverrideRevision === overrideRevision) {
+    if (
+      this.detailedCatalogPromise &&
+      this.detailedCatalogOverrideRevision === overrideRevision
+    ) {
       return this.detailedCatalogPromise;
     }
 
@@ -1931,10 +1935,7 @@ export class OptcRepositoryService {
     const manifest = await this.getDatasetManifest();
     const installedPacks = new Map(manifest.packs.map((pack) => [pack.key, pack]));
     const overridesByCharacterId = this.characterOverrides.overridesByCharacterId();
-    const datasetCaptainById = await this.loadOverriddenDatasetCaptains(
-      rows,
-      overridesByCharacterId,
-    );
+    const datasetCaptainById = await this.loadOverriddenDatasetCaptains(rows, overridesByCharacterId);
     const formsById = await this.getCharacterFormsById();
 
     const decoratedRows: CharacterListItem[] = [];
