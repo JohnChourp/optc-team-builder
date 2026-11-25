@@ -26,6 +26,7 @@ import { IonToolbar } from '@ionic/angular/ion-toolbar';
 import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 import {
   alertCircleOutline,
+  arrowUpCircleOutline,
   boatOutline,
   checkmarkCircleOutline,
   closeOutline,
@@ -117,6 +118,7 @@ import {
   checkTreasureMapPlan,
   groupTreasureMapConflictsByTeam,
 } from './treasure-map-plan.utils';
+import { SavedTeamsEvolutionMaterialsComponent } from './saved-teams-evolution-materials.component';
 
 interface SavedTeamPreviewCard {
   abilityIdentitySets: Record<SavedTeamAbilityOrigin, Set<string>>;
@@ -303,6 +305,7 @@ const SAVED_TEAM_ABILITY_SOURCE_TOKENS: Record<AutoBuildAbilitySource, string> =
     IonToolbar,
     CaptainTeamConditionStatusComponent,
     CharacterTagSetPickerComponent,
+    SavedTeamsEvolutionMaterialsComponent,
     SavedTeamsStylePanelsComponent,
     TeamCoverageSummaryComponent,
     RouterLink,
@@ -404,6 +407,28 @@ export class SavedTeamsPage implements OnInit {
    */
   private readonly treasureMapCheckOpen = signal(false);
   private readonly treasureMapAmbushTeamId = signal<string | null>(null);
+  /** 869f63gzu. Whether the evolution materials card is open. Page-local, never persisted. */
+  private readonly evolutionMaterialsOpen = signal(false);
+  /** 869f63gzu. The box the card reads from, kept here so it survives the card closing. */
+  public readonly evolutionMaterialsBoxId = signal<string | null>(null);
+  /**
+   * 869f63gzu. The units of the selected teams, while the evolution materials card is open; `null`
+   * while it is closed or nothing is selected. It follows the selection live, like the plan check.
+   */
+  public readonly evolutionMaterialsCharacterIds = computed<number[] | null>(() => {
+    if (!this.evolutionMaterialsOpen()) {
+      return null;
+    }
+
+    const selectedTeamIds = this.selectedTeamIdSet();
+    const teamCards = this.filteredSavedTeamCards().filter((teamCard) =>
+      selectedTeamIds.has(teamCard.team.id),
+    );
+
+    return teamCards.length
+      ? teamCards.flatMap((teamCard) => teamCard.slots.flatMap((slot) => (slot ? [slot.id] : [])))
+      : null;
+  });
   /**
    * The selected teams checked as one Treasure Map plan - see `treasure-map-plan.utils.ts`.
    *
@@ -506,6 +531,7 @@ export class SavedTeamsPage implements OnInit {
   public readonly manualBuilderIcon = peopleOutline;
   public readonly abilityFilterIcon = funnelOutline;
   public readonly treasureMapIcon = mapOutline;
+  public readonly evolutionMaterialsIcon = arrowUpCircleOutline;
   public constructor(
     private readonly userState: UserStateService,
     private readonly repository: OptcRepositoryService,
@@ -640,6 +666,11 @@ export class SavedTeamsPage implements OnInit {
     this.selectedTeamIds.set([]);
   }
 
+  /** 869f63gzu. Opens or closes the evolution materials card over the selected teams. */
+  public toggleEvolutionMaterials(): void {
+    this.evolutionMaterialsOpen.update((open) => !open);
+  }
+
   /** 869f63gy7. Opens or closes the Treasure Map check over the selected teams. */
   public toggleTreasureMapCheck(): void {
     this.treasureMapCheckOpen.update((open) => !open);
@@ -764,6 +795,8 @@ export class SavedTeamsPage implements OnInit {
     this.selectedTeamIds.set([]);
     this.treasureMapCheckOpen.set(false);
     this.treasureMapAmbushTeamId.set(null);
+    this.evolutionMaterialsOpen.set(false);
+    this.evolutionMaterialsBoxId.set(null);
     this.clearAllAbilityFilters();
     this.closeAbilityTagSetPicker();
     this.editModalOpen.set(false);

@@ -74,6 +74,7 @@ drifts and when a component is reachable by neither a route nor a template.
 | `RumbleCharactersPage` | page | route | yes | yes |
 | `SavedEnemiesPage` | page | route | yes | yes |
 | `SavedRumbleTeamsPage` | page | route | yes | - |
+| `SavedTeamsEvolutionMaterialsComponent` | page | 1 template | yes | yes |
 | `SavedTeamsPage` | page | route | yes | yes |
 | `SeoContentPage` | page | route | yes | - |
 | `SettingsPage` | page | route | yes | - |

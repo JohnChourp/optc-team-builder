@@ -254,5 +254,26 @@
     "repeated": "Units used more than once: {{count}}. Each one is marked next to the teams that share it.",
     "alsoIn": "{{name}} - also in {{teams}}",
     "inTeam": "{{name}} - {{count}} times in this team"
+  },
+  "evolutionMaterials": {
+    "open": "Evolution materials",
+    "title": "Evolution materials still needed",
+    "copy": "For the selected teams, from one of your boxes: every evolution from the form you have to the form in the team, with its materials summed. Each unit counts once, even when two teams share it.",
+    "loading": "Reading the evolutions...",
+    "failed": "The evolutions could not be read.",
+    "boxesFailed": "Your boxes could not be read.",
+    "retry": "Try again",
+    "noBox": "This needs a character box to start from.",
+    "openBoxes": "Open Character Boxes",
+    "box": "Box",
+    "summary": "To evolve: {{evolve}} · Already in the box: {{owned}} · Not in the box: {{missing}}",
+    "materialsTitle": "Materials",
+    "totalsNote": "What the evolutions ask for in total. Boxes do not record how many copies you hold, so nothing is subtracted.",
+    "skullOf": "Skull of {{name}}",
+    "dropsFrom": "Drops from: {{stages}}",
+    "evolveTitle": "Units to evolve",
+    "evolveFrom": "from {{name}} · steps: {{steps}}",
+    "notInBoxTitle": "Not in the box",
+    "notInBoxNote": "Neither this unit nor an earlier form of it is in the box, so it adds no materials here."
   }
 }

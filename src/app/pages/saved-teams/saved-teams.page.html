@@ -343,6 +343,19 @@
                   <ion-icon [icon]="treasureMapIcon" aria-hidden="true"></ion-icon>
                   {{ t('treasureMap.open') }}
                 </button>
+                <!-- 869f63gzu. A native disclosure button, for the reason given above. -->
+                <button
+                  type="button"
+                  data-testid="saved-teams-evolution-materials-toggle"
+                  class="saved-team-native-button"
+                  aria-controls="saved-teams-evolution-materials"
+                  [attr.aria-expanded]="evolutionMaterialsCharacterIds() ? 'true' : 'false'"
+                  [disabled]="!hasSelection()"
+                  (click)="toggleEvolutionMaterials()"
+                >
+                  <ion-icon [icon]="evolutionMaterialsIcon" aria-hidden="true"></ion-icon>
+                  {{ t('evolutionMaterials.open') }}
+                </button>
                 <ion-button
                   fill="outline"
                   color="danger"
@@ -425,6 +438,23 @@
                     </li>
                   }
                 </ul>
+              </section>
+            }
+            <!--
+              869f63gzu. The evolution materials the selected teams still need, from one box.
+            -->
+            @if (evolutionMaterialsCharacterIds(); as characterIds) {
+              <section
+                id="saved-teams-evolution-materials"
+                class="saved-teams-treasure-map"
+                data-testid="saved-teams-evolution-materials"
+                aria-labelledby="saved-teams-evolution-materials-title"
+              >
+                <app-saved-teams-evolution-materials
+                  [characterIds]="characterIds"
+                  [boxId]="evolutionMaterialsBoxId()"
+                  (boxIdChange)="evolutionMaterialsBoxId.set($event)"
+                />
               </section>
             }
             @if (!filteredSavedTeamCards().length) {

@@ -285,6 +285,7 @@
       "consumers": [
         "src/app/pages/auto-team-builder/auto-team-builder.page.ts",
         "src/app/pages/manual-team-builder/manual-team-builder.page.ts",
+        "src/app/pages/saved-teams/saved-teams-evolution-materials.component.html",
         "src/app/pages/saved-teams/saved-teams.page.html",
         "src/app/pages/saved-teams/saved-teams.page.ts",
         "src/app/pages/settings/settings.page.ts"

@@ -342,6 +342,13 @@ export interface CharacterEvolutionBranch {
   materials: CharacterEvolutionMaterial[];
 }
 
+/** 869f63gzu. One character's evolution links in both directions, without its other progression. */
+export interface CharacterEvolutionLinks {
+  characterId: number;
+  evolvesTo: CharacterEvolutionBranch[];
+  evolvesFrom: number[];
+}
+
 export interface CharacterDropSource {
   group: string;
   stage: string;

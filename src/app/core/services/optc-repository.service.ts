@@ -20,6 +20,7 @@ import {
   type CharacterDetailRecord,
   type CharacterDropSource,
   type CharacterEvolutionBranch,
+  type CharacterEvolutionLinks,
   type CharacterProgression,
   type CharacterFacetMatchMode,
   type CharacterForm,
@@ -1367,6 +1368,63 @@ export class OptcRepositoryService {
       // 869f63gm1. No row, or a malformed one, is "nothing recorded" - empty lists, never a negative.
       acquisition: parseCharacterAcquisition(row['acquisition_json']),
     };
+  }
+
+  /**
+   * 869f63gzu. Both evolution directions for several characters at once, for the materials a whole
+   * team still needs. A character with no row is left out: upstream records no evolution for it.
+   */
+  public async getCharacterEvolutionsByIds(ids: number[]): Promise<CharacterEvolutionLinks[]> {
+    const uniqueIds = [...new Set(ids)].filter((id) => Number.isFinite(id));
+
+    if (uniqueIds.length === 0) {
+      return [];
+    }
+
+    const placeholders = uniqueIds.map(() => '?').join(', ');
+    const rows = await this.selectAll(
+      `
+        SELECT character_id, evolves_to_json, evolves_from_json
+        FROM character_evolutions
+        WHERE character_id IN (${placeholders})
+      `,
+      uniqueIds,
+    );
+
+    return rows.map((row) => ({
+      characterId: Number(row['character_id']),
+      evolvesTo: parseJsonArray<CharacterEvolutionBranch>(row['evolves_to_json']),
+      evolvesFrom: parseJsonArray<number>(row['evolves_from_json']),
+    }));
+  }
+
+  /**
+   * 869f63gzu. The drop sources of several characters at once. A character with no row is left
+   * out: "nothing recorded", never "not farmable".
+   */
+  public async getCharacterDropSourcesByIds(
+    ids: number[],
+  ): Promise<{ characterId: number; dropSources: CharacterDropSource[] }[]> {
+    const uniqueIds = [...new Set(ids)].filter((id) => Number.isFinite(id));
+
+    if (uniqueIds.length === 0) {
+      return [];
+    }
+
+    const placeholders = uniqueIds.map(() => '?').join(', ');
+    const rows = await this.selectAll(
+      `
+        SELECT character_id, sources_json
+        FROM character_drops
+        WHERE character_id IN (${placeholders})
+      `,
+      uniqueIds,
+    );
+
+    return rows.map((row) => ({
+      characterId: Number(row['character_id']),
+      dropSources: parseJsonArray<CharacterDropSource>(row['sources_json']),
+    }));
   }
 
   /**
