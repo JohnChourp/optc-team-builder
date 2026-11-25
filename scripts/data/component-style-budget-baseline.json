@@ -12,7 +12,7 @@
     "parallel history store. Refresh it with `npm run styles:component-budget -- --write`",
     "in the same commit as the change that moved a number."
   ],
-  "measuredOn": "2026-11-25",
+  "measuredOn": "2026-09-25",
   "budget": {
     "warningBytes": 12000,
     "errorBytes": 20000
@@ -26,7 +26,7 @@
     },
     {
       "file": "src/app/app.component.scss",
-      "compiledBytes": 5250
+      "compiledBytes": 5330
     },
     {
       "file": "src/app/pages/auto-team-builder/auto-team-builder-results-comparison-panel.component.scss",
@@ -37,12 +37,12 @@
       "compiledBytes": 4490
     },
     {
-      "file": "src/app/pages/settings/settings.page.scss",
-      "compiledBytes": 4390
-    },
-    {
       "file": "src/app/pages/auto-team-builder/auto-team-builder-picker-panel.component.scss",
       "compiledBytes": 4300
+    },
+    {
+      "file": "src/app/pages/settings/settings.page.scss",
+      "compiledBytes": 4230
     },
     {
       "file": "src/app/shared/character-image-picker/character-image-picker.component.scss",
@@ -54,7 +54,7 @@
     },
     {
       "file": "src/app/layout/tabs.page.scss",
-      "compiledBytes": 3270
+      "compiledBytes": 3250
     },
     {
       "file": "src/app/shared/ability-tag-set-picker/ability-tag-set-picker-catalog-panel.component.scss",
@@ -105,16 +105,12 @@
       "compiledBytes": 2200
     },
     {
-      "file": "src/app/shared/character-facet-filter/character-facet-filter-shell-panel.component.scss",
-      "compiledBytes": 2080
-    },
-    {
       "file": "src/app/pages/manual-team-builder/manual-team-builder-workbench-slot-detail-panel.component.scss",
       "compiledBytes": 2050
     },
     {
-      "file": "src/app/pages/captain-coverage/captain-coverage-team-slots-panel.component.scss",
-      "compiledBytes": 1990
+      "file": "src/app/shared/character-facet-filter/character-facet-filter-shell-panel.component.scss",
+      "compiledBytes": 2050
     },
     {
       "file": "src/app/shared/team-coverage-summary/team-coverage-summary.component.scss",
@@ -127,6 +123,10 @@
     {
       "file": "src/app/pages/character-detail/character-detail-responsive-panel.component.scss",
       "compiledBytes": 1900
+    },
+    {
+      "file": "src/app/pages/captain-coverage/captain-coverage-team-slots-panel.component.scss",
+      "compiledBytes": 1880
     },
     {
       "file": "src/app/shared/ability-tag-set-picker/ability-tag-set-picker-motion-panel.component.scss",
@@ -169,12 +169,12 @@
       "compiledBytes": 1570
     },
     {
-      "file": "src/app/pages/character-edit/character-edit.page.scss",
-      "compiledBytes": 1560
-    },
-    {
       "file": "src/app/pages/character-boxes/character-boxes.page.scss",
       "compiledBytes": 1470
+    },
+    {
+      "file": "src/app/pages/character-edit/character-edit.page.scss",
+      "compiledBytes": 1440
     },
     {
       "file": "src/app/pages/manual-team-builder/manual-team-builder-workbench-layout-panel.component.scss",
@@ -277,15 +277,15 @@
       "compiledBytes": 1180
     },
     {
-      "file": "src/app/pages/rumble-characters/rumble-characters-controls-panel.component.scss",
-      "compiledBytes": 1180
-    },
-    {
       "file": "src/app/pages/saved-enemies/saved-enemies-paste-autocomplete-panel.component.scss",
       "compiledBytes": 1160
     },
     {
       "file": "src/app/pages/captain-coverage/captain-coverage-filter-panel.component.scss",
+      "compiledBytes": 1140
+    },
+    {
+      "file": "src/app/pages/rumble-characters/rumble-characters-controls-panel.component.scss",
       "compiledBytes": 1140
     },
     {
