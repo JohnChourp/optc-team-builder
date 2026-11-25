@@ -133,7 +133,6 @@ export class SavedTeamsEvolutionMaterialsComponent {
     this.boxes = this.userState.characterBoxes;
   }
 
-  /** The units of the selected teams, by id. Repeats are counted once. */
   /**
    * The box the reader picked, kept by the page so it survives the card closing; `null` means the
    * first box.
@@ -144,6 +143,7 @@ export class SavedTeamsEvolutionMaterialsComponent {
 
   @Output() public readonly boxIdChange = new EventEmitter<string | null>();
 
+  /** The units of the selected teams, by id. Repeats are counted once. */
   @Input({ required: true }) public set characterIds(value: readonly number[]) {
     const ids = [...new Set(value)].sort((left, right) => left - right);
     const current = this.teamCharacterIds();
@@ -176,9 +176,6 @@ export class SavedTeamsEvolutionMaterialsComponent {
 
       if (request === this.loadRequest) {
         this.boxesFailed.set(!boxesRead);
-      }
-
-      if (request === this.loadRequest) {
         this.catalog.set(catalog);
       }
     } catch {
