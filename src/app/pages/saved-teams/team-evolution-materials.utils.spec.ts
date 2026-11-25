@@ -8,7 +8,9 @@ import { type CharacterEvolutionLinks } from '../../core/models/optc.models';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import {
   collectEarlierFormIds,
+  collectLaterFormIds,
   findOwnedEvolutionPath,
+  planBoxEvolutionMaterials,
   planTeamEvolutionMaterials,
   type EvolutionLinksById,
 } from './team-evolution-materials.utils';
@@ -118,6 +120,86 @@ describe('collectEarlierFormIds', () => {
   it('lists the earlier forms of what is loaded', () => {
     expect(collectEarlierFormIds([3, 4], LINKS).sort()).toEqual([1, 2, 5]);
     expect(collectEarlierFormIds([99], LINKS)).toEqual([]);
+  });
+});
+
+describe('planBoxEvolutionMaterials', () => {
+  it('evolves each unit to its final form, all steps summed', () => {
+    const plan = planBoxEvolutionMaterials([2, 5], LINKS);
+
+    expect(plan.units).toEqual([
+      { characterId: 2, state: 'evolve', path: [2, 3] },
+      { characterId: 5, state: 'evolve', path: [5, 3] },
+    ]);
+    expect(plan.materials).toEqual([
+      { key: 'c:80', characterId: 80, token: null, count: 1 },
+      { key: 't:ink', characterId: null, token: 'ink', count: 1 },
+      { key: 't:3-skull', characterId: null, token: '3-skull', count: 1 },
+      { key: 'c:81', characterId: 81, token: null, count: 1 },
+    ]);
+  });
+
+  it('lists a unit with more than one final form apart, and sums nothing for it', () => {
+    const plan = planBoxEvolutionMaterials([1], LINKS);
+
+    expect(plan.units).toEqual([{ characterId: 1, state: 'choice', finalIds: [4, 3] }]);
+    expect(plan.materials).toEqual([]);
+  });
+
+  it('skips a unit whose later form the box holds, and counts from that form', () => {
+    const plan = planBoxEvolutionMaterials([1, 2, 3, 4], LINKS);
+
+    expect(plan.units).toEqual([
+      { characterId: 1, state: 'laterOwned', laterId: 2 },
+      { characterId: 2, state: 'laterOwned', laterId: 3 },
+      { characterId: 3, state: 'final' },
+      { characterId: 4, state: 'final' },
+    ]);
+    expect(plan.materials).toEqual([]);
+  });
+
+  it('takes the shortest way when two branches meet at the same final form', () => {
+    const merging: EvolutionLinksById = new Map([
+      [
+        1,
+        {
+          evolvesTo: [
+            { toId: 2, materials: [unit(80)] },
+            { toId: 3, materials: [unit(81)] },
+          ],
+          evolvesFrom: [],
+        },
+      ],
+      [2, { evolvesTo: [{ toId: 3, materials: [unit(80)] }], evolvesFrom: [1] }],
+      [3, { evolvesTo: [], evolvesFrom: [1, 2] }],
+    ]);
+
+    expect(planBoxEvolutionMaterials([1], merging)).toEqual({
+      units: [{ characterId: 1, state: 'evolve', path: [1, 3] }],
+      materials: [{ key: 'c:81', characterId: 81, token: null, count: 1 }],
+    });
+  });
+
+  it('counts nothing for a unit with no recorded evolution, or caught in a cycle', () => {
+    const cycle: EvolutionLinksById = new Map([
+      [1, { evolvesTo: [{ toId: 2, materials: [unit(80)] }], evolvesFrom: [2] }],
+      [2, { evolvesTo: [{ toId: 1, materials: [unit(80)] }], evolvesFrom: [1] }],
+    ]);
+
+    expect(planBoxEvolutionMaterials([99], LINKS).units).toEqual([
+      { characterId: 99, state: 'final' },
+    ]);
+    expect(planBoxEvolutionMaterials([1], cycle)).toEqual({
+      units: [{ characterId: 1, state: 'final' }],
+      materials: [],
+    });
+  });
+});
+
+describe('collectLaterFormIds', () => {
+  it('lists the later forms of what is loaded', () => {
+    expect(collectLaterFormIds([1, 2], LINKS).sort()).toEqual([2, 3, 4]);
+    expect(collectLaterFormIds([99], LINKS)).toEqual([]);
   });
 });
 

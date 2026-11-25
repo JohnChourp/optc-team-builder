@@ -169,6 +169,10 @@
       "compiledBytes": 1570
     },
     {
+      "file": "src/app/pages/character-boxes/character-boxes.page.scss",
+      "compiledBytes": 1470
+    },
+    {
       "file": "src/app/pages/character-edit/character-edit.page.scss",
       "compiledBytes": 1440
     },
@@ -294,10 +298,6 @@
     },
     {
       "file": "src/app/pages/auto-team-builder-rumble/auto-team-builder-rumble-roster-responsive-panel.component.scss",
-      "compiledBytes": 1110
-    },
-    {
-      "file": "src/app/pages/character-boxes/character-boxes.page.scss",
       "compiledBytes": 1110
     },
     {

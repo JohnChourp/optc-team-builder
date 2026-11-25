@@ -132,6 +132,29 @@ describe('CharacterBoxesPage', () => {
     expect(page.contentLadderReport()).toBeNull();
   });
 
+  /* 869f63gzu. The evolution materials card is read only when opened, for the selected box. */
+  it('opens the evolution materials card for the selected box', () => {
+    const { page } = createPage();
+    const template = readFileSync(
+      resolve(process.cwd(), 'src/app/pages/character-boxes/character-boxes.page.html'),
+      'utf8',
+    );
+
+    expect(page.evolutionMaterialsOpen()).toBe(false);
+    page.toggleEvolutionMaterials();
+    expect(page.evolutionMaterialsOpen()).toBe(true);
+    page.toggleEvolutionMaterials();
+    expect(page.evolutionMaterialsOpen()).toBe(false);
+
+    // A native disclosure whose state stays current, hosting the card for the selected box.
+    expect(template).toMatch(
+      /<button[^>]*data-testid="box-evolution-materials-toggle"[^>]*\[attr\.aria-expanded\]="evolutionMaterialsOpen\(\)/u,
+    );
+    expect(template).toMatch(
+      /@if \(evolutionMaterialsOpen\(\)\) \{\s*<app-character-boxes-evolution-materials[^>]*\[characterIds\]="box\.characterIds"/u,
+    );
+  });
+
   it('keeps the page alive when the character read fails', async () => {
     const { page, repository } = createPage();
 

@@ -60,6 +60,7 @@ drifts and when a component is reachable by neither a route nor a template.
 | `AutoTeamBuilderPage` | page | route | yes | yes |
 | `AutoTeamBuilderRumblePage` | page | route | yes | yes |
 | `CaptainCoveragePage` | page | route | yes | yes |
+| `CharacterBoxesEvolutionMaterialsComponent` | page | 1 template | yes | yes |
 | `CharacterBoxesPage` | page | route | yes | yes |
 | `CharacterDetailPage` | page | route | yes | yes |
 | `CharacterEditPage` | page | route | yes | - |

@@ -1,0 +1,107 @@
+<ng-container *transloco="let t; scope: 'character-boxes'; read: 'character-boxes'">
+  <h3 id="box-evolution-materials-title">{{ t('evolutionMaterials.title') }}</h3>
+  <p class="evolution-materials__copy">{{ t('evolutionMaterials.copy') }}</p>
+
+  @if (failed()) {
+    <p class="evolution-materials__copy" data-testid="box-evolution-materials-failed">
+      {{ t('evolutionMaterials.failed') }}
+    </p>
+    <ion-button fill="outline" size="small" (click)="load()">
+      {{ t('evolutionMaterials.retry') }}
+    </ion-button>
+  } @else if (result(); as plan) {
+    @if (plan.boxSize === 0 && loading()) {
+      <!-- The last box read was empty; the one being read may not be. -->
+      <ion-spinner
+        name="crescent"
+        [attr.aria-label]="t('evolutionMaterials.loading')"
+      ></ion-spinner>
+    } @else if (plan.boxSize === 0) {
+      <p
+        class="evolution-materials__status"
+        role="status"
+        data-testid="box-evolution-materials-empty"
+      >
+        {{ t('evolutionMaterials.empty') }}
+      </p>
+    } @else {
+      <p
+        class="evolution-materials__status"
+        role="status"
+        data-testid="box-evolution-materials-status"
+      >
+        {{
+          t('evolutionMaterials.summary', {
+            evolve: plan.evolve.length,
+            final: plan.finalCount,
+            later: plan.laterOwnedCount,
+            choice: plan.choice.length,
+          })
+        }}
+        @if (loading()) {
+          <ion-spinner
+            name="dots"
+            [attr.aria-label]="t('evolutionMaterials.loading')"
+          ></ion-spinner>
+        }
+      </p>
+    }
+
+    @if (plan.materials.length) {
+      <h4>{{ t('evolutionMaterials.materialsTitle') }}</h4>
+      <p class="evolution-materials__note">{{ t('evolutionMaterials.totalsNote') }}</p>
+      <ul class="evolution-materials__materials" data-testid="box-evolution-materials-list">
+        @for (material of plan.materials; track material.key) {
+          <li>
+            <span class="evolution-materials__material">
+              <strong>×{{ material.count }}</strong>
+              @if (material.characterId !== null) {
+                <a [routerLink]="['/characters', material.characterId]">{{ material.name }}</a>
+              } @else if (material.skullOfName !== null) {
+                {{ t('evolutionMaterials.skullOf', { name: material.skullOfName }) }}
+              } @else {
+                {{ material.name }}
+              }
+            </span>
+            @if (material.drops.length) {
+              <span class="evolution-materials__note">
+                {{ t('evolutionMaterials.dropsFrom', { stages: material.drops.join('; ') }) }}
+              </span>
+            }
+          </li>
+        }
+      </ul>
+    }
+
+    @if (plan.evolve.length) {
+      <details data-testid="box-evolution-materials-evolve">
+        <summary>{{ t('evolutionMaterials.evolveTitle', { count: plan.evolve.length }) }}</summary>
+        <ul class="evolution-materials__units">
+          @for (unit of plan.evolve; track unit.characterId) {
+            <li>
+              <a [routerLink]="['/characters', unit.characterId]">{{ unit.name }}</a>
+              -
+              {{ t('evolutionMaterials.evolveTo', { name: unit.finalName, steps: unit.steps }) }}
+            </li>
+          }
+        </ul>
+      </details>
+    }
+
+    @if (plan.choice.length) {
+      <h4>{{ t('evolutionMaterials.choiceTitle') }}</h4>
+      <p class="evolution-materials__note">{{ t('evolutionMaterials.choiceNote') }}</p>
+      <ul class="evolution-materials__units" data-testid="box-evolution-materials-choice">
+        @for (unit of plan.choice; track unit.characterId) {
+          <li>
+            <a [routerLink]="['/characters', unit.characterId]">{{ unit.name }}</a>
+            -
+            {{ t('evolutionMaterials.choiceFinals', { names: unit.finalNames.join(' / ') }) }}
+          </li>
+        }
+      </ul>
+    }
+  } @else if (loading()) {
+    <ion-spinner name="crescent" [attr.aria-label]="t('evolutionMaterials.loading')"></ion-spinner>
+  }
+</ng-container>

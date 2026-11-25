@@ -187,6 +187,29 @@
                   </section>
                 }
 
+                <!-- 869f63gzu. The evolution materials this box needs, read when asked. -->
+                @if (selectedBox(); as box) {
+                  <section class="ladder-card" data-testid="box-evolution-materials">
+                    <!-- A native disclosure button: an ion-button copies aria-* once, at load. -->
+                    <button
+                      type="button"
+                      class="evolution-toggle"
+                      data-testid="box-evolution-materials-toggle"
+                      aria-controls="box-evolution-materials-card"
+                      [attr.aria-expanded]="evolutionMaterialsOpen() ? 'true' : 'false'"
+                      (click)="toggleEvolutionMaterials()"
+                    >
+                      {{ t('evolutionMaterials.open') }}
+                    </button>
+                    @if (evolutionMaterialsOpen()) {
+                      <app-character-boxes-evolution-materials
+                        id="box-evolution-materials-card"
+                        [characterIds]="box.characterIds"
+                      />
+                    }
+                  </section>
+                }
+
                 <div class="bulk-actions-grid">
                   <div class="favorites-bulk-action">
                     <div class="favorites-bulk-action__copy">
