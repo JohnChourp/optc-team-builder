@@ -20,6 +20,7 @@ import {
   type CharacterDetailRecord,
   type CharacterDropSource,
   type CharacterEvolutionBranch,
+  type CharacterEvolutionLinks,
   type CharacterProgression,
   type CharacterFacetMatchMode,
   type CharacterForm,
@@ -323,10 +324,7 @@ export function normalizeCaptainAbilityCoverage(
 }
 
 function normalizeCaptainAbilityScope(value: unknown): CharacterCaptainAbilityScope {
-  return value === 'crew-wide' ||
-    value === 'captain-only' ||
-    value === 'subset' ||
-    value === 'none'
+  return value === 'crew-wide' || value === 'captain-only' || value === 'subset' || value === 'none'
     ? value
     : 'none';
 }
@@ -356,7 +354,9 @@ function normalizeCaptainCoverageTiers(
           ? (kindRaw as CaptainCoverageTierKind)
           : 'baseline';
       const scope = normalizeCaptainAbilityScope(record['scope']);
-      const characterConditions = normalizeCaptainCoverageTargetScope(record['characterConditions']);
+      const characterConditions = normalizeCaptainCoverageTargetScope(
+        record['characterConditions'],
+      );
       const teamConditions = normalizeCaptainCoverageTeamConditions(record['teamConditions']);
       const fieldConditions = normalizeCaptainCoverageFieldConditions(record['fieldConditions']);
       const triggerConditions = normalizeCaptainCoverageTriggerConditions(
@@ -398,15 +398,15 @@ function normalizeCaptainCoverageTargetScope(
   CharacterDetail['captainAbilityCoverage']
 >['entries'][number]['tiers'][number]['characterConditions'] {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
-      return {
-        universal: false,
-        fallbackOther: false,
-        selfOnly: false,
-        dominantType: false,
-        types: [],
-        classes: [],
-        characterTags: [],
-      };
+    return {
+      universal: false,
+      fallbackOther: false,
+      selfOnly: false,
+      dominantType: false,
+      types: [],
+      classes: [],
+      characterTags: [],
+    };
   }
   const record = value as Record<string, unknown>;
   const costRange = normalizeNumericRange(record['costRange']);
@@ -969,10 +969,7 @@ export class OptcRepositoryService {
     await this.characterOverrides.ready();
     const overrideRevision = this.characterOverrides.revision();
 
-    if (
-      this.detailedCatalogPromise &&
-      this.detailedCatalogOverrideRevision === overrideRevision
-    ) {
+    if (this.detailedCatalogPromise && this.detailedCatalogOverrideRevision === overrideRevision) {
       return this.detailedCatalogPromise;
     }
 
@@ -1367,6 +1364,63 @@ export class OptcRepositoryService {
       // 869f63gm1. No row, or a malformed one, is "nothing recorded" - empty lists, never a negative.
       acquisition: parseCharacterAcquisition(row['acquisition_json']),
     };
+  }
+
+  /**
+   * 869f63gzu. Both evolution directions for several characters at once, for the materials a whole
+   * team still needs. A character with no row is left out: upstream records no evolution for it.
+   */
+  public async getCharacterEvolutionsByIds(ids: number[]): Promise<CharacterEvolutionLinks[]> {
+    const uniqueIds = [...new Set(ids)].filter((id) => Number.isFinite(id));
+
+    if (uniqueIds.length === 0) {
+      return [];
+    }
+
+    const placeholders = uniqueIds.map(() => '?').join(', ');
+    const rows = await this.selectAll(
+      `
+        SELECT character_id, evolves_to_json, evolves_from_json
+        FROM character_evolutions
+        WHERE character_id IN (${placeholders})
+      `,
+      uniqueIds,
+    );
+
+    return rows.map((row) => ({
+      characterId: Number(row['character_id']),
+      evolvesTo: parseJsonArray<CharacterEvolutionBranch>(row['evolves_to_json']),
+      evolvesFrom: parseJsonArray<number>(row['evolves_from_json']),
+    }));
+  }
+
+  /**
+   * 869f63gzu. The drop sources of several characters at once. A character with no row is left
+   * out: "nothing recorded", never "not farmable".
+   */
+  public async getCharacterDropSourcesByIds(
+    ids: number[],
+  ): Promise<{ characterId: number; dropSources: CharacterDropSource[] }[]> {
+    const uniqueIds = [...new Set(ids)].filter((id) => Number.isFinite(id));
+
+    if (uniqueIds.length === 0) {
+      return [];
+    }
+
+    const placeholders = uniqueIds.map(() => '?').join(', ');
+    const rows = await this.selectAll(
+      `
+        SELECT character_id, sources_json
+        FROM character_drops
+        WHERE character_id IN (${placeholders})
+      `,
+      uniqueIds,
+    );
+
+    return rows.map((row) => ({
+      characterId: Number(row['character_id']),
+      dropSources: parseJsonArray<CharacterDropSource>(row['sources_json']),
+    }));
   }
 
   /**
@@ -1877,7 +1931,10 @@ export class OptcRepositoryService {
     const manifest = await this.getDatasetManifest();
     const installedPacks = new Map(manifest.packs.map((pack) => [pack.key, pack]));
     const overridesByCharacterId = this.characterOverrides.overridesByCharacterId();
-    const datasetCaptainById = await this.loadOverriddenDatasetCaptains(rows, overridesByCharacterId);
+    const datasetCaptainById = await this.loadOverriddenDatasetCaptains(
+      rows,
+      overridesByCharacterId,
+    );
     const formsById = await this.getCharacterFormsById();
 
     const decoratedRows: CharacterListItem[] = [];

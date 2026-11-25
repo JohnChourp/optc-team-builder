@@ -1,8 +1,12 @@
-import { Component, type ElementRef, type OnInit, ViewChild, computed, signal } from '@angular/core';
 import {
-  buildFailureLines,
-  resolveFailureFamily,
-} from '../../core/services/failure-message.utils';
+  Component,
+  type ElementRef,
+  type OnInit,
+  ViewChild,
+  computed,
+  signal,
+} from '@angular/core';
+import { buildFailureLines, resolveFailureFamily } from '../../core/services/failure-message.utils';
 import { RouterLink } from '@angular/router';
 import {
   IonCheckbox,
@@ -27,6 +31,7 @@ import { TranslocoDirective, TranslocoPipe } from '@jsverse/transloco';
 import {
   alertCircleOutline,
   boatOutline,
+  arrowUpCircleOutline,
   checkmarkCircleOutline,
   closeOutline,
   cloudUploadOutline,
@@ -89,10 +94,7 @@ import {
   matchesCharacterTagSets,
 } from '../../core/services/character-tag-set.utils';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
-import {
-  toStoredAbilityIds,
-  toStoredTagSetSelection,
-} from './saved-teams-view-state.utils';
+import { toStoredAbilityIds, toStoredTagSetSelection } from './saved-teams-view-state.utils';
 import { buildSavedTeamEnemyLinkIndex } from './saved-team-enemy-links.utils';
 import { UserStateService } from '../../core/services/user-state.service';
 import { applyIonicModalDialogLabel } from '../../shared/a11y/ionic-modal-dialog-label.utils';
@@ -113,10 +115,8 @@ import {
 } from './saved-teams-transfer.utils';
 import { buildSavedTeamShareUrl, downloadSavedTeamsExport } from './saved-teams-export.utils';
 import { SavedTeamsStylePanelsComponent } from './saved-teams-style-panels.component';
-import {
-  checkTreasureMapPlan,
-  groupTreasureMapConflictsByTeam,
-} from './treasure-map-plan.utils';
+import { checkTreasureMapPlan, groupTreasureMapConflictsByTeam } from './treasure-map-plan.utils';
+import { SavedTeamsEvolutionMaterialsComponent } from './saved-teams-evolution-materials.component';
 
 interface SavedTeamPreviewCard {
   abilityIdentitySets: Record<SavedTeamAbilityOrigin, Set<string>>;
@@ -303,6 +303,7 @@ const SAVED_TEAM_ABILITY_SOURCE_TOKENS: Record<AutoBuildAbilitySource, string> =
     IonToolbar,
     CaptainTeamConditionStatusComponent,
     CharacterTagSetPickerComponent,
+    SavedTeamsEvolutionMaterialsComponent,
     SavedTeamsStylePanelsComponent,
     TeamCoverageSummaryComponent,
     RouterLink,
@@ -404,6 +405,26 @@ export class SavedTeamsPage implements OnInit {
    */
   private readonly treasureMapCheckOpen = signal(false);
   private readonly treasureMapAmbushTeamId = signal<string | null>(null);
+  /** 869f63gzu. Whether the evolution materials card is open. Page-local, never persisted. */
+  private readonly evolutionMaterialsOpen = signal(false);
+  /**
+   * 869f63gzu. The units of the selected teams, while the evolution materials card is open; `null`
+   * while it is closed or nothing is selected. It follows the selection live, like the plan check.
+   */
+  public readonly evolutionMaterialsCharacterIds = computed<number[] | null>(() => {
+    if (!this.evolutionMaterialsOpen()) {
+      return null;
+    }
+
+    const selectedTeamIds = this.selectedTeamIdSet();
+    const teamCards = this.filteredSavedTeamCards().filter((teamCard) =>
+      selectedTeamIds.has(teamCard.team.id),
+    );
+
+    return teamCards.length
+      ? teamCards.flatMap((teamCard) => teamCard.slots.flatMap((slot) => (slot ? [slot.id] : [])))
+      : null;
+  });
   /**
    * The selected teams checked as one Treasure Map plan - see `treasure-map-plan.utils.ts`.
    *
@@ -506,6 +527,7 @@ export class SavedTeamsPage implements OnInit {
   public readonly manualBuilderIcon = peopleOutline;
   public readonly abilityFilterIcon = funnelOutline;
   public readonly treasureMapIcon = mapOutline;
+  public readonly evolutionMaterialsIcon = arrowUpCircleOutline;
   public constructor(
     private readonly userState: UserStateService,
     private readonly repository: OptcRepositoryService,
@@ -553,14 +575,15 @@ export class SavedTeamsPage implements OnInit {
    */
   /** The rationale in the reader's language, like every other player-facing string here. */
   public publishedTeamRationale(card: PublishedTeamCard): string {
-    return this.i18n.activeLanguage() === 'el'
-      ? card.team.rationale.el
-      : card.team.rationale.en;
+    return this.i18n.activeLanguage() === 'el' ? card.team.rationale.el : card.team.rationale.en;
   }
 
   public publishedTeamMemberNames(card: PublishedTeamCard): string {
     return card.members
-      .map((member) => member?.name ?? this.i18n.translate('published.emptySeat', undefined, 'saved-teams'))
+      .map(
+        (member) =>
+          member?.name ?? this.i18n.translate('published.emptySeat', undefined, 'saved-teams'),
+      )
       .join(' · ');
   }
 
@@ -593,7 +616,6 @@ export class SavedTeamsPage implements OnInit {
     this.seedAbilityTagSetSelections();
     await this.refreshSavedTeamCards();
   }
-
 
   public getTeamBuilderQueryParams(team: Pick<SavedTeam, 'id'>): { teamId: string } {
     return { teamId: team.id };
@@ -638,6 +660,11 @@ export class SavedTeamsPage implements OnInit {
     }
 
     this.selectedTeamIds.set([]);
+  }
+
+  /** 869f63gzu. Opens or closes the evolution materials card over the selected teams. */
+  public toggleEvolutionMaterials(): void {
+    this.evolutionMaterialsOpen.update((open) => !open);
   }
 
   /** 869f63gy7. Opens or closes the Treasure Map check over the selected teams. */
@@ -764,6 +791,7 @@ export class SavedTeamsPage implements OnInit {
     this.selectedTeamIds.set([]);
     this.treasureMapCheckOpen.set(false);
     this.treasureMapAmbushTeamId.set(null);
+    this.evolutionMaterialsOpen.set(false);
     this.clearAllAbilityFilters();
     this.closeAbilityTagSetPicker();
     this.editModalOpen.set(false);
@@ -1333,7 +1361,9 @@ export class SavedTeamsPage implements OnInit {
       ];
 
       if (options.manualCopy) {
-        details.push(this.i18n.translate('share.manualCopy.instructions', undefined, 'saved-teams'));
+        details.push(
+          this.i18n.translate('share.manualCopy.instructions', undefined, 'saved-teams'),
+        );
       }
 
       this.actionFeedback.set({
@@ -1421,9 +1451,7 @@ export class SavedTeamsPage implements OnInit {
          * `consumeSavedTeamsStorageRecovery()`, a one-shot read, so clearing it
          * destroys a data-loss notice that can never be shown again.
          */
-        this.actionFeedback.update((feedback) =>
-          feedback?.tone === 'success' ? null : feedback,
-        );
+        this.actionFeedback.update((feedback) => (feedback?.tone === 'success' ? null : feedback));
 
         return 'cancelled';
       }
@@ -1713,7 +1741,11 @@ export class SavedTeamsPage implements OnInit {
       this.importFeedback.set({
         tone: 'error',
         title: this.i18n.translate('import.errorTitle', undefined, 'saved-teams'),
-        details: this.failureDetails('invalidFile', this.resolveImportErrorDetails(error as SavedTeamsImportError), error),
+        details: this.failureDetails(
+          'invalidFile',
+          this.resolveImportErrorDetails(error as SavedTeamsImportError),
+          error,
+        ),
       });
     } finally {
       this.importing.set(false);
@@ -1867,5 +1899,4 @@ export class SavedTeamsPage implements OnInit {
       ),
     ];
   }
-
 }

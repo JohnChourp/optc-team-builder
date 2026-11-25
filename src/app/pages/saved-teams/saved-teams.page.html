@@ -193,7 +193,10 @@
             </div>
 
             @if (hasAbilityFiltersAvailable()) {
-              <div class="saved-teams-ability-filter-panel" data-testid="saved-teams-ability-filter-panel">
+              <div
+                class="saved-teams-ability-filter-panel"
+                data-testid="saved-teams-ability-filter-panel"
+              >
                 <div class="saved-teams-ability-filter-panel__head">
                   <div>
                     <span>{{ t('abilityFilters.eyebrow') }}</span>
@@ -300,15 +303,15 @@
                 <ion-button fill="outline" color="light" (click)="resetPage()">
                   {{ 'common.actions.reset' | transloco }}
                 </ion-button>
-                  <button
-                    type="button"
-                    data-testid="saved-teams-import-open"
-                    class="saved-team-native-button saved-team-native-button--warning"
-                    (click)="openImportModal()"
-                  >
-                    <ion-icon [icon]="uploadIcon" aria-hidden="true"></ion-icon>
-                    {{ t('tools.import') }}
-                  </button>
+                <button
+                  type="button"
+                  data-testid="saved-teams-import-open"
+                  class="saved-team-native-button saved-team-native-button--warning"
+                  (click)="openImportModal()"
+                >
+                  <ion-icon [icon]="uploadIcon" aria-hidden="true"></ion-icon>
+                  {{ t('tools.import') }}
+                </button>
                 <ion-button
                   fill="outline"
                   color="light"
@@ -342,6 +345,19 @@
                 >
                   <ion-icon [icon]="treasureMapIcon" aria-hidden="true"></ion-icon>
                   {{ t('treasureMap.open') }}
+                </button>
+                <!-- 869f63gzu. A native disclosure button, for the same reason as the one above. -->
+                <button
+                  type="button"
+                  data-testid="saved-teams-evolution-materials-toggle"
+                  class="saved-team-native-button"
+                  aria-controls="saved-teams-evolution-materials"
+                  [attr.aria-expanded]="evolutionMaterialsCharacterIds() ? 'true' : 'false'"
+                  [disabled]="!hasSelection()"
+                  (click)="toggleEvolutionMaterials()"
+                >
+                  <ion-icon [icon]="evolutionMaterialsIcon" aria-hidden="true"></ion-icon>
+                  {{ t('evolutionMaterials.open') }}
                 </button>
                 <ion-button
                   fill="outline"
@@ -425,6 +441,19 @@
                     </li>
                   }
                 </ul>
+              </section>
+            }
+            <!--
+              869f63gzu. The evolution materials the selected teams still need, from one box.
+            -->
+            @if (evolutionMaterialsCharacterIds(); as characterIds) {
+              <section
+                id="saved-teams-evolution-materials"
+                class="saved-teams-treasure-map"
+                data-testid="saved-teams-evolution-materials"
+                aria-labelledby="saved-teams-evolution-materials-title"
+              >
+                <app-saved-teams-evolution-materials [characterIds]="characterIds" />
               </section>
             }
             @if (!filteredSavedTeamCards().length) {
@@ -666,11 +695,7 @@
                   [queryParams]="getTeamBuilderQueryParams(team)"
                   (click)="closeOpenTeamModal(); openTeamModal.dismiss(null, 'confirm')"
                 >
-                  <ion-icon
-                    slot="start"
-                    [icon]="captainCoverageIcon"
-                    aria-hidden="true"
-                  ></ion-icon>
+                  <ion-icon slot="start" [icon]="captainCoverageIcon" aria-hidden="true"></ion-icon>
                   <span>
                     <strong>{{ t('openTeam.destinations.captainCoverage.title') }}</strong>
                     <small>{{ t('openTeam.destinations.captainCoverage.copy') }}</small>
@@ -766,11 +791,7 @@
             </div>
           </ion-content>
 
-          <ion-footer
-            class="edit-modal-footer"
-            role="group"
-            [attr.aria-label]="t('edit.title')"
-          >
+          <ion-footer class="edit-modal-footer" role="group" [attr.aria-label]="t('edit.title')">
             <ion-toolbar>
               <div class="import-modal-actions">
                 <ion-button

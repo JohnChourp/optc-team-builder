@@ -1,0 +1,92 @@
+<ng-container *transloco="let t; scope: 'saved-teams'; read: 'saved-teams'">
+  <h3 id="saved-teams-evolution-materials-title">{{ t('evolutionMaterials.title') }}</h3>
+  <p class="evolution-materials__copy">{{ t('evolutionMaterials.copy') }}</p>
+
+  @if (loading()) {
+    <ion-spinner name="crescent" [attr.aria-label]="t('evolutionMaterials.loading')"></ion-spinner>
+  } @else if (failed()) {
+    <p class="evolution-materials__copy" data-testid="evolution-materials-failed">
+      {{ t('evolutionMaterials.failed') }}
+    </p>
+    <ion-button fill="outline" size="small" (click)="load()">
+      {{ t('evolutionMaterials.retry') }}
+    </ion-button>
+  } @else if (!boxes().length) {
+    <p class="evolution-materials__copy" data-testid="evolution-materials-no-box">
+      {{ t('evolutionMaterials.noBox') }}
+      <a routerLink="/character-boxes">{{ t('evolutionMaterials.openBoxes') }}</a>
+    </p>
+  } @else if (result(); as plan) {
+    <label class="evolution-materials__box">
+      <span>{{ t('evolutionMaterials.box') }}</span>
+      <select data-testid="evolution-materials-box" (change)="onBoxChange($event)">
+        @for (box of boxes(); track box.id) {
+          <option [value]="box.id" [selected]="shownBoxId() === box.id">
+            {{ box.name }} ({{ box.characterIds.length }})
+          </option>
+        }
+      </select>
+    </label>
+
+    <p class="evolution-materials__status" role="status" data-testid="evolution-materials-status">
+      {{
+        t('evolutionMaterials.summary', {
+          evolve: plan.evolve.length,
+          owned: plan.ownedCount,
+          missing: plan.notInBox.length,
+        })
+      }}
+    </p>
+
+    @if (plan.materials.length) {
+      <h4>{{ t('evolutionMaterials.materialsTitle') }}</h4>
+      <p class="evolution-materials__note">{{ t('evolutionMaterials.totalsNote') }}</p>
+      <ul class="evolution-materials__materials" data-testid="evolution-materials-list">
+        @for (material of plan.materials; track material.key) {
+          <li>
+            <span class="evolution-materials__material">
+              <strong>×{{ material.count }}</strong>
+              @if (material.characterId !== null) {
+                <a [routerLink]="['/characters', material.characterId]">{{ material.name }}</a>
+              } @else if (material.skullOfName !== null) {
+                {{ t('evolutionMaterials.skullOf', { name: material.skullOfName }) }}
+              } @else {
+                {{ material.name }}
+              }
+            </span>
+            @if (material.drops.length) {
+              <span class="evolution-materials__note">
+                {{ t('evolutionMaterials.dropsFrom', { stages: material.drops.join('; ') }) }}
+              </span>
+            }
+          </li>
+        }
+      </ul>
+    }
+
+    @if (plan.evolve.length) {
+      <h4>{{ t('evolutionMaterials.evolveTitle') }}</h4>
+      <ul class="evolution-materials__units" data-testid="evolution-materials-evolve">
+        @for (unit of plan.evolve; track unit.characterId) {
+          <li>
+            <a [routerLink]="['/characters', unit.characterId]">{{ unit.name }}</a>
+            -
+            {{ t('evolutionMaterials.evolveFrom', { name: unit.fromName, steps: unit.steps }) }}
+          </li>
+        }
+      </ul>
+    }
+
+    @if (plan.notInBox.length) {
+      <h4>{{ t('evolutionMaterials.notInBoxTitle') }}</h4>
+      <p class="evolution-materials__note">{{ t('evolutionMaterials.notInBoxNote') }}</p>
+      <ul class="evolution-materials__units" data-testid="evolution-materials-not-in-box">
+        @for (unit of plan.notInBox; track unit.characterId) {
+          <li>
+            <a [routerLink]="['/characters', unit.characterId]">{{ unit.name }}</a>
+          </li>
+        }
+      </ul>
+    }
+  }
+</ng-container>
