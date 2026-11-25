@@ -1,0 +1,59 @@
+:host {
+  display: grid;
+  gap: 8px;
+}
+
+h3,
+h4,
+.evolution-materials__copy,
+.evolution-materials__status,
+.evolution-materials__note {
+  margin: 0;
+}
+
+.evolution-materials__status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.evolution-materials__note {
+  font-size: 0.82rem;
+  opacity: 0.8;
+}
+
+.evolution-materials__materials,
+.evolution-materials__units {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.evolution-materials__materials li {
+  display: grid;
+  gap: 2px;
+}
+
+.evolution-materials__material {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: inherit;
+}

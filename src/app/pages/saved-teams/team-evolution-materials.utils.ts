@@ -131,6 +131,44 @@ function materialKey(material: CharacterEvolutionMaterial): string | null {
   return material.token ? `t:${material.token}` : null;
 }
 
+/** Adds every material of each step along `path` to `totals`. */
+function addPathMaterials(
+  totals: Map<string, EvolutionMaterialTotal>,
+  links: EvolutionLinksById,
+  path: readonly number[],
+): void {
+  for (let index = 1; index < path.length; index += 1) {
+    for (const material of stepMaterials(links, path[index - 1]!, path[index]!) ?? []) {
+      const key = materialKey(material);
+
+      if (!key) {
+        continue;
+      }
+
+      const total = totals.get(key);
+
+      if (total) {
+        total.count += 1;
+      } else {
+        totals.set(key, {
+          key,
+          characterId: material.characterId,
+          token: material.characterId === null ? material.token : null,
+          count: 1,
+        });
+      }
+    }
+  }
+}
+
+/** Most needed first; equal counts keep the order they were first met in. */
+function sortTotals(totals: Map<string, EvolutionMaterialTotal>): EvolutionMaterialTotal[] {
+  return [...totals.values()]
+    .map((total, order) => ({ total, order }))
+    .sort((left, right) => right.total.count - left.total.count || left.order - right.order)
+    .map(({ total }) => total);
+}
+
 export function planTeamEvolutionMaterials(
   teamCharacterIds: Iterable<number>,
   ownedIds: ReadonlySet<number>,
@@ -153,36 +191,149 @@ export function planTeamEvolutionMaterials(
     }
 
     units.push({ characterId, state: 'evolve', fromId: path[0]!, path });
+    addPathMaterials(totals, links, path);
+  }
 
-    for (let index = 1; index < path.length; index += 1) {
-      for (const material of stepMaterials(links, path[index - 1]!, path[index]!) ?? []) {
-        const key = materialKey(material);
+  return { units, materials: sortTotals(totals) };
+}
 
-        if (!key) {
-          continue;
-        }
+/*
+ * 869f63gzu, second part: the whole box. The owner chose:
+ *
+ *  - every unit evolves **to its final form**, all steps summed;
+ *  - a unit whose later form the box already holds is **skipped** - that later form is planned on
+ *    its own, so only the steps after it count;
+ *  - a unit whose evolutions lead to **more than one final form** is not summed: which one the
+ *    reader wants is their choice, so it is listed apart.
+ */
 
-        const total = totals.get(key);
+export type BoxUnitEvolutionPlan =
+  | { characterId: number; state: 'final' }
+  | { characterId: number; state: 'laterOwned'; laterId: number }
+  | { characterId: number; state: 'choice'; finalIds: number[] }
+  | {
+      characterId: number;
+      state: 'evolve';
+      /** Each form along the way, the box's form first and the final form last. */
+      path: number[];
+    };
 
-        if (total) {
-          total.count += 1;
-        } else {
-          totals.set(key, {
-            key,
-            characterId: material.characterId,
-            token: material.characterId === null ? material.token : null,
-            count: 1,
-          });
+export interface BoxEvolutionMaterials {
+  units: BoxUnitEvolutionPlan[];
+  materials: EvolutionMaterialTotal[];
+}
+
+/** The later forms upstream lists for `characterId`, nearest first. Bounded against cycles. */
+function laterForms(characterId: number, links: EvolutionLinksById): number[] {
+  const later: number[] = [];
+  const seen = new Set<number>([characterId]);
+  let frontier = [characterId];
+
+  for (let step = 0; step < EVOLUTION_SEARCH_MAX_STEPS && frontier.length > 0; step += 1) {
+    const next: number[] = [];
+
+    for (const id of frontier) {
+      for (const branch of links.get(id)?.evolvesTo ?? []) {
+        if (!seen.has(branch.toId)) {
+          seen.add(branch.toId);
+          later.push(branch.toId);
+          next.push(branch.toId);
         }
       }
     }
+
+    frontier = next;
   }
 
-  // Most needed first; equal counts keep the order they were first met in.
-  const materials = [...totals.values()]
-    .map((total, order) => ({ total, order }))
-    .sort((left, right) => right.total.count - left.total.count || left.order - right.order)
-    .map(({ total }) => total);
+  return later;
+}
 
-  return { units, materials };
+/** The shortest way from `fromId` to `toId` along upstream's evolutions, or null. */
+function forwardPath(fromId: number, toId: number, links: EvolutionLinksById): number[] | null {
+  let frontier: number[][] = [[fromId]];
+  const seen = new Set<number>([fromId]);
+
+  for (let step = 0; step < EVOLUTION_SEARCH_MAX_STEPS && frontier.length > 0; step += 1) {
+    const next: number[][] = [];
+
+    for (const path of frontier) {
+      for (const branch of links.get(path[path.length - 1]!)?.evolvesTo ?? []) {
+        if (seen.has(branch.toId)) {
+          continue;
+        }
+
+        seen.add(branch.toId);
+
+        const extended = [...path, branch.toId];
+
+        if (branch.toId === toId) {
+          return extended;
+        }
+
+        next.push(extended);
+      }
+    }
+
+    frontier = next;
+  }
+
+  return null;
+}
+
+/** Every character id whose links the box plan may read, given what is loaded so far. */
+export function collectLaterFormIds(ids: Iterable<number>, links: EvolutionLinksById): number[] {
+  const later = new Set<number>();
+
+  for (const id of ids) {
+    for (const branch of links.get(id)?.evolvesTo ?? []) {
+      later.add(branch.toId);
+    }
+  }
+
+  return [...later];
+}
+
+export function planBoxEvolutionMaterials(
+  boxCharacterIds: Iterable<number>,
+  links: EvolutionLinksById,
+): BoxEvolutionMaterials {
+  const boxIds = new Set(boxCharacterIds);
+  const units: BoxUnitEvolutionPlan[] = [];
+  const totals = new Map<string, EvolutionMaterialTotal>();
+
+  for (const characterId of boxIds) {
+    const later = laterForms(characterId, links);
+    const laterOwned = later.find((id) => boxIds.has(id));
+
+    if (laterOwned !== undefined) {
+      units.push({ characterId, state: 'laterOwned', laterId: laterOwned });
+      continue;
+    }
+
+    // A final form is one that evolves no further. A unit with none reachable (only in a cycle
+    // of bad data) has nothing this card can count.
+    const finalIds = later.filter((id) => !(links.get(id)?.evolvesTo.length ?? 0));
+
+    if (finalIds.length === 0) {
+      units.push({ characterId, state: 'final' });
+      continue;
+    }
+
+    if (finalIds.length > 1) {
+      units.push({ characterId, state: 'choice', finalIds });
+      continue;
+    }
+
+    const path = forwardPath(characterId, finalIds[0]!, links);
+
+    if (!path) {
+      units.push({ characterId, state: 'final' });
+      continue;
+    }
+
+    units.push({ characterId, state: 'evolve', path });
+    addPathMaterials(totals, links, path);
+  }
+
+  return { units, materials: sortTotals(totals) };
 }

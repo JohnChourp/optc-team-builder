@@ -35,6 +35,24 @@
       "type": "{{count}} more {{name}}."
     }
   },
+  "evolutionMaterials": {
+    "open": "Evolution materials",
+    "title": "Evolution materials for this box",
+    "copy": "Every unit in this box, evolved to its final form: the materials of all the steps, summed. A unit whose later form is already in the box counts from that form.",
+    "loading": "Reading the evolutions...",
+    "failed": "The evolutions could not be read.",
+    "retry": "Try again",
+    "summary": "To evolve: {{evolve}} · Already final: {{final}} · Later form in the box: {{later}} · Has a choice: {{choice}}",
+    "materialsTitle": "Materials",
+    "totalsNote": "What the evolutions ask for in total. Boxes do not record how many copies you hold, so nothing is subtracted.",
+    "skullOf": "Skull of {{name}}",
+    "dropsFrom": "Drops from: {{stages}}",
+    "evolveTitle": "Units to evolve ({{count}})",
+    "evolveTo": "to {{name}} · steps: {{steps}}",
+    "choiceTitle": "Has a choice of evolution",
+    "choiceNote": "These evolve into more than one final form, so which one is yours to pick. They add no materials here; open a unit to see each evolution.",
+    "choiceFinals": "can become: {{names}}"
+  },
   "editor": {
     "buildFromBoxAction": "Build from this box",
     "buildFromBoxLabel": "What can I build with this box?",

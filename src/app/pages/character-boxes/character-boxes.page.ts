@@ -32,6 +32,7 @@ import {
   type DatasetManifest,
   type DetailedCharacterSearchQuery,
 } from '../../core/models/optc.models';
+import { CharacterBoxesEvolutionMaterialsComponent } from './character-boxes-evolution-materials.component';
 import {
   buildContentLadderReport,
   type ContentLadderEntry,
@@ -133,6 +134,7 @@ interface CharacterBoxCharacterCardView {
     CharacterFilterRowComponent,
     CharacterTagFilterComponent,
     CharacterBoxesStylePanelsComponent,
+    CharacterBoxesEvolutionMaterialsComponent,
     RouterLink,
     TranslocoDirective,
     TranslocoPipe,
@@ -403,6 +405,8 @@ export class CharacterBoxesPage implements OnInit {
    * rather than reactively, because this page is constructed directly in its spec and an `effect`
    * would have no injection context.
    */
+  /** 869f63gzu. The evolution materials card is read only when the reader opens it. */
+  public readonly evolutionMaterialsOpen = signal(false);
   private readonly ladderBoxCharacters = signal<CharacterListItem[]>([]);
   public readonly contentLadderReport = computed<ContentLadderReport | null>(() =>
     this.selectedBox() ? buildContentLadderReport(this.ladderBoxCharacters()) : null,
@@ -550,6 +554,10 @@ export class CharacterBoxesPage implements OnInit {
     } catch {
       this.ladderBoxCharacters.set([]);
     }
+  }
+
+  public toggleEvolutionMaterials(): void {
+    this.evolutionMaterialsOpen.update((open) => !open);
   }
 
   public contentLadderVerdictLabel(entry: ContentLadderEntry): string {

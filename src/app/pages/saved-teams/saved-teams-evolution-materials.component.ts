@@ -4,37 +4,15 @@ import { IonButton } from '@ionic/angular/ion-button';
 import { IonSpinner } from '@ionic/angular/ion-spinner';
 import { TranslocoDirective } from '@jsverse/transloco';
 
-import { type CharacterEvolutionLinks } from '../../core/models/optc.models';
 import { OptcRepositoryService } from '../../core/services/optc-repository.service';
 import { UserStateService } from '../../core/services/user-state.service';
 import {
-  resolveSkullCharacterId,
-  summarizeDropSources,
-} from '../character-detail/character-progression.presenter';
-import {
-  EVOLUTION_SEARCH_MAX_STEPS,
-  collectEarlierFormIds,
-  planTeamEvolutionMaterials,
-  type EvolutionLinksById,
-} from './team-evolution-materials.utils';
-
-/** What the card needs besides the links: names, and the drop stages of each material. */
-interface EvolutionMaterialsCatalog {
-  links: EvolutionLinksById;
-  names: ReadonlyMap<number, string>;
-  drops: ReadonlyMap<number, string[]>;
-}
-
-export interface EvolutionMaterialRow {
-  key: string;
-  count: number;
-  /** A character material links to its page. */
-  characterId: number | null;
-  name: string;
-  /** A unit's own skull reads "Skull of <name>". */
-  skullOfName: string | null;
-  drops: string[];
-}
+  evolutionCatalogName,
+  loadEvolutionMaterialsCatalog,
+  toEvolutionMaterialRows,
+  type EvolutionMaterialsCatalog,
+} from './evolution-materials-catalog';
+import { planTeamEvolutionMaterials } from './team-evolution-materials.utils';
 
 export interface EvolutionUnitRow {
   characterId: number;
@@ -86,21 +64,8 @@ export class SavedTeamsEvolutionMaterialsComponent {
       new Set(box.characterIds),
       catalog.links,
     );
-    const nameOf = (characterId: number): string =>
-      catalog.names.get(characterId) ?? `#${characterId}`;
-
-    const materials: EvolutionMaterialRow[] = plan.materials.map((material) => {
-      const skullOf = resolveSkullCharacterId(material.token);
-
-      return {
-        key: material.key,
-        count: material.count,
-        characterId: material.characterId,
-        name: material.characterId !== null ? nameOf(material.characterId) : (material.token ?? ''),
-        skullOfName: skullOf !== null ? nameOf(skullOf) : null,
-        drops: material.characterId !== null ? (catalog.drops.get(material.characterId) ?? []) : [],
-      };
-    });
+    const nameOf = (characterId: number): string => evolutionCatalogName(catalog, characterId);
+    const materials = toEvolutionMaterialRows(plan.materials, catalog);
     const evolve: EvolutionUnitRow[] = [];
     const notInBox: { characterId: number; name: string }[] = [];
     let ownedCount = 0;
@@ -167,7 +132,7 @@ export class SavedTeamsEvolutionMaterialsComponent {
     try {
       // The boxes fail on their own, so the card can say which of the two could not be read.
       const [catalog, boxesRead] = await Promise.all([
-        this.loadCatalog(ids),
+        loadEvolutionMaterialsCatalog(this.repository, ids, 'earlier'),
         this.userState.readyCharacterBoxes().then(
           () => true,
           () => false,
@@ -194,56 +159,5 @@ export class SavedTeamsEvolutionMaterialsComponent {
 
     this.selectedBoxId.set(boxId);
     this.boxIdChange.emit(boxId);
-  }
-
-  private async loadCatalog(ids: readonly number[]): Promise<EvolutionMaterialsCatalog> {
-    const links = new Map<number, CharacterEvolutionLinks>();
-    const asked = new Set<number>();
-    let pending = [...ids];
-
-    // The teams' units, then their earlier forms, one level per query.
-    for (let step = 0; step <= EVOLUTION_SEARCH_MAX_STEPS && pending.length > 0; step += 1) {
-      for (const entry of await this.repository.getCharacterEvolutionsByIds(pending)) {
-        links.set(entry.characterId, entry);
-      }
-
-      const level = pending;
-
-      level.forEach((id) => asked.add(id));
-      pending = collectEarlierFormIds(level, links).filter((id) => !asked.has(id));
-    }
-
-    const nameIds = new Set<number>([...ids, ...links.keys()]);
-    const materialIds = new Set<number>();
-
-    for (const entry of links.values()) {
-      for (const branch of entry.evolvesTo) {
-        for (const material of branch.materials) {
-          if (material.characterId !== null) {
-            materialIds.add(material.characterId);
-            nameIds.add(material.characterId);
-          }
-
-          const skullOf = resolveSkullCharacterId(material.token);
-
-          if (skullOf !== null) {
-            nameIds.add(skullOf);
-          }
-        }
-      }
-    }
-
-    const [characters, drops] = await Promise.all([
-      this.repository.getCharactersByIds([...nameIds]),
-      this.repository.getCharacterDropSourcesByIds([...materialIds]),
-    ]);
-
-    return {
-      links,
-      names: new Map(characters.map((character) => [character.id, character.name])),
-      drops: new Map(
-        drops.map((entry) => [entry.characterId, summarizeDropSources(entry.dropSources)]),
-      ),
-    };
   }
 }

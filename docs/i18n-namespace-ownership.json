@@ -80,6 +80,7 @@
       "owner": "src/app/pages/character-boxes/",
       "hosts": [],
       "consumers": [
+        "src/app/pages/character-boxes/character-boxes-evolution-materials.component.html",
         "src/app/pages/character-boxes/character-boxes.page.html",
         "src/app/pages/character-boxes/character-boxes.page.ts"
       ]
