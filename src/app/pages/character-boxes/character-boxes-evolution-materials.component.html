@@ -10,7 +10,13 @@
       {{ t('evolutionMaterials.retry') }}
     </ion-button>
   } @else if (result(); as plan) {
-    @if (plan.boxSize === 0) {
+    @if (plan.boxSize === 0 && loading()) {
+      <!-- The last box read was empty; the one being read may not be. -->
+      <ion-spinner
+        name="crescent"
+        [attr.aria-label]="t('evolutionMaterials.loading')"
+      ></ion-spinner>
+    } @else if (plan.boxSize === 0) {
       <p
         class="evolution-materials__status"
         role="status"
