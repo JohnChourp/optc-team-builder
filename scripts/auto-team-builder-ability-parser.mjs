@@ -2411,8 +2411,9 @@ function resolveStructuredTurnMinTurns(key, normalizedText) {
   return STRUCTURED_GENERIC_TURN_KEYS.has(key) ? resolveMaxTurnCountFromText(normalizedText) : null;
 }
 
+// Its only caller passes text this module already normalised (1amndjnqk7e).
 function resolveMaxTurnCountFromText(value) {
-  const normalizedText = extractPrimaryAbilityBranchText(value);
+  const normalizedText = extractPrimaryAbilityBranchText(value, true);
   const minTurns = [...normalizedText.matchAll(/\b(?:by|for)\s+(\d+)\s+turns?\b/gi)]
     .map((match) => Number(match[1]))
     .filter((turns) => Number.isFinite(turns) && turns > 0)
@@ -3060,6 +3061,8 @@ function analyzeUnconditionalBuilderAbilityText(
   // The `foldMaxLevelTier = false` argument on the inner call
   // disables re-folding, so this cannot recurse more than one level even when the
   // extracted max-level text itself still contains nested tier restatements.
+  // maxLevelText is already normalised, so the inner call gets `preNormalized`
+  // (1amndjnqk7e): a second pass would read a decoded "&lt;...&gt;" clause as a tag.
   if (foldMaxLevelTier && (source === 'specialText' || source === 'sailorAbilities')) {
     const maxLevelText = extractMaxLevelAbilityBranchText(value, preNormalized);
 
@@ -3068,7 +3071,12 @@ function analyzeUnconditionalBuilderAbilityText(
         `${ability.key}|${ability.source}|${ability.minTurns}|${ability.effectTargetScope ?? ''}`;
       const existingKeySources = new Set(abilities.map(identity));
 
-      for (const ability of analyzeUnconditionalBuilderAbilityText(maxLevelText, source, false)) {
+      for (const ability of analyzeUnconditionalBuilderAbilityText(
+        maxLevelText,
+        source,
+        false,
+        true,
+      )) {
         const keySource = identity(ability);
 
         if (!existingKeySources.has(keySource)) {
