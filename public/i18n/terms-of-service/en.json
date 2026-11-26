@@ -1,7 +1,7 @@
 {
   "eyebrow": "Legal information",
   "title": "Terms of Service",
-  "summary": "These terms explain the rules for using the optc-team-builder web app and its related public project pages, including optional Google integrations and the limits of the service.",
+  "summary": "These terms explain the rules for using the optc-team-builder web app and its related public project pages, including optional Google Analytics measurement and the limits of the service.",
   "sections": {
     "acceptance": {
       "title": "Acceptance of these terms",
@@ -12,7 +12,7 @@
       "copy": "The service is an offline-first fan project built to help users browse OPTC data and manage team-building workflows.",
       "items": {
         "offline": "Core features include character browsing, team-building, saved data management, and other browser- or device-local workflows.",
-        "google": "Optional features may include Google sign-in, Google Drive backup, and Google Analytics measurement when you choose to enable them.",
+        "google": "Optional features may include Google Analytics measurement when you choose to enable it.",
         "publicPages": "These terms also cover related public project pages such as the Privacy Policy, Cookie Policy, repository links, and other service-facing documentation."
       }
     },
@@ -35,16 +35,16 @@
       "items": {
         "integrity": "Do not abuse, overload, probe, disrupt, or attempt to bypass the technical integrity, hosting, or availability of the service or connected third-party systems.",
         "illegal": "Do not use the service for unlawful, harmful, fraudulent, or clearly abusive activity, including automated misuse that exceeds the intended personal-use context of the app.",
-        "content": "Do not upload, import, sync, or redistribute content through the service if you do not have the rights or permission to do so."
+        "content": "Do not upload, import, or redistribute content through the service if you do not have the rights or permission to do so."
       }
     },
     "userData": {
       "title": "Your data and backups",
-      "copy": "You remain responsible for the data you create, import, export, or sync through the service. Local browser data and Google Drive backups are primarily under your control, and you should keep your own copies if the data matters to you."
+      "copy": "You remain responsible for the data you create, import, or export through the service. Local browser data and the files you export are primarily under your control, and you should keep your own copies if the data matters to you."
     },
     "googleServices": {
       "title": "Optional Google services",
-      "copy": "Google sign-in, Google Drive backup, and Google Analytics are optional features. If you choose to use them, your use is also subject to Google's own terms, privacy policies, and platform rules."
+      "copy": "Google Analytics is an optional feature. If you choose to enable it, your use is also subject to Google's own terms, privacy policies, and platform rules."
     },
     "availability": {
       "title": "Availability and service changes",
@@ -72,7 +72,7 @@
       "title": "Updates to these terms",
       "copy": "The operator may update these terms from time to time. Continued use of the service after an updated version is published means you accept the revised terms.",
       "lastUpdatedLabel": "Last updated",
-      "lastUpdatedValue": "April 21, 2026"
+      "lastUpdatedValue": "November 26, 2026"
     },
     "related": {
       "title": "Related pages",

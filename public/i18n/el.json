@@ -167,7 +167,7 @@
       },
       "settings": {
         "title": "Ρυθμίσεις",
-        "copy": "Άλλαξε γλώσσα, διαχειρίσου imports και exports, backups, Google Drive sync και analytics consent."
+        "copy": "Άλλαξε γλώσσα, διαχειρίσου imports και exports, backups και analytics consent."
       }
     },
     "workflow": {
@@ -268,7 +268,7 @@
   },
   "offline": {
     "title": "Είσαι εκτός σύνδεσης",
-    "copy": "Οι χαρακτήρες, οι ομάδες, τα boxes και οι δύο builders δουλεύουν κανονικά. Η σύνδεση με Google, το Drive sync και οι εικόνες που δεν έχεις ξανανοίξει χρειάζονται δίκτυο."
+    "copy": "Οι χαρακτήρες, οι ομάδες, τα boxes και οι δύο builders δουλεύουν κανονικά. Μόνο οι εικόνες που δεν έχεις ξανανοίξει χρειάζονται δίκτυο."
   },
   "playerFile": {
     "chooseDestination": "Διάλεξε πού θα αποθηκεύσεις ή πού θα στείλεις το αρχείο εξαγωγής."
