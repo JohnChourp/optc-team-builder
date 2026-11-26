@@ -31,6 +31,49 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.9.0',
+    date: '2026-11-26',
+    userVisible: true,
+    headline: {
+      en: 'Plan evolutions for a whole team or box and find supports for a character',
+      el: 'Δες τα υλικά εξέλιξης για ολόκληρη ομάδα ή box και βρες supports για έναν χαρακτήρα',
+    },
+    summaryEn:
+      'In **Saved Teams** and **Character Boxes**, open Evolution materials to see the totals and the known places to find each material. On the **Character** screen, open Support finder to see who can support that character and who can use their support.',
+    summaryEl:
+      'Στις **Αποθηκευμένες ομάδες** και στα **Boxes χαρακτήρων**, άνοιξε τα Υλικά εξέλιξης για να δεις πόσα υλικά χρειάζονται οι χαρακτήρες σου και πού θα τα βρεις όταν υπάρχει γνωστή πίστα. Στην **οθόνη χαρακτήρα**, πάτησε «Βρες supports» για να δεις ποιοι μπορούν να τον υποστηρίξουν και σε ποιους μπορεί ο ίδιος να δώσει support.',
+    added: [
+      {
+        en: 'In **Saved Teams**, select teams and a box to add up the materials from the forms you own to the forms your teams need. A character shared by two teams counts once.',
+        el: 'Στις **Αποθηκευμένες ομάδες**, διάλεξε ομάδες και box για να δεις το σύνολο των υλικών από τις μορφές που έχεις μέχρι εκείνες που χρειάζονται οι ομάδες σου. Ένας χαρακτήρας που παίζει σε δύο ομάδες μετρά μία φορά.',
+      },
+      {
+        en: 'In **Character Boxes**, the Evolution materials card totals the steps to each final form. Characters with a choice of final form appear in a separate list.',
+        el: 'Στα **Boxes χαρακτήρων**, η κάρτα Υλικά εξέλιξης αθροίζει τα υλικά όλων των βημάτων μέχρι την τελική μορφή. Οι χαρακτήρες με περισσότερες από μία τελικές μορφές εμφανίζονται χωριστά.',
+      },
+      {
+        en: 'On the **Character** screen, search for compatible supports across the catalogue or limit the search to one of your boxes.',
+        el: 'Στην **οθόνη χαρακτήρα**, αναζήτησε συμβατά supports σε όλο τον κατάλογο ή μόνο σε ένα δικό σου box.',
+      },
+    ],
+    improved: [
+      {
+        en: 'In **Manual Team Builder**, the ability panel for each crew member includes the extra turns their special grants when your crew meets its captain condition.',
+        el: 'Στο **Manual Team Builder**, οι ικανότητες κάθε μέλους της ομάδας περιλαμβάνουν τους επιπλέον γύρους που δίνει το special του όταν η ομάδα πληροί την προϋπόθεση για τον Captain.',
+      },
+    ],
+    fixed: [
+      {
+        en: 'In **Auto Team Builder**, team search and the final team report now count a special’s extra effect when your Captain or Friend Captain meets its condition.',
+        el: 'Στο **Auto Team Builder**, η αναζήτηση ομάδας και η τελική αναφορά υπολογίζουν πλέον και το πρόσθετο αποτέλεσμα ενός special όταν ο Captain ή ο Friend Captain πληροί την προϋπόθεση.',
+      },
+      {
+        en: 'The **Home** screen and **Terms of Service** now describe the backup options available after the removal of Google sign-in and Drive sync.',
+        el: 'Η **Αρχική** και οι **Όροι χρήσης** εξηγούν ποιες επιλογές αντιγράφων ασφαλείας υπάρχουν μετά την κατάργηση της σύνδεσης Google και του συγχρονισμού με το Drive.',
+      },
+    ],
+  },
+  {
     version: '0.8.1',
     date: '2026-11-19',
     userVisible: false,
