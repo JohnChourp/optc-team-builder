@@ -59,7 +59,7 @@ export const SEO_CONTENT_PAGES: Readonly<Record<string, SeoContentPageData>> = {
       },
       {
         title: 'Keep planning data local',
-        copy: 'Saved teams, saved enemies, character boxes, and backups stay in your browser until you export them.',
+        copy: 'Saved teams, saved enemies, character boxes, and backups stay in your browser unless you export or share them.',
       },
     ],
     links: [

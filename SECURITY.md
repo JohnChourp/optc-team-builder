@@ -28,8 +28,8 @@ reach:
   breach.
 - **Your data stays on your device** — saved teams, boxes, favourites and local
   character overrides live in your own browser or app storage.
-- **Your data leaves the device only in a file you export.** The app syncs
-  nowhere, and the project stores no copy.
+- **Your data leaves the device only when you export a file or share a team
+  link.** The app syncs nowhere, and the project stores no copy.
 - **The character dataset is public information** regenerated from upstream OPTC
   data, and it is read-only.
 
