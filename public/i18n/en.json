@@ -268,7 +268,7 @@
   },
   "offline": {
     "title": "You are offline",
-    "copy": "Your characters, teams, boxes and both builders keep working. Only images you have not opened before need a connection."
+    "copy": "Your characters, teams, boxes and both builders keep working. Images you have not opened before need a connection."
   },
   "playerFile": {
     "chooseDestination": "Choose where to save or send the export file."
