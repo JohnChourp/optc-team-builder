@@ -5,10 +5,10 @@ import {
 } from '../models/optc.models';
 
 /**
- * Verified over all 4654 [@dataset characterRows] rows of public/assets/data/optc-seed.sql:
+ * Verified over all 4660 [@dataset characterRows] rows of public/assets/data/optc-seed.sql:
  * 191 [@dataset charactersWithTwoTypes] characters carry two types
- * (4463 [@dataset charactersWithOneType] carry one) and
- * 4152 [@dataset charactersWithTwoClasses] carry two classes
+ * (4469 [@dataset charactersWithOneType] carry one) and
+ * 4158 [@dataset charactersWithTwoClasses] carry two classes
  * (484 [@dataset charactersWithOneClass] carry one,
  * 18 [@dataset charactersWithNoClasses] carry none). No row carries three of either. `all` across
  * more than this can never match, so the normalizer refuses to represent it.
