@@ -2411,8 +2411,9 @@ function resolveStructuredTurnMinTurns(key, normalizedText) {
   return STRUCTURED_GENERIC_TURN_KEYS.has(key) ? resolveMaxTurnCountFromText(normalizedText) : null;
 }
 
+// Its only caller passes text this module already normalised (1amndjnqk7e).
 function resolveMaxTurnCountFromText(value) {
-  const normalizedText = extractPrimaryAbilityBranchText(value);
+  const normalizedText = extractPrimaryAbilityBranchText(value, true);
   const minTurns = [...normalizedText.matchAll(/\b(?:by|for)\s+(\d+)\s+turns?\b/gi)]
     .map((match) => Number(match[1]))
     .filter((turns) => Number.isFinite(turns) && turns > 0)
