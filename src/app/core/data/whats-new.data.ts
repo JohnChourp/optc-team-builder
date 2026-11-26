@@ -44,6 +44,10 @@ export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
       'Στις **Αποθηκευμένες ομάδες** και στα **Boxes χαρακτήρων**, άνοιξε τα Υλικά εξέλιξης για να δεις πόσα υλικά χρειάζονται οι χαρακτήρες σου και πού θα τα βρεις όταν υπάρχει γνωστή πίστα. Στην **οθόνη χαρακτήρα**, πάτησε «Βρες supports» για να δεις ποιοι μπορούν να τον υποστηρίξουν και σε ποιους μπορεί ο ίδιος να δώσει support.',
     added: [
       {
+        en: 'The **Characters** screen now includes new entries for Nico Robin, Nami, Usopp, Ronja, Saul and Saintess Gunko.',
+        el: 'Στην **οθόνη χαρακτήρων** προστέθηκαν νέες καταχωρίσεις για τους Nico Robin, Nami, Usopp, Ronja, Saul και Saintess Gunko.',
+      },
+      {
         en: 'In **Saved Teams**, select teams and a box to add up the materials from the forms you own to the forms your teams need. A character shared by two teams counts once.',
         el: 'Στις **Αποθηκευμένες ομάδες**, διάλεξε ομάδες και box για να δεις το σύνολο των υλικών από τις μορφές που έχεις μέχρι εκείνες που χρειάζονται οι ομάδες σου. Ένας χαρακτήρας που παίζει σε δύο ομάδες μετρά μία φορά.',
       },
