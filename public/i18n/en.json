@@ -167,7 +167,7 @@
       },
       "settings": {
         "title": "Settings",
-        "copy": "Change language, manage imports and exports, configure backups, Google Drive sync, and analytics consent."
+        "copy": "Change language, manage imports and exports, configure backups, and analytics consent."
       }
     },
     "workflow": {
@@ -268,7 +268,7 @@
   },
   "offline": {
     "title": "You are offline",
-    "copy": "Your characters, teams, boxes and both builders keep working. Google sign-in, Drive sync and images you have not opened before need a connection."
+    "copy": "Your characters, teams, boxes and both builders keep working. Images you have not opened before need a connection."
   },
   "playerFile": {
     "chooseDestination": "Choose where to save or send the export file."

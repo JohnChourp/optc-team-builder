@@ -23,14 +23,14 @@
       "title": "Without a connection",
       "rows": {
         "works": "The character catalogue, both team builders, Captain Coverage, your saved teams and your boxes all keep working with no connection.",
-        "needsConnection": "Signing in, Google Drive sync and downloading a new version need a connection. Nothing else does.",
+        "needsConnection": "Pictures you have not opened before and downloading a new version need a connection. Nothing else does.",
         "storage": "Your teams and boxes are stored on this device, not on a server. Clearing the browser's site data deletes them - and on iPhone the browser can also clear them on its own if you have not opened the app for a long while. The app asks the browser to keep them, but cannot guarantee it, so export anything you would not want to lose."
       }
     },
     "permissions": {
       "title": "What the Android app asks for",
       "rows": {
-        "internet": "Internet — to load the character data and to sync if you sign in.",
+        "internet": "Internet — to load the character data.",
         "installPackages": "Install packages — only so the app can install its own update when you accept one. It is never used for anything else.",
         "nothingElse": "Nothing else. No contacts, no location, no camera, no files beyond what you export yourself."
       }

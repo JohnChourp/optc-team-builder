@@ -59,7 +59,7 @@ export const SEO_CONTENT_PAGES: Readonly<Record<string, SeoContentPageData>> = {
       },
       {
         title: 'Keep planning data local',
-        copy: 'Saved teams, saved enemies, character boxes, and backups stay in your browser unless you choose to use Drive sync.',
+        copy: 'Saved teams, saved enemies, character boxes, and backups stay in your browser unless you export or share them.',
       },
     ],
     links: [
@@ -194,7 +194,7 @@ export const SEO_CONTENT_PAGES: Readonly<Record<string, SeoContentPageData>> = {
       },
       {
         title: 'Current limits',
-        copy: 'Saved teams are local to the current browser or app install unless you export, share, import, or sync them. Corrupted local saved-team storage is repaired in place when possible, and unrecoverable records are removed with a warning instead of breaking the page.',
+        copy: 'Saved teams are local to the current browser or app install unless you export, share, or import them. Corrupted local saved-team storage is repaired in place when possible, and unrecoverable records are removed with a warning instead of breaking the page.',
       },
     ],
     links: [
