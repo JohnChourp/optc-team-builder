@@ -2,7 +2,10 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 
-// Per-topic regression for the max-tier fold of a multi-tier special (1amndjnqk7e).
+// Per-topic regression for the parser normalising its own already-normalised text a second
+// time (1amndjnqk7e). These cases feed raw "&lt;...&gt;" straight to the parser. Text from
+// the importer is normalised before it reaches the parser, whose first pass then still drops
+// a decoded "<...>" clause: a known limit, outside these cases.
 // The harness preamble is duplicated from auto-team-builder-ability-parser.spec.ts on
 // purpose: a new case gets its own file, so parallel branches never meet in the monolith.
 type AbilitySource = 'specialText' | 'superSpecialText' | 'captainAbility' | 'sailorAbilities';
