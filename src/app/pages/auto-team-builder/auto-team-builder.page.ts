@@ -1095,6 +1095,8 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly loadedCharacterBoxPoolName = signal('');
   public readonly selectedExcludeCharacterBoxId = signal<string | null>(null);
   public readonly favoritesOnly = signal(false);
+  /** 869f63h04. Opt-in, off by default and never remembered: see `AutoBuildConstraints.obtainableOnly`. */
+  public readonly obtainableOnly = signal(false);
   public readonly allowAnyFriendCaptainAutoFill = signal(false);
   public readonly guidedAutoBuildEnabled = signal(false);
   /**
@@ -2451,6 +2453,12 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.t('filters.leaderSuperEffectScope.toggle'),
   );
   public readonly favoritesOnlyToggleLabel = computed(() => this.t('filters.favoritesOnly.toggle'));
+  public readonly obtainableOnlyToggleLabel = computed(() =>
+    this.t('filters.obtainableOnly.toggle'),
+  );
+  public readonly obtainableOnlySupportLabel = computed(() =>
+    this.t('filters.obtainableOnly.support'),
+  );
   public readonly allowAnyFriendCaptainAutoFillToggleLabel = computed(() =>
     this.t('filters.allowAnyFriendCaptainAutoFill.toggle'),
   );
@@ -2898,21 +2906,31 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
   public readonly pausedBuildTitle = computed(() => this.t('paused.title'));
   public readonly pausedBuildCopy = computed(() => this.t('paused.copy'));
   public readonly candidatePoolLabel = computed(() => {
-    const isFavoritesOnly = this.result()?.input.favoritesOnly ?? this.favoritesOnly();
+    const result = this.result();
+    const isFavoritesOnly = result?.input.favoritesOnly ?? this.favoritesOnly();
+    // 869f63h04. The report says when the obtainable-only filter shaped the pool.
+    const isObtainableOnly = result ? result.input.obtainableOnly === true : this.obtainableOnly();
+    const obtainableSuffix = isObtainableOnly
+      ? this.t('results.candidatePool.obtainableOnlySuffix')
+      : '';
 
     if (this.hasSelectedTypes()) {
-      return isFavoritesOnly
-        ? this.t('results.candidatePool.favoritesWithTypes', {
-            types: this.selectedTypesLabel(),
-          })
-        : this.t('results.candidatePool.withTypes', {
-            types: this.selectedTypesLabel(),
-          });
+      return (
+        (isFavoritesOnly
+          ? this.t('results.candidatePool.favoritesWithTypes', {
+              types: this.selectedTypesLabel(),
+            })
+          : this.t('results.candidatePool.withTypes', {
+              types: this.selectedTypesLabel(),
+            })) + obtainableSuffix
+      );
     }
 
-    return isFavoritesOnly
-      ? this.t('results.candidatePool.favoritesDefault')
-      : this.t('results.candidatePool.default');
+    return (
+      (isFavoritesOnly
+        ? this.t('results.candidatePool.favoritesDefault')
+        : this.t('results.candidatePool.default')) + obtainableSuffix
+    );
   });
   public readonly resultUsesFallback = computed(
     () => this.result()?.relaxation.usedFallback ?? false,
@@ -5716,6 +5734,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.resetBuildState();
   }
 
+  public onObtainableOnlyToggle(event: CustomEvent<{ checked: boolean }>): void {
+    this.obtainableOnly.set(event.detail.checked);
+    this.resetBuildState();
+  }
+
   public onAllowAnyFriendCaptainAutoFillToggle(event: CustomEvent<{ checked: boolean }>): void {
     this.allowAnyFriendCaptainAutoFill.set(event.detail.checked);
     this.resetBuildState();
@@ -6881,6 +6904,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       battleRequirements: this.pageBattleRequirements(),
       enemyMechanics: this.pageEnemyMechanics(),
       favoritesOnly: this.favoritesOnly(),
+      ...(this.obtainableOnly() ? { obtainableOnly: true } : {}),
       boostedCharacterIds: [...this.boostedCharacterIds()],
       ...toSparseAvoidPreferFields(this.avoidPreferRules()),
       allowAnyFriendCaptainAutoFill: this.allowAnyFriendCaptainAutoFill(),
@@ -7116,6 +7140,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       requireSuperTandemCriteriaCoverage: this.requireSuperTandemCriteriaCoverage(),
       requireUniqueBaseCharacterNames: true,
       favoritesOnly: this.favoritesOnly(),
+      obtainableOnly: this.obtainableOnly(),
       allowAnyFriendCaptainAutoFill: this.allowAnyFriendCaptainAutoFill(),
       favoriteCount: this.favoriteCharacterIds().length,
       favoriteShipsOnly: this.favoriteShipsOnly(),
@@ -7668,6 +7693,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.selectedCharacterBoxId.set(null);
     this.selectedExcludeCharacterBoxId.set(null);
     this.favoritesOnly.set(defaultFilters.favoritesOnly);
+    this.obtainableOnly.set(false);
     this.allowAnyFriendCaptainAutoFill.set(defaultFilters.allowAnyFriendCaptainAutoFill);
     this.guidedAutoBuildEnabled.set(false);
     this.favoriteShipsOnly.set(defaultFilters.favoriteShipsOnly);
@@ -7986,6 +8012,7 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     this.selectedCharacterBoxId.set(null);
     this.selectedExcludeCharacterBoxId.set(null);
     this.favoritesOnly.set(state.favoritesOnly);
+    this.obtainableOnly.set(state.obtainableOnly === true);
     this.allowAnyFriendCaptainAutoFill.set(state.allowAnyFriendCaptainAutoFill);
     this.favoriteShipsOnly.set(state.favoriteShipsOnly);
     this.avoidPreferRules.set(state.avoidPreferRules ?? createEmptyAvoidPreferRules());
@@ -8265,6 +8292,11 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
           classes: this.formatSelectedValues(this.selectedClasses()),
         }),
       );
+    }
+
+    // 869f63h04. No fallback relaxes it, so a failure under it names it.
+    if (this.obtainableOnly()) {
+      activeRequirements.push(this.t('errors.requirements.obtainableScope'));
     }
 
     const leaderBoostRangeLabels = this.activeLeaderBoostRangeLabels();

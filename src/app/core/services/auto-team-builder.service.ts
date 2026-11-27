@@ -326,6 +326,7 @@ export class AutoTeamBuilderService {
     executionOptions: AutoTeamBuildExecutionOptions = {},
   ): Promise<AutoBuildResult | null> {
     const favoritesOnly = constraints.favoritesOnly ?? false;
+    const obtainableOnly = constraints.obtainableOnly ?? false;
     /*
      * 869f1q90b. Copied rather than referenced: the input is handed to a worker and must not
      * alias a signal the page keeps mutating.
@@ -458,6 +459,7 @@ export class AutoTeamBuilderService {
       battleRequirements,
       enemyMechanics,
       favoritesOnly,
+      ...(obtainableOnly ? { obtainableOnly: true } : {}),
       boostedCharacterIds,
       ...toSparseAvoidPreferFields(avoidPreferRules),
       allowAnyFriendCaptainAutoFill,
@@ -534,7 +536,7 @@ export class AutoTeamBuilderService {
     }
 
     const hasExplicitCandidateScope = constraints.candidateCharacterIds !== undefined;
-    const allowedCharacterIds = hasExplicitCandidateScope
+    const scopedCharacterIds = hasExplicitCandidateScope
       ? candidateCharacterIds.filter(
           (characterId) => !favoritesOnly || favoriteCharacterIds.has(characterId),
         )
@@ -542,8 +544,23 @@ export class AutoTeamBuilderService {
         ? [...favoriteCharacterIds]
         : undefined;
 
-    if (hasExplicitCandidateScope && (allowedCharacterIds?.length ?? 0) === 0) {
+    if (hasExplicitCandidateScope && (scopedCharacterIds?.length ?? 0) === 0) {
       return null;
+    }
+
+    // 869f63h04. Narrows whatever scope is already set; with none, the obtainable units are the scope.
+    let allowedCharacterIds = scopedCharacterIds;
+
+    if (obtainableOnly) {
+      const obtainableCharacterIds = new Set(await this.repository.getObtainableCharacterIds());
+
+      allowedCharacterIds = (scopedCharacterIds ?? [...obtainableCharacterIds]).filter(
+        (characterId) => obtainableCharacterIds.has(characterId),
+      );
+
+      if (allowedCharacterIds.length === 0) {
+        return null;
+      }
     }
 
     const requestedLeaderIds = [captainCharacterId, friendCaptainCharacterId].filter(

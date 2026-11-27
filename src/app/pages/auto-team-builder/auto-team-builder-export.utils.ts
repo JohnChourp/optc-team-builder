@@ -177,6 +177,8 @@ export interface AutoTeamSelectionExportPayload {
     requireSuperTandemCriteriaCoverage?: boolean;
     requireUniqueBaseCharacterNames: boolean;
     favoritesOnly: boolean;
+    /** 869f63h04. Sparse: written only when the filter was on; older files read as off. */
+    obtainableOnly?: boolean;
     allowAnyFriendCaptainAutoFill?: boolean;
     favoriteCount: number;
     favoriteShipsOnly?: boolean;
@@ -241,6 +243,7 @@ export interface AutoTeamSelectionImportState {
   requireSuperTandemCriteriaCoverage: boolean;
   requireUniqueBaseCharacterNames: boolean;
   favoritesOnly: boolean;
+  obtainableOnly?: boolean;
   allowAnyFriendCaptainAutoFill: boolean;
   favoriteShipsOnly: boolean;
   leaderBoostFilters: AutoBuildLeaderBoostFilter[];
@@ -311,6 +314,7 @@ interface BuildAutoTeamSelectionExportPayloadOptions {
   requireSuperTandemCriteriaCoverage?: boolean;
   requireUniqueBaseCharacterNames: boolean;
   favoritesOnly: boolean;
+  obtainableOnly?: boolean;
   allowAnyFriendCaptainAutoFill?: boolean;
   favoriteCount: number;
   favoriteShipsOnly?: boolean;
@@ -1024,6 +1028,7 @@ export function parseAutoTeamSelectionImportPayload(
       typeof filters['requireSameCaptainAndFriendCaptain'] === 'boolean'
     ) ||
     typeof filters['favoritesOnly'] !== 'boolean' ||
+    !(filters['obtainableOnly'] === undefined || typeof filters['obtainableOnly'] === 'boolean') ||
     !(
       filters['allowAnyFriendCaptainAutoFill'] === undefined ||
       typeof filters['allowAnyFriendCaptainAutoFill'] === 'boolean'
@@ -1664,6 +1669,7 @@ export function sanitizeAutoTeamSelectionImportPayload(
         payload.filters.requireSuperTandemCriteriaCoverage === true,
       requireUniqueBaseCharacterNames: payload.filters.requireUniqueBaseCharacterNames === true,
       favoritesOnly: payload.filters.favoritesOnly,
+      obtainableOnly: payload.filters.obtainableOnly === true,
       allowAnyFriendCaptainAutoFill: payload.filters.allowAnyFriendCaptainAutoFill === true,
       favoriteShipsOnly: payload.filters.favoriteShipsOnly === true,
       leaderBoostFilters,
@@ -1748,6 +1754,7 @@ export function buildAutoTeamSelectionExportPayload({
   requireSuperTandemCriteriaCoverage = false,
   requireUniqueBaseCharacterNames,
   favoritesOnly,
+  obtainableOnly = false,
   allowAnyFriendCaptainAutoFill = false,
   favoriteCount,
   favoriteShipsOnly = false,
@@ -1828,6 +1835,7 @@ export function buildAutoTeamSelectionExportPayload({
       requireSuperTandemCriteriaCoverage,
       requireUniqueBaseCharacterNames,
       favoritesOnly,
+      ...(obtainableOnly ? { obtainableOnly: true } : {}),
       allowAnyFriendCaptainAutoFill,
       favoriteCount,
       favoriteShipsOnly,

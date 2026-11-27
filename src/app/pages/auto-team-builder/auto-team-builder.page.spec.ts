@@ -4094,6 +4094,72 @@ describe('AutoTeamBuilderPage builder interactions', () => {
     );
   });
 
+  describe('869f63h04 obtainable-only filter', () => {
+    it('is off by default and sends no flag; switched on, it sends the flag', async () => {
+      const { page, autoTeamBuilder } = await createPage();
+
+      await page.ngOnInit();
+      page.selectedClasses.set(['Fighter']);
+      page.selectedTypes.set(['DEX']);
+      expect(page.obtainableOnly()).toBe(false);
+      await page.buildTeam();
+
+      const offConstraints = autoTeamBuilder.buildTeam.mock.calls.at(-1)?.[2];
+
+      expect(offConstraints).toBeDefined();
+      expect(offConstraints).not.toHaveProperty('obtainableOnly');
+
+      page.onObtainableOnlyToggle({ detail: { checked: true } } as CustomEvent<{
+        checked: boolean;
+      }>);
+      await page.buildTeam();
+
+      expect(autoTeamBuilder.buildTeam).toHaveBeenLastCalledWith(
+        ['Fighter'],
+        ['DEX'],
+        expect.objectContaining({ obtainableOnly: true }),
+        expect.any(Object),
+      );
+    });
+
+    it('says in the result when the filter shaped the pool, from the result rather than the toggle', async () => {
+      const { page } = await createPage();
+      const result = createAutoBuildResult();
+
+      await page.ngOnInit();
+      page.selectedTypes.set(['DEX', 'PSY']);
+      page.result.set({ ...result, input: { ...result.input, obtainableOnly: true } });
+      page.obtainableOnly.set(false);
+
+      expect(page.candidatePoolLabel()).toBe(
+        'Built from the local pool while targeting DEX / PSY coverage. Auto-fill used only units from farming, shops or the Friend Point banner.',
+      );
+
+      page.result.set(result);
+      page.obtainableOnly.set(true);
+
+      expect(page.candidatePoolLabel()).toBe(
+        'Built from the local pool while targeting DEX / PSY coverage.',
+      );
+    });
+
+    it('names the filter when no team is found under it', async () => {
+      const { page } = await createPage();
+
+      await page.ngOnInit();
+      page.selectedTypes.set(['DEX']);
+      page.obtainableOnly.set(true);
+
+      expect(page['resolveBuildFailureMessage']()).toContain(
+        'only units from farming, shops or the Friend Point banner',
+      );
+
+      page.obtainableOnly.set(false);
+
+      expect(page['resolveBuildFailureMessage']()).not.toContain('Friend Point banner');
+    });
+  });
+
   it('passes the favorite and box intersection when both scopes are active', async () => {
     const { page, autoTeamBuilder, userState } = await createPage();
 

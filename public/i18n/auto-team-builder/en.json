@@ -258,6 +258,10 @@
         "withCount": "Limit auto-filled slots to your {{count}} saved favorite units. Manual picks can still use any unit."
       }
     },
+    "obtainableOnly": {
+      "support": "Off by default. Auto-fill uses only units recorded as farmable, sold in a shop or on the Friend Point banner, and the forms they evolve into. A unit with nothing recorded is left out, which does not mean it cannot be obtained. Manual picks can still use any unit.",
+      "toggle": "Only farmable, shop and Friend Point units"
+    },
     "allowAnyFriendCaptainAutoFill": {
       "toggle": "Allow any Friend Captain",
       "support": "When Friend Captain is empty, search all characters for that slot. Favorite auto-fill still applies to Captain and subs."
@@ -956,6 +960,7 @@
       "default": "Built from the full local pool.",
       "favoritesDefault": "Built with favorite-only auto-fill for open slots.",
       "favoritesWithTypes": "Built with favorite-only auto-fill for open slots while targeting {{types}} coverage.",
+      "obtainableOnlySuffix": " Auto-fill used only units from farming, shops or the Friend Point banner.",
       "withTypes": "Built from the local pool while targeting {{types}} coverage."
     },
     "leaderCriteria": {
@@ -1163,6 +1168,7 @@
       "favoritesScope": " while keeping favorite-only auto-fill for open slots; non-favorite counters are not considered",
       "flexible": "No flexible team matched {{types}} while keeping {{requirements}}{{favoritesScope}}.",
       "leaderBoostRange": "the Captain boost range {{range}}",
+      "obtainableScope": "only units from farming, shops or the Friend Point banner",
       "separator": " and ",
       "superSpecialCriteria": "Super Special criteria coverage",
       "strict": "No strict team matched {{types}} while keeping {{requirements}}{{favoritesScope}}."

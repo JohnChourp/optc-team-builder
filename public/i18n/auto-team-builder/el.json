@@ -258,6 +258,10 @@
         "withCount": "Περιορίζει τα auto-filled slots στα {{count}} αποθηκευμένα favorite units σου. Τα manual picks μπορούν να χρησιμοποιούν οποιοδήποτε unit."
       }
     },
+    "obtainableOnly": {
+      "support": "Κλειστό εξ ορισμού. Το auto-fill χρησιμοποιεί μόνο units που έχουν καταγραφεί ότι βγαίνουν από farming, πωλούνται σε shop ή βγαίνουν από το Friend Point banner, μαζί με τις εξελιγμένες μορφές τους. Ένα unit χωρίς καταγραφή μένει έξω, αλλά αυτό δεν σημαίνει ότι δεν αποκτάται. Τα manual picks μπορούν να χρησιμοποιούν οποιοδήποτε unit.",
+      "toggle": "Μόνο units από farming, shop ή Friend Point"
+    },
     "allowAnyFriendCaptainAutoFill": {
       "toggle": "Επίτρεψε οποιονδήποτε Friend Captain",
       "support": "Όταν το Friend Captain είναι κενό, ψάχνει όλους τους χαρακτήρες για αυτό το slot. Το favorite auto-fill ισχύει ακόμα για Captain και subs."
@@ -956,6 +960,7 @@
       "default": "Χτίστηκε από όλο το local pool.",
       "favoritesDefault": "Χτίστηκε με favorite-only auto-fill για τα ανοιχτά slots.",
       "favoritesWithTypes": "Χτίστηκε με favorite-only auto-fill για τα ανοιχτά slots με στόχο κάλυψη {{types}}.",
+      "obtainableOnlySuffix": " Το auto-fill χρησιμοποίησε μόνο units από farming, shop ή το Friend Point banner.",
       "withTypes": "Χτίστηκε από το local pool με στόχο κάλυψη {{types}}."
     },
     "leaderCriteria": {
@@ -1163,6 +1168,7 @@
       "favoritesScope": " κρατώντας favorite-only auto-fill για τα ανοιχτά slots· non-favorite counters δεν εξετάζονται",
       "flexible": "Δεν βρέθηκε flexible ομάδα για {{types}} που να κρατά τα {{requirements}}{{favoritesScope}}.",
       "leaderBoostRange": "όρια Captain boost {{range}}",
+      "obtainableScope": "μόνο units από farming, shop ή το Friend Point banner",
       "separator": " και ",
       "superSpecialCriteria": "κάλυψη των Super Special criteria",
       "strict": "Δεν βρέθηκε strict ομάδα για {{types}} που να κρατά τα {{requirements}}{{favoritesScope}}."

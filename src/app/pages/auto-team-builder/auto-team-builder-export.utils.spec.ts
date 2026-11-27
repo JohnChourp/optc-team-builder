@@ -194,10 +194,45 @@ describe('auto-team-builder-export.utils character tag sets', () => {
   });
 });
 
+describe('auto-team-builder-export.utils obtainable-only filter (869f63h04)', () => {
+  const noTags: CharacterTagSetSelection = { operator: 'all', sets: [] };
+
+  it('writes the flag only when the filter is on, so an export with it off is unchanged', () => {
+    expect(buildExportPayload(noTags).filters).not.toHaveProperty('obtainableOnly');
+    expect(buildExportPayload(noTags, { obtainableOnly: false }).filters).not.toHaveProperty(
+      'obtainableOnly',
+    );
+    expect(buildExportPayload(noTags, { obtainableOnly: true }).filters.obtainableOnly).toBe(true);
+  });
+
+  it('round-trips the filter, and reads a file written before it as off', () => {
+    const read = (payload: unknown) =>
+      sanitizeAutoTeamSelectionImportPayload(
+        parseAutoTeamSelectionImportPayload(JSON.stringify(payload)),
+        sanitizeOptions(),
+      ).state.obtainableOnly;
+
+    expect(read(buildExportPayload(noTags, { obtainableOnly: true }))).toBe(true);
+    expect(read(buildExportPayload(noTags))).toBe(false);
+    expect(read(legacyPayload([], false))).toBe(false);
+  });
+
+  it('rejects a file whose flag is not a boolean', () => {
+    const payload = buildExportPayload(noTags);
+    const raw = { ...payload, filters: { ...payload.filters, obtainableOnly: 'yes' } };
+
+    expect(() => parseAutoTeamSelectionImportPayload(JSON.stringify(raw))).toThrowError(
+      AutoTeamSelectionImportError,
+    );
+  });
+});
+
 function buildExportPayload(
   characterTagSets: CharacterTagSetSelection,
+  overrides: { obtainableOnly?: boolean } = {},
 ): AutoTeamSelectionExportPayload {
   return buildAutoTeamSelectionExportPayload({
+    ...overrides,
     selectedTypes: [],
     selectedClasses: [],
     characterTagSets,

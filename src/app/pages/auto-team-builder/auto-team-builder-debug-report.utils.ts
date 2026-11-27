@@ -236,6 +236,7 @@ const REQUEST_FLAG_KEYS = [
   'strictSuperTandemCriteriaCoverage',
   'requireUniqueBaseCharacterNames',
   'favoritesOnly',
+  'obtainableOnly',
   'allowAnyFriendCaptainAutoFill',
   'favoriteShipsOnly',
 ] as const satisfies ReadonlyArray<keyof AutoBuildConstraints>;

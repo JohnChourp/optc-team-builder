@@ -344,6 +344,20 @@
 
                                       <div class="strict-toggle-row">
                                         <div class="strict-toggle-copy">
+                                          <strong>{{ obtainableOnlyToggleLabel() }}</strong>
+                                          <small>{{ obtainableOnlySupportLabel() }}</small>
+                                        </div>
+                                        <ion-toggle
+                                          [attr.aria-label]="obtainableOnlyToggleLabel()"
+                                          color="warning"
+                                          [checked]="obtainableOnly()"
+                                          [disabled]="controlsDisabled()"
+                                          (ionChange)="onObtainableOnlyToggle($event)"
+                                        ></ion-toggle>
+                                      </div>
+
+                                      <div class="strict-toggle-row">
+                                        <div class="strict-toggle-copy">
                                           <strong>{{ favoriteShipsOnlyToggleLabel() }}</strong>
                                           <small>{{ favoriteShipsOnlySupportLabel() }}</small>
                                         </div>

@@ -198,6 +198,105 @@ describe('Auto team builder', () => {
     expect(servedPoolIds).toEqual([[], favoriteCharacterIds, decoyCharacterIds]);
   });
 
+  describe('869f63h04 obtainable-only auto-fill', () => {
+    const obtainableRecords = createStrictMixedTeamRecords();
+    const otherRecords = createAlternateStrictMixedTeamRecords();
+    const records = [...obtainableRecords, ...otherRecords];
+    const obtainableIds = obtainableRecords.map((record) => record.id);
+    const otherIds = otherRecords.map((record) => record.id);
+    const createRepository = (obtainable: number[]) => ({
+      getObtainableCharacterIds: vi.fn().mockResolvedValue(obtainable),
+      getAutoBuilderCandidates: vi.fn().mockImplementation(async (_types, _limit, query) => {
+        const allowedIds = Array.isArray(query?.allowedCharacterIds)
+          ? new Set<number>(query.allowedCharacterIds)
+          : null;
+
+        return records.filter((record) => !allowedIds || allowedIds.has(record.id));
+      }),
+    });
+
+    it('builds only from obtainable units and says the filter was on', async () => {
+      // 4000 is obtainable but not in this pool: the list narrows the pool, it adds nobody.
+      const repository = createRepository([...obtainableIds, 4000]);
+      const result = await new AutoTeamBuilderService(repository as never).buildTeam(
+        ['Fighter', 'Slasher'],
+        ['DEX', 'PSY'],
+        { obtainableOnly: true },
+      );
+
+      expectCompleteAutoTeam(result);
+      expect(result.slots.every((slot) => obtainableIds.includes(slot.character.id))).toBe(true);
+      expect(result.input.obtainableOnly).toBe(true);
+      expect(result.requestedInput.obtainableOnly).toBe(true);
+      expect(repository.getObtainableCharacterIds).toHaveBeenCalledTimes(1);
+      expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(
+        ['DEX', 'PSY'],
+        AUTO_TEAM_CANDIDATE_LIMIT,
+        expect.objectContaining({ allowedCharacterIds: [...obtainableIds, 4000] }),
+      );
+    });
+
+    it('is off by default: nothing is read and the input carries no flag', async () => {
+      const repository = createRepository(obtainableIds);
+      const result = await new AutoTeamBuilderService(repository as never).buildTeam(
+        ['Fighter', 'Slasher'],
+        ['DEX', 'PSY'],
+        {},
+      );
+
+      expectCompleteAutoTeam(result);
+      expect(repository.getObtainableCharacterIds).not.toHaveBeenCalled();
+      expect('obtainableOnly' in result.input).toBe(false);
+      expect('obtainableOnly' in result.requestedInput).toBe(false);
+    });
+
+    it('narrows a favourites scope rather than replacing it', async () => {
+      const repository = createRepository(otherIds);
+      const result = await new AutoTeamBuilderService(repository as never).buildTeam(
+        ['Fighter', 'Slasher'],
+        ['DEX', 'PSY'],
+        {
+          obtainableOnly: true,
+          favoritesOnly: true,
+          favoriteCharacterIds: [...obtainableIds, ...otherIds],
+        },
+      );
+
+      expectCompleteAutoTeam(result);
+      expect(result.slots.every((slot) => otherIds.includes(slot.character.id))).toBe(true);
+      expect(repository.getAutoBuilderCandidates).toHaveBeenCalledWith(
+        ['DEX', 'PSY'],
+        AUTO_TEAM_CANDIDATE_LIMIT,
+        expect.objectContaining({ allowedCharacterIds: otherIds }),
+      );
+    });
+
+    it('narrows an explicit box scope, and returns no team without a search when nothing is left', async () => {
+      const repository = createRepository(obtainableIds);
+      const result = await new AutoTeamBuilderService(repository as never).buildTeam(
+        ['Fighter', 'Slasher'],
+        ['DEX', 'PSY'],
+        { obtainableOnly: true, candidateCharacterIds: otherIds },
+      );
+
+      expect(result).toBeNull();
+      expect(repository.getObtainableCharacterIds).toHaveBeenCalledTimes(1);
+      expect(repository.getAutoBuilderCandidates).not.toHaveBeenCalled();
+    });
+
+    it('returns no team without a search when the dataset records no obtainable unit', async () => {
+      const repository = createRepository([]);
+      const result = await new AutoTeamBuilderService(repository as never).buildTeam(
+        ['Fighter', 'Slasher'],
+        ['DEX', 'PSY'],
+        { obtainableOnly: true },
+      );
+
+      expect(result).toBeNull();
+      expect(repository.getAutoBuilderCandidates).not.toHaveBeenCalled();
+    });
+  });
+
   it('returns no team when exclusions leave the narrowed favorites scope too small to fill six slots', async () => {
     const favoriteRecords = createStrictMixedTeamRecords();
     const decoyRecords = createAlternateStrictMixedTeamRecords();

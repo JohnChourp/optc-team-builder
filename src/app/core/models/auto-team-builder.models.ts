@@ -209,6 +209,12 @@ export interface AutoBuildConstraints {
   candidateCharacterIds?: number[];
   favoritesOnly?: boolean;
   /**
+   * 869f63h04. Opt-in, off by default: keep only units upstream records as farmable, sold in a shop
+   * or pulled from the Friend Point banner, and the forms they evolve into. Locked slots and a
+   * Friend Captain borrowed from any player stay as they are.
+   */
+  obtainableOnly?: boolean;
+  /**
    * 869f1q90b. Characters the reader has told us are boosted for the event they are about to play.
    *
    * Hand-entered, because 869f12xa5's feasibility gate closed on the alternative: there is no
@@ -302,6 +308,8 @@ export interface AutoBuildInput extends AutoBuildConstraints {
   battleRequirements?: AutoBuildBattleRequirement[];
   enemyMechanics: AutoBuildEnemyMechanicRequirement[];
   favoritesOnly: boolean;
+  /** See `AutoBuildConstraints.obtainableOnly`. Sparse: present only when the filter was on. */
+  obtainableOnly?: boolean;
   /** See `AutoBuildConstraints.boostedCharacterIds`. Ranking only, never legality. */
   boostedCharacterIds: number[];
   allowAnyFriendCaptainAutoFill: boolean;
