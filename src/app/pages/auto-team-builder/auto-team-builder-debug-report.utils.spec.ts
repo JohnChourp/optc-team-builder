@@ -207,6 +207,8 @@ describe('Auto Team Builder debug report (869exmkdp)', () => {
     expect(report.request.leaderBoostRanges).toEqual({ ATK: { min: 3, max: null } });
     expect(report.request.flags['requireFullCaptainAbilityCoverage']).toBe(true);
     expect(report.request.flags['favoritesOnly']).toBe(false);
+    // 869f63h04. Always listed, so a report says plainly when the filter was off.
+    expect(report.request.flags['obtainableOnly']).toBe(false);
     expect(report.coverage).toEqual({
       missingAbilityKeys: ['orbBoost'],
       missingRequiredCharacterGroups: 0,

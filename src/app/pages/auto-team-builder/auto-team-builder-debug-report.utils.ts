@@ -50,7 +50,10 @@ export interface AutoTeamBuildStats {
 
 export interface AutoTeamDebugReportContext {
   candidateSource: 'all' | 'box' | 'favorites' | 'boxFavorites';
-  /** How many characters a box limited the search to (after favourites-only), or null for none. */
+  /**
+   * How many characters a box limited the search to (after favourites-only), or null for none.
+   * Counted before the obtainable-only filter (869f63h04), which `request.flags` reports.
+   */
   candidatePoolSize: number | null;
   boxCharacterCount: number | null;
   excludeBoxCharacterCount: number | null;
@@ -236,6 +239,7 @@ const REQUEST_FLAG_KEYS = [
   'strictSuperTandemCriteriaCoverage',
   'requireUniqueBaseCharacterNames',
   'favoritesOnly',
+  'obtainableOnly',
   'allowAnyFriendCaptainAutoFill',
   'favoriteShipsOnly',
 ] as const satisfies ReadonlyArray<keyof AutoBuildConstraints>;

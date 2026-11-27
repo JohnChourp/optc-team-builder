@@ -60,6 +60,7 @@ import {
   isCharacterAvailableInRegion,
   normalizeCharacterRegionPreference,
 } from './character-region.utils';
+import { resolveObtainableCharacterIds } from './character-obtainable.utils';
 import {
   loadDatasetDatabase,
   markDatasetReady,
@@ -1396,6 +1397,36 @@ export class OptcRepositoryService {
       evolvesTo: parseJsonArray<CharacterEvolutionBranch>(row['evolves_to_json']),
       evolvesFrom: parseJsonArray<number>(row['evolves_from_json']),
     }));
+  }
+
+  /**
+   * 869f63h04. Every unit upstream records as farmable, sold in a shop or pulled from the Friend
+   * Point banner, with every form those evolve into. A unit missing from the list has nothing
+   * recorded: the filter cannot vouch for it, which is not the same as "cannot be obtained".
+   */
+  public async getObtainableCharacterIds(): Promise<number[]> {
+    const rows = await this.selectAll(
+      `
+        SELECT
+          c.id,
+          e.evolves_to_json,
+          p.sources_json,
+          a.sources_json AS acquisition_json
+        FROM characters c
+        LEFT JOIN character_evolutions e ON e.character_id = c.id
+        LEFT JOIN character_drops p ON p.character_id = c.id
+        LEFT JOIN character_acquisition a ON a.character_id = c.id
+      `,
+    );
+
+    return resolveObtainableCharacterIds(
+      rows.map((row) => ({
+        characterId: Number(row['id']),
+        acquisition: parseCharacterAcquisition(row['acquisition_json']),
+        dropSources: parseJsonArray<CharacterDropSource>(row['sources_json']),
+        evolvesTo: parseJsonArray<CharacterEvolutionBranch>(row['evolves_to_json']),
+      })),
+    );
   }
 
   /**
