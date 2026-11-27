@@ -259,7 +259,7 @@
       }
     },
     "obtainableOnly": {
-      "support": "Off by default. Auto-fill uses only units recorded as farmable, sold in a shop or on the Friend Point banner, and the forms they evolve into. A unit with nothing recorded is left out, which does not mean it cannot be obtained. Manual picks can still use any unit.",
+      "support": "Auto-fill uses only units recorded as farmable, sold in a shop or on the Friend Point banner, and the forms they evolve into. A unit with nothing recorded is left out, which does not mean it cannot be obtained. Manual picks can still use any unit.",
       "toggle": "Only farmable, shop and Friend Point units"
     },
     "allowAnyFriendCaptainAutoFill": {
@@ -1161,6 +1161,7 @@
       "requirementsFlexible": "No flexible {{types}} team could be built after applying {{requirements}} with {{lockedCount}} manual slot choices{{leaderRequirement}}.",
       "strict": "No strict team could be built with {{lockedCount}} manual slot choices{{leaderRequirement}}."
     },
+    "obtainableScopeNote": "Only units from farming, shops or the Friend Point banner were searched.",
     "requirements": {
       "abilityCoverage": "ability coverage for {{abilities}}",
       "battleCoverage": "battle counter coverage for {{battles}}",

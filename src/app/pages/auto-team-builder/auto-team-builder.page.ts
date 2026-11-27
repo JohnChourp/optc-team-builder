@@ -8273,7 +8273,10 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     const infeasibilityMessage = this.resolveInfeasibilityMessage();
 
     if (infeasibilityMessage) {
-      return infeasibilityMessage;
+      // 869f63h04. The pool it counted was narrowed; say so, or the cause reads as the whole app's.
+      return this.obtainableOnly()
+        ? `${infeasibilityMessage} ${this.t('errors.obtainableScopeNote')}`
+        : infeasibilityMessage;
     }
 
     const lockedCount = this.manualSelectionCount();
@@ -10656,10 +10659,24 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
       return [];
     }
 
-    const allowedCharacterIds = this.resolveCurrentAutoBuildAllowedCharacterIds();
+    let allowedCharacterIds = this.resolveCurrentAutoBuildAllowedCharacterIds();
 
     if (this.selectedCharacterBox() && allowedCharacterIds.length === 0) {
       return [];
+    }
+
+    // 869f63h04. The pool saved as a box is the pool the build searches: narrowed the same way.
+    if (this.obtainableOnly()) {
+      const obtainableCharacterIds = new Set(await this.repository.getObtainableCharacterIds());
+      const hasScope = this.selectedCharacterBox() !== null || this.favoritesOnly();
+
+      allowedCharacterIds = (hasScope ? allowedCharacterIds : [...obtainableCharacterIds]).filter(
+        (characterId) => obtainableCharacterIds.has(characterId),
+      );
+
+      if (allowedCharacterIds.length === 0) {
+        return [];
+      }
     }
 
     const records = await this.repository.getAutoBuilderCandidates(

@@ -4143,6 +4143,66 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       );
     });
 
+    it('saves as a box only the obtainable units, alone or inside the selected box', async () => {
+      const { page, repository } = await createPage();
+
+      repository.getObtainableCharacterIds.mockResolvedValue([202, 203, 777]);
+      repository.getAutoBuilderCandidates.mockResolvedValue([createCharacterRecord(202)]);
+      await page.ngOnInit();
+      page.selectedTypes.set(['DEX']);
+      page.selectedClasses.set(['Fighter']);
+      page.obtainableOnly.set(true);
+
+      await page.createCandidatePoolBox();
+
+      expect(repository.getAutoBuilderCandidates).toHaveBeenLastCalledWith(['DEX'], null, {
+        selectedClasses: ['Fighter'],
+        allowedCharacterIds: [202, 203, 777],
+        lockedCharacterIds: [],
+        excludedCharacterIds: [],
+      });
+
+      // box-1 holds 201, 202 and 203: only the two obtainable ones stay.
+      page.selectedCharacterBoxId.set('box-1');
+      await page.createCandidatePoolBox();
+
+      expect(repository.getAutoBuilderCandidates).toHaveBeenLastCalledWith(['DEX'], null, {
+        selectedClasses: ['Fighter'],
+        allowedCharacterIds: [202, 203],
+        lockedCharacterIds: [],
+        excludedCharacterIds: [],
+      });
+    });
+
+    it('round-trips through the preset file and is cleared by a page reset', async () => {
+      const { page } = await createPage();
+
+      await page.ngOnInit();
+      page.obtainableOnly.set(true);
+
+      const payload = page.buildSelectionExportPayload('2026-11-27T00:00:00.000Z');
+
+      expect(payload?.filters.obtainableOnly).toBe(true);
+
+      await page['resetPageState']();
+
+      expect(page.obtainableOnly()).toBe(false);
+
+      const { state } = sanitizeAutoTeamSelectionImportPayload(
+        parseAutoTeamSelectionImportPayload(JSON.stringify(payload)),
+        {
+          availableTypes: [],
+          availableClasses: [],
+          abilityCatalogItems: [],
+          availableLockedCharacters: [],
+        },
+      );
+
+      await page['applySelectionPresetState'](state);
+
+      expect(page.obtainableOnly()).toBe(true);
+    });
+
     it('names the filter when no team is found under it', async () => {
       const { page } = await createPage();
 
@@ -4157,6 +4217,20 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       page.obtainableOnly.set(false);
 
       expect(page['resolveBuildFailureMessage']()).not.toContain('Friend Point banner');
+    });
+
+    it('adds the filter to a message about what the pool could not supply', async () => {
+      const { page } = await createPage();
+
+      await page.ngOnInit();
+      page.selectedTypes.set(['DEX']);
+      page.obtainableOnly.set(true);
+      page['resolveInfeasibilityMessage'] = () =>
+        'None of the 40 characters in the pool can do it.';
+
+      expect(page['resolveBuildFailureMessage']()).toBe(
+        'None of the 40 characters in the pool can do it. Only units from farming, shops or the Friend Point banner were searched.',
+      );
     });
   });
 
@@ -10948,6 +11022,7 @@ async function createPage(
     getDatasetManifest: ReturnType<typeof vi.fn>;
     getAutoBuilderAbilityCatalog: ReturnType<typeof vi.fn>;
     getAutoBuilderCandidates: ReturnType<typeof vi.fn>;
+    getObtainableCharacterIds: ReturnType<typeof vi.fn>;
     getAvailableCharacterTags: ReturnType<typeof vi.fn>;
     getShips: ReturnType<typeof vi.fn>;
     getCharacterById: ReturnType<typeof vi.fn>;
@@ -11103,6 +11178,7 @@ async function createPage(
       ],
     }),
     getAutoBuilderCandidates: vi.fn().mockResolvedValue([]),
+    getObtainableCharacterIds: vi.fn().mockResolvedValue([]),
     getAvailableCharacterTags: vi
       .fn()
       .mockResolvedValue(['Straw Hat Pirates', 'Minks', 'Worst Generation']),
