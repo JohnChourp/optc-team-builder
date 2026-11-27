@@ -8340,19 +8340,28 @@ export class AutoTeamBuilderPage implements OnInit, OnDestroy, ViewWillEnter {
     }
 
     if (lockedCount) {
+      // 869f63h04. These two list no requirements, so the obtainable-only filter is named apart.
+      const obtainableNote = this.obtainableOnly()
+        ? ` ${this.t('errors.obtainableScopeNote')}`
+        : '';
+
       if (this.hasStrictFilters()) {
-        return this.t('errors.locked.strict', {
-          lockedCount,
-          leaderRequirement: leaderRequirementLabel,
-        });
+        return (
+          this.t('errors.locked.strict', {
+            lockedCount,
+            leaderRequirement: leaderRequirementLabel,
+          }) + obtainableNote
+        );
       }
 
       if (this.favoritesOnly()) {
-        return this.t('errors.locked.favoritesFlexible', {
-          types: this.selectedTypesLabel(),
-          lockedCount,
-          leaderRequirement: leaderRequirementLabel,
-        });
+        return (
+          this.t('errors.locked.favoritesFlexible', {
+            types: this.selectedTypesLabel(),
+            lockedCount,
+            leaderRequirement: leaderRequirementLabel,
+          }) + obtainableNote
+        );
       }
 
       if (activeRequirements.length > 0) {

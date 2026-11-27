@@ -4219,6 +4219,24 @@ describe('AutoTeamBuilderPage builder interactions', () => {
       expect(page['resolveBuildFailureMessage']()).not.toContain('Friend Point banner');
     });
 
+    it('adds the filter to the locked-pick messages that list no requirements', async () => {
+      const { page, userState } = await createPage();
+
+      userState.favoriteCharacterIds.set([101]);
+      await page.ngOnInit();
+      page.selectedTypes.set(['DEX']);
+      page.manualSlots.set(createManualSlots({ captain: [101] }));
+      page.favoritesOnly.set(true);
+
+      const withoutFilter = page['resolveBuildFailureMessage']();
+
+      page.obtainableOnly.set(true);
+
+      expect(page['resolveBuildFailureMessage']()).toBe(
+        `${withoutFilter} Only units from farming, shops or the Friend Point banner were searched.`,
+      );
+    });
+
     it('adds the filter to a message about what the pool could not supply', async () => {
       const { page } = await createPage();
 
