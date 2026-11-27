@@ -31,6 +31,31 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
   {
+    version: '0.10.0',
+    date: '2026-11-27',
+    userVisible: true,
+    headline: {
+      en: 'Build teams only from units you can still farm, buy or pull with Friend Points',
+      el: 'Φτιάξε ομάδες μόνο με χαρακτήρες που βγαίνουν από πίστες, shops ή Friend Points',
+    },
+    summaryEn:
+      'In **Auto Team Builder**, a new toggle in the filters, **Only farmable, shop and Friend Point units**, limits auto-fill to units that drop from a stage, are sold in a shop or come from the Friend Point banner, plus every form they evolve into. It is off by default, and it narrows your box or favourites when you build from those.',
+    summaryEl:
+      'Στο **Auto Team Builder**, ένας νέος διακόπτης στα φίλτρα, **Only farmable, shop and Friend Point units**, κρατά στο auto-fill μόνο χαρακτήρες που πέφτουν από πίστα, πωλούνται σε shop ή βγαίνουν από το Friend Point banner, μαζί με κάθε μορφή στην οποία εξελίσσονται. Είναι κλειστός από προεπιλογή και, όταν χτίζεις από το box ή τα αγαπημένα σου, τα περιορίζει ακόμη περισσότερο.',
+    added: [
+      {
+        en: 'In **Auto Team Builder**, the **Only farmable, shop and Friend Point units** toggle in the filters. Your locked picks and a Friend Captain from any player stay as they are.',
+        el: 'Στο **Auto Team Builder**, ο διακόπτης **Only farmable, shop and Friend Point units** στα φίλτρα. Οι χαρακτήρες που κλείδωσες και ένας Friend Captain από οποιονδήποτε παίκτη μένουν όπως είναι.',
+      },
+      {
+        en: 'In **Auto Team Builder**, the Candidate pool card in the results says when the toggle was on, and the button that saves the pool as a box keeps only those units.',
+        el: 'Στο **Auto Team Builder**, η κάρτα Candidate pool στα αποτελέσματα λέει όταν ο διακόπτης ήταν ανοιχτός, και το κουμπί που αποθηκεύει το pool ως box κρατά μόνο αυτούς τους χαρακτήρες.',
+      },
+    ],
+    improved: [],
+    fixed: [],
+  },
+  {
     version: '0.9.0',
     date: '2026-11-26',
     userVisible: true,
