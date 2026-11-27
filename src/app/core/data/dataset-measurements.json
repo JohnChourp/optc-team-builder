@@ -10,7 +10,7 @@
   "detailRows": 4661,
   "supportOnlyCharacters": 12,
   "teamConditions": 316,
-  "triggerConditions": 879,
+  "triggerConditions": 880,
   "fieldConditions": 19,
   "teamConditionsByKind": {
     "crew-composition": 254,
@@ -18,7 +18,7 @@
     "requires-captain": 53
   },
   "triggerClauseInstances": {
-    "beneficialOrb": 304,
+    "beneficialOrb": 305,
     "applicableTag": 48,
     "performsExcellentActionSpecial": 53
   }

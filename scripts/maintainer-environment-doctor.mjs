@@ -40,7 +40,7 @@ export const REQUIRED_PACKAGE_SCRIPTS = [
     name: 'test:captain-contracts',
     group: 'contract',
     expectedCommand:
-      'vitest run scripts/import-optc-data.spec.ts scripts/lib/captain-ability-coverage.spec.ts scripts/lib/captain-grammar-parity.spec.ts',
+      'vitest run scripts/import-optc-data.spec.ts scripts/lib/captain-ability-coverage.spec.ts scripts/lib/captain-grammar-parity.spec.ts scripts/lib/captain-tier-wording-variants.spec.ts',
     fix: 'Restore the captain contract package script used by parser and generated metadata validation.',
   },
   {

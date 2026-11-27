@@ -64,6 +64,8 @@ export interface CaptainBoosts {
 export interface CaptainValueRange {
   min?: number;
   max?: number;
+  /** Exact values admitted besides min/max: "Cost 54 or 20 or less" is `{ max: 20, orValues: [54] }`. */
+  orValues?: number[];
 }
 
 export interface CaptainClauseRanges {
@@ -96,7 +98,7 @@ const PREFERRED_DEFAULT_CAPTAIN_VARIANT_KEYS = [
 ];
 
 const COST_SUBSET_PATTERN =
-  /\bcost\s+(?:\d+\s+or\s+(?:more|less|higher|lower)|\d+\s*-\s*\d+|\d+)\s+characters?\b/i;
+  /\bcost\s+(?:\d+\s+or\s+(?:more|less|higher|lower)|\d+\s+or\s+\d+\s+or\s+(?:less|lower)|\d+\s*-\s*\d+|\d+)\s+characters?\b/i;
 const COST_RANGE_PATTERN = /\bcost\s+(\d+)\s*-\s*(\d+)\s+characters?\b/i;
 const COST_EXACT_PATTERN = /\bcost\s+(\d+)\s+characters?\b/i;
 const COST_MIN_PATTERN = /\bcost\s+(\d+)\s+or\s+(?:more|higher)\s+characters?\b/i;
@@ -106,6 +108,20 @@ const RARITY_SUBSET_PATTERN =
 const RARITY_MIN_PATTERN = /\brarity\s+(\d+)\s+or\s+(?:more|higher)\s+characters?\b/i;
 const RARITY_MAX_PATTERN = /\brarity\s+(\d+)\s+or\s+(?:less|lower)\s+characters?\b/i;
 const RARITY_TIERED_PATTERN = /\brarity\s+(\d+)\s+or\s+\1\+\s+characters?\b/i;
+// "Cost 54 or 20 or less characters": one exact cost besides a maximum (#459, #3399).
+const COST_VALUE_OR_MAX_PATTERN =
+  /\bcost\s+(\d+)\s+or\s+(\d+)\s+or\s+(?:less|lower)\s+characters?\b/i;
+
+// The wording variants `normalizeCaptainBoostWordingVariants` rewrites.
+const SINGULAR_POSSESSIVE_BOOST_PATTERN =
+  /(\bboosts?\s+(?:(?!\bboosts?\b|\bby\b|\bthis\s+character\b)[^.;,])+?\s)character['’]s(\s+(?:ATK|HP|RCV)\b)/gi;
+const MISSING_BY_BOOST_PATTERN =
+  /(\bboosts?\s+(?:ATK|HP|RCV)(?:(?:,\s*|\s+and\s+)(?:ATK|HP|RCV))*\s+of\s+(?:(?!\bboosts?\b|\bby\b)[^.;])+?\s+characters)\s+(\d+(?:\.\d+)?x)\b/gi;
+const SINGULAR_ALL_CHARACTER_PATTERN = /\ball\s+character\b(?!['’])/gi;
+const RCV_THEN_THEIR_STAT_BOOST_PATTERN =
+  /\b(boosts?)\s+RCV\s+of\s+((?:(?!\bboosts?\b|\bby\b)[^.;])+?\s+characters)\s+by\s+(\d+(?:\.\d+)?x)\s+and\s+their\s+(ATK|HP)\s+by\b/gi;
+const HP_RIDER_BEFORE_ATK_ALTERNATIVES_PATTERN =
+  /(\bboosts?\s+((?:(?!\bboosts?\b|\bby\b)[^.;,])+?)\s+characters['’]\s+ATK\s+by\s+\d+(?:\.\d+)?x)\s+and\s+their\s+HP\s+by\s+(\d+(?:\.\d+)?x)((?:,\s*by\s+\d+(?:\.\d+)?x\s+after\s+[^,.;]+)+)/gi;
 
 /**
  * The HP, ATK and average boost a Captain gives, read from its default captain text: the
@@ -209,6 +225,14 @@ export function readCaptainClauseRanges(
       max: Number(costMax[1]),
     };
   }
+  const costValueOrMax = clause.match(COST_VALUE_OR_MAX_PATTERN);
+  if (costValueOrMax !== null) {
+    costRange = {
+      ...(costRange ?? {}),
+      max: Number(costValueOrMax[2]),
+      orValues: [Number(costValueOrMax[1])],
+    };
+  }
 
   const rarityTiered = clause.match(RARITY_TIERED_PATTERN);
   if (rarityTiered !== null) {
@@ -241,13 +265,62 @@ export function readCaptainClauseRanges(
   return { costRange, rarityRange };
 }
 
-/** Whether a cost or rarity value is inside a range; an absent range admits everything. */
+/**
+ * Whether a cost or rarity value is inside a range; an absent range admits everything. A value
+ * the range names in `orValues` ("Cost 54 or 20 or less") is admitted too.
+ */
 export function captainValueInRange(value: number, range: CaptainValueRange | undefined): boolean {
   return (
     range === undefined ||
+    (range.orValues?.includes(value) ?? false) ||
     ((range.min === undefined || value >= range.min) &&
       (range.max === undefined || value <= range.max))
   );
+}
+
+/**
+ * 1amndjnqk7g. The same Captain boost written a way the tier and coverage readers do not know,
+ * rewritten into the wording they read. Each rewrite keeps the meaning and the multiplier:
+ *
+ *  - "Boosts Slasher and Driven character's ATK by 2.25x" -> "... characters' ATK by 2.25x"
+ *    (#2001, #2096, #2097); "this character's ATK" stays self-only.
+ *  - "Boosts ATK of [QCK], Slasher, and Free Spirit characters 3.25x" -> "... characters by 3.25x"
+ *    (#4044).
+ *  - "Boosts ATK of all character by 4x" -> "... all characters by 4x" (#4261).
+ *  - "Boosts RCV of Cerebral characters by 1.5x and their ATK by 1.5x" -> "... by 1.5x and boosts
+ *    ATK of Cerebral characters by 1.5x" (#1366); "their HP" after RCV is read the same way.
+ *  - "Boosts X characters' ATK by 2.75x and their HP by 1.2x, by 3x after 2 consecutive PERFECTs"
+ *    -> "Boosts X characters' ATK by 2.75x, by 3x after 2 consecutive PERFECTs. Boosts HP of X
+ *    characters by 1.2x" (#2097): the alternatives raise the ATK, and read after the HP rider
+ *    they were taken for HP.
+ *
+ * The build runs it before it writes the tiers and the app before it reads a Captain's coverage,
+ * so both read one wording. The dataset's `captain_*_boost` columns do not go through it.
+ */
+export function normalizeCaptainBoostWordingVariants(text: string): string {
+  if (!text) {
+    return text;
+  }
+
+  return String(text)
+    .replace(SINGULAR_POSSESSIVE_BOOST_PATTERN, "$1characters'$2")
+    .replace(MISSING_BY_BOOST_PATTERN, '$1 by $2')
+    .replace(SINGULAR_ALL_CHARACTER_PATTERN, 'all characters')
+    .replace(
+      RCV_THEN_THEIR_STAT_BOOST_PATTERN,
+      (_match: string, boosts: string, target: string, multiplier: string, stat: string) =>
+        `${boosts} RCV of ${target} by ${multiplier} and boosts ${stat} of ${target} by`,
+    )
+    .replace(
+      HP_RIDER_BEFORE_ATK_ALTERNATIVES_PATTERN,
+      (
+        _match: string,
+        atkClause: string,
+        target: string,
+        hpMultiplier: string,
+        alternatives: string,
+      ) => `${atkClause}${alternatives}. Boosts HP of ${target} characters by ${hpMultiplier}`,
+    );
 }
 
 function extractDefaultCaptainBoostText(

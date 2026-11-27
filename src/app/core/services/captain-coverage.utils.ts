@@ -8,6 +8,7 @@ import {
 import {
   captainValueInRange,
   hasCaptainCostOrRarityScope,
+  normalizeCaptainBoostWordingVariants,
   readCaptainClauseRanges,
 } from '../grammar/captain-boost-grammar';
 import {
@@ -178,7 +179,9 @@ export function resolveCaptainBoostScope(
   coverageMode: AutoBuildCaptainAbilityCoverageMode = 'fullAbilityCoverage',
   scopeCache?: CaptainBoostScopeCache,
 ): CaptainBoostScopeSummary {
-  const normalizedCaptainText = normalizeHtmlToText(captainText);
+  const normalizedCaptainText = normalizeCaptainBoostWordingVariants(
+    normalizeHtmlToText(captainText),
+  );
 
   if (!normalizedCaptainText) {
     return createEmptyCaptainBoostScope();

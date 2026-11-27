@@ -66,6 +66,7 @@
       "dominantType": "Dominant Type characters",
       "costMin": "Cost {{min}}+",
       "costMax": "Cost ≤ {{max}}",
+      "costOrValues": "or Cost {{values}}",
       "rarityMin": "Rarity {{min}}+",
       "rarityMax": "Rarity ≤ {{max}}",
       "tierFallback": "Tier {{tier}}"

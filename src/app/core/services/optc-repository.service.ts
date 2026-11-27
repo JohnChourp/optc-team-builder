@@ -411,7 +411,7 @@ function normalizeCaptainCoverageTargetScope(
       };
   }
   const record = value as Record<string, unknown>;
-  const costRange = normalizeNumericRange(record['costRange']);
+  const costRange = normalizeNumericRange(record['costRange'], { withOrValues: true });
   const rarityRange = normalizeNumericRange(record['rarityRange']);
   return {
     universal: Boolean(record['universal']),
@@ -426,21 +426,33 @@ function normalizeCaptainCoverageTargetScope(
   };
 }
 
-function normalizeNumericRange(value: unknown): { min?: number; max?: number } | undefined {
+function normalizeNumericRange(
+  value: unknown,
+  { withOrValues = false }: { withOrValues?: boolean } = {},
+): { min?: number; max?: number; orValues?: number[] } | undefined {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return undefined;
   }
   const record = value as Record<string, unknown>;
   const min = Number(record['min']);
   const max = Number(record['max']);
-  const range: { min?: number; max?: number } = {};
+  const range: { min?: number; max?: number; orValues?: number[] } = {};
   if (Number.isFinite(min)) {
     range.min = min;
   }
   if (Number.isFinite(max)) {
     range.max = max;
   }
-  return range.min === undefined && range.max === undefined ? undefined : range;
+  // 1amndjnqk7g. "Cost 54 or 20 or less": the exact costs admitted besides min/max.
+  const orValues = Array.isArray(record['orValues'])
+    ? record['orValues'].map(Number).filter((entry) => Number.isFinite(entry))
+    : [];
+  if (withOrValues && orValues.length > 0) {
+    range.orValues = orValues;
+  }
+  return range.min === undefined && range.max === undefined && range.orValues === undefined
+    ? undefined
+    : range;
 }
 
 function normalizeCaptainCoverageTeamConditions(
