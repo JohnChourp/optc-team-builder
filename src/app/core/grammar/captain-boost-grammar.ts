@@ -189,6 +189,13 @@ export function readCaptainClauseRanges(
   let costRange = previous.costRange;
   let rarityRange = previous.rarityRange;
 
+  // 1amndjnqk7g. The exact costs of an earlier "Cost 54 or 20 or less" clause belong to that
+  // clause: a later clause that names a cost of its own does not inherit them.
+  if (costRange?.orValues !== undefined && COST_SUBSET_PATTERN.test(clause)) {
+    costRange = { ...costRange };
+    delete costRange.orValues;
+  }
+
   const costRangeMatch = clause.match(COST_RANGE_PATTERN);
   if (costRangeMatch !== null) {
     costRange = {

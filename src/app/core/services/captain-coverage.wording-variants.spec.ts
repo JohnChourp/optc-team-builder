@@ -4,10 +4,14 @@ import {
   type CharacterCaptainAbilityCoverageTier,
   type CharacterDetailRecord,
 } from '../models/optc.models';
-import { captainValueInRange } from '../grammar/captain-boost-grammar';
+import { captainValueInRange, readCaptainClauseRanges } from '../grammar/captain-boost-grammar';
 import { matchesCaptainCoverageTier } from './captain-coverage-filter.utils';
 import { buildCaptainCoverageTierView } from './captain-coverage-tier-view.utils';
-import { resolveCaptainCoverage } from './captain-coverage.utils';
+import {
+  createCaptainBoostScopeCache,
+  resolveCaptainBoostScope,
+  resolveCaptainCoverage,
+} from './captain-coverage.utils';
 import { normalizeCaptainAbilityCoverage } from './optc-repository.service';
 
 /*
@@ -15,6 +19,10 @@ import { normalizeCaptainAbilityCoverage } from './optc-repository.service';
  * build applies before it writes the tiers, so Captain Coverage now finds who these Captains
  * boost. The texts are the shipped ones (dataset v36).
  */
+const LAW_2001 =
+  "Boosts Slasher and Free Spirit character's ATK by 2.5x, by 3.5x after 3 consecutive PERFECTs, by 4x after 5 consecutive PERFECTs. Recovers 1,000 HP at the end of each turn.";
+const ZORO_2097 =
+  "Boosts Slasher and Driven character's ATK by 2.75x and their HP by 1.2x, by 3x after 2 consecutive PERFECTs, by 3.3x after 5 consecutive PERFECTs.";
 const ZORO_2096 =
   "Boosts Slasher and Driven character's ATK by 2.25x, by 2.5x after 2 consecutive PERFECTs, by 2.75x after 5 consecutive PERFECTs.";
 const SUKIYAKI_4044 =
@@ -30,6 +38,28 @@ describe('Captain Coverage reads the wording variants of a Captain boost', () =>
   it('finds the class a "character\'s ATK" Captain boosts (#2096)', () => {
     expect(matches(ZORO_2096, { classes: ['Slasher', 'Fighter'] })).toBe(true);
     expect(matches(ZORO_2096, { classes: ['Shooter', 'Cerebral'] })).toBe(false);
+  });
+
+  it('finds the classes a "character\'s ATK" Captain boosts (#2001)', () => {
+    expect(matches(LAW_2001, { classes: ['Free Spirit', 'Shooter'] })).toBe(true);
+    expect(matches(LAW_2001, { classes: ['Shooter', 'Cerebral'] })).toBe(false);
+  });
+
+  it('reads #2097\'s PERFECT alternatives as ATK and its HP rider as HP 1.2x', () => {
+    expect(coverageOf(ZORO_2097, { classes: ['Driven', 'Fighter'] })).toEqual({
+      matches: true,
+      boosts: { hp: 1.2, atk: 3.3 },
+    });
+    expect(matches(ZORO_2097, { classes: ['Shooter', 'Cerebral'] })).toBe(false);
+  });
+
+  it('reads the same clauses from a scope cache, keyed before the rewrite', () => {
+    const cache = createCaptainBoostScopeCache();
+    const first = resolveCaptainBoostScope(ZORO_2096, 'simpleBoostScope', cache);
+    const second = resolveCaptainBoostScope(ZORO_2096, 'simpleBoostScope', cache);
+    expect(second).toBe(first);
+    expect(first.allowedClasses).toEqual(expect.arrayContaining(['Slasher', 'Driven']));
+    expect(resolveCaptainBoostScope(ZORO_2096, 'simpleBoostScope')).toEqual(first);
   });
 
   it('finds who a boost with no "by" covers (#4044)', () => {
@@ -78,6 +108,26 @@ describe('a tier scoped to "Cost 54 or 20 or less"', () => {
     ]);
   });
 
+  it('drops a stored exact cost that is not a number', () => {
+    expect(loadedTier({ max: 20, orValues: [null, '', '54', 54] }).characterConditions.costRange).toEqual({
+      max: 20,
+      orValues: [54],
+    });
+    expect(loadedTier({ max: 20, orValues: [null] }).characterConditions.costRange).toEqual({ max: 20 });
+  });
+
+  it('does not carry the exact cost into a later clause that names its own cost', () => {
+    const first = readCaptainClauseRanges('boosts ATK of Cost 54 or 20 or less characters by 3x');
+    expect(first.costRange).toEqual({ max: 20, orValues: [54] });
+    expect(readCaptainClauseRanges('boosts HP of Cost 30 or less characters by 1.2x', first).costRange).toEqual({
+      max: 30,
+    });
+    expect(readCaptainClauseRanges('boosts HP of Slasher characters by 1.2x', first).costRange).toEqual({
+      max: 20,
+      orValues: [54],
+    });
+  });
+
   it('leaves a plain range as it was', () => {
     expect(captainValueInRange(54, { max: 20 })).toBe(false);
     expect(captainValueInRange(54, { max: 20, orValues: [54] })).toBe(true);
@@ -92,10 +142,15 @@ interface TargetShape {
   type?: string;
 }
 
-function matches(captainAbility: string, shape: TargetShape): boolean {
-  return resolveCaptainCoverage(target({ captainAbility }, 1), target(shape, 2), {
+function coverageOf(captainAbility: string, shape: TargetShape) {
+  const coverage = resolveCaptainCoverage(target({ captainAbility }, 1), target(shape, 2), {
     coverageMode: 'simpleBoostScope',
-  }).matches;
+  });
+  return { matches: coverage.matches, boosts: coverage.boosts };
+}
+
+function matches(captainAbility: string, shape: TargetShape): boolean {
+  return coverageOf(captainAbility, shape).matches;
 }
 
 function loadedTier(costRange: Record<string, unknown>): CharacterCaptainAbilityCoverageTier {

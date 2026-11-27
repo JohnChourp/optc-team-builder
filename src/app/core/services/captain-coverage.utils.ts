@@ -179,9 +179,7 @@ export function resolveCaptainBoostScope(
   coverageMode: AutoBuildCaptainAbilityCoverageMode = 'fullAbilityCoverage',
   scopeCache?: CaptainBoostScopeCache,
 ): CaptainBoostScopeSummary {
-  const normalizedCaptainText = normalizeCaptainBoostWordingVariants(
-    normalizeHtmlToText(captainText),
-  );
+  const normalizedCaptainText = normalizeHtmlToText(captainText);
 
   if (!normalizedCaptainText) {
     return createEmptyCaptainBoostScope();
@@ -206,9 +204,12 @@ export function resolveCaptainBoostScope(
 }
 
 function resolveCaptainBoostScopeUncached(
-  normalizedCaptainText: string,
+  htmlNormalizedCaptainText: string,
   coverageMode: AutoBuildCaptainAbilityCoverageMode,
 ): CaptainBoostScopeSummary {
+  // 1amndjnqk7g. The wording rewrite the build applies before it writes the tiers; here, after the
+  // cache lookup, so a cached Captain is not rewritten again for every target.
+  const normalizedCaptainText = normalizeCaptainBoostWordingVariants(htmlNormalizedCaptainText);
 
   const defaultCaptainText = extractDefaultCaptainBoostText(normalizedCaptainText);
   const defaultBoostClauses = extractDefaultCaptainBoostClauses(defaultCaptainText);

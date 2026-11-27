@@ -445,7 +445,9 @@ function normalizeNumericRange(
   }
   // 1amndjnqk7g. "Cost 54 or 20 or less": the exact costs admitted besides min/max.
   const orValues = Array.isArray(record['orValues'])
-    ? record['orValues'].map(Number).filter((entry) => Number.isFinite(entry))
+    ? record['orValues'].filter(
+        (entry): entry is number => typeof entry === 'number' && Number.isFinite(entry),
+      )
     : [];
   if (withOrValues && orValues.length > 0) {
     range.orValues = orValues;
