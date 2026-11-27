@@ -86,7 +86,8 @@ interface CaptainCoverageTargetScope {
   types: string[];
   classes: string[];
   characterTags: string[];
-  costRange?: { min?: number; max?: number };
+  /** `orValues`: exact costs admitted besides min/max ("Cost 54 or 20 or less"), 1amndjnqk7g. */
+  costRange?: { min?: number; max?: number; orValues?: number[] };
   rarityRange?: { min?: number; max?: number };
 }
 

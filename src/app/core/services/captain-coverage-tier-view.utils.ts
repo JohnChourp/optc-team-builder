@@ -94,6 +94,12 @@ export function buildCaptainCoverageTierScopeTokens(
   if (conditions.costRange?.max !== undefined) {
     tokens.push({ key: 'captainTiers.scope.costMax', params: { max: conditions.costRange.max } });
   }
+  if (conditions.costRange?.orValues?.length) {
+    tokens.push({
+      key: 'captainTiers.scope.costOrValues',
+      params: { values: conditions.costRange.orValues.join(', ') },
+    });
+  }
   if (conditions.rarityRange?.min !== undefined) {
     tokens.push({
       key: 'captainTiers.scope.rarityMin',
@@ -140,6 +146,9 @@ function buildCaptainCoverageTierScopeLabel(tier: CharacterCaptainAbilityCoverag
   }
   if (conditions.costRange?.max !== undefined) {
     fragments.push(`Cost ≤ ${conditions.costRange.max}`);
+  }
+  if (conditions.costRange?.orValues?.length) {
+    fragments.push(`or Cost ${conditions.costRange.orValues.join(', ')}`);
   }
   if (conditions.rarityRange?.min !== undefined) {
     fragments.push(`Rarity ${conditions.rarityRange.min}+`);
@@ -282,7 +291,7 @@ function collectCaptainCoverageTierConditionLines(
  * `performs EXCELLENT with their Action Special`
  * (53 [@dataset triggerClauseInstances.performsExcellentActionSpecial]),
  * `if they have a beneficial orb`
- * (304 [@dataset triggerClauseInstances.beneficialOrb], a quarter of every condition line in the
+ * (305 [@dataset triggerClauseInstances.beneficialOrb], a quarter of every condition line in the
  * app) and `if they have the applicable tag`
  * (48 [@dataset triggerClauseInstances.applicableTag]). Matching the exact string is
  * deliberate: anything else falls through to the raw clause unchanged, so an

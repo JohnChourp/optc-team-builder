@@ -1,17 +1,17 @@
 {
-  "generatedAt": "2026-11-27T09:01:02.759Z",
+  "generatedAt": "2026-11-27T10:56:36.218Z",
   "sourceVersion": "36",
   "total": 595,
   "distinctClauses": 110,
   "totals": {
-    "triggerClauses": 879,
+    "triggerClauses": 880,
     "teamConditions": 316,
-    "clauses": 1195
+    "clauses": 1196
   },
   "unresolvedShare": {
-    "triggerClause": 0.5995,
+    "triggerClause": 0.5989,
     "teamConditionRawOnly": 0.2152,
-    "overall": 0.4979
+    "overall": 0.4975
   },
   "byKind": {
     "teamConditionRawOnly": 68,

@@ -1,6 +1,7 @@
 import { normalizeHtmlToText } from './html-text.mjs';
 import {
   hasCaptainCostOrRarityScope,
+  normalizeCaptainBoostWordingVariants,
   readCaptainClauseRanges,
 } from '../../src/app/core/grammar/captain-boost-grammar.ts';
 
@@ -505,7 +506,7 @@ const FOR_N_TURNS_PATTERN = /\bfor\s+(\d+)\s+turns?\b/i;
 // conditions).
 export function extractCoverageTiers(captainText) {
   const normalizedCaptainText = normalizeSharedCaptainBoostMultipliers(
-    normalizeHtmlToText(captainText),
+    normalizeCaptainBoostWordingVariants(normalizeHtmlToText(captainText)),
   );
 
   if (!normalizedCaptainText) {

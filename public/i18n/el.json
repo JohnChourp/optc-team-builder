@@ -66,6 +66,7 @@
       "dominantType": "χαρακτήρες Dominant Type",
       "costMin": "Κόστος {{min}}+",
       "costMax": "Κόστος ≤ {{max}}",
+      "costOrValues": "ή Κόστος {{values}}",
       "rarityMin": "Σπανιότητα {{min}}+",
       "rarityMax": "Σπανιότητα ≤ {{max}}",
       "tierFallback": "Tier {{tier}}"

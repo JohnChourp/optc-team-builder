@@ -129,7 +129,7 @@
     "test:actions-pins": "vitest run scripts/check-github-actions-pins.spec.ts",
     "test:app-contrast": "vitest run scripts/check-app-surface-contrast.spec.ts && npm run theme:app-contrast",
     "test:branch-cleanup": "vitest run scripts/branch-cleanup-report.spec.ts",
-    "test:captain-contracts": "vitest run scripts/import-optc-data.spec.ts scripts/lib/captain-ability-coverage.spec.ts scripts/lib/captain-grammar-parity.spec.ts",
+    "test:captain-contracts": "vitest run scripts/import-optc-data.spec.ts scripts/lib/captain-ability-coverage.spec.ts scripts/lib/captain-grammar-parity.spec.ts scripts/lib/captain-tier-wording-variants.spec.ts",
     "test:ci": "ng test --watch=false",
     "test:ci-routing": "vitest run scripts/ci-check-routing.spec.ts",
     "test:ci-triggers": "vitest run scripts/check-github-ci-triggers.spec.ts",
