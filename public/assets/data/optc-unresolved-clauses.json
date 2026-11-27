@@ -1,21 +1,21 @@
 {
-  "generatedAt": "2026-11-26T18:18:20.848Z",
+  "generatedAt": "2026-11-27T09:01:02.759Z",
   "sourceVersion": "36",
-  "total": 594,
-  "distinctClauses": 109,
+  "total": 595,
+  "distinctClauses": 110,
   "totals": {
-    "triggerClauses": 878,
+    "triggerClauses": 879,
     "teamConditions": 316,
-    "clauses": 1194
+    "clauses": 1195
   },
   "unresolvedShare": {
-    "triggerClause": 0.5991,
+    "triggerClause": 0.5995,
     "teamConditionRawOnly": 0.2152,
-    "overall": 0.4975
+    "overall": 0.4979
   },
   "byKind": {
     "teamConditionRawOnly": 68,
-    "triggerClause": 526
+    "triggerClause": 527
   },
   "items": [
     {
@@ -757,6 +757,14 @@
       "instances": 1,
       "characterIds": [
         1245
+      ]
+    },
+    {
+      "kind": "triggerClause",
+      "clause": "If 5 or more [New Giant Pirate Crew] [Elbaph Arc] [Giant] characters are on the crew] Reduces crew's Special Bind duration by 10 turns",
+      "instances": 1,
+      "characterIds": [
+        4687
       ]
     },
     {

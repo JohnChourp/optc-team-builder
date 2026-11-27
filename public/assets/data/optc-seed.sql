@@ -256801,6 +256801,54 @@ DROP TABLE IF EXISTS meta;
         max_sockets, special_cooldown_max, special_cooldown_min, region_json, region_release_json,
         assets_json, search_text, families_json, search_aliases
       ) VALUES (
+        4687,
+        'Rodo - Livedolls in His Palm',
+        0,
+        'DEX',
+        'Slasher',
+        'Powerhouse',
+        '["Slasher","Powerhouse"]',
+        6,
+        '6',
+        55,
+        5,
+        2090,
+        860,
+        140,
+        4180,
+        1720,
+        280,
+        0,
+        1.35,
+        0,
+        0.675,
+        5,
+        22,
+        17,
+        '{"exactLocal":false,"thumbnailGlobal":true,"thumbnailJapan":true}',
+        '{"availableOnGlobal":false}',
+        '{"exactLocal":null,"thumbnailLocal":null,"thumbnailGlobal":"4/600/4687.png","thumbnailJapan":"4/600/4687.png"}',
+        'rodo - livedolls in his palm dex slasher powerhouse new giant pirate crew giant elbaph arc',
+        '["Rodo"]',
+        ''
+      );
+
+
+      INSERT INTO character_details (character_id, detail_json)
+      VALUES (4687, '{"characterId":4687,"captainAbility":"Reduces [DEX], Slasher, and Powerhouse characters'' Special charge time by 2 turns at start of quest, boosts their ATK by approximately 5.5x when slots match (5.25x otherwise), HP by 1.35x, makes crew''s [DEX] slots have matching slot effects, and boosts [New Giant Pirate Crew] [Elbaph Arc] [Giant] characters'' ATK by 1.15x [If 5 or more [New Giant Pirate Crew] [Elbaph Arc] [Giant] characters are on the crew] Reduces crew''s Special Bind duration by 10 turns","captainAbilityVariants":[{"key":"captain","label":"Captain Ability","text":"Reduces [DEX], Slasher, and Powerhouse characters'' Special charge time by 2 turns at start of quest, boosts their ATK by approximately 5.5x when slots match (5.25x otherwise), HP by 1.35x, makes crew''s [DEX] slots have matching slot effects, and boosts [New Giant Pirate Crew] [Elbaph Arc] [Giant] characters'' ATK by 1.15x [If 5 or more [New Giant Pirate Crew] [Elbaph Arc] [Giant] characters are on the crew] Reduces crew''s Special Bind duration by 10 turns"}],"captainAbilityCoverage":{"entries":[{"key":"captain","label":"Captain Ability","tiers":[{"tier":1,"kind":"conditional","scope":"subset","characterConditions":{"universal":false,"fallbackOther":false,"selfOnly":false,"types":[],"classes":[],"characterTags":["New Giant Pirate Crew","Elbaph Arc","Giant"]},"teamConditions":[],"fieldConditions":[],"triggerConditions":[{"kind":"other","rawClause":"If 5 or more [New Giant Pirate Crew] [Elbaph Arc] [Giant] characters are on the crew] Reduces crew''s Special Bind duration by 10 turns"}],"clauses":["and boosts [New Giant Pirate Crew] [Elbaph Arc] [Giant] characters'' ATK by 1.15x ["],"atkBoost":1.15}]}]},"captainNotes":null,"specialName":"Humans in His Hands","specialText":"Reduces all enemies'' DEF Up duration by 8 turns, and removes all Poison effects on the crew [If crew has type effect boost when Special is launched] Further increases crew''s type effect boost by +0.5 [Otherwise] Boosts the type effects of normal attacks for [DEX], Slasher, and Powerhouse characters by 3.5x for 1 turn [If 5 or more [New Giant Pirate Crew] [Elbaph Arc] [Giant] characters are on the crew] Boosts the chain multiplier by 1.75x for 1 turn","specialNotes":null,"superSpecialText":null,"superSpecialCriteriaText":null,"superSpecialNotes":null,"superSpecialCriteria":null,"partyConflictKeys":["rodo"],"characterTags":["New Giant Pirate Crew","Giant","Elbaph Arc"],"builderAbilities":[{"key":"remove_enemy_increased_defense","label":"Remove Increased Defense","minTurns":8,"isCompleteRemoval":false,"slotTokens":[],"source":"specialText","coverageMode":"explicit"},{"key":"boost_type_effects","label":"Boost Type Effects (Color Affinity)","minTurns":null,"isCompleteRemoval":false,"slotTokens":[],"source":"specialText","coverageMode":"explicit"},{"key":"chain_multiplier_multiplicative_boost","label":"Chain Multiplier: Multiplicative Boost","minTurns":null,"isCompleteRemoval":false,"slotTokens":[],"source":"specialText","coverageMode":"explicit"},{"key":"effect_boost","label":"Effect Boost","minTurns":null,"isCompleteRemoval":false,"slotTokens":[],"source":"specialText","coverageMode":"explicit"},{"key":"remove_special_bind","label":"Remove Special Bind","minTurns":10,"isCompleteRemoval":false,"slotTokens":[],"source":"captainAbility","coverageMode":"explicit","effectTargetScope":"crew"},{"key":"make_slots_favorable","label":"Make Orbs Beneficial","minTurns":null,"isCompleteRemoval":false,"slotTokens":["DEX"],"source":"captainAbility","coverageMode":"explicit","effectTargetScope":"crew"},{"key":"crewmate_rcv_boost_slasher","label":"RCV Boost: Slasher","minTurns":null,"isCompleteRemoval":false,"slotTokens":[],"source":"sailorAbilities","coverageMode":"explicit"},{"key":"crewmate_rcv_boost_powerhouse","label":"RCV Boost: Powerhouse","minTurns":null,"isCompleteRemoval":false,"slotTokens":[],"source":"sailorAbilities","coverageMode":"explicit"},{"key":"crewmate_hp_boost_slasher","label":"HP Boost: Slasher","minTurns":null,"isCompleteRemoval":false,"slotTokens":[],"source":"sailorAbilities","coverageMode":"explicit"},{"key":"crewmate_hp_boost_powerhouse","label":"HP Boost: Powerhouse","minTurns":null,"isCompleteRemoval":false,"slotTokens":[],"source":"sailorAbilities","coverageMode":"explicit"},{"key":"potential_pinch_healing","label":"Pinch Healing","minTurns":null,"isCompleteRemoval":false,"slotTokens":[],"source":"potentialAbilities","coverageMode":"explicit"},{"key":"potential_bind_ship_ability_resistance","label":"Bind Ship Ability Resistance","minTurns":null,"isCompleteRemoval":false,"slotTokens":[],"source":"potentialAbilities","coverageMode":"explicit"}],"sailorAbilities":["Boosts Slasher and Powerhouse characters'' base HP and RCV by 150. Character cannot be blown away by attack"],"sailorNotes":null,"potentialAbilities":[{"Name":"Pinch Healing","description":["If HP is below 50% at the start of the turn, recovers 1.5x this character''s RCV at the end of the turn for each time you hit a PERFECT with this character"]},{"Name":"Ship Bind","description":["Reduces Ship Bind duration by 5 turns"]},{"Name":"No Healing","description":["Reduces No Healing duration by 10 turns"]}],"supportData":[{"supportedCharactersText":"Striker characters","levelDescriptions":["Adds 15% of character''s base HP to supported character''s base HP"]}],"swapData":null,"vsSpecial":null,"superType":null,"superTandemData":null,"finalTapData":null,"rushSugoSpecialData":null,"superClass":null,"rumbleData":null}');
+
+
+        INSERT INTO character_acquisition (character_id, sources_json)
+        VALUES (4687, '{"flags":["rr","lrr","pflrr"],"shops":[],"banners":[]}');
+
+
+      INSERT INTO characters (
+        id, name, is_incomplete, type, primary_class, secondary_class, classes_json, stars, stars_label, cost, combo,
+        min_hp, min_atk, min_rcv, max_hp, max_atk, max_rcv, growth,
+        captain_hp_boost, captain_atk_boost, captain_average_boost,
+        max_sockets, special_cooldown_max, special_cooldown_min, region_json, region_release_json,
+        assets_json, search_text, families_json, search_aliases
+      ) VALUES (
         5013,
         'Monkey D. Luffy - Kung Fu Training',
         0,
@@ -258005,4 +258053,4 @@ DROP TABLE IF EXISTS meta;
 
 
     INSERT INTO meta (key, value)
-    VALUES ('manifest', '{"schemaVersion":2,"generatedAt":"2026-11-26T18:18:18.656Z","sourceVersion":"36","sourceRepository":"2Shankz/optc-db.github.io","sourceCommit":"a5689c133722e8ab7f80e02cb4be306e47824fc7","characterCount":4660,"detailCount":4563,"shipCount":66,"rumbleCount":4642,"availableTypes":["DEX","INT","PSY","QCK","STR"],"availableClasses":["Booster","Cerebral","Driven","Evolver","Fighter","Free Spirit","Powerhouse","Shooter","Slasher","Striker"],"packs":[{"key":"thumbnailsGlo","id":"thumbnails-glo","label":"Global thumbnails","localBasePath":"assets/offline-packs/thumbnails-glo","fileCount":5438,"totalBytes":55342954,"installed":true,"checksum":"df94f79786955eedd082930b70946c4aa0d71e27"},{"key":"thumbnailsJapan","id":"thumbnails-jap","label":"Japan thumbnails","localBasePath":"assets/offline-packs/thumbnails-jap","fileCount":5630,"totalBytes":114587425,"installed":true,"checksum":"dd8283e86a3614e7105a6c59d6d153c189ecab65"},{"key":"shipThumbnails","id":"ship-thumbnails","label":"Ship thumbnails","localBasePath":"assets/offline-packs/ship-thumbnails","fileCount":63,"totalBytes":502890,"installed":true,"checksum":"5f01f0889be3aa7a901634609253bf50146595b1"}]}');
+    VALUES ('manifest', '{"schemaVersion":2,"generatedAt":"2026-11-27T09:01:00.616Z","sourceVersion":"36","sourceRepository":"2Shankz/optc-db.github.io","sourceCommit":"54dcb6a5c8a93856a1189d8719475dd94daf81ba","characterCount":4661,"detailCount":4564,"shipCount":66,"rumbleCount":4642,"availableTypes":["DEX","INT","PSY","QCK","STR"],"availableClasses":["Booster","Cerebral","Driven","Evolver","Fighter","Free Spirit","Powerhouse","Shooter","Slasher","Striker"],"packs":[{"key":"thumbnailsGlo","id":"thumbnails-glo","label":"Global thumbnails","localBasePath":"assets/offline-packs/thumbnails-glo","fileCount":5439,"totalBytes":55351413,"installed":true,"checksum":"df94f79786955eedd082930b70946c4aa0d71e27"},{"key":"thumbnailsJapan","id":"thumbnails-jap","label":"Japan thumbnails","localBasePath":"assets/offline-packs/thumbnails-jap","fileCount":5631,"totalBytes":114595927,"installed":true,"checksum":"dd8283e86a3614e7105a6c59d6d153c189ecab65"},{"key":"shipThumbnails","id":"ship-thumbnails","label":"Ship thumbnails","localBasePath":"assets/offline-packs/ship-thumbnails","fileCount":63,"totalBytes":502890,"installed":true,"checksum":"5f01f0889be3aa7a901634609253bf50146595b1"}]}');

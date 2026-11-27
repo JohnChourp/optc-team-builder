@@ -42,10 +42,10 @@
       "manifestKey": "thumbnailsGlo",
       "label": "Global thumbnails",
       "localBasePath": "assets/offline-packs/thumbnails-glo",
-      "measuredFileCount": 5438,
-      "measuredBytes": 55343873,
-      "manifestFileCount": 5438,
-      "manifestBytes": 55342954,
+      "measuredFileCount": 5439,
+      "measuredBytes": 55352332,
+      "manifestFileCount": 5439,
+      "manifestBytes": 55351413,
       "byteDrift": 919,
       "markerFiles": [
         ".pack-ready"
@@ -57,10 +57,10 @@
       "manifestKey": "thumbnailsJapan",
       "label": "Japan thumbnails",
       "localBasePath": "assets/offline-packs/thumbnails-jap",
-      "measuredFileCount": 5630,
-      "measuredBytes": 114586862,
-      "manifestFileCount": 5630,
-      "manifestBytes": 114587425,
+      "measuredFileCount": 5631,
+      "measuredBytes": 114595364,
+      "manifestFileCount": 5631,
+      "manifestBytes": 114595927,
       "byteDrift": -563,
       "markerFiles": [
         ".pack-ready"
