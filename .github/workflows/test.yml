@@ -166,7 +166,7 @@ jobs:
           cat ci-check-routing-summary.md >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Upload routing summary
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: ci-check-routing-summary
           path: ci-check-routing-summary.md
@@ -260,7 +260,7 @@ jobs:
 
       - name: Upload PWA shell artifacts
         if: always() && matrix.suite == 'pwa-shell'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: pwa-shell-report
           path: test-results/pwa-shell/
@@ -364,7 +364,7 @@ jobs:
 
       - name: Upload flake ledger (${{ matrix.browser }})
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: playwright-flake-ledger-${{ matrix.browser }}
           path: e2e/flake-ledger.json
@@ -373,7 +373,7 @@ jobs:
 
       - name: Upload Playwright summary
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: playwright-summary-${{ matrix.browser }}
           path: |
@@ -384,7 +384,7 @@ jobs:
 
       - name: Upload Playwright debug report
         if: always() && steps.playwright.outcome == 'failure'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: playwright-report-${{ matrix.browser }}
           path: |
@@ -458,7 +458,7 @@ jobs:
 
       - name: Upload quarantined Playwright summary
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: playwright-quarantine-summary-${{ matrix.browser }}
           path: |
@@ -469,7 +469,7 @@ jobs:
 
       - name: Upload quarantined Playwright debug report
         if: always() && steps.quarantined_playwright.outcome == 'failure'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: playwright-quarantine-${{ matrix.browser }}
           path: |
