@@ -115,7 +115,6 @@ import {
   type FavoriteShipsTransferPayload,
 } from './favorite-ships-transfer.utils';
 import { type InventoryCaptureImportError } from './inventory-capture.utils';
-import { formattingLanguage } from '../../core/i18n/app-locale-format';
 
 interface TransferFeedback {
   details: string[];
