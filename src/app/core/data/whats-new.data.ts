@@ -44,6 +44,10 @@ export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
       'Στο **Auto Team Builder**, ένας νέος διακόπτης στα φίλτρα, **Only farmable, shop and Friend Point units**, κρατά στο auto-fill μόνο χαρακτήρες που πέφτουν από πίστα, πωλούνται σε shop ή βγαίνουν από το Friend Point banner, μαζί με κάθε μορφή στην οποία εξελίσσονται. Είναι κλειστός από προεπιλογή και, όταν χτίζεις από το box ή τα αγαπημένα σου, τα περιορίζει ακόμη περισσότερο.',
     added: [
       {
+        en: 'The **Characters** screen now includes a new entry for **Rodo - Livedolls in His Palm** (6-star DEX Slasher/Powerhouse).',
+        el: 'Στην **οθόνη χαρακτήρων** προστέθηκε νέα καταχώριση για τον **Rodo - Livedolls in His Palm** (6 αστέρων DEX Slasher/Powerhouse).',
+      },
+      {
         en: 'In **Auto Team Builder**, the **Only farmable, shop and Friend Point units** toggle in the filters. Your locked picks and a Friend Captain from any player stay as they are.',
         el: 'Στο **Auto Team Builder**, ο διακόπτης **Only farmable, shop and Friend Point units** στα φίλτρα. Οι χαρακτήρες που κλείδωσες και ένας Friend Captain από οποιονδήποτε παίκτη μένουν όπως είναι.',
       },
